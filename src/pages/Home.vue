@@ -4,16 +4,38 @@ import ContentBlock from '../components/ContentBlock.vue'
 import { ref, onMounted } from 'vue'
 
 const today = new Date().toLocaleDateString()
+
 const visitorInfo = ref({
   ip: 'Loading...',
   country: '未知',
-  browser: navigator.userAgent,
-  os: navigator.platform
+  browser: '未知',
+  os: '未知'
 })
+
+function parseVisitorDevice() {
+  const ua = navigator.userAgent
+  const platform = navigator.platform
+
+  let browser = '未知'
+  if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome'
+  else if (ua.includes('Firefox')) browser = 'Firefox'
+  else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari'
+  else if (ua.includes('Edg')) browser = 'Edge'
+
+  let os = '未知'
+  if (platform.includes('Mac')) os = 'macOS'
+  else if (platform.includes('Win')) os = 'Windows'
+  else if (/Linux|X11/.test(platform)) os = 'Linux'
+
+  visitorInfo.value.browser = browser
+  visitorInfo.value.os = os
+}
 
 const visitorCountAvailable = true // 控制是否启用 busuanzi
 
 onMounted(async () => {
+  parseVisitorDevice()
+
   try {
     const res = await fetch('https://ipapi.co/json/')
     const data = await res.json()
