@@ -103,50 +103,101 @@ onMounted(async () => {
 
 <style scoped>
 .markdown-body {
-  max-width: 800px;
+  max-width: 860px;
   margin: 2rem auto;
   padding: 0 1rem;
-  font-family: Georgia, 'Times New Roman', serif;
-  line-height: 1.8;
+  font-family: 'Inter', 'Noto Serif SC', 'Times New Roman', serif;
+  line-height: 1.9;
   font-size: 1.05rem;
-  color: #1a1a1a;
+  color: var(--text-color);
 }
 
+/* 标题样式 */
 .markdown-body h1, .markdown-body h2, .markdown-body h3 {
   margin-top: 2rem;
   margin-bottom: 1rem;
-  font-weight: bold;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1.5;
+}
+.markdown-body h4, .markdown-body h5, .markdown-body h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+/* 行内代码和块代码 */
+.markdown-body code {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  background-color: var(--surface-color-hover);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
 }
 
 .markdown-body pre {
-  background: #f6f8fa;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   padding: 1rem;
   overflow-x: auto;
-  border-radius: 6px;
+  margin: 1.5rem 0;
+}
+.markdown-body pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.95rem;
 }
 
-.markdown-body code {
-  font-family: 'Fira Code', monospace;
-}
-
+/* 图片与表格 */
 .markdown-body img {
   max-width: 100%;
-  border-radius: 6px;
+  border-radius: 8px;
   margin: 1rem 0;
 }
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+.markdown-body th, .markdown-body td {
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+}
 
+/* 引用块 */
 .markdown-body blockquote {
-  border-left: 4px solid #ccc;
+  border-left: 4px solid var(--accent-color);
   padding-left: 1rem;
-  color: #666;
+  color: var(--text-color);
+  background-color: var(--surface-color-hover);
+  border-radius: 0.5rem;
+  margin: 1rem 0;
   font-style: italic;
 }
 
+/* 列表 */
+.markdown-body ul, .markdown-body ol {
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+/* 链接 */
 .markdown-body a {
-  color: #0366d6;
+  color: var(--link-color);
   text-decoration: none;
 }
 .markdown-body a:hover {
+  color: var(--primary-color-hover);
   text-decoration: underline;
+}
+
+/* 数学公式 */
+mjx-container {
+  font-family: 'STIX Two Math', 'Latin Modern Math', 'Noto Serif SC', serif !important;
+  font-size: 1.05rem;
+  line-height: 1.8;
 }
 </style>
