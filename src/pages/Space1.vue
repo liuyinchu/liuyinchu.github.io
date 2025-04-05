@@ -1,4 +1,6 @@
 <script setup>
+import Meteors from '../components/effects/Meteors.vue'
+
 const articles = [
   {
     id: 'naming_guide',
@@ -28,32 +30,54 @@ const articles = [
 </script>
 
 <template>
-  <main class="article-page">
-    <h1 class="block-title">讨论</h1>
-    <p class="block-intro">一些值得记录的思考、讨论或灵感。</p>
+  <div class="relative bg-container">
+    <!-- 流星背景层 -->
+    <Meteors />
 
-    <div class="article-list">
-      <RouterLink
-        v-for="(article, i) in articles"
-        :key="i"
-        :to="`/space1/${article.id}`"
-        class="article-card"
-        :style="article.bg ? { backgroundImage: `url(${article.bg})` } : {}"
-      >
-        <div class="card-overlay">
-          <h3 class="article-title">{{ article.title }}</h3>
-          <p class="article-desc">{{ article.desc }}</p>
-        </div>
-      </RouterLink>
-    </div>
-  </main>
+    <!-- 正文内容 -->
+    <main class="article-page relative z-10">
+      <h1 class="block-title">讨论</h1>
+      <p class="block-intro">一些值得记录的思考、讨论或灵感。</p>
+
+      <div class="article-list">
+        <RouterLink
+          v-for="(article, i) in articles"
+          :key="i"
+          :to="`/space1/${article.id}`"
+          class="article-card"
+          :style="article.bg ? { backgroundImage: `url(${article.bg})` } : {}"
+        >
+          <div class="card-overlay">
+            <h3 class="article-title">{{ article.title }}</h3>
+            <p class="article-desc">{{ article.desc }}</p>
+          </div>
+        </RouterLink>
+      </div>
+    </main>
+  </div>
 </template>
 
 <style scoped>
-.article-page {
-  padding: 3rem 1rem;
-  background-color: var(--background-color);
+.bg-container {
+  position: relative;
+  overflow: hidden;
   min-height: 100vh;
+}
+
+/* 保证流星在底层 */
+.bg-container > .meteor-layer,
+.bg-container > *:not(.article-page) {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* 正文在上层 */
+.article-page {
+  position: relative;
+  z-index: 10;
+  padding: 3rem 1rem;
+  background-color: transparent; /* 不覆盖背景 */
   text-align: center;
 }
 
@@ -94,9 +118,9 @@ const articles = [
 
 /* 毛玻璃遮罩层 */
 .card-overlay {
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(var(--ctp-mocha-base-rgb), 0.8);
+  backdrop-filter: blur(9.5px);
+  -webkit-backdrop-filter: blur(9.5px);
   padding: 1.5rem 2rem;
   color: var(--text-color);
   border: 1px solid var(--border-color);

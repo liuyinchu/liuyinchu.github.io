@@ -1,11 +1,9 @@
 <template>
   <footer class="site-footer">
     <p>
-      GitHub:
       <a href="https://github.com/pifuyuini" target="_blank" rel="noopener noreferrer">GitHub</a>
       |
-      Email:
-      <a href="mailto:your@email.com">your@email.com</a>
+      <a href="mailto:mingchupifuyuini@gmail.com">MyEmail</a>
       |
       <RouterLink to="/about">About</RouterLink>
       |

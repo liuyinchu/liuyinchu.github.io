@@ -12,9 +12,9 @@
 
     <!-- 图片模块 C -->
     <ImageBlock
-      src="/img/gpt_new_img_test.jpeg"
+      src="/bg/gpt_new_img_test.jpg"
       alt="保护我们的动物朋友"
-      width="80%"
+      width="40%"
     />
 
     <!-- 第二段 Markdown 文本 -->
@@ -49,7 +49,7 @@ const bodyText = `
 本网站由 Vue3 + Vite 构建，支持：
 
 - Markdown 编辑
-- LaTeX 公式（例如：$\delta S = 0$）
+- LaTeX 公式（例如：$\\delta S = 0$）
 - 精美的跳转按钮
 - 响应式图片展示
 
