@@ -10,7 +10,7 @@ import hljs from 'highlight.js'
 
 // 样式导入（KaTeX + Highlight）
 import 'katex/dist/katex.min.css'
-import 'highlight.js/styles/github-dark.css'
+import 'highlight.js/styles/atom-one-dark.css'
 
 // Props: Markdown 内容字符串
 const props = defineProps({

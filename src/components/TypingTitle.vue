@@ -7,13 +7,14 @@ import { ref, onMounted } from 'vue'
 
 const texts = [
   "Welcome to LiuYinChu'Space.",
-  "致虚极，守静笃。", 
+  "为天地立心，为生民立命，为往圣继绝学，为万世开太平。",
   "Here I share code, notes, and lab reports.",
+  "致虚极，守静笃。",
   "记录，为了更深刻地思考。",
   "Explore unknown possibilities.",
   "个人网站高能回，流萤厨献给流萤的真挚情书！",
   "Between logic and poetry, there is code.",
-  "今天依旧晴朗，我亲爱的流萤。",
+  "与君初相识，犹如故人归。",
   "Sometime ever, sometime never.",
   "志之所趋，无远弗届，穷山距海，不能限也。",
   "Better late than never.",
@@ -23,7 +24,8 @@ const texts = [
   "Journey of a thousand miles begins with single step.",
   "冀以尘雾之微补益山海，荧烛末光增辉日月。",
   "Talk is cheap. Show me the code.",
-  "如果我们选择了最能为人类而工作的职业，那么，重担就不能把我们压倒，因为这是为大家作出的牺牲；那时我们所享受的就不是可怜的、有限的、自私的乐趣，我们的幸福将属于千百万人，我们的事业将悄然无声地存在下去，但是它会永远发挥作用，而面对我们的骨灰，高尚的人们将洒下热泪。"
+  "且将新火试新茶，诗酒趁年华。",
+  "今天依旧晴朗，我亲爱的流萤。",
 ]
 
 const displayedText = ref('')

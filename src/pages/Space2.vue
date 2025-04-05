@@ -12,8 +12,8 @@
 
     <!-- 图片模块 C -->
     <ImageBlock
-      src="/bg/share.jpeg"
-      alt="分享是创造的开始"
+      src="/img/gpt_new_img_test.jpeg"
+      alt="保护我们的动物朋友"
       width="80%"
     />
 
@@ -22,7 +22,7 @@
 
     <!-- 再来一个按钮模块 -->
     <LinkButtons :buttons="[
-      { text: '更多资源', url: '/resource' }
+      { text: '分享是创造的开始', url: '/resource' }
     ]" />
   </PageWrapper>
 </template>
@@ -46,10 +46,10 @@ const bodyText = `
 
 ## 关于本站
 
-本网站由 Vue + Vite 构建，支持：
+本网站由 Vue3 + Vite 构建，支持：
 
 - Markdown 编辑
-- LaTeX 公式（例如：$\\alpha^2 + \\beta^2 = 1$）
+- LaTeX 公式（例如：$\delta S = 0$）
 - 精美的跳转按钮
 - 响应式图片展示
 

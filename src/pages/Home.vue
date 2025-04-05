@@ -98,7 +98,7 @@ onMounted(async () => {
       </p>
     </ContentBlock>
 
-    <ContentBlock title="访客" backgroundImage="/bg/visitor.jpeg">
+    <ContentBlock title="访客" backgroundImage="/bg/snow_mountain_starry_sky_aurora.jpeg">
       <div class="centered-text">
         <p>{{ today }}
           <span v-if="visitorCountAvailable" id="busuanzi_container_site_pv">

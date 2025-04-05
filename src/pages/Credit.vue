@@ -7,6 +7,8 @@
 <script setup>
 import PageWrapper from '../components/common/PageWrapper.vue'
 import BlockMarkdown from '../components/common/BlockMarkdown.vue'
+import ImageBlock from '../components/common/ImageBlock.vue'
+import LinkButtons from '../components/common/LinkButtons.vue'
 
 const creditText = `
 # 致谢与版权
@@ -19,6 +21,7 @@ const creditText = `
 - **GitHub Pages：** 本网站部署于 GitHub Pages。
 - **部分灵感来源：** Apple 官网、yyk space、Huanyu Shi 等（部分可以在 [网上邻居](/space1) 中找到）。
 - **部分素材来源：** pixiv 画师（他们可以在 [资源链接](/resource) 中找到）。
+- **颜色主题：** [Catppuccin Mocha](https://catppuccin.com/)。
 - **说明：** 如果您认为侵犯了您的版权，您可以通过页脚的联系方式告知我，我会第一时间删除相关资源。
 - **关于这个网站的版权：** 暂时懒得写，我估计也用不上。
 `

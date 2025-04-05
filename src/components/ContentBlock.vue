@@ -41,7 +41,7 @@ defineProps({
 .overlay-glass {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.6); /* 从 0.75 降到 0.6 */
+  background-color: rgba(var(--ctp-mocha-base-rgb), 0.75); /* 从 0.75 降到 0.6 */
   border: 1px solid var(--border-color);
   padding: 2rem;
   border-radius: 1.5rem;

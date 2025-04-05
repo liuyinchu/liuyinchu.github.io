@@ -2,21 +2,27 @@
 const articles = [
   {
     id: 'naming_guide',
-    title: '命名规范',
+    title: '命名规范建议',
     desc: '我倡议规范命名。',
-    bg: '/bg/share.jpeg' // ✅ 可选：背景图路径
+    bg: '/bg/IMG_FireFly4.jpeg' // ✅ 可选：背景图路径
   },
   {
     id: 'qm_course_note',
     title: '量子力学课程相关笔记',
     desc: '其实主要是与作业和小测相关。',
-    bg: '' // ✅ 无背景图
+    bg: '/bg/outside_sky.jpg'
   },
   {
     id: 'python_note_class_specific_methods',
     title: 'Python中类的专有方法',
     desc: '这是一篇Python学习笔记。',
-    bg: '/bg/open.jpeg'
+    bg: '/bg/IMG_Elysia.jpg'
+  },
+  {
+    id: 'ms_gate_note',
+    title: 'Mølmer–Sørensen门理论推导笔记',
+    desc: '这是一篇关于量子物理的早期科研尝试笔记。',
+    bg: '/bg/visitor.jpeg'
   }
 ]
 </script>
@@ -88,7 +94,7 @@ const articles = [
 
 /* 毛玻璃遮罩层 */
 .card-overlay {
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.6);
+  background-color: rgba(var(--ctp-mocha-base-rgb), 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: 1.5rem 2rem;

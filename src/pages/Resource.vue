@@ -1,6 +1,8 @@
 <script setup>
 import PageWrapper from '../components/common/PageWrapper.vue'
 import BlockMarkdown from '../components/common/BlockMarkdown.vue'
+import ImageBlock from '../components/common/ImageBlock.vue'
+import LinkButtons from '../components/common/LinkButtons.vue'
 
 const resourceText = `
 # 资源分享
