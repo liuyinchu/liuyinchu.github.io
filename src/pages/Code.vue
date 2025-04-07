@@ -55,13 +55,13 @@ const code4 = `
     
     <BlockMarkdown :content="code1" />
     <ImageBlock
-      src="/bg/ysy_plot_examples.png"
+      src="/bg/ysy_plot_example.png"
       alt="使用设定好的主题并用快速多曲线绘制函数的绘图结果"
       width="50%"
     />
     <BlockMarkdown :content="code1_2" />
     <ImageBlock
-      src="/bg/ysy_plot_examples_2.png"
+      src="/bg/ysy_plot_example_2.png"
       alt="v1.3版本中新增的风格加载器，图示为与本网站适配的梦琪摩卡主题"
       width="50%"
     />
