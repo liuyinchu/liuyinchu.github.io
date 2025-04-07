@@ -12,9 +12,15 @@ const intro = `
 const code1 = `
 ---
 
-## 个人绘图工具<code>ysy_plot_utils.py</code>封装了一些适用于<code>Matplotlib</code>的主题样式和快速绘图函数。
+## 个人绘图工具
+
+<code>ysy_plot_utils.py</code>封装了一些适用于<code>Matplotlib</code>的主题样式和快速绘图函数。
 
 虽然但是，就开发了一点点功能，如果有用的话，你可以拿去尽情使用。
+`
+
+const code1_2 = `
+更新了v1.3版本，主要新增了风格加载器功能；然后对主绘图函数做了小适配，对流萤主题也做了小修改与小适配。
 `
 
 const code2 = `
@@ -53,7 +59,13 @@ const code4 = `
       alt="使用设定好的主题并用快速多曲线绘制函数的绘图结果"
       width="50%"
     />
-    <LinkButtons :buttons="[{ text: '下载', url: '/files/code/ysy_plot_utils.py' }]" />
+    <BlockMarkdown :content="code1_2" />
+    <ImageBlock
+      src="/bg/ysy_plot_examples_2.png"
+      alt="v1.3版本中新增的风格加载器，图示为与本网站适配的梦琪摩卡主题"
+      width="50%"
+    />
+    <LinkButtons :buttons="[{ text: '下载', url: '/files/code/ysy-data-analysis-utils-v1.3.zip' }]" />
     
     <BlockMarkdown :content="code2" />
     <LinkButtons :buttons="[{ text: '下载', url: '/files/code/v1.2-beta-ysy-new-labreport-template-recommended-only-for-modern-physics-experiments.zip' }]" />
