@@ -24,7 +24,7 @@ import { RouterLink } from 'vue-router'
   padding: 1.5rem 1rem;
   font-size: 0.9rem;
   border-top: 1px solid var(--border-color);
-  margin-top: 2rem;
+  margin-top: 0rem;
 }
 
 .site-footer a {

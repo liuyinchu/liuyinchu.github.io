@@ -21,6 +21,18 @@ const articles = [
     bg: '/bg/IMG_Elysia.jpg'
   },
   {
+    id: 'astro_ml_guide',
+    title: '天文学中的机器学习指南',
+    desc: '这是一篇文献阅读笔记。',
+    bg: '/bg/IMG_FireFly4.jpeg'
+  },
+  {
+    id: 'introduction_to_open_source_protocol',
+    title: '开源协议简介',
+    desc: '提供最基本的介绍，你可以进一步去探索它。',
+    bg: '/outside_sky.jpg'
+  },
+  {
     id: 'ms_gate_note',
     title: 'Mølmer–Sørensen门理论推导笔记',
     desc: '这是一篇关于量子物理的早期科研尝试笔记。',
