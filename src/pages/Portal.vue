@@ -13,6 +13,12 @@ const dockGroups = [
     color: '#94e2d5', // Mocha - Teal
     links: [
       { name: 'GitHub', url: 'https://github.com/' },
+      { name: '视频格式转换', url: 'https://cloudconvert.com' },
+      { name: 'Tikz绘图辅助', url: 'https://www.mathcha.io/' },
+      { name: 'LaTeX公式编辑器', url: 'https://www.latexlive.com/' },
+      { name: 'Catppuccin调色板', url: 'https://catppuccin.com/palette/' },
+      { name: 'Google翻译', url: 'https://translate.google.com' },
+      { name: '文件传输助手', url: 'https://filehelper.weixin.qq.com/' },
     ]
   },
   {
@@ -21,13 +27,15 @@ const dockGroups = [
     links: [
       { name: 'arXiv', url: 'https://arxiv.org/' },
       { name: '小时百科', url: 'https://wuli.wiki/online/index.html' },
+      { name: '马克思主义文库', url: 'https://www.marxists.org/chinese/' },
+      { name: 'Git教程&速查', url: 'https://liaoxuefeng.com/books/git/introduction/index.html' },
     ]
   },
   {
     name: '其它',
     color: '#fab387', // Mocha - Peach
     links: [
-      { name: '企业微信', url: 'https://exmail.qq.com/login' },
+      { name: '企业微信邮箱', url: 'https://exmail.qq.com/login' },
       { name: 'Google', url: 'https://www.google.com/' },
       { name: 'YouTube', url: 'https://www.youtube.com/' },
       { name: 'B站', url: 'https://www.bilibili.com/' },
@@ -73,30 +81,35 @@ onMounted(() => {
         url: '/music/space_walk.m4a',
         cover: '/music/cover/default.jpg',
       },
-      {
-        name: 'Second Song',
-        artist: 'Someone',
-        url: '/music/song2.mp3',
-        cover: '/music/cover/default.jpg',
-      },
-      {
-        name: 'Third Track',
-        artist: 'Another',
-        url: '/music/song3.mp3',
-        cover: '/music/cover/default.jpg',
-      },
-      {
-        name: 'Third Track',
-        artist: 'Another',
-        url: '/music/song3.mp3',
-        cover: '/music/cover/default.jpg',
-      },
-      {
-        name: 'Third Track',
-        artist: 'Another',
-        url: '/music/song3.mp3',
-        cover: '/music/cover/default.jpg',
-      },
+      { name: 'a_letter', artist: '泽野弘之', url: '/music/a_letter.m4a', cover: '/music/cover/default4.jpg' },
+      { name: 'a_new_day_with_hope', artist: 'HoYo-Mix', url: '/music/a_new_day_with_hope.m4a', cover: '/music/cover/default2.jpg' },
+      { name: 'cage', artist: '泽野弘之', url: '/music/cage.m4a', cover: '/music/cover/default3.jpg' },
+      { name: 'call_your_name_gv', artist: '泽野弘之', url: '/music/call_your_name_gv.m4a', cover: '/music/cover/default.jpg' },
+      { name: 'flower_dance', artist: 'DJ Okawari', url: '/music/flower_dance.m4a', cover: '/music/cover/default3.jpg' },
+      { name: 'narrative', artist: '泽野弘之', url: '/music/narrative.m4a', cover: '/music/cover/default2.jpg' },
+      { name: 'ninelie', artist: 'Aimer', url: '/music/ninelie.m4a', cover: '/music/cover/default4.jpg' },
+      { name: 'puppet_in_the_dark', artist: 'Unknown', url: '/music/puppet_in_the_dark.m4a', cover: '/music/cover/default.jpg' },
+      { name: 'revolution', artist: 'Unknown', url: '/music/revolution.m4a', cover: '/music/cover/default.jpg' },
+      { name: 'sh0ut', artist: 'SawanoHiroyuki[nZk]', url: '/music/sh0ut.m4a', cover: '/music/cover/default3.jpg' },
+      { name: 'the_opening', artist: '塞壬唱片', url: '/music/the_opening.m4a', cover: '/music/cover/default.jpg' },
+      { name: '爱情转移', artist: '陈奕迅', url: '/music/爱情转移_陈奕迅.mp3', cover: '/music/cover/default2.jpg' },
+      { name: '不是因为寂寞才想你', artist: 'Unknown', url: '/music/不是因为寂寞才想你.mp3', cover: '/music/cover/default4.jpg' },
+      { name: '关键词', artist: '林俊杰', url: '/music/关键词_林俊杰.m4a', cover: '/music/cover/default.jpg' },
+      { name: '关山酒', artist: '兰音Reine', url: '/music/关山酒_兰音.m4a', cover: '/music/cover/default3.jpg' },
+      { name: '花海', artist: '周杰伦', url: '/music/花海.m4a', cover: '/music/cover/default.jpg' },
+      { name: '画', artist: '邓紫棋', url: '/music/画.m4a', cover: '/music/cover/default4.jpg' },
+      { name: '几初的智愿', artist: 'HoYo-Mix', url: '/music/几初的智愿.m4a', cover: '/music/cover/default.jpg' },
+      { name: '寂寞沙洲冷', artist: '周传雄', url: '/music/寂寞沙洲冷_周传雄.mp3', cover: '/music/cover/default3.jpg' },
+      { name: '眉间雪', artist: 'Unknown', url: '/music/眉间雪.m4a', cover: '/music/cover/default2.jpg' },
+      { name: '七里香', artist: '周杰伦', url: '/music/七里香_周杰伦.mp3', cover: '/music/cover/default.jpg' },
+      { name: '如果当时', artist: '许嵩', url: '/music/如果当时.m4a', cover: '/music/cover/default.jpg' },
+      { name: '若我不曾见过太阳', artist: '知更鸟', url: '/music/若我不曾见过太阳.m4a', cover: '/music/cover/default2.jpg' },
+      { name: '舍离去', artist: '兰音Reine', url: '/music/舍离去_兰音.m4a', cover: '/music/cover/default.jpg' },
+      { name: '使一颗心免于哀伤', artist: '知更鸟', url: '/music/使一颗心免于哀伤.m4a', cover: '/music/cover/default.jpg' },
+      { name: '手写的从前', artist: 'Unknown', url: '/music/手写的从前.m4a', cover: '/music/cover/default2.jpg' },
+      { name: '天军行阵乐', artist: 'Poe(CN)', url: '/music/天军行阵乐.flac', cover: '/music/cover/default4.jpg' },
+      { name: '突然的自我', artist: '伍佰', url: '/music/突然的自我_伍佰.mp3', cover: '/music/cover/default.jpg' },
+      { name: '我们的歌谣', artist: '凤凰传奇', url: '/music/我们的歌谣_凤凰传奇.m4a', cover: '/music/cover/default3.jpg' },
     ].map(track => ({
       ...track,
       cover: track.cover || '/music/cover/default.jpg',
@@ -127,12 +140,11 @@ onMounted(() => {
 
       <div class="card frosted calendar-card">
         <h2 class="title">Calendar</h2>
-        <!-- 你自己的 Calendar 组件插入这里 -->
         <Calendar class="themed-calendar" />
       </div>
     </div>
     <div class="card frosted dock-card">
-      <h2 class="title">🚢 Dock</h2>
+      <h2 class="title">Dock</h2>
       <div class="dock-groups">
         <div
           v-for="group in dockGroups"
