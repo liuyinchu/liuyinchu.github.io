@@ -6,6 +6,7 @@ const dockGroups = [
     links: [
       { name: 'ChatGPT', url: 'https://chat.openai.com/' },
       { name: '深度求索', url: 'https://chat.deepseek.com/' },
+      { name: 'Suno', url: 'https://suno.com/' },
     ]
   },
   {
@@ -19,6 +20,8 @@ const dockGroups = [
       { name: 'Catppuccin调色板', url: 'https://catppuccin.com/palette/' },
       { name: 'Google翻译', url: 'https://translate.google.com' },
       { name: '文件传输助手', url: 'https://filehelper.weixin.qq.com/' },
+      { name: 'Bing', url: 'https://cn.bing.com/' },
+      { name: '菜鸟教程', url: 'https://www.runoob.com/' },
     ]
   },
   {
@@ -39,6 +42,7 @@ const dockGroups = [
       { name: 'Google', url: 'https://www.google.com/' },
       { name: 'YouTube', url: 'https://www.youtube.com/' },
       { name: 'B站', url: 'https://www.bilibili.com/' },
+      { name: '知乎', url: 'https://www.zhihu.com/' },
     ]
   }
 ]

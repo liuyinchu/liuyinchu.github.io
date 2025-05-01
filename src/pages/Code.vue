@@ -21,16 +21,18 @@ const code1 = `
 
 const code1_2 = `
 更新了v1.3版本，主要新增了风格加载器功能；然后对主绘图函数做了小适配，对流萤主题也做了小修改与小适配。
+
+而在v1.4中，我提供了适配于相应 LaTeX 模版的绘图风格。
 `
 
 const code2 = `
 ---
 
-## 近代物理实验报告模版
+## LaTeX 通用模版
 
-这个我也没搞完，但暂时就这样勉强能用；总之，它为近代物理实验报告的撰写的新形式与新主题风格提供了一些探索与可能。
+这是原近代物理实验报告模版的加强版。
 
-上述这个实验报告模版有些旧了，事实上我制作了一个全新的通用模版 YsyClass，其中封装了包括但不限于上述实验报告的样式，近期会上线。
+通用模版 YsyClass，其中封装了包括但不限于上述实验报告的样式，目前测试版本已上线。
 `
 
 const code3 = `
@@ -67,10 +69,15 @@ const code4 = `
       alt="v1.3版本中新增的风格加载器，图示为与本网站适配的梦琪摩卡主题"
       width="50%"
     />
-    <LinkButtons :buttons="[{ text: '下载', url: '/files/code/ysy-data-analysis-utils-v1.3.zip' }]" />
+    <ImageBlock
+      src="/bg/acadmic_example.png"
+      alt="v1.4版本中新增风格"
+      width="50%"
+    />
+    <LinkButtons :buttons="[{ text: '下载', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-data-analysis-utils' }]" />
     
     <BlockMarkdown :content="code2" />
-    <LinkButtons :buttons="[{ text: '下载', url: '/files/code/v1.2-beta-ysy-new-labreport-template-recommended-only-for-modern-physics-experiments.zip' }]" />
+    <LinkButtons :buttons="[{ text: '下载', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-latex-template-test-demo' }]" />
     
     <BlockMarkdown :content="code3" />
     <ImageBlock
@@ -78,7 +85,7 @@ const code4 = `
       alt="效果展示"
       width="80%"
     />
-    <LinkButtons :buttons="[{ text: '下载', url: '/files/code/learning-and-practice-linux-server-login-welcome-script-attempt.zip' }]" />
+    <LinkButtons :buttons="[{ text: '下载', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/learning-and-practice-linux-server-login-welcome-script-attempt' }]" />
     
     <BlockMarkdown :content="code4" />
     <ImageBlock
@@ -86,6 +93,6 @@ const code4 = `
       alt="绘制的CG系数表示例"
       width="50%"
     />
-    <LinkButtons :buttons="[{ text: '下载', url: '/files/code/clebsch-gordan-coefficient.zip' }]" />
+    <LinkButtons :buttons="[{ text: '下载', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/clebsch-gordan-coefficient' }]" />
   </PageWrapper>
 </template>
