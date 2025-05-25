@@ -14,11 +14,13 @@ const texts = [
   "Explore unknown possibilities.",
   "个人网站高能回，流萤厨献给流萤的真挚情书！",
   "Between logic and poetry, there is code.",
+  "恒兀兀以穷年，日乾乾而夕惕。",
   "与君初相识，犹如故人归。",
   "Sometime ever, sometime never.",
   "志之所趋，无远弗届，穷山距海，不能限也。",
   "Better late than never.",
   "春风若有怜花意，可否许我再少年。",
+  "多少事，从来急。天地转，光阴迫。一万年太久，只争朝夕！",
   "Make each day your masterpiece.",
   "而世之奇伟、瑰怪、非常之观，常在于险远，而人之所罕至焉，故非有志者不能至也。",
   "Journey of a thousand miles begins with single step.",
@@ -26,6 +28,7 @@ const texts = [
   "Talk is cheap. Show me the code.",
   "且将新火试新茶，诗酒趁年华。",
   "今天依旧晴朗，我亲爱的流萤。",
+  "庸德之行，庸言之谨；有所不足，不敢不勉；有余，不敢尽。",
 ]
 
 const displayedText = ref('')

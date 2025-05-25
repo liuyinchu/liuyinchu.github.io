@@ -33,6 +33,12 @@ const articles = [
     bg: '/bg/heroine.jpg'
   },
   {
+    id: 'signals_and_systems',
+    title: '信号与系统入门导览',
+    desc: '提供最基本的介绍，你可以进一步去探索它。',
+    bg: '/bg/spring.jpg'
+  },
+  {
     id: 'ms_gate_note',
     title: 'Mølmer–Sørensen门理论推导笔记',
     desc: '这是一篇关于量子物理的早期科研尝试笔记。',

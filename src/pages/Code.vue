@@ -22,7 +22,9 @@ const code1 = `
 const code1_2 = `
 更新了v1.3版本，主要新增了风格加载器功能；然后对主绘图函数做了小适配，对流萤主题也做了小修改与小适配。
 
-而在v1.4中，我提供了适配于相应 LaTeX 模版的绘图风格。
+更新了v1.4中，我提供了适配于相应 LaTeX 模版的绘图风格。
+
+更新了v1.5，适当优化。
 `
 
 const code2 = `
@@ -59,21 +61,11 @@ const code4 = `
     
     <BlockMarkdown :content="code1" />
     <ImageBlock
-      src="/bg/ysy_plot_example.png"
-      alt="使用设定好的主题并用快速多曲线绘制函数的绘图结果"
-      width="50%"
+      src="/bg/acadmic_example.png"
+      alt="v1.4版本后推荐绘图方式与效果"
+      width="60%"
     />
     <BlockMarkdown :content="code1_2" />
-    <ImageBlock
-      src="/bg/ysy_plot_example_2.png"
-      alt="v1.3版本中新增的风格加载器，图示为与本网站适配的梦琪摩卡主题"
-      width="50%"
-    />
-    <ImageBlock
-      src="/bg/acadmic_example.png"
-      alt="v1.4版本中新增风格"
-      width="50%"
-    />
     <LinkButtons :buttons="[{ text: '下载', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-data-analysis-utils' }]" />
     
     <BlockMarkdown :content="code2" />

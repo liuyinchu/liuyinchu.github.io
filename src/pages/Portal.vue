@@ -7,6 +7,7 @@ const dockGroups = [
       { name: 'ChatGPT', url: 'https://chat.openai.com/' },
       { name: '深度求索', url: 'https://chat.deepseek.com/' },
       { name: 'Suno', url: 'https://suno.com/' },
+      { name: 'Gemini', url: 'https://gemini.google.com/' },
     ]
   },
   {
@@ -43,6 +44,8 @@ const dockGroups = [
       { name: 'YouTube', url: 'https://www.youtube.com/' },
       { name: 'B站', url: 'https://www.bilibili.com/' },
       { name: '知乎', url: 'https://www.zhihu.com/' },
+      { name: '中山大学统一门户', url: 'https://mportal.sysu.edu.cn/' },
+      { name: '中山大学物理与天文学院', url: 'https://spa.sysu.edu.cn/' },
     ]
   }
 ]
@@ -96,6 +99,7 @@ onMounted(() => {
       { name: 'Revolution', artist: 'The Score', url: '/music/revolution.m4a', cover: '/music/cover/default.jpg' },
       { name: 'sh0ut', artist: 'SawanoHiroyuki[nZk]', url: '/music/sh0ut.m4a', cover: '/music/cover/default3.jpg' },
       { name: 'The Opening', artist: '塞壬唱片', url: '/music/the_opening.m4a', cover: '/music/cover/default.jpg' },
+      { name: '知我', artist: '哦漏', url: '/music/知我_哦漏.m4a', cover: '/music/cover/default.jpg' },
       { name: '爱情转移', artist: '陈奕迅', url: '/music/爱情转移_陈奕迅.mp3', cover: '/music/cover/default2.jpg' },
       { name: '不是因为寂寞才想你', artist: 'T.R.Y', url: '/music/不是因为寂寞才想你.m4a', cover: '/music/cover/default4.jpg' },
       { name: '关键词', artist: '林俊杰', url: '/music/关键词_林俊杰.m4a', cover: '/music/cover/default.jpg' },
@@ -104,6 +108,7 @@ onMounted(() => {
       { name: '画', artist: '邓紫棋', url: '/music/画.m4a', cover: '/music/cover/default4.jpg' },
       { name: '几初的智愿', artist: 'HoYo-Mix', url: '/music/几初的智愿.m4a', cover: '/music/cover/default.jpg' },
       { name: '寂寞沙洲冷', artist: '周传雄', url: '/music/寂寞沙洲冷_周传雄.mp3', cover: '/music/cover/default3.jpg' },
+      { name: '流光记', artist: '银临', url: '/music/流光记_银临.m4a', cover: '/music/cover/default.jpg' },
       { name: '眉间雪', artist: '晴愔', url: '/music/眉间雪.m4a', cover: '/music/cover/default2.jpg' },
       { name: '七里香', artist: '周杰伦', url: '/music/七里香_周杰伦.mp3', cover: '/music/cover/default.jpg' },
       { name: '如果当时', artist: '许嵩', url: '/music/如果当时.m4a', cover: '/music/cover/default.jpg' },
@@ -349,7 +354,7 @@ onMounted(() => {
 
 .music-card {
   flex: 1 1 60%;
-  max-width: 60%;
+  max-width: 95%;
   min-width: 300px;
   height: 300px; /* 统一为 270px，适配日历 6 行 */
 }
