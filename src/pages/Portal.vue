@@ -53,6 +53,8 @@ const dockGroups = [
 import APlayer from 'aplayer'
 import { onMounted, ref } from 'vue'
 import Calendar from '../components/Calendar.vue'
+import ToDoList from '../components/ToDoList.vue' // 引入 ToDoList 组件
+import Weather from '../components/Weather.vue'   // 引入 Weather 组件
 
 const fullText = 'Wishing your day stays bright —— like sunshine that chose to stay just for you.'
 const typedText = ref('')
@@ -150,6 +152,17 @@ onMounted(() => {
       <div class="card frosted calendar-card">
         <h2 class="title">Calendar</h2>
         <Calendar class="themed-calendar" />
+      </div>
+    </div>
+    <div class="row-cards">
+      <div class="card frosted todo-card">
+        <h2 class="title">ToDo List</h2>
+        <ToDoList />
+      </div>
+
+      <div class="card frosted weather-card">
+        <h2 class="title">Weather</h2>
+        <Weather />
       </div>
     </div>
     <div class="card frosted dock-card">
@@ -480,5 +493,34 @@ onMounted(() => {
   width: 24px;
   height: 24px;
   object-fit: contain;
+}
+
+.todo-card {
+  flex: 1 1 50%;
+  min-width: 350px; /* 稍微增加最小宽度，确保内容有空间 */
+  height: 400px; /* 保持固定高度 */
+  display: flex;
+  flex-direction: column;
+}
+
+.weather-card {
+  flex: 0 0 350px; /* 固定宽度增加到 350px，给文字更多空间 */
+  width: 350px; /* 明确固定宽度 */
+  height: 400px; /* 与 todo-card 相同 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 媒体查询，处理在小屏幕下 to-do list 宽度为 weather 的 1:1 关系 */
+@media (max-width: 750px) { /* 调整断点，如果卡片宽度增加，可能需要更宽的断点 */
+  .row-cards {
+    flex-direction: column;
+  }
+  .todo-card,
+  .weather-card {
+    flex: 1 1 100%;
+    max-width: 100%;
+    min-width: unset;
+  }
 }
 </style>
