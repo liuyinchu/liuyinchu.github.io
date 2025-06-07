@@ -18,11 +18,11 @@ const dockGroups = [
       { name: '视频格式转换', url: 'https://cloudconvert.com' },
       { name: 'Tikz绘图辅助', url: 'https://www.mathcha.io/' },
       { name: 'LaTeX公式编辑器', url: 'https://www.latexlive.com/' },
-      { name: 'Catppuccin调色板', url: 'https://catppuccin.com/palette/' },
       { name: 'Google翻译', url: 'https://translate.google.com' },
       { name: '文件传输助手', url: 'https://filehelper.weixin.qq.com/' },
       { name: 'Bing', url: 'https://cn.bing.com/' },
       { name: '菜鸟教程', url: 'https://www.runoob.com/' },
+      { name: 'Google', url: 'https://www.google.com/' },
     ]
   },
   {
@@ -40,12 +40,12 @@ const dockGroups = [
     color: '#fab387', // Mocha - Peach
     links: [
       { name: '企业微信邮箱', url: 'https://exmail.qq.com/login' },
-      { name: 'Google', url: 'https://www.google.com/' },
       { name: 'YouTube', url: 'https://www.youtube.com/' },
       { name: 'B站', url: 'https://www.bilibili.com/' },
       { name: '知乎', url: 'https://www.zhihu.com/' },
       { name: '中山大学统一门户', url: 'https://mportal.sysu.edu.cn/' },
       { name: '中山大学物理与天文学院', url: 'https://spa.sysu.edu.cn/' },
+      { name: 'Catppuccin调色板', url: 'https://catppuccin.com/palette/' },
     ]
   }
 ]
@@ -90,11 +90,13 @@ onMounted(() => {
         url: '/music/space_walk.m4a',
         cover: '/music/cover/default.jpg',
       },
+      { name: '不谓侠', artist: '萧忆情Alex', url: '/music/不谓侠_萧忆情Alex.m4a', cover: '/music/cover/default5.jpg' },
       { name: 'A Letter', artist: '泽野弘之', url: '/music/a_letter.m4a', cover: '/music/cover/default4.jpg' },
       { name: 'A New Day with Hope', artist: 'HoYo-Mix', url: '/music/a_new_day_with_hope.m4a', cover: '/music/cover/default2.jpg' },
       { name: 'Cage', artist: '泽野弘之', url: '/music/cage.m4a', cover: '/music/cover/default3.jpg' },
       { name: 'Call Your Name (Gv)', artist: '泽野弘之', url: '/music/call_your_name_gv.m4a', cover: '/music/cover/default.jpg' },
       { name: 'Flower Dance', artist: 'DJ Okawari', url: '/music/flower_dance.m4a', cover: '/music/cover/default3.jpg' },
+      { name: '红色高跟鞋', artist: '蔡健雅', url: '/music/红色高跟鞋_蔡健雅.m4a', cover: '/music/cover/default5.jpg' },
       { name: 'narrative', artist: '泽野弘之', url: '/music/narrative.m4a', cover: '/music/cover/default2.jpg' },
       { name: 'ninelie', artist: 'Aimer', url: '/music/ninelie.m4a', cover: '/music/cover/default4.jpg' },
       { name: 'Puppet in the Dark', artist: 'FELT', url: '/music/puppet_in_the_dark.m4a', cover: '/music/cover/default.jpg' },
@@ -103,6 +105,7 @@ onMounted(() => {
       { name: 'The Opening', artist: '塞壬唱片', url: '/music/the_opening.m4a', cover: '/music/cover/default.jpg' },
       { name: '知我', artist: '哦漏', url: '/music/知我_哦漏.m4a', cover: '/music/cover/default.jpg' },
       { name: '爱情转移', artist: '陈奕迅', url: '/music/爱情转移_陈奕迅.mp3', cover: '/music/cover/default2.jpg' },
+      { name: 'LOVE Theme from TIGA', artist: '矢野立美', url: '/music/LOVE_Theme_from_TIGA_矢野立美.m4a', cover: '/music/cover/default5.jpg' },
       { name: '不是因为寂寞才想你', artist: 'T.R.Y', url: '/music/不是因为寂寞才想你.m4a', cover: '/music/cover/default4.jpg' },
       { name: '关键词', artist: '林俊杰', url: '/music/关键词_林俊杰.m4a', cover: '/music/cover/default.jpg' },
       { name: '关山酒', artist: '兰音Reine', url: '/music/关山酒_兰音.m4a', cover: '/music/cover/default3.jpg' },
@@ -112,12 +115,14 @@ onMounted(() => {
       { name: '寂寞沙洲冷', artist: '周传雄', url: '/music/寂寞沙洲冷_周传雄.mp3', cover: '/music/cover/default3.jpg' },
       { name: '流光记', artist: '银临', url: '/music/流光记_银临.m4a', cover: '/music/cover/default.jpg' },
       { name: '眉间雪', artist: '晴愔', url: '/music/眉间雪.m4a', cover: '/music/cover/default2.jpg' },
+      { name: '天地缓缓', artist: '兰音Reine', url: '/music/天地缓缓_兰音Reine.m4a', cover: '/music/cover/default5.jpg' },
       { name: '七里香', artist: '周杰伦', url: '/music/七里香_周杰伦.mp3', cover: '/music/cover/default.jpg' },
       { name: '如果当时', artist: '许嵩', url: '/music/如果当时.m4a', cover: '/music/cover/default.jpg' },
       { name: '若我不曾见过太阳', artist: '知更鸟', url: '/music/若我不曾见过太阳.m4a', cover: '/music/cover/default2.jpg' },
       { name: '舍离去', artist: '兰音Reine', url: '/music/舍离去_兰音.m4a', cover: '/music/cover/default.jpg' },
       { name: '使一颗心免于哀伤', artist: '知更鸟', url: '/music/使一颗心免于哀伤.m4a', cover: '/music/cover/default.jpg' },
       { name: '手写的从前', artist: '周杰伦', url: '/music/手写的从前.m4a', cover: '/music/cover/default2.jpg' },
+      { name: '烟雨行舟', artist: '伦桑', url: '/music/烟雨行舟_伦桑.m4a', cover: '/music/cover/default5.jpg' },
       { name: '天军行阵乐', artist: 'Poe(CN)', url: '/music/天军行阵乐.flac', cover: '/music/cover/default4.jpg' },
       { name: '突然的自我', artist: '伍佰', url: '/music/突然的自我_伍佰.mp3', cover: '/music/cover/default.jpg' },
       { name: '我们的歌谣', artist: '凤凰传奇', url: '/music/我们的歌谣_凤凰传奇.m4a', cover: '/music/cover/default3.jpg' },

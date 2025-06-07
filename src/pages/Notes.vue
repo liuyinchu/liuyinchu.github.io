@@ -14,7 +14,17 @@ const notes = [
     name: '2024年大创项目',
     desc: '给小组的汇报人做的PPT，结果他没用上；不过挺详细的，倒是可以当个笔记。',
     url: '/files/notes/lhasso_gnn_presentation_ysyversion.pdf'
-  }
+  },
+  {
+    name: '引力波物理梳理笔记1',
+    desc: '课程《引力波物理》前半学期内容的个人知识点梳理笔记。',
+    url: '/files/notes/gw_ppt_note.pdf'
+  },
+  {
+    name: '量子力学梳理笔记1',
+    desc: '个人笔记，参考知乎的文章，梳理了含时微扰、绝热近似和相对论量子力学的内容',
+    url: '/files/notes/qm_ppt_note.pdf'
+  },
 ]
 
 const introText = `

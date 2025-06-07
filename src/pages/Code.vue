@@ -32,9 +32,9 @@ const code2 = `
 
 ## LaTeX 通用模版
 
-这是原近代物理实验报告模版的加强版。
+这是原近代物理实验报告模版的加强版，新增对通用笔记模板、基础物理实验模板、课程论文模板的适配。
 
-通用模版 YsyClass，其中封装了包括但不限于上述实验报告的样式，目前测试版本已上线。
+通用模版 YsyClass，其中封装了包括但不限于上述实验报告的样式，目前测试版本v1.3-release已上线。
 `
 
 const code3 = `
@@ -69,7 +69,7 @@ const code4 = `
     <LinkButtons :buttons="[{ text: '下载', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-data-analysis-utils' }]" />
     
     <BlockMarkdown :content="code2" />
-    <LinkButtons :buttons="[{ text: '下载', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-latex-template-test-demo' }]" />
+    <LinkButtons :buttons="[{ text: '下载', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-latex-template' }]" />
     
     <BlockMarkdown :content="code3" />
     <ImageBlock
