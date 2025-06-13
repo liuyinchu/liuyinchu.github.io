@@ -449,7 +449,7 @@ http://www.damtp.cam.ac.uk/user/tong/solidstate.html)，以下为个人笔记部
         * 这个类比非常强大，因为布洛赫电子本质上就是一个在周期性势场中传播的波包。它的平均速度就是这个波包的传播速度。
 
 * **来源**：
-    * 这个公式可以通过量子力学的**海森堡运动方程（Heisenberg equation of motion）**严格推导出来。
+    * 这个公式可以通过量子力学的**海森堡运动方程（Heisenberg equation of motion）** 严格推导出来。
     * 对于一个算符 $O$，其在海森堡绘景中的时间演化由 $\frac{dO}{dt} = \frac{1}{i\hbar}[O, H]$ 给出，其中 $H$ 是哈密顿量。
     * 我们想要计算粒子的速度，也就是位置算符 $\mathbf{x}$ 的时间导数：
         $$\mathbf{v} = \frac{d\mathbf{x}}{dt} = \frac{1}{i\hbar}[\mathbf{x}, H]$$

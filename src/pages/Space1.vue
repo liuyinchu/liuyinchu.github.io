@@ -27,6 +27,12 @@ const articles = [
     bg: '/bg/outside_sky.jpg'
   },
   {
+    id: 'solid_physics_note2',
+    title: '固体物理学习笔记：能带论',
+    desc: '学习 David Tong 的 Solid State Physics 的 2. Band Structure 的 AI-Help 笔记。',
+    bg: '/bg/mountain.JPG'
+  },
+  {
     id: 'solid_physics_note3',
     title: '固体物理学习笔记：电子动力学',
     desc: '学习 David Tong 的 Solid State Physics 的 3. Electron Dynamics in Solids 的 AI-Help 笔记。',
@@ -37,12 +43,6 @@ const articles = [
     title: '固体物理学习笔记：声子',
     desc: '学习 David Tong 的 Solid State Physics 的 4. Phonons 的 AI-Help 笔记。',
     bg: '/bg/water_from_painting.JPG'
-  },
-  {
-    id: 'qm_course_note',
-    title: '量子力学课程相关笔记',
-    desc: '其实主要是与作业和小测相关。',
-    bg: '/bg/outside_sky.jpg'
   },
   {
     id: 'ms_gate_note',
@@ -154,9 +154,9 @@ const articles = [
 
 /* 毛玻璃遮罩层 */
 .card-overlay {
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.8);
-  backdrop-filter: blur(9.5px);
-  -webkit-backdrop-filter: blur(9.5px);
+  background-color: rgba(rgb(30, 30, 46), 0.85);
+  backdrop-filter: blur(6.5px);
+  -webkit-backdrop-filter: blur(6.5px);
   padding: 1.5rem 2rem;
   color: var(--text-color);
   border: 1px solid var(--border-color);
