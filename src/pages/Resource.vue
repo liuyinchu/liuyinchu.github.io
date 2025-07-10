@@ -67,6 +67,12 @@ scikit-image 是 Python 的一个开源图像处理库，基于 NumPy 和 SciPy 
 * 图像分割与形态学操作
 * 颜色空间转换与几何变换
 
+### [GWpy](https://gwpy.github.io/)
+GWpy 是一个专为引力波数据分析设计的 Python 科学计算库，广泛应用于 LIGO、Virgo 等引力波探测项目中。
+它提供高层接口用于获取、处理和可视化引力波数据，支持时域分析、频谱计算、数据质量标记与筛选等功能，兼容主流科学库如 NumPy 与 Matplotlib，适合科研与教学场景。
+GWpy 还能直接连接 Gravitational Wave Open Science Center（GWOSC）下载公开数据，是引力波天文学研究的重要工具之一。
+
+
 ---
 
 ## 电脑相关
@@ -78,6 +84,15 @@ scikit-image 是 Python 的一个开源图像处理库，基于 NumPy 和 SciPy 
 
 ## 一些文章、笔记和资料
 
+### [怎样从别人那里要求获得代码/论文/模型/数据?](https://cs.nju.edu.cn/wujx/HowToRequestCode.html)
+吴建鑫
+
+南京大学 人工智能学院
+
+2023.6.20
+
+本文欢迎转载，但需要注明原作者和出处。
+
 ### [控制论从入门到放弃](https://zhuanlan.zhihu.com/p/683044170)
 一篇通俗易懂的控制论入门文章，适合初学者快速建立直觉。一篇很好的控制论入门文章。
 
@@ -86,14 +101,13 @@ scikit-image 是 Python 的一个开源图像处理库，基于 NumPy 和 SciPy 
 
 ### [The Missing Semester of Your CS Education 中文版](https://missing-semester-cn.github.io/)
 课程介绍（转载自官网）：计算机设计的初衷就是任务自动化，然而学生们却常常陷在大量的重复任务中，或者无法完全发挥出诸如 版本控制、文本编辑器等工具的强大作用。效率低下和浪费时间还是其次，更糟糕的是，这还可能导致数据丢失或 无法完成某些特定任务。
-这些主题不是大学课程的一部分：学生一直都不知道如何使用这些工具，或者说，至少是不知道如何高效 地使用，因此浪费了时间和精力在本来可以更简单的任务上。标准的计算机科学课程缺少了这门能让计算 变得更简捷的关键课程。
+这些主题不是大学课程的一部分：学生一直都不知道如何使用这些工具，或者说，至少是不知道如何高效 地使用，因此浪费了时间和精力在本来可以更简单的任务上。标准的计算机科学课程缺少了这门能让计算变得更简捷的关键课程。
 
 此外，B站有中文翻译过的课程视频。
 
 ### [一个beamer模版](https://github.com/matze/mtheme)
-看起来不错。
-
-Metropolis 是一款简洁、现代的 Beamer 主题，适合所有人使用。它力求最大限度地减少干扰，并最大限度地提升内容空间；它唯一的视觉亮点是每张幻灯片上都添加了一个（可选的）进度条。
+Metropolis 是一款简洁、现代的 Beamer 主题，适合所有人使用。它力求最大限度地减少干扰，并最大限度地提升内容空间；它唯一的视觉亮点是每张幻灯片上都添加了一个（可选的）进度条。  
+目前我正在使用。
 
 ### [CS50X2025](https://cs50.harvard.edu/x/2025/)
 这是CS50，哈佛大学为计算机科学和编程艺术领域的专业人士和普通学生提供的入门课程，无论他们是否有编程经验。（三分之二的CS50学生从未学习过计算机科学。）
@@ -143,11 +157,22 @@ CloudConvert 是一款在线文件转换器。我们支持几乎所有音频、�
 在本该认真工作的时刻，假装自己正忙得不可开交，或者耐心等待电脑运行！让旁人对你的“高效多任务处理能力”刮目相看。只需打开几个 genact 实例，精彩表演立刻上演。genact 提供多种“场景”，看似在进行某些激动人心或高深莫测的操作，实际上什么都没发生。  
 我只能说这个 GitHub 项目简直是天才。
 
+### [FLiNG Trainer](https://flingtrainer.com/)
+PC Game Cheats and Mods.
+
+### [GWOSC](https://gwosc.org/)
+Gravitational Wave Open Science Center 是一个由 LIGO 和 Virgo 合作组织维护的数据平台，旨在向全球科研人员和公众开放引力波探测数据。
+该中心提供经过预处理和校准的 LIGO/Virgo 数据，涵盖多个观测运行周期（O1、O2、O3 等），并配套事件目录、数据质量信息和分析工具文档，方便用户下载、分析和复现引力波事件。
+GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资源门户。
+
+
 ---
 
 ## 书籍推荐
 
-Sakurai 的 Modern Quantum Mechanics ，[这个是导读](https://zhuanlan.zhihu.com/p/620813548)。
+Sakurai 的 **Modern Quantum Mechanics** ，[这个是导读](https://zhuanlan.zhihu.com/p/620813548)。
+
+David Tong 的 **Lectures on Solid State Physics**，这是一份非常好的固体物理讲义，可以在剑桥大学的课程网站上[获取](https://www.damtp.cam.ac.uk/user/tong/solidstate.html)。
 
 ---
 
