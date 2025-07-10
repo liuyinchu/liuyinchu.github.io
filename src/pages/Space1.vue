@@ -1,90 +1,45 @@
 <script setup>
+import { ref, onMounted } from 'vue'
+// 路径已根据你的结构调整
 import Meteors from '../components/effects/Meteors.vue'
 
-const articles = [
-  {
-    id: 'naming_guide',
-    title: '命名规范建议',
-    desc: '我倡议规范命名。',
-    bg: '/bg/IMG_FireFly4.jpeg' // ✅ 可选：背景图路径
-  },
-  {
-    id: 'introduction_to_open_source_protocol',
-    title: '开源协议简介',
-    desc: '提供最基本的介绍，你可以进一步去探索它。',
-    bg: '/bg/heroine.jpg'
-  },
-  {
-    id: 'python_note_class_specific_methods',
-    title: 'Python中类的专有方法',
-    desc: '这是一篇Python学习笔记。',
-    bg: '/bg/IMG_Elysia.jpg'
-  },
-  {
-    id: 'qm_course_note',
-    title: '量子力学课程相关笔记',
-    desc: '其实主要是与作业和小测相关。',
-    bg: '/bg/outside_sky.jpg'
-  },
-  {
-    id: 'solid_physics_note2',
-    title: '固体物理学习笔记：能带论',
-    desc: '学习 David Tong 的 Solid State Physics 的 2. Band Structure 的 AI-Help 笔记。',
-    bg: '/bg/mountain.JPG'
-  },
-  {
-    id: 'solid_physics_note3',
-    title: '固体物理学习笔记：电子动力学',
-    desc: '学习 David Tong 的 Solid State Physics 的 3. Electron Dynamics in Solids 的 AI-Help 笔记。',
-    bg: '/bg/skadi.jpeg'
-  },
-  {
-    id: 'solid_physics_note4',
-    title: '固体物理学习笔记：声子',
-    desc: '学习 David Tong 的 Solid State Physics 的 4. Phonons 的 AI-Help 笔记。',
-    bg: '/bg/water_from_painting.JPG'
-  },
-  {
-    id: 'ms_gate_note',
-    title: 'Mølmer–Sørensen门理论推导笔记',
-    desc: '这是一篇关于量子物理的早期科研尝试笔记。',
-    bg: '/bg/visitor.jpeg'
-  },
-  {
-    id: 'astro_ml_guide',
-    title: '天文学中的机器学习指南',
-    desc: '这是一篇文献阅读笔记。',
-    bg: '/bg/punishing_gray_raven.jpeg'
-  },
-  {
-    id: 'signals_and_systems',
-    title: '信号与系统入门导览',
-    desc: '提供最基本的介绍，你可以进一步去探索它。',
-    bg: '/bg/spring.jpg'
-  },
-]
+const articles = ref([])
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/articles.json')
+    articles.value = await res.json()
+  } catch (error) {
+    console.error("无法加载文章列表:", error)
+  }
+})
 </script>
 
 <template>
-  <div class="relative bg-container">
-    <!-- 流星背景层 -->
+  <div class="bg-container">
     <Meteors />
-
-    <!-- 正文内容 -->
-    <main class="article-page relative z-10">
-      <h1 class="block-title">讨论</h1>
-      <p class="block-intro">一些值得记录的思考、讨论或灵感。</p>
-
+    <main class="article-page">
+      <h1 class="block-title">随记</h1>
+      <p class="block-intro">来自远方，来自黄昏和清晨，来自十二重高天的好风轻扬，飘来生命气息的吹拂，吹在我身上。</p>
+      <p class="block-intro">趁着生命气息逗留，盘桓未去，拉住我的手，快告诉我你的心声。</p>
+      <p class="block-intro">莫待无常之风，携我去飘渺远方。</p>
+      <p class="block-intro">—— 阿尔弗雷德·爱德华·豪斯迈《西罗普郡少年》</p>
       <div class="article-list">
         <RouterLink
-          v-for="(article, i) in articles"
-          :key="i"
+          v-for="article in articles"
+          :key="article.id"
           :to="`/space1/${article.id}`"
           class="article-card"
-          :style="article.bg ? { backgroundImage: `url(${article.bg})` } : {}"
         >
-          <div class="card-overlay">
+          <div class="image-container">
+            <img :src="article.image" :alt="article.title" class="article-image" />
+          </div>
+          <div class="text-container">
             <h3 class="article-title">{{ article.title }}</h3>
+            <div class="meta-info">
+              <span>{{ article.author }}</span>
+              <span>{{ article.date }}</span>
+            </div>
             <p class="article-desc">{{ article.desc }}</p>
           </div>
         </RouterLink>
@@ -99,37 +54,24 @@ const articles = [
   overflow: hidden;
   min-height: 100vh;
 }
-
-/* 保证流星在底层 */
-.bg-container > .meteor-layer,
-.bg-container > *:not(.article-page) {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-/* 正文在上层 */
 .article-page {
   position: relative;
   z-index: 10;
   padding: 3rem 1rem;
-  background-color: transparent; /* 不覆盖背景 */
+  background-color: transparent;
   text-align: center;
 }
-
 .block-title {
   font-size: 2rem;
   font-weight: bold;
   color: var(--primary-color);
   margin-bottom: 0.5rem;
 }
-
 .block-intro {
   font-size: 1.1rem;
   color: var(--text-color);
   margin-bottom: 2rem;
 }
-
 .article-list {
   display: flex;
   flex-direction: column;
@@ -137,44 +79,66 @@ const articles = [
   max-width: 880px;
   margin: 0 auto;
 }
-
-/* 卡片容器 */
 .article-card {
-  position: relative;
-  background-size: cover;
-  background-position: center;
+  display: flex;
+  height: 220px;
+  background-color: rgba(var(--ctp-mocha-base-rgb), 0.7);
+  backdrop-filter: blur(9.5px);
+  -webkit-backdrop-filter: blur(9.5px);
+  border: 1px solid var(--border-color);
   border-radius: 1.25rem;
   overflow: hidden;
   text-decoration: none;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 .article-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  border-color: var(--primary-color);
 }
-
-/* 毛玻璃遮罩层 */
-.card-overlay {
-  background-color: rgba(rgb(30, 30, 46), 0.85);
-  backdrop-filter: blur(6.5px);
-  -webkit-backdrop-filter: blur(6.5px);
+.image-container {
+  flex: 0.382;
+  height: 100%;
+}
+.article-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.article-card:hover .article-image {
+  transform: scale(1.05);
+}
+.text-container {
+  flex: 0.618;
   padding: 1.5rem 2rem;
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 1.25rem;
+  display: flex;
+  flex-direction: column;
   text-align: left;
+  color: var(--text-color);
 }
-
-/* 文章标题 */
 .article-title {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-color);
   margin-bottom: 0.5rem;
 }
-
-/* 文章描述 */
+.meta-info {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--ctp-mocha-subtext0);
+  margin-bottom: 0.75rem;
+}
 .article-desc {
   font-size: 0.95rem;
   opacity: 0.9;
+  flex-grow: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  text-overflow: ellipsis;
 }
 </style>

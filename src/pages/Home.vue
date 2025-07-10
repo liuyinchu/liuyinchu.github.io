@@ -1,7 +1,6 @@
 <script setup>
 import TypingTitle from '../components/TypingTitle.vue'
 import ContentBlock from '../components/ContentBlock.vue'
-import Footer from '../components/Footer.vue'
 import { ref, onMounted } from 'vue'
 
 const today = new Date().toLocaleDateString()
@@ -57,7 +56,7 @@ onMounted(async () => {
   <!-- 主体内容区域 -->
   <div class="main-content">
     <ContentBlock title="共享内容" backgroundImage="/bg/share.jpeg">
-      <p class="centered-text">共享的代码、资源与笔记：“谨此录之，所藏者，皆我所乐与子共也。”</p>
+      <p class="centered-text">以下是我共享的代码、收集的资源链接和整理的笔记（实验报告），希望对你有用。</p>
       <div class="button-group">
         <RouterLink to="/code" class="themed-button">代码</RouterLink>
         <RouterLink to="/resource" class="themed-button">资源链接</RouterLink>
@@ -66,15 +65,16 @@ onMounted(async () => {
       </div>
     </ContentBlock>
 
-    <ContentBlock title="开放空间" backgroundImage="/bg/open.jpeg">
-      <p class="centered-text">一个分享博文与思想碰撞的开放角落，欢迎交流：“斯为一隅之地，载吾思辨之文，纳君高论之声。”</p>
+    <ContentBlock title="开放空间" backgroundImage="/bg/skadi.jpeg">
+      <p class="centered-text">来自远方，来自黄昏和清晨，来自十二重高天的好风轻扬，飘来生命气息的吹拂，吹在我身上。</p>
       <div class="button-group">
-        <RouterLink to="/space1" class="themed-button">讨论</RouterLink>
-        <RouterLink to="/space2" class="themed-button">未开放</RouterLink>
+        <RouterLink to="/space1" class="themed-button">随记</RouterLink>
+        <RouterLink to="/space3" class="themed-button">未开放</RouterLink>
+        <RouterLink to="/space2" class="themed-button">网络邻居</RouterLink>
       </div>
     </ContentBlock>
 
-    <ContentBlock title="网络邻居" backgroundImage="/bg/neighbor.jpeg">
+    <!-- <ContentBlock title="网络邻居" backgroundImage="/bg/neighbor.jpeg">
       <p class="centered-text">
         这是我在这片数字社区里，对那些或熟悉、或素未谋面的在线“邻居”进行的观察与记录。<br />
         我悄然注视着他们，如同在一个温柔的社区里漫步。<br />
@@ -82,12 +82,12 @@ onMounted(async () => {
         “有的旋律与我悠然共鸣，有的则只是匆匆过客，留下淡淡的印记。”
       </p>
       <div class="button-group">
-        <a href="https://huanyushi.github.io" class="themed-button" target="_blank">Huanyu Shi, Theory of Everything</a>
+        <a href="https://huanyushi.github.io" class="themed-button" target="_blank">Huanyu Shi</a>
         <a href="https://www.yykspace.com" class="themed-button" target="_blank">yyk space</a>
-        <a href="https://talescuber.github.io" class="themed-button" target="_blank">TaLEsCuber，学物理太多导致的</a>
+        <a href="https://talescuber.github.io" class="themed-button" target="_blank">TaLEsCuber</a>
         <a href="http://zhiqihuang.top/" class="themed-button" target="_blank">zhiqihuang</a>
       </div>
-    </ContentBlock>
+    </ContentBlock> -->
 
     <ContentBlock title="“火萤IV型”" backgroundImage="/bg/liuyin.jpg">
       <p class="centered-text">
@@ -100,7 +100,7 @@ onMounted(async () => {
       </p>
     </ContentBlock>
 
-    <ContentBlock title="访客信息" backgroundImage="/bg/snow_mountain_starry_sky_aurora.jpeg">
+    <ContentBlock title="访客信息" backgroundImage="/bg/spring.jpg">
       <div class="centered-text">
         <p>{{ today }}
           <span v-if="visitorCountAvailable" id="busuanzi_container_site_pv">

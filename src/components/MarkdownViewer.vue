@@ -1,21 +1,19 @@
-<template>
-  <div class="markdown-body" v-html="renderedHtml"></div>
-</template>
-
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import MarkdownIt from 'markdown-it'
+import mdAnchor from 'markdown-it-anchor'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/atom-one-dark.css'
 
 const props = defineProps({
-  src: {
-    type: String,
-    required: true
-  }
+  src: { type: String, required: true }
 })
 
+// 定义要发送的事件
+const emit = defineEmits(['tocGenerated', 'markdownLoaded'])
+
 const renderedHtml = ref('')
+const markdownBodyRef = ref(null)
 
 // 提取公式并替换成 @@FORMULA_n@@ 占位符
 function extractFormulas(text) {
@@ -38,11 +36,8 @@ function loadMathJax(callback) {
     callback && callback()
     return
   }
-
   window.MathJax = {
-    loader: {
-      load: ['[tex]/ams', '[tex]/autoload', '[tex]/physics', 'ui/lazy']
-    },
+    loader: { load: ['[tex]/ams', '[tex]/autoload', '[tex]/physics', 'ui/lazy'] },
     tex: {
       inlineMath: [['$', '$'], ['\\(', '\\)']],
       displayMath: [['$$', '$$'], ['\\[', '\\]']],
@@ -57,7 +52,6 @@ function loadMathJax(callback) {
       }
     }
   }
-
   const script = document.createElement('script')
   script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js'
   script.async = true
@@ -68,10 +62,11 @@ onMounted(async () => {
   const res = await fetch(props.src)
   const rawText = await res.text()
 
-  // 提取公式
+  // 发送原文事件，用于计算阅读时间
+  emit('markdownLoaded', rawText)
+
   const { replaced, formulas } = extractFormulas(rawText)
 
-  // 渲染 Markdown
   const md = new MarkdownIt({
     html: true,
     linkify: true,
@@ -86,18 +81,45 @@ onMounted(async () => {
     }
   })
 
-  const htmlWithPlaceholders = md.render(replaced)
+  // 使用 markdown-it-anchor 插件
+  md.use(mdAnchor, {
+    level: [1, 2, 3],
+    permalink: mdAnchor.permalink.ariaHidden({
+      placement: 'before',
+      symbol: '#',
+      class: 'header-anchor'
+    })
+  })
 
-  // 恢复公式
+  const htmlWithPlaceholders = md.render(replaced)
   const finalHtml = restoreFormulas(htmlWithPlaceholders, formulas)
   renderedHtml.value = finalHtml
 
-  // 最后渲染公式
   loadMathJax(() => {
     MathJax.typesetPromise()
   })
+
+  // 生成并发送 TOC 数据
+  await nextTick()
+  const tocItems = []
+  const container = markdownBodyRef.value
+  if (container) {
+    const headings = container.querySelectorAll('h1[id], h2[id], h3[id]')
+    headings.forEach(h => {
+      tocItems.push({
+        level: parseInt(h.tagName.substring(1), 10),
+        text: h.innerText.replace(/^#\s*/, '').trim(),
+        id: h.id
+      })
+    })
+  }
+  emit('tocGenerated', tocItems)
 })
 </script>
+
+<template>
+  <div ref="markdownBodyRef" class="markdown-body" v-html="renderedHtml"></div>
+</template>
 
 <style scoped>
 .markdown-body {
