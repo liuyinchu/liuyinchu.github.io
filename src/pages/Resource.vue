@@ -36,6 +36,9 @@ Nature Physics 杂志的综述文章合集，适合查找高质量的前沿文�
 
 ## Python 库、包
 
+### [UV](https://docs.astral.sh/uv/)
+cargo-like 的现代 Python 包管理。一个用 Rust 编写的极快的 Python 包和项目管理器。
+
 ### [Ruptures](https://centre-borelli.github.io/ruptures-docs/)
 ruptures 是一个专注于时间序列变点检测（change point detection）的 Python 库。它支持多种统计模型和检测算法，适用于信号处理、金融、异常检测等领域。
 
@@ -72,6 +75,14 @@ GWpy 是一个专为引力波数据分析设计的 Python 科学计算库，广�
 它提供高层接口用于获取、处理和可视化引力波数据，支持时域分析、频谱计算、数据质量标记与筛选等功能，兼容主流科学库如 NumPy 与 Matplotlib，适合科研与教学场景。
 GWpy 还能直接连接 Gravitational Wave Open Science Center（GWOSC）下载公开数据，是引力波天文学研究的重要工具之一。
 
+### [Dash](https://dash.plotly.com/)
+Dash 是最早且最值得信赖的低代码 Python 框架，可用于快速构建交互式数据应用程序。
+凭借广泛的用户社区和数以百万计的下载量，Dash 已成为数据科学家和机器学习工程师首选的开发工具，能够无需编写 JavaScript 代码，轻松将模型与数据洞见转化为可交付的 Web 应用。
+
+对我来说，我用它开发了我们的实验系统数字控制面板，很美观。
+
+此外，由社区维护的框架 [dash-bootstrap](https://www.dash-bootstrap-components.com/) 十分的好上手且好用，而且它内置了许多美观的[主题](https://www.dash-bootstrap-components.com/docs/themes/explorer/)。
+
 
 ---
 
@@ -79,6 +90,9 @@ GWpy 还能直接连接 Gravitational Wave Open Science Center（GWOSC）下载�
 
 ### [macOS配置指南](https://sourabhbajaj.com/mac-setup/)
 面向开发者的 macOS 系统配置指南，涵盖开发环境与效率工具。
+
+### [kitty](https://sw.kovidgoyal.net/kitty/)
+这个快速、功能丰富、基于 GPU 的终端模拟器是我目前正在使用的，美观而且好用，我的随记里有一份它的配置笔记。
 
 ---
 
@@ -173,6 +187,8 @@ GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资�
 Sakurai 的 **Modern Quantum Mechanics** ，[这个是导读](https://zhuanlan.zhihu.com/p/620813548)。
 
 David Tong 的 **Lectures on Solid State Physics**，这是一份非常好的固体物理讲义，可以在剑桥大学的课程网站上[获取](https://www.damtp.cam.ac.uk/user/tong/solidstate.html)。
+
+数学物理方法强烈推荐给我们上课的黄志琦老师写的[讲义](http://zhiqihuang.top/mmp/lectures/mmpbook_v3.6.pdf)，他的这个[萌新高数入门](http://zhiqihuang.top/personal/calculus_v1.1.pdf)也很不错。
 
 ---
 

@@ -71,7 +71,7 @@ const code4 = `
     
     <BlockMarkdown :content="code1" />
     <ImageBlock
-      src="/bg/acadmic_example.png"
+      src="/fig/acadmic_example.png"
       alt="v1.4 版本后推荐绘图方式与效果"
       width="60%"
     />
@@ -83,7 +83,7 @@ const code4 = `
     
     <BlockMarkdown :content="code_gw" />
     <ImageBlock
-      src="/bg/GW150914_H1_MF.png"
+      src="/fig/GW150914_H1_MF.png"
       alt="GW150914-H1 事件发生时刻附近的应变数据与匹配滤波（30～350Hz）"
       width="60%"
     />
@@ -91,7 +91,7 @@ const code4 = `
     
     <BlockMarkdown :content="code3" />
     <ImageBlock
-      src="/bg/welcome_example.png"
+      src="/fig/welcome_example.png"
       alt="效果展示"
       width="80%"
     />
@@ -99,7 +99,7 @@ const code4 = `
     
     <BlockMarkdown :content="code4" />
     <ImageBlock
-      src="/bg/cgc_example.png"
+      src="/fig/cgc_example.png"
       alt="绘制的 CG 系数表示例"
       width="50%"
     />

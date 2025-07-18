@@ -56,17 +56,15 @@ onMounted(async () => {
   <!-- 主体内容区域 -->
   <div class="main-content">
     <ContentBlock title="共享内容" backgroundImage="/bg/share.jpeg">
-      <p class="centered-text">以下是我共享的代码、收集的资源链接和整理的笔记（实验报告），希望对你有用。</p>
       <div class="button-group">
         <RouterLink to="/code" class="themed-button">代码</RouterLink>
         <RouterLink to="/resource" class="themed-button">资源链接</RouterLink>
         <RouterLink to="/notes" class="themed-button">笔记</RouterLink>
-        <a href="https://github.com/TaLEsCuber/CoLabR" class="themed-button" target="_blank">实验报告</a>
+        <RouterLink to="/labreport" class="themed-button">实验报告</RouterLink>
       </div>
     </ContentBlock>
 
     <ContentBlock title="开放空间" backgroundImage="/bg/skadi.jpeg">
-      <p class="centered-text">来自远方，来自黄昏和清晨，来自十二重高天的好风轻扬，飘来生命气息的吹拂，吹在我身上。</p>
       <div class="button-group">
         <RouterLink to="/space1" class="themed-button">随记</RouterLink>
         <RouterLink to="/space3" class="themed-button">未开放</RouterLink>
