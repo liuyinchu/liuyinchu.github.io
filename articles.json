@@ -78,5 +78,13 @@
     "date": "2025-07-01",
     "desc": "学习 David Tong 的 Solid State Physics 的 4. Phonons 的 AI-Help 笔记。",
     "image": "/bg/open.jpeg"
+  },
+  {
+    "id": "kitty_config_log",
+    "title": "终端模拟器 kitty 个人配置笔记",
+    "author": "pifuyuini",
+    "date": "2025-07-19",
+    "desc": "用于快速配置 macOS上的 kitty 。",
+    "image": "/bg/sakura_valley.png"
   }
 ]
