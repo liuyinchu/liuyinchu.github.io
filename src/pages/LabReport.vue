@@ -65,7 +65,7 @@ const introText = `
 
 ### 六、版权声明
 
-1.  **报告与代码**：本仓库中所有原创的实验报告及代码，其版权归原作者所有。其中的代码部分，您可自由使用。但**严禁抄袭、挪用实验报告中的任何实质性内容**。若因此产生任何学术诚信问题（比如被老师发现），后果由当事人自负，本分享项目概不负责（很重要，请注意）。
+1.  **报告与代码**：本项目中所有原创的实验报告及代码，其版权归原作者所有。其中的代码部分，您可自由使用。但**严禁抄袭、挪用实验报告中的任何实质性内容**。若因此产生任何学术诚信问题（比如被老师发现），后果由当事人自负，本分享项目概不负责（很重要，请注意）。
 2.  **引用资料**：项目中引用的部分参考资料，其版权归原始创作者所有。我们分享的初衷仅为学习交流。若您认为任何内容侵犯了您的合法权益，请立即与我们联系，我们将第一时间进行处理。
 
 ---
@@ -133,6 +133,31 @@ const APL2 = `
 - APL2-**3** [光泵磁共振实验](https://github.com/pifuyuini/LabR/tree/main/APL2/apl2-3)
 - APL2-**5** [双光子纠缠源研究和量子非局域性验证](https://github.com/pifuyuini/LabR/tree/main/APL2/apl2-5)
 - APL2-**6** [散射光成像实验](https://github.com/pifuyuini/LabR/tree/main/APL2/apl2-6)
+
+---
+
+`
+
+const colab = `
+## CoLabR —— **Co**llaborate to write a **Lab** **R**eport.
+
+*物理实验合作库（~~然而与 Google 的 colab 重名了~~），“R” 代表 “Report” ，即这个库主要用于存放与实验报告相关的内容（完整报告、数据和代码）。*
+
+本仓库收录了我们在本科阶段所**合作**完成的四门物理实验课程的实验报告与相关资料。
+
+- [设计性实验 S.A.M.](https://github.com/TaLEsCuber/CoLabR/tree/main/GPL/proj-sam)
+- ETL1-2 [基本电路元件伏安特性的测量](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL1-2)
+- ETL1-5 [一阶电路暂态过程的研究](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL1-5)
+- ETL1-6 [R、L、C元件阻抗特性研究](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL1-6)
+- ETL2-1 [蓝牙音箱的焊接和调试](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL2-1)
+- ETL2-2 [测量放大器设计与实验](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL2-2)
+- APL1-4 [电子自旋共振实验](https://github.com/TaLEsCuber/CoLabR/tree/main/APL/APL1-4)
+- APL1-8 [氦氖激光综合实验](https://github.com/TaLEsCuber/CoLabR/tree/main/APL/APL1-8)
+- APL2-1 [低温技术平台与高温超导研究](https://github.com/TaLEsCuber/CoLabR/tree/main/APL/APL2-1)
+- APL2-3 [光泵磁共振实验](https://github.com/TaLEsCuber/CoLabR/tree/main/APL/APL2-3)
+- APL2-6 [散射光成像实验](https://github.com/TaLEsCuber/CoLabR/tree/main/APL/APL2-6)
+
+
 
 ---
 
