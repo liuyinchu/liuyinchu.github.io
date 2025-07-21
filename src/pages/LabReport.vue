@@ -5,6 +5,7 @@
       <BlockMarkdown :content="GPL2" />
       <BlockMarkdown :content="APL1" />
       <BlockMarkdown :content="APL2" />
+      <BlockMarkdown :content="colab" />
   </PageWrapper>
 </template>
 
