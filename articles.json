@@ -86,5 +86,13 @@
     "date": "2025-07-19",
     "desc": "用于快速配置 macOS上的 kitty 。",
     "image": "/bg/sakura_valley.png"
+  },
+  {
+    "id": "notes_classical_mechanics",
+    "title": "经典力学笔记",
+    "author": "pifuyuini",
+    "date": "2025-07-29",
+    "desc": "经典力学·复习用·个人简明总结。",
+    "image": "/bg/cm_cover.png"
   }
 ]
