@@ -185,7 +185,8 @@ onMounted(async () => {
 
 :deep(pre) {
   position: relative; 
-  background-color: var(--surface-color);
+  /* background-color: var(--surface-color); */
+  background-color: rgb(24, 24, 37);
   padding: 1.25rem 1.5rem;
   border-radius: 0.75rem;
   overflow-x: auto;

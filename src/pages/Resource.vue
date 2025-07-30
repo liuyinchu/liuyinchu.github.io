@@ -94,6 +94,16 @@ Dash 是最早且最值得信赖的低代码 Python 框架，可用于快速构�
 ### [kitty](https://sw.kovidgoyal.net/kitty/)
 这个快速、功能丰富、基于 GPU 的终端模拟器是我目前正在使用的，美观而且好用，我的随记里有一份它的配置笔记。
 
+### [FreeMove](https://github.com/imDema/FreeMove)
+**FreeMove 是一款 Windows 工具，帮助你在不破坏程序运行或快捷方式的前提下，将默认安装在 C 盘的程序自由移动到其他磁盘，释放宝贵的系统空间。**
+它的原理是：先将程序文件移动到新位置，再在原位置创建符号链接，确保系统和程序依旧能够正常访问。
+
+使用非常简单：只需运行可执行文件并通过图形界面操作（需管理员权限）。
+**注意事项**：不要移动系统关键目录，否则可能导致系统故障。但移动这些目录下的**具体程序文件夹**是安全的，具体使用方法请看项目所在仓库中的说明文件。
+
+强烈推荐给想要减轻 C 盘负担、腾出空间的用户！轻量、无广告、免费开源，日常使用安全高效。
+
+
 ---
 
 ## 一些文章、笔记和资料
@@ -184,11 +194,24 @@ GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资�
 
 ## 书籍推荐
 
-Sakurai 的 **Modern Quantum Mechanics** ，[这个是导读](https://zhuanlan.zhihu.com/p/620813548)。
+### 教材清单
 
-David Tong 的 **Lectures on Solid State Physics**，这是一份非常好的固体物理讲义，可以在剑桥大学的课程网站上[获取](https://www.damtp.cam.ac.uk/user/tong/solidstate.html)。
+这一小节以学院本科课程安排的时间顺序给出我在学习过程中使用过的一些**个人**感觉比较好的书籍的推荐。
 
-数学物理方法强烈推荐给我们上课的黄志琦老师写的[讲义](http://zhiqihuang.top/mmp/lectures/mmpbook_v3.6.pdf)，他的这个[萌新高数入门](http://zhiqihuang.top/personal/calculus_v1.1.pdf)也很不错。
+- 线性代数：《线性代数及其应用》（初学）和《线性代数应该这样学》（进阶）。
+- 力学：周衍柏《理论力学》。
+- 电磁学：Griffith 《电动力学导论》和梁灿彬《电磁学拓展篇》。
+- 理论力学：高显《经典力学》（作者是给我们上课的老师，教材也是他写的上课会用的教材；建议配套读一些相关的微分几何的内容加强自己的数学基础）。
+- 数学物理方法：强烈推荐给我们上课的黄志琦老师写的[讲义](http://zhiqihuang.top/mmp/lectures/mmpbook_v3.6.pdf)（此外，他的这个[萌新高数入门](http://zhiqihuang.top/personal/calculus_v1.1.pdf)也很不错）。
+- 原子物理：Griffith 《量子力学导论》。
+- 热力学与统计物理：目前暂时只推荐我前面提到的笔记。
+- 量子力学：初学推荐 Cohen 的《量子力学》 两卷，我是几乎完整（包括绝大部分附录，内容都十分优质）地全部啃下来的，很有收获（此外，特别推荐提前通过第二章加强自己的线代基础）。进阶学习推荐 Sakurai 的 **Modern Quantum Mechanics** ，[这个是导读](https://zhuanlan.zhihu.com/p/620813548)，可以参考。
+- 广义相对论：梁灿彬《微分几何入门与广义相对论》和黄志琦的课件（可以在他的网站中找到，这里就不给链接了）。
+- 固体物理：David Tong 的 **Lectures on Solid State Physics**，这是一份非常好的固体物理讲义，可以在剑桥大学的课程网站上[获取](https://www.damtp.cam.ac.uk/user/tong/solidstate.html)。
+- 引力波物理：推荐给我们上课的胡一鸣老师写的[讲义](https://github.com/yiminghu-SYSU/GW_DA_notes)。
+
+暂时先列出这些。
+
 
 ---
 
