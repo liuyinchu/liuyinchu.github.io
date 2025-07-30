@@ -89,11 +89,12 @@ import { RouterLink } from 'vue-router'
     </button>
 
     <nav class="nav-menu" :class="{ 'is-active': isMenuOpen }">
-      <RouterLink to="/code" @click="closeMenu">代码</RouterLink>
-      <RouterLink to="/resource" @click="closeMenu">资源链接</RouterLink>
-      <RouterLink to="/notes" @click="closeMenu">笔记</RouterLink>
-      <RouterLink to="/space2" @click="closeMenu">网络邻居</RouterLink>
+      <RouterLink to="/postit" @click="closeMenu">日志</RouterLink>
       <RouterLink to="/space1" @click="closeMenu">随记</RouterLink>
+      <RouterLink to="/space2" @click="closeMenu">网络邻居</RouterLink>
+      <RouterLink to="/resource" @click="closeMenu">资源链接</RouterLink>
+      <RouterLink to="/code" @click="closeMenu">代码</RouterLink>
+      <RouterLink to="/notes" @click="closeMenu">笔记</RouterLink>
     </nav>
   </header>
 </template>
@@ -212,7 +213,9 @@ function closeMenu() {
 }
 
 
-/* ===== [新增] 移动端响应式样式 ===== */
+/* ===== [修正与改进] 移动端响应式样式 ===== */
+
+/* 汉堡按钮容器 */
 .mobile-nav-toggle {
   display: none; /* 桌面端默认隐藏 */
   position: relative;
@@ -221,94 +224,108 @@ function closeMenu() {
   background: transparent;
   border: none;
   cursor: pointer;
-  z-index: 1001;
+  z-index: 1001; /* 确保在最上层 */
+  padding: 0; /* 移除默认内边距 */
 }
 
+/* 汉堡按钮的“三条线”的定位和基础样式 */
 .hamburger-box {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   width: 24px;
   height: 24px;
+  margin: 8px; /* 将定位从 absolute 改为 margin，更稳定 */
 }
 
-.hamburger-inner,
-.hamburger-inner::before,
-.hamburger-inner::after {
+/* 这是中间那条线，也是上下两条线的定位基准 */
+.hamburger-inner {
   position: absolute;
+  top: 50%;
   width: 24px;
   height: 2px;
   background-color: var(--text-color);
   border-radius: 2px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.hamburger-inner {
-  top: 50%;
   transform: translateY(-50%);
+  /* [改进] 为自身也添加过渡效果 */
+  transition: background-color 0.1s 0.2s ease-in-out; 
 }
 
+/* 这是上面和下面两条线 */
 .hamburger-inner::before,
 .hamburger-inner::after {
   content: '';
+  position: absolute;
+  left: 0; /* <<< 新增这一行以修复错位问题 */
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-color);
+  border-radius: 2px;
+  /* [改进] 将过渡效果放在这里，更平滑 */
+  transition: transform 0.3s 0.1s ease-in-out;
 }
 
 .hamburger-inner::before {
-  top: -8px;
+  top: -8px; /* 从中心点向上偏移8px */
 }
 
 .hamburger-inner::after {
-  bottom: -8px;
+  top: 8px;  /* [修正] 改为top，方便计算。从中心点向下偏移8px */
 }
 
-/* 汉堡按钮激活时的动画 -> X */
+
+/* --- 核心修正：汉堡按钮激活时的动画 -> X --- */
+
+/* 当按钮激活时，中间的线“消失” */
 .mobile-nav-toggle.is-active .hamburger-inner {
-  transform: rotate(45deg);
-}
-.mobile-nav-toggle.is-active .hamburger-inner::before {
-  top: 0;
-  transform: rotate(-90deg);
-  opacity: 1;
-}
-.mobile-nav-toggle.is-active .hamburger-inner::after {
-  bottom: 0;
-  transform: rotate(0deg); /* 视觉上与主线条合并 */
-  opacity: 0;
+  background-color: transparent; /* 背景变透明，视觉上消失 */
+  transition: background-color 0.1s ease-in-out;
 }
 
+/* 上面的线：向下移动8px到中心，然后旋转45度 */
+.mobile-nav-toggle.is-active .hamburger-inner::before {
+  transform: translateY(8px) rotate(45deg);
+}
+
+/* 下面的线：向上移动8px到中心，然后旋转-45度 */
+.mobile-nav-toggle.is-active .hamburger-inner::after {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+
+/* ===== 移动端导航菜单样式 (媒体查询) ===== */
 
 /* 当屏幕宽度小于 768px 时 */
 @media (max-width: 768px) {
+  /* 导航菜单的样式 (这部分您的代码是正确的，予以保留和微调) */
   .nav-menu {
     position: absolute;
-    top: 100%;
+    top: 100%; /* 定位在导航栏正下方 */
     left: 0;
     width: 100%;
-    background-color: rgba(var(--ctp-mocha-base-rgb), 0.95);
+    background-color: rgba(var(--ctp-mocha-base-rgb), 0.9); /* 轻微调高透明度 */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 
-    /* 布局变为垂直 */
     flex-direction: column;
     align-items: center;
     gap: 0;
     padding: 1rem 0;
 
     /* 默认隐藏，带动画效果 */
-    transform: translateY(-100%);
+    transform: translateY(-10px); /* [改进] 从轻微向上偏移的位置开始 */
     opacity: 0;
     pointer-events: none;
     transition: transform 0.3s ease, opacity 0.3s ease;
     border-bottom: 1px solid var(--border-color);
   }
 
+  /* 导航菜单激活时的样式 */
   .nav-menu.is-active {
     transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
   }
 
+  /* 菜单项样式 */
   .nav-menu a {
     width: 100%;
     text-align: center;
@@ -316,12 +333,14 @@ function closeMenu() {
     font-size: 1.2rem;
   }
   
+  /* 菜单项下划线位置调整 */
   .nav-menu a::after {
-      bottom: 8px; /* 调整下划线位置 */
+      bottom: 8px; 
   }
 
+  /* 在移动端显示汉堡按钮 */
   .mobile-nav-toggle {
-    display: block; /* 在移动端显示汉堡按钮 */
+    display: block; 
   }
 }
 </style>

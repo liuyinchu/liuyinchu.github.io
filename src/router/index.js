@@ -12,6 +12,7 @@ import About from '../pages/About.vue'
 import Credit from '../pages/Credit.vue'
 import Portal from '../pages/Portal.vue'
 import LabReport from '../pages/LabReport.vue'
+import PostIt from '../pages/PostIt.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -26,6 +27,7 @@ const routes = [
   { path: '/credit', component: Credit },
   { path: '/portal', component: Portal },
   { path: '/labreport', component: LabReport },
+  { path: '/postit', component: PostIt },
 ]
 
 const router = createRouter({

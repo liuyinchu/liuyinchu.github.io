@@ -66,9 +66,10 @@ onMounted(async () => {
 
     <ContentBlock title="开放空间" backgroundImage="/bg/skadi.jpeg">
       <div class="button-group">
+        <RouterLink to="/postit" class="themed-button">日志</RouterLink>
         <RouterLink to="/space1" class="themed-button">随记</RouterLink>
-        <RouterLink to="/space3" class="themed-button">未开放</RouterLink>
         <RouterLink to="/space2" class="themed-button">网络邻居</RouterLink>
+        <RouterLink to="/space3" class="themed-button">未开放</RouterLink>
       </div>
     </ContentBlock>
 

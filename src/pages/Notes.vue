@@ -17,7 +17,7 @@ const notes = [
   },
   {
     name: 'Optics Assignment',
-    desc: '2022级光学课作业个人习题解答（英文版）',
+    desc: '2022级光学课作业个人习题解答（英文版）。',
     url: '/files/notes/ysy_optics.pdf'
   },
   {
@@ -32,7 +32,7 @@ const notes = [
   },
   {
     name: '量子力学梳理笔记 I',
-    desc: '个人笔记，参考知乎的文章，梳理了含时微扰、绝热近似和相对论量子力学的内容',
+    desc: '个人笔记，参考知乎的文章，梳理了含时微扰、绝热近似和相对论量子力学的内容。',
     url: '/files/notes/qm_ppt_note.pdf'
   },
 ]

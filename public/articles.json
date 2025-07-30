@@ -1,59 +1,19 @@
 [
   {
-    "id": "naming_guide",
-    "title": "命名规范建议",
+    "id": "notes_classical_mechanics",
+    "title": "经典力学笔记",
     "author": "pifuyuini",
-    "date": "2025-03-01",
-    "desc": "我倡议规范命名，这对于代码的可读性和长期维护至关重要。本文将探讨一些常见的命名场景并给出建议。",
-    "image": "/bg/IMG_FireFly4.jpeg"
+    "date": "2025-07-29",
+    "desc": "经典力学·复习用·个人简明总结。",
+    "image": "/bg/cm_cover.png"
   },
   {
-    "id": "qm_course_note",
-    "title": "量子力学课程相关笔记",
+    "id": "kitty_config_log",
+    "title": "终端模拟器 kitty 个人配置笔记",
     "author": "pifuyuini",
-    "date": "2025-01-01",
-    "desc": "这份笔记主要整理了量子力学课程中的作业难点、小测验的解题思路以及一些关键概念的推导过程。",
-    "image": "/bg/outside_sky.jpg"
-  },
-  {
-    "id": "python_note_class_specific_methods",
-    "title": "Python中类的专有方法",
-    "author": "pifuyuini",
-    "date": "2025-01-01",
-    "desc": "这是一篇Python学习笔记，详细记录了Python类中那些以双下划线开头和结尾的“魔术方法”的用途和示例。",
-    "image": "/bg/IMG_Elysia.jpg"
-  },
-  {
-    "id": "astro_ml_guide",
-    "title": "天文学中的机器学习指南",
-    "author": "pifuyuini",
-    "date": "2025-03-01",
-    "desc": "这是一篇文献阅读笔记。",
-    "image": "/bg/punishing_gray_raven.jpeg"
-  },
-  {
-    "id": "introduction_to_open_source_protocol",
-    "title": "开源协议简介",
-    "author": "pifuyuini",
-    "date": "2025-05-01",
-    "desc": "如果你想参与或发起一个开源项目，了解常见的开源协议是第一步。本文为你提供最基本的介绍。",
-    "image": "/bg/heroine.jpg"
-  },
-  {
-    "id": "ms_gate_note",
-    "title": "Mølmer–Sørensen门理论推导笔记",
-    "author": "pifuyuini",
-    "date": "2025-01-01",
-    "desc": "这是一篇关于离子阱量子计算中核心逻辑门——M-S门的早期科研尝试笔记，包含详细的理论推导。",
-    "image": "/bg/visitor.jpeg"
-  },
-  {
-    "id": "signals_and_systems",
-    "title": "信号与系统入门导览",
-    "author": "pifuyuini",
-    "date": "2025-06-01",
-    "desc": "提供最基本的介绍。",
-    "image": "/bg/mountain.JPG"
+    "date": "2025-07-19",
+    "desc": "用于快速配置 macOS上的 kitty 。",
+    "image": "/bg/sakura_valley.png"
   },
   {
     "id": "solid_physics_note2",
@@ -80,19 +40,59 @@
     "image": "/bg/open.jpeg"
   },
   {
-    "id": "kitty_config_log",
-    "title": "终端模拟器 kitty 个人配置笔记",
+    "id": "signals_and_systems",
+    "title": "信号与系统入门导览",
     "author": "pifuyuini",
-    "date": "2025-07-19",
-    "desc": "用于快速配置 macOS上的 kitty 。",
-    "image": "/bg/sakura_valley.png"
+    "date": "2025-06-01",
+    "desc": "提供最基本的介绍。",
+    "image": "/bg/mountain.JPG"
   },
   {
-    "id": "notes_classical_mechanics",
-    "title": "经典力学笔记",
+    "id": "introduction_to_open_source_protocol",
+    "title": "开源协议简介",
     "author": "pifuyuini",
-    "date": "2025-07-29",
-    "desc": "经典力学·复习用·个人简明总结。",
-    "image": "/bg/cm_cover.png"
+    "date": "2025-05-01",
+    "desc": "如果你想参与或发起一个开源项目，了解常见的开源协议是第一步。本文为你提供最基本的介绍。",
+    "image": "/bg/heroine.jpg"
+  },
+  {
+    "id": "naming_guide",
+    "title": "命名规范建议",
+    "author": "pifuyuini",
+    "date": "2025-03-01",
+    "desc": "我倡议规范命名，这对于代码的可读性和长期维护至关重要。本文将探讨一些常见的命名场景并给出建议。",
+    "image": "/bg/IMG_FireFly4.jpeg"
+  },
+  {
+    "id": "astro_ml_guide",
+    "title": "天文学中的机器学习指南",
+    "author": "pifuyuini",
+    "date": "2025-03-01",
+    "desc": "这是一篇文献阅读笔记。",
+    "image": "/bg/punishing_gray_raven.jpeg"
+  },
+  {
+    "id": "python_note_class_specific_methods",
+    "title": "Python中类的专有方法",
+    "author": "pifuyuini",
+    "date": "2025-01-01",
+    "desc": "这是一篇Python学习笔记，详细记录了Python类中那些以双下划线开头和结尾的“魔术方法”的用途和示例。",
+    "image": "/bg/IMG_Elysia.jpg"
+  },
+  {
+    "id": "qm_course_note",
+    "title": "量子力学课程相关笔记",
+    "author": "pifuyuini",
+    "date": "2025-01-01",
+    "desc": "这份笔记主要整理了量子力学课程中的作业难点、小测验的解题思路以及一些关键概念的推导过程。",
+    "image": "/bg/outside_sky.jpg"
+  },
+  {
+    "id": "ms_gate_note",
+    "title": "Mølmer–Sørensen门理论推导笔记",
+    "author": "pifuyuini",
+    "date": "2025-01-01",
+    "desc": "这是一篇关于离子阱量子计算中核心逻辑门——M-S门的早期科研尝试笔记，包含详细的理论推导。",
+    "image": "/bg/visitor.jpeg"
   }
 ]

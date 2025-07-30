@@ -160,3 +160,39 @@ a:hover {
 .aplayer-volume-bar .aplayer-volume {
   background-color: var(--primary-color) !important;
 }
+
+/* 这里是所有 Markdown 渲染内容的统一样式中心。
+  通过 .markdown-body 类来应用。
+
+/* --- 表格样式 --- */
+.markdown-body table {
+  width: 100%;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  color: var(--text-color);
+}
+.markdown-body th, .markdown-body td {
+  border: 1px solid var(--border-color);
+  padding: 0.6em 0.8em;
+  text-align: left;
+  vertical-align: middle;
+}
+.markdown-body th {
+  font-weight: bold;
+  background-color: var(--surface-color);
+  color: var(--primary-color);
+}
+.markdown-body tbody tr {
+  transition: background-color 0.2s ease;
+  background-color: transparent;
+}
+.markdown-body tbody tr:nth-child(even) {
+  background-color: var(--surface-color-hover);
+}
+.markdown-body tbody tr:hover {
+  /* background-color: var(--accent-color); */
+  background-color: rgb(147, 153, 178);
+  color: var(--ctp-mocha-base);
+}

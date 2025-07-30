@@ -236,8 +236,8 @@ onUpdated(addCopyButtons)
   text-align: center; /* 使中间的符号居中 */
 }
 
-/* [新增] 表格样式 */
-:deep(table) {
+/* [新增] 表格样式（写在全局里了，所以注释掉） */
+/* :deep(table) {
   width: 100%;
   border-collapse: collapse;
   margin: 2rem 0;
@@ -257,7 +257,7 @@ onUpdated(addCopyButtons)
 }
 :deep(tbody tr:nth-child(even)) {
   background-color: var(--surface-color);
-}
+} */
 
 
 /* --- 代码块样式优化 --- */

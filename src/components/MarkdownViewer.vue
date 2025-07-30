@@ -151,8 +151,8 @@ onMounted(async () => {
   color: var(--accent-color);
 }
 
-/* 行内代码与块代码略 */
-.markdown-body code {
+/* 行内代码与块代码 */
+/* .markdown-body code {
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
   font-size: 0.95rem;
   background-color: var(--surface-color-hover);
@@ -173,6 +173,32 @@ onMounted(async () => {
   background: none;
   padding: 0;
   font-size: 0.95rem;
+} */
+:deep(code) {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background-color: var(--surface-color-hover);
+  color: var(--ctp-mocha-subtext1);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+:deep(pre) {
+  position: relative; 
+  background-color: var(--surface-color);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  margin: 1.5rem 0;
+  border: 1px solid var(--border-color);
+}
+
+:deep(pre code) {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
 }
 
 /* 其余图片、表格、引用块样式略 */
