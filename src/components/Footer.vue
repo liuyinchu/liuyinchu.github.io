@@ -73,7 +73,7 @@ import { RouterLink } from 'vue-router'
   padding: 2.5rem 1.5rem; /* [优化] 增加垂直内边距 */
   font-size: 0.9rem;
   border-top: 1px solid var(--border-color);
-  margin-top: 4rem; /* [优化] 与主内容区拉开距离 */
+  margin-top: 0.1rem; /* [优化] 与主内容区拉开距离 -- 这是个错误的优化！*/
 }
 
 .footer-content {

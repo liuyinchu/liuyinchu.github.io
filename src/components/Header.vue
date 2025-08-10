@@ -91,10 +91,11 @@ import { RouterLink } from 'vue-router'
     <nav class="nav-menu" :class="{ 'is-active': isMenuOpen }">
       <RouterLink to="/postit" @click="closeMenu">日志</RouterLink>
       <RouterLink to="/space1" @click="closeMenu">随记</RouterLink>
-      <RouterLink to="/space2" @click="closeMenu">网络邻居</RouterLink>
+      <!-- <RouterLink to="/space2" @click="closeMenu">网络邻居</RouterLink> -->
       <RouterLink to="/resource" @click="closeMenu">资源链接</RouterLink>
       <RouterLink to="/code" @click="closeMenu">代码</RouterLink>
-      <RouterLink to="/notes" @click="closeMenu">笔记</RouterLink>
+      <RouterLink to="/academic" @click="closeMenu">个人学术</RouterLink>
+      <!-- <RouterLink to="/notes" @click="closeMenu">笔记</RouterLink> -->
     </nav>
   </header>
 </template>

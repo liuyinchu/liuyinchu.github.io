@@ -4,9 +4,9 @@
     <div v-else-if="error" class="error-state">{{ error }}</div>
     <div v-else-if="weatherInfo" class="weather-content">
       <p class="summary-text">
-        Today in <span class="highlight-city">{{ locationName }}</span>,
-        it will be <span class="highlight-desc">{{ weatherInfo.text }}</span>,
-        with <span class="highlight-temp">{{ weatherInfo.temp }}°C</span>
+        Today in <span class="highlight-city">{{ locationName }}</span> ,
+        it will be <span class="highlight-desc">{{ weatherInfo.text }}</span> ,
+        with <span class="highlight-temp">{{ weatherInfo.temp }}°C</span> .
       </p>
 
       <ul class="details-list">
@@ -152,97 +152,212 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 样式部分保持不变 */
+/* ===== 容器：柔和玻璃感 + 细描边 + 内边距优化 ===== */
 .weather-container {
+  transform: scale(0.999);
+  transform-origin: top center;
+
+  --card-bg: rgba(255,255,255,0.03);
+  --card-bd: rgba(255,255,255,0.08);
+  --card-bd-strong: rgba(255,255,255,0.14);
+  --chip-bg: rgba(255,255,255,0.06);
+  --chip-bd: rgba(255,255,255,0.12);
+
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 0 1.5rem;
+  padding: 1.1rem 1.25rem; /* 收紧左右，拉大整体密度 */
   box-sizing: border-box;
   color: var(--ctp-mocha-text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   justify-content: center;
-  align-items: flex-start;
+  align-items: stretch;
+
+  background: linear-gradient(180deg, var(--card-bg), transparent 120%),
+              radial-gradient(120% 90% at 10% -10%, rgba(116,199,236,0.09), transparent 40%),
+              radial-gradient(120% 90% at 100% 0%, rgba(203,166,247,0.06), transparent 45%);
+  border: 1px solid var(--card-bd);
+  border-radius: 14px;
+  backdrop-filter: saturate(115%) blur(6px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
 }
 
+/* ===== 状态：加载/错误 ===== */
 .loading-state, .error-state {
   flex-grow: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  font-size: 1.1rem;
-  color: var(--ctp-mocha-overlay1);
   text-align: center;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed var(--card-bd);
+}
+
+/* 骨架微动效（loading） */
+.loading-state {
+  font-size: 1.05rem;
+  color: var(--ctp-mocha-overlay1);
+  position: relative;
+  overflow: hidden;
+}
+.loading-state::after{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer{
+  100% { transform: translateX(100%); }
 }
 
 .error-state {
   color: var(--ctp-mocha-red);
   white-space: pre-line;
+  border-color: color-mix(in oklab, var(--ctp-mocha-red) 35%, transparent);
+  background: color-mix(in oklab, var(--ctp-mocha-red) 8%, transparent);
 }
 
+/* ===== 内容主体 ===== */
 .weather-content {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   width: 100%;
+  background: none !important; /* 去掉深色背景 */
+  box-shadow: none !important; /* 去掉阴影 */
+  border-radius: 0 !important; /* 去掉圆角 */
+  padding: 0; /* 去掉额外间距 */
 }
 
+/* ===== 概要句：层级更清晰，数值更突出 ===== */
 .summary-text {
-  font-size: 1.5rem;
-  font-weight: 500;
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.45;
   color: var(--ctp-mocha-text);
-  line-height: 1.4;
-  margin-bottom: 1.5rem;
+  font-size: clamp(1.05rem, 0.92rem + 0.6vw, 1.6rem);
+  letter-spacing: 0.1px;
 }
 
+/* 城市名：暖色强调 */
 .highlight-city {
   color: var(--ctp-mocha-peach);
-  font-weight: 700;
+  font-weight: 800;
 }
 
+/* 天气描述：淡紫强调，首字母已在模板中处理为 capitalize */
 .highlight-desc {
   color: var(--ctp-mocha-lavender);
-  font-weight: 600;
-  text-transform: capitalize;
+  font-weight: 700;
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.5rem;
+  background: rgba(203,166,247,0.12);
+  border: 1px solid rgba(203,166,247,0.28);
 }
 
+/* 温度：大号数字 + 轻投影，视觉锚点 */
 .highlight-temp {
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: var(--ctp-mocha-sky);
   display: inline-block;
-  margin-left: 0.5rem;
+  margin-left: 0.4rem;
+  font-weight: 900;
+  font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.4rem);
+  color: var(--ctp-mocha-sky);
+  text-shadow: 0 2px 12px rgba(116,199,236,0.25);
+  transform: translateY(1px);
 }
 
+/* ===== 细节列表：对齐规整，加入分隔线与数值“胶囊” ===== */
 .details-list {
   list-style: none;
   padding: 0;
-  margin: 0;
-  font-size: 0.95rem;
+  margin: 0.25rem 0 0;
+  font-size: clamp(0.88rem, 0.84rem + 0.2vw, 1rem);
   color: var(--ctp-mocha-subtext0);
+  display: grid;
+  grid-template-columns: 1fr;   /* 你若想双列：改 repeat(2,minmax(0,1fr)) */
+  row-gap: 0.35rem;
 }
 
 .details-list li {
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 0.4rem;
+  padding: 0.4rem 0.25rem;
+  border-bottom: 1px dashed var(--card-bd);
 }
+.details-list li:last-child { border-bottom: 0; }
 
+/* 子弹点：几何圆点，不抢主色 */
 .bullet {
-  color: var(--primary-color);
-  margin-right: 0.5rem;
-  font-size: 1.2rem;
-  line-height: 1;
-  flex-shrink: 0;
+  width: 10px; height: 10px;
+  display: inline-block;
+  line-height: 10px;
+  text-indent: -9999px; /* 隐藏原字符 */
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--ctp-mocha-sky), var(--ctp-mocha-blue));
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.06);
+  margin-right: 0.25rem;
 }
 
+/* 数值胶囊：与主题协调的玻璃态 chip */
 .detail-value {
+  justify-self: end;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-bd);
   color: var(--ctp-mocha-text);
-  font-weight: 600;
-  margin-left: 0.25rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
   white-space: nowrap;
+  min-width: 4ch;
+  text-align: right;
+}
+
+/* ===== 交互微动效（整体 hover 轻微提亮） ===== */
+.weather-container:hover {
+  border-color: var(--card-bd-strong);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+}
+
+/* ===== 小屏优化：行距与字号略收紧 ===== */
+@media (max-width: 460px) {
+  .weather-container { padding: 0.9rem 1rem; }
+  .details-list { row-gap: 0.25rem; }
+  .details-list li { padding: 0.3rem 0.1rem; }
+}
+
+/* KILL the dark panel on the container itself */
+.weather-container {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border-radius: 0 !important; /* 如需保持外层卡片圆角，可删掉这行 */
+  padding: 0 0rem !important; /* 保留你原先的左右内边距 */
+}
+
+/* 保险：如果之前加过伪元素做遮罩，一并关掉 */
+.weather-container::before,
+.weather-container::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* 内容块保持透明，防止内层再加底色 */
+.weather-content {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
 }
 </style>

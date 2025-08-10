@@ -14,7 +14,7 @@ const code1 = `
 
 ## 个人绘图工具
 
-<code>ysy_plot_utils.py</code>封装了一些适用于<code>Matplotlib</code>的主题样式和快速绘图函数。
+<code>ysy_plot_utils.py</code> 封装了一些适用于 <code>Matplotlib</code> 的主题样式和快速绘图函数。
 
 虽然但是，就开发了一点点功能，如果有用的话，你可以拿去尽情使用。
 `
