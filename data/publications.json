@@ -1,0 +1,10 @@
+[
+  {
+    "title": "论文题目",
+    "authors": ["您的名字", "合作者一号", "合作者二号"],
+    "venue": "期刊",
+    "year": 2024,
+    "link": "https://arxiv.org/abs/xxxx.xxxxx",
+    "type": "journal"
+  }
+]

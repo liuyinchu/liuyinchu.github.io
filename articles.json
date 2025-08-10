@@ -1,5 +1,13 @@
 [
   {
+    "id": "when_your_card_be_wild",
+    "title": "当秘札恣行",
+    "author": "雾笺客",
+    "date": "2025-7-40",
+    "desc": "一篇个人奇幻小说创作",
+    "image": "/bg/cyber_kamisato_ayaka.png"
+  },
+  {
     "id": "notes_classical_mechanics",
     "title": "经典力学笔记",
     "author": "pifuyuini",
@@ -61,7 +69,7 @@
     "author": "pifuyuini",
     "date": "2025-03-01",
     "desc": "我倡议规范命名，这对于代码的可读性和长期维护至关重要。本文将探讨一些常见的命名场景并给出建议。",
-    "image": "/bg/IMG_FireFly4.jpeg"
+    "image": "/bg/camping.png"
   },
   {
     "id": "astro_ml_guide",
