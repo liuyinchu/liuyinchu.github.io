@@ -375,16 +375,17 @@ onMounted(() => {
 }
 
 .music-card {
-  flex: 1 1 60%;
-  max-width: 95%;
-  min-width: 300px;
-  height: 300px; /* 统一为 270px，适配日历 6 行 */
+  flex: 1;          /* 占满剩余空间 */
+  min-width: 300px; /* 给它一个最小宽度，避免太窄 */
+  height: 300px;
+  display: flex;
+  flex-direction: column;
 }
 
 .calendar-card {
-  flex: 1 1 240px;
-  max-width: 350px;
-  height: 300px; /* 与 music-card 完全一致 */
+  flex: 0 0 350px;  /* 不伸缩，固定宽度 */
+  width: 350px;
+  height: 300px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -505,17 +506,17 @@ onMounted(() => {
 }
 
 .todo-card {
-  flex: 1 1 50%;
-  min-width: 350px; /* 稍微增加最小宽度，确保内容有空间 */
-  height: 400px; /* 保持固定高度 */
+  flex: 1;
+  min-width: 300px;
+  height: 400px;
   display: flex;
   flex-direction: column;
 }
 
 .weather-card {
-  flex: 0 0 350px; /* 固定宽度增加到 350px，给文字更多空间 */
-  width: 350px; /* 明确固定宽度 */
-  height: 400px; /* 与 todo-card 相同 */
+  flex: 0 0 350px;
+  width: 350px;
+  height: 400px;
   display: flex;
   flex-direction: column;
 }
