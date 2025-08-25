@@ -383,7 +383,7 @@ onMounted(() => {
 
 .calendar-card {
   flex: 1 1 240px;
-  max-width: 300px;
+  max-width: 350px;
   height: 300px; /* 与 music-card 完全一致 */
   display: flex;
   flex-direction: column;
