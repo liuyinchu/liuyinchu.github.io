@@ -1,0 +1,284 @@
+# 配置云服务器的个人日志式笔记
+
+## 0 云服务器基本信息
+
+以下是我选用的，仅供参考：
+- 厂商：**腾讯云**学生优惠 -- 轻量应用服务器 -- 3个月50元；
+- 操作系统：Linux-Ubuntu-22.04 TLS；
+- 配置：2vCPU4Gibs + 5M + 60G；
+
+上述服务器在 2025 年 8 月过期，续费一个月要花 70 元；所以，我新换了某 G 云的，配置基本与上相同，目前是 3 个月 + 300 美元试用阶段，待后续更新。
+
+注意接下来是我自己推荐的配置步骤（特别提醒：**Windows系统我没试过，我用的本地操作系统是macOS**）。
+
+## 1 连接与登陆
+
+### `.ssh` 文件夹
+
+`.ssh` 是用户主目录下用于存放 SSH 相关配置和密钥的文件夹。常见的文件包括：
+1. `id_rsa`（私钥）
+   - 这是用户生成的一对 SSH 密钥中的**私钥**部分。
+   - 它用于认证客户端身份，与服务器上的公钥匹配以建立安全连接。
+   - **此文件必须严格保密**，一旦泄露，他人可能无需密码即可登录服务器。
+2. `id_rsa.pub`（公钥）
+   - 是与 `id_rsa` 配对的**公钥**。
+   - 此文件可以安全地分发和上传到服务器，通常被加入到服务器端的 `~/.ssh/authorized_keys` 文件中，用于实现基于密钥的免密码登录。
+3. `known_hosts`
+   - 用于记录客户端曾经连接过的服务器的主机公钥指纹。
+   - 当用户首次连接某个服务器时，SSH 会提示是否信任该主机，接受后该主机的信息将被记录在此文件中。
+   - SSH 在后续连接时会比对该主机指纹是否一致，以防止中间人攻击。
+4. `known_hosts.old`
+   - 是 `known_hosts` 文件的备份版本。
+   - 当 `known_hosts` 文件发生更改时，系统会自动保留旧版本以便回滚。
+
+>如需配置免密登录，需要将本机的公钥 `id_rsa.pub` 内容追加到远程服务器用户的 `~/.ssh/authorized_keys` 文件中，并保证权限设置正确。
+
+### ssh配置：
+
+1. 云主机端登陆root权限创建用户 `sudo adduser [username]`；
+2. 假设你已经在本地生成了 `~/.ssh/id_rsa.pub`，并把它内容复制了出来，现在登录服务器，运行：
+	```bash
+	sudo mkdir -p /home/[username]/.ssh
+	sudo nano /home/[username]/.ssh/authorized_keys
+	```
+	将你本地 `id_rsa.pub` 的内容粘贴进去（单行，不要断行），然后保存退出。
+3. 设置权限：
+	```bash
+	sudo chown -R [username]:[username] /home/[username]/.ssh
+	sudo chmod 700 /home/[username]/.ssh
+	sudo chmod 600 /home/[username]/.ssh/authorized_keys
+	```
+4. 赋予 sudo 权限（允许该用户使用 sudo）
+	```bash
+	sudo usermod -aG sudo [username]
+	```
+5. 现在你可以从本地使用 SSH 登录新用户。
+
+2025年8月26日：上述步骤对腾讯云是必要的，对某 G 云则可直接在控制台去设置，也许方便一些？
+
+## 2 （对于国内服务器）配置代理
+
+>为什么？-- 我们做一个情景猜想，你也不想你的国内云主机访问GitHub10次失败了9次吧？？
+
+**免责声明：以下是存粹的技术性交流，探讨技术上的可行性，不提供任何实践指导，本指南不为此承担任何法律责任，一切后果自负。**
+
+**相关法规：** 请参考[这个](https://zhuanlan.zhihu.com/p/676451643)和[这个](https://zhuanlan.zhihu.com/p/495877133)以及提到的相关法律官方文件。
+
+**再次强调，使用VPN在国际互联网制作、复制、查阅和传播下列信息的，属于是违法行为：**
+1. 煽动抗拒、破坏宪法和法律、行政法规实施，或者其他违反宪法和法律、行政法规的；
+2. 煽动颠覆国家政权、分裂国家、破坏祖国统一和损害国家机关信誉的；
+3. 煽动民族仇恨、民族歧视、破坏民族团结，或者捏造、歪曲事实，散布谣言，扰乱社会秩序的；
+4. 宣扬封建迷信、淫秽、色情、赌博、暴力、凶杀、恐怖，教唆犯罪的；
+5. 公然侮辱他人或者捏造事实诽谤他人的。
+
+具体方法可以参考[这一份文档](https://ry.huaji.store/2020/08/Linux-magic-network/)其中的**V2RayA**方案，具体流程可以参考[官方文档](https://v2raya.org/docs/prologue/installation/debian/)。
+
+注意，这份文档在**2025年7月14日**在技术上是具有可行性的。
+
+分享一些技术细节上的猜想：
+- 安装：方案一（会有一点慢，耐心）。
+- 启动：打开**快速上手**，注意要先让本地接上服务器的2017端口，参考代码是 `ssh -L 2017:localhost:2017 [username]@[Public IP]` 。
+- 导入代理的配置：略（再次强调这段文字只是技术上的探讨，一切行动请注意**合法合规**）。
+- 选择节点：可用http测速，多选择几个延迟低的节点。
+- 启用代理：具体参考文档，透明模式的分支模式一在技术上具备可行性。
+- 运行。
+
+祝你一切顺利，有问题多看参考文档。
+
+*2025年8月26日：如果你使用的也是某 G 云这样的海外服务器，可完全忽略这一步骤。*
+
+## 3 zsh + oh-my-zsh
+
+>为什么？-- 其实是这样的，根据我的经验，我这样的萌新+外行，是需要**代码补全+高亮+清晰的报错**的；除此以外，你想要更帅的装逼也可以用这套。
+
+安利：[Oh My Zsh!](https://ohmyz.sh/) 和 [Powerlevel10k](https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#oh-my-zsh)。当然，你也可以在B站上搜索看看。
+
+- 安装zsh： `sudo apt install -y zsh` ；
+- 检查： `zsh --version` ；
+- 安装omz： `sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"` ；
+- 安装过程中它会询问你是否将 zsh 设为默认 shell：选 Yes（y）即可。如果你不小心跳过了，下面可以手动设置；
+- 若需手动设置： `chsh -s $(which zsh)` ；
+- 下载插件：
+	```bash
+	# 安装 zsh-autosuggestions
+	git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+	# 安装 zsh-syntax-highlighting
+	git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+	```
+- 下载主题：  `git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"` ；
+- 配置： `vim ~/.zshrc` （有一定语法门槛，这没办法，我默认你知道最基本的vim操作，不会的问AI学一学，十分钟就能搞定），然后把`plugins=(git)`改为`plugins=(git zsh-autosuggestions zsh-syntax-highlighting)`，把`ZSH_THEME="robbyrussell"`改为`ZSH_THEME="powerlevel10k/powerlevel10k"` ；
+- 重新加载配置： `source ~/.zshrc` （很重要别忘了）；
+- 然后你可以按喜好一步步根据引导配置powerlevel10k主题了。
+- 题外话：你的本地终端有配色方案和字体，我参考的是[这一份教程](https://www.bilibili.com/video/BV1WJ4m1w7ms)。然后你需要调一下补全的颜色，我采用的是流萤的火焰的颜色 `ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#4df8e8'` ，直接在 `~/.zshrc` 中多加这一行就可以了；当然你可以自己选择你的偏好。
+- 到这里zsh + oh-my-zsh就配置好了。
+
+到2025年8月26日，上述步骤是完全可用且高效的。不过，要是第一步有一些问题，先执行`sudo apt-get update`就行。
+
+## 4 conda （选）
+
+>为什么？ -- 呃，对我来说因为我写这篇文章时我的主语言时Python，其次我当时还是学物理的，所以用conda很合理对吧？？
+
+个人推荐 **miniconda** 而非 anaconda ，你可以多做一些这方面的考虑。
+
+这部分可以完全问AI跟着它的指导走，只是记得告诉它你现在用的是zsh并配置好了代理。
+
+这里我简单更新一下我在2025年8月26日给我的新服务的配置流程：
+1. 先确保系统是最新的：`sudo apt update && sudo apt upgrade -y`；
+2. 对于**Linux x86_64**：`wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`；
+3. 安装运行脚本：`bash Miniconda3-latest-Linux-x86_64.sh`，接下来需要按 `Enter` 查看许可协议，然后输入 `yes` 接受，然后输入安装路径（推荐默认 `~/miniconda3`），最后要注意选择是否在 `.bashrc` 或 `.zshrc` 中自动初始化，推荐选 `yes`，具体是这样的：
+	```bash
+	Do you wish to update your shell profile to automatically initialize conda?
+	This will activate conda on startup and change the command prompt when activated.
+	If you'd prefer that conda's base environment not be activated on startup,
+	run the following command when conda is activated:
+
+	conda config --set auto_activate_base false
+
+	You can undo this by running conda init --reverse $SHELL? [yes|no]
+	```
+	这是 Miniconda 安装脚本在问你要不要修改你的 shell 配置文件（`.zshrc`），让 conda 自动初始化。具体意思： `yes` 安装程序会往 `~/.zshrc` 里加几行初始化代码，这样你一登录 zsh，conda 就能用（并且默认进入 base 环境，除非你关掉）。这是大多数人选的。 `no` 不修改配置文件。你之后用 conda 就得手动运行一次初始化，比如`~/miniconda3/bin/conda init zsh`和
+	`source ~/.zshrc`。**如果你不想每次登录都自动进入 base 环境，可以先选 `yes` ，然后再执行 `conda config --set auto_activate_base false` 。**
+4. `conda --version` ：能看到版本号说明成功。
+
+## 5 neovim + lazyvim （选）
+
+为什么？ -- 一方面，虽然后续我个人更推荐用vscode来写代码和管理文件，但是你总免不了需要用终端做这方面的一些工作（尤其是与AI配合时），这时候neovim还是比vim好用一些的；另一方面，这玩意实在是帅。
+
+这里就不安利了，B站上搜一下吧，喜欢就搞。
+
+- 首先下载Homebrew： `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"` ；
+- 然后安装和配置路径：
+	```bash
+	echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.zshrc
+	eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+	```
+- 确认： `brew --version` ；
+- 下载neovim： `brew install neovim` ；
+- 确认： `nvim --version` ；
+- 清空默认配置（报错就表明无默认配置，继续就好）：
+	```bash
+	mv ~/.config/nvim ~/.config/nvim.backup
+	mv ~/.local/share/nvim ~/.local/share/nvim.backup
+	mv ~/.cache/nvim ~/.cache/nvim.backup
+	```
+- 下载lazyvim： `git clone https://github.com/LazyVim/starter ~/.config/nvim` ；
+- 进入目录： `cd ~/.config/nvim` ；
+- 初始化： `nvim` ，耐心等它搞完后再退出；
+- 最后：网上找一些教程来爽用一波。
+
+## 6 UV （推荐）
+
+*2025 年 7 月新增*
+
+它是一个先进的Python包管理，详见[官方文档](https://docs.astral.sh/uv/)。
+
+关于为什么要用 **uv** ，我觉得[这个视频](https://b23.tv/D0gze5b)讲得很好。而这个 UP 主也有关于 uv 的[详细教程](https://b23.tv/ee9Tpbc)，比下面这个我的写得好多了。
+
+以下简要记录我的使用笔记：
+
+### 安装
+
+科学下载：`curl -LsSf https://astral.sh/uv/install.sh | sh` ；
+
+自动补全：`echo 'eval "$(uv generate-shell-completion zsh)"' >> ~/.zshrc` ；
+
+重载：`source ~/.zshrc` ；
+
+卸载：  
+```bash
+uv cache clean
+rm -r "$(uv python dir)"
+rm -r "$(uv tool dir)"
+```
+
+```bash
+rm ~/.local/bin/uv ~/.local/bin/uvx
+```
+
+### 确认
+
+输入`uv`，成功会出现帮助菜单。
+
+### 快速开始
+
+1. 安装Python：
+   - 如果你系统中已经安装了 Python（比如通过系统自带、pyenv、Homebrew 等安装的），那么 uv 自动发现并使用它。你不需要配置路径或环境变量。uv 内置了 Python 版本管理功能，而且是“即需即装”（on-demand install），你甚至可以在没有任何 Python 的系统上使用 uv 安装 Python！
+   - 先查看目前已经有的：`uv python list` ；
+   - `uv python install` ，这条命令会：安装最新版本的 Python，使用 Astral 提供的独立构建的 Python 发行版（python-build-standalone 项目），安装结果是只对 uv 可见的（不会覆盖或污染你系统自带的 Python）。uv 并不会把它安装的 Python 注册为全局 python 命令。
+   - 2025年 7 月，推荐下载：`uv python install 3.12 3.11 3.10` 。
+
+2. 跑一个脚本
+	- `uv run script.py` ，自动管理依赖环境，无需手动创建 venv。若在项目中，默认使用项目环境（可加 --no-project 跳过）。
+	- `uv run --with rich script.py` ，运行依赖脚本。
+
+3. 搞个项目
+	- 初始化：
+		```bash
+		# 快速创建
+		uv init hello-world
+		cd hello-world
+
+		# 或者当前目录初始化
+		mkdir hello-world && cd hello-world
+		uv init
+		```
+	- 项目结构：
+		```pgsql
+		hello-world/
+		├── .gitignore
+		├── .python-version      ← 默认 Python 版本（可直接在这里修改）
+		├── README.md            ← 项目简介
+		├── main.py              ← 默认脚本
+		├── pyproject.toml       ← 项目元数据 + 依赖声明（项目核心文件）
+		└── （运行后自动生成）
+			├── .venv/           ← 虚拟环境目录
+			└── uv.lock          ← 精确依赖锁文件
+		```
+	- 即刻就可以运行：`uv run main.py` ；
+	- 添加依赖：`uv add requests` ；
+	- 移除依赖： `uv remove requests` ；
+	- `pyproject.toml` ，依赖写在 `dependencies` 的列表里：
+		```toml
+		[project]
+		name = "hello-world"
+		version = "0.1.0"
+		description = "Add your description here"
+		readme = "README.md"
+		dependencies = []
+		```
+	- 剩余内容参考前面**教程**就好。
+
+4. 待补充。
+
+## 7 Web 相关（也许）
+
+由于新的某 G 云的服务上没有 `Node.js` 之类的，所以我进行了相关的安装，记录如下：
+1. 安装 nvm： `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash` ；
+2. `source ~/.zshrc` ；
+3. 使用 nvm 来安装最新版的 LTS (长期支持版) Node.js。这是最稳定和推荐的版本： `nvm install --lts` ；
+4. 验证安装是否成功： `node -v` 和 `npm -v`。
+5. （额外）调试模式：（1）`npm install`；（2）`npm run dev`，会给到 `http://localhost:5173/`；（3）转发到本地 `ssh -L 5173:localhost:5173 [username]@[ip address]`。
+---
+
+#  Linux 服务器使用笔记
+
+### Conda
+
+```bash
+# 新环境
+conda create -n universal python=3.11
+conda activate universal
+conda install numpy scipy pandas openpyxl matplotlib seaborn scikit-learn jupyterlab ipython pip
+conda update --all
+
+# 克隆与其它常用命令
+conda env list
+conda create --name 新环境名称 --clone 旧环境名称
+conda remove --name 旧环境名称 --all
+conda list # 列出所有包
+```
+
+### 其它
+
+
+`genact`，启动！

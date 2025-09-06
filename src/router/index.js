@@ -14,6 +14,9 @@ import Portal from '../pages/Portal.vue'
 import LabReport from '../pages/LabReport.vue'
 import PostIt from '../pages/PostIt.vue'
 import Academic from '../pages/Academic.vue'
+import YsyLatex from '../pages/YsyLatex.vue'
+import YsyDataAnalysisHelper from '../pages/YsyDataAnalysisHelper.vue'
+import BriskNexus from '../pages/BriskNexus.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -30,6 +33,9 @@ const routes = [
   { path: '/labreport', component: LabReport },
   { path: '/postit', component: PostIt },
   { path: '/academic', component: Academic },
+  { path: '/ysy-latex', component: YsyLatex },
+  { path: '/ysy-data-analysis-helper', component: YsyDataAnalysisHelper },
+  { path: '/brisk-nexus', component: BriskNexus },
 ]
 
 const router = createRouter({

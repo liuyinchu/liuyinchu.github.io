@@ -44,8 +44,6 @@ const dockGroups = [
       { name: 'YouTube', url: 'https://www.youtube.com/' },
       { name: 'B站', url: 'https://www.bilibili.com/' },
       { name: '知乎', url: 'https://www.zhihu.com/' },
-      { name: '中山大学统一门户', url: 'https://mportal.sysu.edu.cn/' },
-      { name: '中山大学物理与天文学院', url: 'https://spa.sysu.edu.cn/' },
       { name: 'Catppuccin调色板', url: 'https://catppuccin.com/palette/' },
     ]
   }

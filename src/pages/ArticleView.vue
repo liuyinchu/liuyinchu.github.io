@@ -134,7 +134,7 @@ function onMarkdownLoaded(rawText) {
   display: flex;
   justify-content: flex-end; /* 修改为末端对齐 */
   gap: 2rem;
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
 }
 .article-wrapper {

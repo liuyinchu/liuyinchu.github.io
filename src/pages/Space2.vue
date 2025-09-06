@@ -20,8 +20,29 @@ onMounted(async () => {
     <header class="page-header">
       <h1>网络邻居</h1>
       <p class="intro-quote">
-        “No site is an island entire of itself; every site is a piece of the continent, a part of the main. We are all connected by the invisible threads of the web, each a lighthouse shining in the digital sea.”
+        相知无远近，万里尚为邻。
       </p>
+<!-- <p class="intro-quote">
+        At what station must our farewells be kissed,<br>
+        Where wind from rose is endlessly dismissed?<br>
+        You and I, we watch the falling snow,<br>
+        As holy hands let all deceptions go.<br>
+        <br>
+        In what season of life will we relent?<br>
+        Your hand retreats—an art, an aesthetic scent.<br>
+        Love was a fire you fanned and then forsook,<br>
+        Leaving me to a path of darkened look.<br>
+        <br>
+        I drink the snow on peaks where gales confess,<br>
+        They whisper of a rose you once possessed.<br>
+        May this flurry of white now be my tears,<br>
+        To grant you all the light of springtime years.<br>
+        <br>
+        Invincible, I hide my heart's affair,<br>
+        Only the moon knows the glorious despair.<br>
+        This sorrow's beauty is for me to bear,<br>
+        As snow in winter—not so very rare.<br>
+      </p> -->
     </header>
 
     <div class="friends-grid">
@@ -39,9 +60,9 @@ onMounted(async () => {
     <h2 class="section-title">成为邻居</h2>
     <p class="section-intro">很高兴能与你在这片数字空间相遇。如果你的站点也满足以下基本要求，欢迎随时与我联系，交换友链。</p>
     <ul>
-      <li><span class="icon">1.</span>没想好……</li>
-      <li><span class="icon">2.</span>也没想好……</li>
-      <li><span class="icon">3.</span>支持 SYSU.SPA 喵！</li>
+      <li><span class="icon">1.</span>网站性质不涉及商业/政治/色情/灰色/版权/破解/企业/经营/影音/小说/软件破解/内容不明等，内容有一定质量；</li>
+      <li><span class="icon">2.</span>非空壳网站，能长期存活和更新；</li>
+      <li><span class="icon">3.</span>如果可以的话，请支持 SYSU.SPA ！</li>
     </ul>
     <div class="important-notice">
       <span class="icon">⚠️</span>本站坚决不与任何包含 违法犯罪、色情暴力、政治舆论、国家机密、恶意推广、人身攻击 等内容的站点交换链接。
@@ -49,7 +70,7 @@ onMounted(async () => {
   </div>
   <div class="format-section">
     <h3 class="section-title-small">申请格式</h3>
-    <p>请在留言板或通过其他方式提供以下信息：</p>
+    <p>请在本站的 Issues 中或通过其他方式提供格式如下的相关信息（以我自己的网站为例）：</p>
     <pre><code><span class="token key">"name"</span><span class="token punc">:</span> <span class="token str">"LiuYinChu'Space"</span><span class="token punc">,</span>
 <span class="token key">"link"</span><span class="token punc">:</span> <span class="token str">"https://liuyinchu.github.io"</span><span class="token punc">,</span>
 <span class="token key">"desc"</span><span class="token punc">:</span> <span class="token str">"祝你有晴朗的一天！"</span></code></pre>

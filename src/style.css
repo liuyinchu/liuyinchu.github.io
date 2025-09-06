@@ -118,8 +118,8 @@ a:hover {
   
   /* 打字文本样式 */
   .typing {
-    font-size: 4rem;
-    max-width: 800px;
+    font-size: 3.5rem;
+    max-width: 1200px;
     text-align: center;
     color: var(--ctp-mocha-text);
     font-weight: 600;
@@ -149,6 +149,64 @@ a:hover {
     transition: background-color 0.8s ease;
     padding: 2rem;
   }
+
+/* —— 字幕区域增强：更平顺的渐变与可读性 —— */
+.typing-screen {
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(180deg, var(--ctp-mocha-crust), var(--ctp-mocha-base) 78%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  transition: background 600ms ease; /* 缩短过渡避免拖泥带水 */
+  /* 某些 GPU 上能略微减轻 banding */
+  background-attachment: fixed;
+}
+
+/* 打字文本（全局兜底，组件内有 scoped 版本，二者一致即可） */
+.typing {
+  font-size: clamp(1.6rem, 3.2vw, 3.5rem);
+  max-width: min(1200px, 92vw);
+  text-align: center;
+  color: var(--ctp-mocha-text);
+  font-weight: 600;
+  line-height: 1.6;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures contextual;
+}
+
+/* 光标动画（全局版） */
+.cursor {
+  display: inline-block;
+  width: 0.6ch;
+  margin-left: 0.1ch;
+  /* 用 CSS 变量允许在组件里自定义节奏 */
+  --caret-ms: 850ms;
+  animation: caret-blink var(--caret-ms) steps(1, end) infinite;
+  color: var(--primary-color);
+}
+@keyframes caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* 减少动效偏好：禁用全局光标闪烁 */
+@media (prefers-reduced-motion: reduce) {
+  .cursor { animation: none !important; display: none; }
+}
+
+/* 细节：链接/按钮 hover 更灵动但不过火 */
+.themed-button {
+  transition: background-color 180ms ease, transform 120ms ease, box-shadow 180ms ease;
+}
+.themed-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
 
 /* 控件 hover 蓝宝石色 */
 .aplayer-icon:hover {
@@ -181,7 +239,7 @@ a:hover {
 }
 .markdown-body th {
   font-weight: bold;
-  background-color: var(--surface-color);
+  background-color: rgb(108, 112, 134);
   color: var(--primary-color);
 }
 .markdown-body tbody tr {

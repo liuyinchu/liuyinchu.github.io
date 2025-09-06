@@ -72,17 +72,36 @@ onMounted(async () => {
   color: var(--text-color);
   margin-bottom: 2rem;
 }
-.article-list {
+/* .article-list {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  max-width: 880px;
+  max-width: 1000px;
   margin: 0 auto;
+} */
+ .article-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  /* 关键：用 clamp 做流式容器宽度 */
+  max-width: clamp(280px, 92vw, 1000px);
+  /* 小屏留点内边距，避免贴边 */
+  padding-inline: clamp(12px, 3vw, 24px);
+
+  margin: 0 auto;
+}
+
+/* 超大屏再放宽一点可读宽度（可选） */
+@media (min-width: 1440px) {
+  .article-list {
+    max-width: clamp(1000px, 80vw, 1200px);
+  }
 }
 .article-card {
   display: flex;
   height: 220px;
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.7);
+  background-color: #313244;
   backdrop-filter: blur(9.5px);
   -webkit-backdrop-filter: blur(9.5px);
   border: 1px solid var(--border-color);
