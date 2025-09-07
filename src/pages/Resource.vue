@@ -185,6 +185,9 @@ GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资�
 ### [GitHub snk](https://github.com/Platane/snk)
 这是一个有趣的小工具，可以把 GitHub 用户的贡献图转化为一款贪吃蛇游戏。它会根据提交记录生成路径，像贪吃蛇一样逐格“吃掉”贡献方块，非常直观又好玩。你还可以通过[在线演示](https://platane.github.io/snk/)快速生成自己的 GitHub 贪吃蛇动画。
 
+### [Readme Typing SVG](https://readme-typing-svg.demolab.com/demo/)
+神奇的字幕（打字机）！
+
 <h2 id="sec-books" class="sec">书籍推荐 <a href="#top" class="back-top">TOP ↑</a></h2>
 
 ### 教材清单

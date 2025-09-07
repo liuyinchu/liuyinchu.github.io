@@ -19,9 +19,17 @@ onMounted(async () => {
   <div class="page-container">
     <header class="page-header">
       <h1>网络邻居</h1>
-      <p class="intro-quote">
+      <section class="contrib-section" aria-label="GitHub contributions">
+        <img
+          src="/fig/friends.svg"
+          alt="相知无远近，万里尚为邻。"
+          class="contrib-img"
+          loading="lazy"
+        />
+      </section>
+      <!-- <p class="intro-quote">
         相知无远近，万里尚为邻。
-      </p>
+      </p> -->
 <!-- <p class="intro-quote">
         At what station must our farewells be kissed,<br>
         Where wind from rose is endlessly dismissed?<br>
@@ -235,5 +243,18 @@ onMounted(async () => {
 .token.key { color: var(--ctp-mocha-mauve); }
 .token.punc { color: var(--ctp-mocha-subtext1); }
 .token.str { color: var(--ctp-mocha-green); }
+
+.contrib-section {
+  width: min(var(--contrib-max-width), var(--contrib-h-margins));
+  margin: var(--contrib-space-top) auto var(--contrib-space-bottom) auto;
+}
+
+.contrib-img {
+  display: block;       /* 块级元素，避免行内缝隙 */
+  width: 35%;          /* 自适应宽度 */
+  height: auto;        /* 保持纵横比 */
+  margin: 0 auto;      /* 水平居中 */
+  /* 不要阴影/描边：确保“无分割痕迹” */
+}
 
 </style>
