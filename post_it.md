@@ -1,3 +1,10 @@
+::: postit 非常神奇的“TypingSVG”
+
+## Premier Affair of The Heart
+
+<img src="/fig/premier_affair_of_the_heart.svg" alt="Premier affair of the heart" width="75%">
+:::
+
 ::: postit 盾戳，正是我为王的理由！
 将我的繁文缛节弃置于此！！！
 :::
