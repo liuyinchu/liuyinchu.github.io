@@ -4,14 +4,7 @@
     "desc": "个人（实验）数据分析工具。",
     "homepage": "/ysy-data-analysis-helper",
     "repo": "https://github.com/liuyinchu/ysy-data-analysis-helper",
-    "category": "project"
-  },
-  {
-    "name": "Ysy LaTeX",
-    "desc": "个人 LaTeX 模版（课件/讲义/报告），模块化选项与中文友好。",
-    "homepage": "/ysy-latex",
-    "repo": "https://github.com/liuyinchu/ysy-latex",
-    "category": "project"
+    "category": "code"
   },
   {
     "name": "引力波数据处理入门学习与实践",

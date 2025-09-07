@@ -140,7 +140,7 @@ function onMarkdownLoaded(rawText) {
 .article-wrapper {
   flex: 1;
   min-width: 0;
-  max-width: 860px;
+  max-width: 1000px;
   /* [新增] 为正文栏添加背景和圆角 */
   background-color: var(--surface-color); /* 比 #1e1e2e 稍浅的背景 */
   border-radius: 0.75rem;
