@@ -40,7 +40,7 @@ const dockGroups = [
     name: '其它',
     color: '#fab387', // Mocha - Peach
     links: [
-      { name: '企业微信邮箱', url: 'https://exmail.qq.com/login' },
+      { name: '网易企业邮箱', url: 'https://qy.163.com/static/login/' },
       { name: 'YouTube', url: 'https://www.youtube.com/' },
       { name: 'B站', url: 'https://www.bilibili.com/' },
       { name: '知乎', url: 'https://www.zhihu.com/' },

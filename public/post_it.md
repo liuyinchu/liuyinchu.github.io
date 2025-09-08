@@ -5,14 +5,25 @@
 <img src="/fig/premier_affair_of_the_heart.svg" alt="Premier affair of the heart" width="75%">
 :::
 
+::: postit 非常神奇的“TypingSVG”
+
+## Premier Affair of The Heart
+
+<img src="/fig/premier_affair_of_the_heart.svg" alt="Premier affair of the heart" width="75%">
+:::
+
 ::: postit 盾戳，正是我为王的理由！
-将我的繁文缛节弃置于此！！！
+
+> 将我的繁文缛节弃置于此！！！
+
+<img src="/fig/Shield_Poke.png" alt="盾戳正是我为王的理由！" width="50%">
 :::
 
 ::: postit 一些神秘链接长期更新中
-20250906 个人大模型 https://github.com/jingyaogong/minimind
 
-20250821 量子计算 https://www.zhihu.com/question/305099454/answer/1941869743654015698
+- 20250909 程序员如何优雅地做副业：https://github.com/easychen/lean-side-bussiness
+- 20250906 个人大模型 https://github.com/jingyaogong/minimind
+- 20250821 量子计算 https://www.zhihu.com/question/305099454/answer/1941869743654015698
 :::
 
 ::: postit 如何在macOS中强制退出应用程序 
