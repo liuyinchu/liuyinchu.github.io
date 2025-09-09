@@ -1,3 +1,8 @@
+::: postit ChatGPT5尚未发布
+
+## 2025 年 9 月 9 日，Gemini 2.5 Pro 坚持称 ChatGPT5 还没有发布……
+:::
+
 ::: postit 非常神奇的“TypingSVG”
 
 ## Premier Affair of The Heart
