@@ -10,7 +10,7 @@
 
 <style scoped>
 .page-wrapper {
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 2rem 1rem;
   background-color: var(--background-color);
@@ -19,25 +19,17 @@
 }
 
 /* 大屏 */
-@media (min-width: 1200px) {
+@media (min-width: 1250px) {
   .page-wrapper {
-    max-width: 1200px;
+    max-width: 80%;
     padding: 2.5rem 2rem;
-  }
-}
-
-/* 中等屏幕 (平板等) */
-@media (max-width: 991px) {
-  .page-wrapper {
-    max-width: 90%;
-    padding: 2rem 1.5rem;
   }
 }
 
 /* 小屏幕 (手机等) */
 @media (max-width: 600px) {
   .page-wrapper {
-    max-width: 100%;
+    max-width: 90%;
     padding: 1.5rem 1rem;
   }
 }
