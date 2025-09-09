@@ -18,10 +18,28 @@
   transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-/* 响应式支持 */
+/* 大屏 */
+@media (min-width: 1200px) {
+  .page-wrapper {
+    max-width: 1200px;
+    padding: 2.5rem 2rem;
+  }
+}
+
+/* 中等屏幕 (平板等) */
+@media (max-width: 991px) {
+  .page-wrapper {
+    max-width: 90%;
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* 小屏幕 (手机等) */
 @media (max-width: 600px) {
   .page-wrapper {
+    max-width: 100%;
     padding: 1.5rem 1rem;
   }
 }
+
 </style>
