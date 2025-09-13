@@ -17,6 +17,7 @@ import Academic from '../pages/Academic.vue'
 import YsyLatex from '../pages/YsyLatex.vue'
 import YsyDataAnalysisHelper from '../pages/YsyDataAnalysisHelper.vue'
 import BriskNexus from '../pages/BriskNexus.vue'
+import PaperSwitchBrush from '../pages/PaperSwitchBrush.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -36,6 +37,7 @@ const routes = [
   { path: '/ysy-latex', component: YsyLatex },
   { path: '/ysy-data-analysis-helper', component: YsyDataAnalysisHelper },
   { path: '/brisk-nexus', component: BriskNexus },
+  { path: '/paper-switch-brush', component: PaperSwitchBrush },
 ]
 
 const router = createRouter({
