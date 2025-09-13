@@ -61,7 +61,7 @@ onMounted(async () => {
         <RouterLink to="/resource" class="themed-button">资源链接</RouterLink>
         <RouterLink to="/notes" class="themed-button">笔记</RouterLink>
         <RouterLink to="/labreport" class="themed-button">实验报告</RouterLink>
-        <RouterLink to="/space3" class="themed-button">未开放</RouterLink>
+        <RouterLink to="/paper-switch-brush" class="themed-button">论文刷刷乐</RouterLink>
       </div>
     </ContentBlock>
 
