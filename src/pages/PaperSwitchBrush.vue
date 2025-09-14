@@ -437,7 +437,7 @@ function jumpPrompt() {
   font-weight: 800;
   font-size: clamp(14px, 1.8vw, 16px);
   border: var(--thin) solid var(--border-color);
-  background: #6c7086;
+  background: linear-gradient(135deg, #6c7086, #585b70);
   color: var(--text-color);
   text-decoration: none;
   cursor: pointer;
@@ -447,7 +447,7 @@ function jumpPrompt() {
 .psb_cblock:active { transform: translateY(0); }
 
 .psb_cblock.primary {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #89dceb);
   border-color: transparent;
   color: #0b0b0b;
 }

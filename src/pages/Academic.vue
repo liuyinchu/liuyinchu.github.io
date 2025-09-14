@@ -120,6 +120,7 @@ onMounted(async () => {
   height: 100%;
   background-size: cover;
   background-position: center;
+  background-attachment: fixed;
   filter: grayscale(30%); /* 稍微降低灰度，让图片色彩多一点 */
 }
 
@@ -130,12 +131,12 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   /* 修改点 3：直接使用半透明黑色作为滤镜 */
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.66);
 }
 
 .hero-title {
   position: relative;
-  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-size: clamp(2.5rem, 10vw, 6rem);
   color: var(--text-color);
   font-weight: 400;
   letter-spacing: 4px;

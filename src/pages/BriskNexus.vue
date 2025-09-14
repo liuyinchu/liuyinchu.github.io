@@ -39,6 +39,12 @@
 
     <BlockMarkdown :content="proj3" />
 
+    <ImageBlock
+      src="/fig/ysy_latex_ref.png"
+      alt="模板参考文献格式说明——建议喂给 AI 助手"
+      width="70%"
+    />
+
         <LinkButtons :buttons="[
       { text: '使用/下载/托管仓库', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-latex-template/template-v1.4.1' }
     ]" />

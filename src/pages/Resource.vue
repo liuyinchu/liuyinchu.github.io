@@ -35,6 +35,11 @@ const resourceText = `
 ### [nLab](https://ncatlab.org/nlab/show/HomePage)
 这是一个关于数学、物理与哲学协同工作的维基平台——尤其（但绝不限于）从高阶结构的视角出发：秉持对同伦理论/代数拓扑、同伦类型论、高阶范畴论以及高阶范畴代数等工具与观点的兼容并包。
 
+### [GWOSC](https://gwosc.org/)
+Gravitational Wave Open Science Center 是一个由 LIGO 和 Virgo 合作组织维护的数据平台，旨在向全球科研人员和公众开放引力波探测数据。
+该中心提供经过预处理和校准的 LIGO/Virgo 数据，涵盖多个观测运行周期（O1、O2、O3 等），并配套事件目录、数据质量信息和分析工具文档，方便用户下载、分析和复现引力波事件。
+GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资源门户。
+
 <h2 id="sec-papers" class="sec">文献 <a href="#top" class="back-top">TOP ↑</a></h2>
 
 ### [Nature 物理综述](https://www.nature.com/natrevphys/)
@@ -106,6 +111,10 @@ Dash 是最早且最值得信赖的低代码 Python 框架，可用于快速构�
 
 强烈推荐给想要减轻 C 盘负担、腾出空间的用户！轻量、无广告、免费开源，日常使用安全高效。
 
+### [genact - a nonsense activity generator](https://github.com/svenstaro/genact)
+在本该认真工作的时刻，假装自己正忙得不可开交，或者耐心等待电脑运行！让旁人对你的“高效多任务处理能力”刮目相看。只需打开几个 genact 实例，精彩表演立刻上演。genact 提供多种“场景”，看似在进行某些激动人心或高深莫测的操作，实际上什么都没发生。  
+这个 GitHub 项目简直是天才。
+
 <h2 id="sec-notes" class="sec">一些文章、笔记和资料 <a href="#top" class="back-top">TOP ↑</a></h2>
 
 ### [怎样从别人那里要求获得代码/论文/模型/数据?](https://cs.nju.edu.cn/wujx/HowToRequestCode.html)
@@ -167,17 +176,8 @@ CloudConvert 是一款在线文件转换器。我们支持几乎所有音频、�
 ### [LaTeX表格](https://tableconvert.com)
 此生成器用于快速创建和在线生成 LaTeX 表格。
 
-### [genact - a nonsense activity generator](https://github.com/svenstaro/genact)
-在本该认真工作的时刻，假装自己正忙得不可开交，或者耐心等待电脑运行！让旁人对你的“高效多任务处理能力”刮目相看。只需打开几个 genact 实例，精彩表演立刻上演。genact 提供多种“场景”，看似在进行某些激动人心或高深莫测的操作，实际上什么都没发生。  
-这个 GitHub 项目简直是天才。
-
 ### [FLiNG Trainer](https://flingtrainer.com/)
 PC Game Cheats and Mods.
-
-### [GWOSC](https://gwosc.org/)
-Gravitational Wave Open Science Center 是一个由 LIGO 和 Virgo 合作组织维护的数据平台，旨在向全球科研人员和公众开放引力波探测数据。
-该中心提供经过预处理和校准的 LIGO/Virgo 数据，涵盖多个观测运行周期（O1、O2、O3 等），并配套事件目录、数据质量信息和分析工具文档，方便用户下载、分析和复现引力波事件。
-GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资源门户。
 
 ### [ASCII text art generator](https://textkool.com/en/ascii-art-generator)
 本网站使用的 ASCII 文本艺术生成器。特别的，我选用的字体是“ANSI Shadow”。
@@ -187,6 +187,10 @@ GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资�
 
 ### [Readme Typing SVG](https://readme-typing-svg.demolab.com/demo/)
 神奇的字幕（打字机）！
+
+### [DeepSeek 开放平台](https://platform.deepseek.com/)
+用于获取、使用和管理 DeepSeek-API。相关文档在[这里](https://api-docs.deepseek.com/zh-cn/)。
+
 
 <h2 id="sec-books" class="sec">书籍推荐 <a href="#top" class="back-top">TOP ↑</a></h2>
 
