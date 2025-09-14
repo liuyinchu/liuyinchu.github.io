@@ -142,6 +142,7 @@ function keyFromDate(d) {
 }
 const today = new Date()
 const dateKey = keyFromDate(today)
+const activeKey = ref(dateKey) // 实际加载成功的数据键
 const prevDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)
 const prevKey = keyFromDate(prevDate)
 
@@ -161,6 +162,7 @@ async function loadDailyWithFallback() {
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       const data = await r.json()
       items.value = Array.isArray(data) ? data : [data]
+      activeKey.value = key
       return
     } catch (_) {
       // try next
@@ -258,17 +260,32 @@ function renderMD(t) {
   return html
 }
 
-/* ======= Like（按日） ======= */
+/* ======= Like（按日, 响应式） ======= */
 const LS_LIKES_KEY = 'paperbrush_likes'
 function getMap() { try { return JSON.parse(localStorage.getItem(LS_LIKES_KEY)) || {} } catch { return {} } }
 function setMap(m) { localStorage.setItem(LS_LIKES_KEY, JSON.stringify(m)) }
-function likedOf(dk) { const m = getMap(); return Array.isArray(m[dk]) ? m[dk] : [] }
-const likedToday = computed(() => likedOf(dateKey))
-function isLiked(p) { return likedToday.value.includes(p['arXiv id']) }
+
+// 响应式缓存，点击后立刻触发视图更新
+const likesMap = ref(getMap())
+function likedOfReactive(dk) {
+  const a = likesMap.value[dk]
+  return Array.isArray(a) ? a : []
+}
+const likedToday = computed(() => likedOfReactive(activeKey.value))
+
+function isLiked(p) {
+  return likedToday.value.includes(p['arXiv id'])
+}
 function toggleLike(p) {
-  const id = p['arXiv id']; const m = getMap(); const arr = likedOf(dateKey).slice()
-  const i = arr.indexOf(id); if (i >= 0) arr.splice(i,1); else arr.push(id)
-  m[dateKey] = arr; setMap(m)
+  const id = p['arXiv id']
+  const m  = { ...likesMap.value }
+  const arr = likedOfReactive(activeKey.value).slice()
+  const i = arr.indexOf(id)
+  if (i >= 0) arr.splice(i, 1)
+  else arr.push(id)
+  m[activeKey.value] = arr
+  likesMap.value = m
+  setMap(m)
 }
 
 /* ======= 工具 ======= */
@@ -286,9 +303,16 @@ async function copyAndClear() {
   }
   clearToday()
 }
-function clearToday() { const m = getMap(); delete m[dateKey]; setMap(m) }
-function clearAll() { localStorage.removeItem(LS_LIKES_KEY) }
-
+function clearToday() {
+  const m = { ...likesMap.value }
+  delete m[activeKey.value]
+  likesMap.value = m
+  setMap(m)
+}
+function clearAll() {
+  localStorage.removeItem(LS_LIKES_KEY)
+  likesMap.value = {}
+}
 /* ======= n/N 点击跳转 ======= */
 function jumpPrompt() {
   const n = prompt(`Jump to card (1..${items.value.length})`)
@@ -429,9 +453,9 @@ function jumpPrompt() {
 }
 .psb_cblock.ghost { background: transparent; }
 .psb_cblock.liked {
-  background: rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, var(--success-color), #89dceb);
   border-color: var(--success-color);
-  color: var(--success-color);
+  color: #1e1e2e;
 }
 
 /* n/N 色块样式（可点击跳转） */
