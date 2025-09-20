@@ -35,7 +35,7 @@ const props = defineProps({
 
 /* Apple风格圆角按钮 */
 .themed-button {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #74c7ec);
   color: var(--ctp-mocha-base);
   padding: 0.6rem 1.2rem;
   border-radius: 999px; /* 超圆角 */
@@ -47,7 +47,7 @@ const props = defineProps({
 }
 
 .themed-button:hover {
-  background-color: var(--primary-color-hover);
+  background: linear-gradient(135deg, #94e2d5, #f38ba8);
   transform: translateY(-2px);
 }
 </style>

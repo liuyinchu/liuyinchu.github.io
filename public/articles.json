@@ -1,5 +1,13 @@
 [
   {
+    "id": "learn_rust",
+    "title": "学学学习心得编程语言 Rust （长期更新）",
+    "author": "liuyinchu",
+    "date": "2025-9-20",
+    "desc": "Rust ，启动！",
+    "image": "/bg/dreamy_yae_miko.png"
+  },
+  {
     "id": "note_of_configure_server",
     "title": "学学学着使用 Linux 云主机（长期更新）",
     "author": "liuyinchu",

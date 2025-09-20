@@ -101,7 +101,7 @@ onMounted(async () => {
 .article-card {
   display: flex;
   height: 220px;
-  background-color: #313244;
+  background: linear-gradient(135deg, #313244, #585b70);
   backdrop-filter: blur(9.5px);
   -webkit-backdrop-filter: blur(9.5px);
   border: 1px solid var(--border-color);
@@ -114,6 +114,7 @@ onMounted(async () => {
 .article-card:hover {
   transform: translateY(-5px) scale(1.01);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #585b70, #313244);
   border-color: var(--primary-color);
 }
 .image-container {

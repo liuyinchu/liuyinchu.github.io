@@ -154,9 +154,25 @@ onBeforeUnmount(() => {
   white-space: pre-wrap;
 }
 
+/* 原版 */
+/* .typing__text {text-shadow: 0 0 0.5px rgba(0,0,0,0.2);} */
+
+/* 渐变测试版 */
 .typing__text {
   /* 轻微发光，提高对比度但不刺眼（可删） */
   text-shadow: 0 0 0.5px rgba(0,0,0,0.2);
+  background: linear-gradient(
+    135deg,
+    #E57219 0%,
+    #EDCC87 16.7%,
+    #B4E6CD 40.5%,
+    #69F0E1 61%,
+    #47F1E8 97.8%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; /* Safari/Chrome */
+  background-clip: text;                 /* Firefox */
+  color: transparent;
 }
 
 /* 光标：使用 steps(1) 减少中间帧重绘，视觉稳定 */

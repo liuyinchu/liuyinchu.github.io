@@ -1,5 +1,10 @@
 # 配置云服务器的个人日志式笔记
 
+## 重要提醒
+
+**目前服务器的配置已经有点复杂了，释放这个服务器之前，务必把以下文件下载到本地：**
+- `.zshrc`
+
 ## 0 云服务器基本信息
 
 以下是我选用的，仅供参考：
@@ -56,9 +61,11 @@
 
 2025年8月26日：上述步骤对腾讯云是必要的，对某 G 云则可直接在控制台去设置，也许方便一些？
 
+> 关于其它登录方式：利用 VSCode 直接 Remote SSH 远程连接是一个很便捷的方案，很简单，此处就不赘述了。
+
 ## 2 （对于国内服务器）配置代理
 
->为什么？-- 我们做一个情景猜想，你也不想你的国内云主机访问GitHub10次失败了9次吧？？
+> 为什么？-- 我们做一个情景猜想，你也不想你的国内云主机访问GitHub10次失败了9次吧？？
 
 **免责声明：以下是存粹的技术性交流，探讨技术上的可行性，不提供任何实践指导，本指南不为此承担任何法律责任，一切后果自负。**
 
@@ -89,7 +96,7 @@
 
 ## 3 zsh + oh-my-zsh
 
->为什么？-- 其实是这样的，根据我的经验，我这样的萌新+外行，是需要**代码补全+高亮+清晰的报错**的；除此以外，你想要更帅的装逼也可以用这套。
+> 为什么？-- 其实是这样的，根据我的经验，我这样的萌新+外行，是需要**代码补全+高亮+清晰的报错**的；除此以外，你想要更帅的装逼也可以用这套。
 
 安利：[Oh My Zsh!](https://ohmyz.sh/) 和 [Powerlevel10k](https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#oh-my-zsh)。当然，你也可以在B站上搜索看看。
 
@@ -274,7 +281,7 @@ rm ~/.local/bin/uv ~/.local/bin/uvx
 4. 验证安装是否成功： `node -v` 和 `npm -v`。
 5. （额外）调试模式：（1）`npm install`；（2）`npm run dev`，会给到 `http://localhost:5173/`；（3）转发到本地 `ssh -L 5173:localhost:5173 [username]@[ip address]`。
 
-## 8 `eza` 综合使用指南
+## 8 `eza` 综合使用指南（试用）
 
 `eza` 是一个用 Rust 编写的现代化 `ls` 命令替代品。它的核心设计哲学是：提供比 ls 更多的功能和更友好的用户体验，并且默认配置就足够出色。
 
@@ -437,7 +444,7 @@ eza -l --git
     eza -l --time-style=iso
     ```
 
-为了把 `eza` 融入日常工作流，最好的方式就是设置一套强大的别名。再次提供一个更完整的版本，你可以直接复制到你的 `~/.bashrc` 或 `~/.zshrc` 文件中。
+为了把 `eza` 融入日常工作流，最好的方式就是设置一套强大的别名。 以下可以直接复制到 `~/.bashrc` 或 `~/.zshrc` 文件中。
 
 ```bash
 #-------------------------------------------------
@@ -469,6 +476,337 @@ alias tree4='eza --tree -L 4 --icons'       # 看 4 层
 
 记得修改后执行 `source ~/.bashrc` 或重启终端。
 
+## 9 运维入门
+
+> 前情提要：25 年 9 月，我野心膨胀，妄图拿我的某 G 云服务器跑微分方程的时间前向仿真，遂安装 Julia ；成功在其编译包的时候把 CPU 搞到了 200% ，卡死两次，崩溃数次；痛定思痛，花了一上午学了一点服务器的运行维护和安全使用，记录于此：
+
+核心思想：由于只有我一个人用，也不对外开放，所以我更关注资源监控CPU、内存、磁盘 I/O、网络带宽是否存在异常峰值、长期瓶颈；服务/进程监控关键服务是否存活（如 Nginx、MySQL、Docker 等），进程资源消耗是否正常；异常触发条件：CPU > 90% 持续 5 分钟，磁盘使用率 > 80%。
+
+- `safe_clean.sh` ：用于快速清理 Disk
+  ```bash
+  #!/bin/bash
+  set -e
+
+  echo ">>> 清理 apt 缓存"
+  sudo apt clean
+  sudo apt autoremove --purge -y
+
+  echo ">>> 清理 systemd 日志"
+  sudo journalctl --vacuum-time=7d
+
+  echo ">>> 清理临时文件"
+  sudo rm -rf /tmp/* /var/tmp/*
+
+  echo ">>> 清理旧日志文件"
+  sudo rm -f /var/log/*.gz /var/log/*.[0-9]
+
+  if command -v docker &>/dev/null; then
+    echo ">>> 清理 Docker 垃圾"
+    docker system prune -af --volumes
+  fi
+
+  echo ">>> 清理旧内核"
+  sudo apt autoremove --purge -y
+
+  echo ">>> 完成！"
+  df -h
+  ```
+
+- `I_am_watching_you.sh` ：关键指标的瞬时查看
+  ```bash
+  #!/usr/bin/env bash
+  # I_am_watching_you.sh
+  # Lightweight one-shot health snapshot for a Linux server.
+  # - No hard deps (best-effort). Uses /proc for CPU/MEM/NET; falls back gracefully.
+  # - Measures deltas over ~1s for CPU% and NET throughput.
+  # - Works without root. Add sudo for more detail where noted.
+
+  set -u
+  LANG=C
+
+  hr() { printf '%*s\n' "${COLUMNS:-80}" '' | tr ' ' '-'; }
+  sec() { echo; hr; echo ">>> $1"; hr; }
+
+  has() { command -v "$1" >/dev/null 2>&1; }
+
+  # ---------- CPU % (1s delta using /proc/stat) ----------
+  cpu_read() {
+    # echo: user nice system idle iowait irq softirq steal guest guest_nice
+    awk '/^cpu /{print $2,$3,$4,$5,$6,$7,$8,$9,$10,$11}' /proc/stat
+  }
+  cpu_calc() {
+    # args: pre_line post_line
+    read -r u1 n1 s1 i1 w1 iqr1 sir1 st1 g1 gn1 <<<"$1"
+    read -r u2 n2 s2 i2 w2 iqr2 sir2 st2 g2 gn2 <<<"$2"
+    local pre=$((u1+n1+s1+i1+w1+iqr1+sir1+st1+g1+gn1))
+    local post=$((u2+n2+s2+i2+w2+iqr2+sir2+st2+g2+gn2))
+    local diff=$((post-pre))
+    local idle=$((i2-i1))
+    local iow=$((w2-w1))
+    local usr=$((u2-u1))
+    local sys=$((s2-s1))
+    local nic=$((n2-n1))
+    local irq=$((iqr2-iqr1+sir2-sir1))
+    local stl=$((st2-st1))
+    # percentages
+    pct() { awk -v a="$1" -v b="$2" 'BEGIN{ if (b<=0) {print 0} else {printf "%.1f", (a*100.0)/b} }'; }
+    CPU_TOTAL=$(pct "$((diff-idle))" "$diff")
+    CPU_USER=$(pct "$usr" "$diff")
+    CPU_NICE=$(pct "$nic" "$diff")
+    CPU_SYS=$(pct "$sys" "$diff")
+    CPU_IOWAIT=$(pct "$iow" "$diff")
+    CPU_IRQ=$(pct "$irq" "$diff")
+    CPU_STEAL=$(pct "$stl" "$diff")
+  }
+
+  PRE=$(cpu_read); sleep 1; POST=$(cpu_read); cpu_calc "$PRE" "$POST"
+
+  # ---------- MEM ----------
+  mem_val() { awk -v k="$1" '$1==k {print $2}' /proc/meminfo; } # in kB
+  MEM_TOTAL_KB=$(mem_val MemTotal:)
+  MEM_AVAIL_KB=$(mem_val MemAvailable:)
+  MEM_FREE_KB=$(mem_val MemFree:)
+  SWAP_TOTAL_KB=$(mem_val SwapTotal:)
+  SWAP_FREE_KB=$(mem_val SwapFree:)
+  kb_to_gib() { awk -v k="$1" 'BEGIN{printf "%.2f", k/1024/1024}'; }
+  pct() { awk -v used="$1" -v total="$2" 'BEGIN{ if (total<=0) print "0.0"; else printf "%.1f", (used*100.0)/total }'; }
+
+  MEM_USED_KB=$((MEM_TOTAL_KB-MEM_AVAIL_KB))
+  MEM_USED_PCT=$(pct "$MEM_USED_KB" "$MEM_TOTAL_KB")
+  SWAP_USED_KB=$((SWAP_TOTAL_KB-SWAP_FREE_KB))
+  SWAP_USED_PCT=$(pct "$SWAP_USED_KB" "$SWAP_TOTAL_KB")
+
+  # ---------- LOAD & UPTIME ----------
+  LOAD=$(awk '{printf "1m=%.2f 5m=%.2f 15m=%.2f", $1,$2,$3}' /proc/loadavg)
+  UPTIME_HUMAN=$(uptime -p 2>/dev/null || true)
+  LAST_REBOOT=$(last reboot -n 1 2>/dev/null | head -n1 || true)
+
+  # ---------- NET (1s delta on /proc/net/dev) ----------
+  read_net() {
+    # output: if rx_bytes tx_bytes
+    awk -F'[: ]+' '/:/{iface=$2;rx=$3;tx=$(NF-1); if (iface!="lo") print iface,rx,tx}' /proc/net/dev
+  }
+  declare -A RX1 TX1 RX2 TX2
+  while read -r ifc rx tx; do RX1["$ifc"]="$rx"; TX1["$ifc"]="$tx"; done < <(read_net)
+  sleep 1
+  while read -r ifc rx tx; do RX2["$ifc"]="$rx"; TX2["$ifc"]="$tx"; done < <(read_net)
+
+  net_table() {
+    printf "%-12s %12s %12s\n" "IFACE" "RX(Mbps)" "TX(Mbps)"
+    for i in "${!RX2[@]}"; do
+      r1=${RX1["$i"]:-0}; r2=${RX2["$i"]:-0}
+      t1=${TX1["$i"]:-0}; t2=${TX2["$i"]:-0}
+      dr=$((r2-r1)); dt=$((t2-t1))
+      # bytes/s -> Mbit/s
+      awk -v ifc="$i" -v dr="$dr" -v dt="$dt" 'BEGIN{
+        rx=dr*8/1e6; tx=dt*8/1e6;
+        printf "%-12s %12.2f %12.2f\n", ifc, rx, tx
+      }'
+    done | sort
+  }
+
+  # ---------- FS usage ----------
+  DF_TABLE=$(df -h --output=source,size,used,avail,pcent,target 2>/dev/null | grep -vE 'tmpfs|overlay|udev|shm' || true)
+  INODE_TABLE=$(df -i --output=source,itotal,iused,iavail,ipcent,target 2>/dev/null | grep -vE 'tmpfs|overlay|udev|shm' || true)
+
+  # ---------- TOP processes ----------
+  TOP_CPU=$(ps -eo pid,ppid,comm,%cpu,%mem --sort=-%cpu | head -n 11)
+  TOP_MEM=$(ps -eo pid,ppid,comm,%mem,%cpu --sort=-%mem | head -n 11)
+
+  # ---------- LISTENING PORTS ----------
+  if has ss; then
+    PORTS=$(ss -tulnp 2>/dev/null | head -n 40 || true)
+  else
+    PORTS=$(netstat -tulnp 2>/dev/null | head -n 40 || true)
+  fi
+
+  # ---------- Systemd failed ----------
+  FAILED=$(systemctl --failed --no-legend --no-pager 2>/dev/null || true)
+
+  # ---------- Docker (optional) ----------
+  if has docker; then
+    DOCKER_SUMMARY=$(docker system df 2>/dev/null || true)
+    DOCKER_TOP=$(docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}\t{{.Ports}}' 2>/dev/null | head -n 15 || true)
+  else
+    DOCKER_SUMMARY="(docker not found)"
+    DOCKER_TOP="(docker not found)"
+  fi
+
+  # ---------- NVIDIA GPU (optional) ----------
+  if has nvidia-smi; then
+    GPU=$(
+      nvidia-smi --query-gpu=name,driver_version,temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader 2>/dev/null \
+      | awk -F, 'BEGIN{printf "%-25s %-8s %6s %8s %14s\n","GPU","Driver","Temp","Util","Mem(used/total)"}
+                {gsub(/^ +| +$/,""); printf "%-25s %-8s %5sC %7s%% %6sMiB/%-6sMiB\n",$1,$2,$3,$4,$5,$6}'
+    )
+  else
+    GPU="(nvidia-smi not found)"
+  fi
+
+  # ---------- Sensors (optional) ----------
+  if has sensors; then
+    SENS=$(sensors 2>/dev/null | head -n 20 || true)
+  else
+    SENS="(lm-sensors not found)"
+  fi
+
+  # ---------- Users & dmesg errors ----------
+  USERS=$(who 2>/dev/null || true)
+  DMESG_ERR=$(dmesg --ctime --level=err 2>/dev/null | tail -n 5 || true)
+
+  # ===================== OUTPUT =====================
+  sec "Host"
+  echo "Hostname : $(hostname)"
+  echo "Kernel   : $(uname -srmo)"
+  echo "Uptime   : ${UPTIME_HUMAN:-N/A}"
+  echo "Last boot: ${LAST_REBOOT:-N/A}"
+  echo "Load     : ${LOAD}"
+
+  sec "CPU (Δ1s)"
+  printf "Total=%.1f%%  user=%.1f%%  nice=%.1f%%  sys=%.1f%%  iowait=%.1f%%  irq=%.1f%%  steal=%.1f%%\n" \
+    "$CPU_TOTAL" "$CPU_USER" "$CPU_NICE" "$CPU_SYS" "$CPU_IOWAIT" "$CPU_IRQ" "$CPU_STEAL"
+
+  sec "Memory"
+  printf "RAM  : used %sGiB / total %sGiB  (%.1f%%)\n" \
+    "$(kb_to_gib "$MEM_USED_KB")" "$(kb_to_gib "$MEM_TOTAL_KB")" "$MEM_USED_PCT"
+  printf "SWAP : used %sGiB / total %sGiB  (%.1f%%)\n" \
+    "$(kb_to_gib "$SWAP_USED_KB")" "$(kb_to_gib "$SWAP_TOTAL_KB")" "$SWAP_USED_PCT"
+
+  sec "Network (Δ1s)"
+  net_table
+
+  sec "Filesystem usage"
+  echo "$DF_TABLE"
+
+  sec "Inodes usage"
+  echo "$INODE_TABLE"
+
+  sec "Top by CPU"
+  echo "$TOP_CPU"
+
+  sec "Top by MEM"
+  echo "$TOP_MEM"
+
+  sec "Listening ports (first 40)"
+  echo "$PORTS"
+
+  sec "Systemd failed units"
+  echo "${FAILED:-None}"
+
+  sec "Docker summary"
+  echo "$DOCKER_SUMMARY"
+  echo
+  echo "Docker top (first 15):"
+  echo "$DOCKER_TOP"
+
+  sec "GPU"
+  echo "$GPU"
+
+  sec "Sensors (first 20 lines)"
+  echo "$SENS"
+
+  sec "Logged-in users"
+  echo "${USERS:-None}"
+
+  sec "Latest kernel errors (dmesg)"
+  echo "${DMESG_ERR:-None}"
+
+  echo
+  hr
+  echo "Snapshot complete @ $(date)"
+  hr
+  ```
+
+- `where_and_clean.sh` ：更细致的清理
+  ```bash
+  #!/usr/bin/env bash
+  set -euo pipefail
+  echo "==== SIZE by top-level ===="
+  sudo du -xh --max-depth=1 / | sort -h | tail -n 20
+  echo
+  echo "==== TOP 30 FILES >100MB ===="
+  sudo find / -xdev -type f -size +100M -printf '%s %p\n' 2>/dev/null \
+  | sort -nr | head -n 30 | awk '{ printf "%.2f GB  %s\n", $1/1024/1024/1024, $2 }'
+  echo
+  echo "==== OPEN BUT DELETED (free after service restart) ===="
+  sudo lsof +L1 2>/dev/null | awk '{print $7, $9, $1, $2, $NF}' \
+  | sort -nr | head -n 20 | awk '{ printf "%.2f MB  %s  (proc=%s pid=%s)\n", $1/1024/1024, $2, $3, $4 }' || true
+  echo
+  read -rp "Proceed with SAFE CLEAN (pip/conda/npm cache, journal 7d, apt clean, docker prune)? [y/N] " ans
+  [[ "${ans:-N}" =~ ^[Yy]$ ]] || exit 0
+
+  echo ">>> pip/conda/npm cache"
+  pip cache purge 2>/dev/null || true
+  conda clean -a -y 2>/dev/null || true
+  npm cache clean --force 2>/dev/null || true
+  yarn cache clean 2>/dev/null || true
+
+  echo ">>> journal 7d + apt clean"
+  sudo journalctl --vacuum-time=7d || true
+  sudo apt clean || true
+  sudo apt autoremove --purge -y || true
+
+  if command -v docker &>/dev/null; then
+    echo ">>> docker prune"
+    docker system prune -af --volumes || true
+    docker builder prune -af || true
+  fi
+
+  echo ">>> DONE. Current usage:"
+  df -h
+  ```
+
+以下是上面三个脚本的使用方法：
+```bash
+chmod +x safe-clean.sh
+./safe-clean.sh
+```
+```bash
+chmod +x I_am_watching_you.sh
+./I_am_watching_you.sh
+```
+```bash
+chmod +x where_and_clean.sh
+./where_and_clean.sh
+```
+
+另外，我发现接着 VSCode ，就会占用 20% 的 CPU ，所以说 neovim 还是有用的。
+
+还有就是进程管理，这个只要你觉得不对劲，你就问 AI ，让它指导你清理掉不对的进程就行。
+
+没有 swap 的小机型非常容易因为预编译或峰值内存被 OOM 直接拍死。
+```bash
+# 建 2G swap；想更稳用 4G：把 2G 改成 4G
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+sudo swapon -a
+# 验证
+free -h
+```
+可选把 swap 稍微积极点使用，给峰值更多缓冲（不会明显变慢）：
+```bash
+echo 'vm.swappiness=40' | sudo tee /etc/sysctl.d/99-swap.conf
+sudo sysctl --system
+```
+给 user.slice 上“安全阀门”；CPUQuota=85%：用户进程合计最多 85% CPU；系统始终留有余量；MemoryHigh：超过软上限会被内核/oomd“施压”，尽量回收；MemoryMax：硬上限，触碰就只杀“闯祸进程”，不会把整机干没。
+```bash
+# CPU：最多 85%（更保守，留 15% 给系统和 SSH）
+sudo systemctl set-property user.slice CPUAccounting=yes CPUQuota=85%
+
+# 内存：软上限 3.2G（超过会被压制），硬上限 3.6G（到达就被杀）
+# 按你机器实际 RAM 调整：总内存≈3.8G时，这个组合比较稳
+sudo systemctl set-property user.slice MemoryAccounting=yes MemoryHigh=3.2G MemoryMax=3.6G
+
+# 生效 & 查看
+sudo systemctl daemon-reexec
+systemctl show user.slice -p CPUQuota -p MemoryHigh -p MemoryMax
+cat /sys/fs/cgroup/user.slice/cpu.max
+cat /sys/fs/cgroup/user.slice/memory.high
+cat /sys/fs/cgroup/user.slice/memory.max
+```
+
 ---
 
 #  Linux 服务器使用笔记
@@ -494,3 +832,5 @@ conda list # 列出所有包
 `genact`，启动！
 
 如果你确定远程上的修改不重要，可以直接强制覆盖远程： `git push origin main --force` 。
+
+

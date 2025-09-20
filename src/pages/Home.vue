@@ -71,6 +71,7 @@ onMounted(async () => {
         <RouterLink to="/space1" class="themed-button">随记</RouterLink>
         <RouterLink to="/space2" class="themed-button">网络邻居</RouterLink>
         <RouterLink to="/academic" class="themed-button">个人学术</RouterLink>
+        <RouterLink to="/space3" class="themed-button">未开放</RouterLink>
       </div>
     </ContentBlock>
 
@@ -89,7 +90,7 @@ onMounted(async () => {
       </div>
     </ContentBlock> -->
 
-    <ContentBlock title="“火萤IV型”" backgroundImage="/bg/liuyin.jpg">
+    <!-- <ContentBlock title="“火萤IV型”" backgroundImage="/bg/liuyin.jpg">
       <p class="centered-text">
         我曾安眠，赤染之茧；<br />
         自破碎的天空坠落；<br />
@@ -98,7 +99,7 @@ onMounted(async () => {
         自无梦的长夜亮起；<br />
         绽放在终竟的明天。
       </p>
-    </ContentBlock>
+    </ContentBlock> -->
 
     <ContentBlock title="访客信息" backgroundImage="/bg/spring.jpg">
       <div class="centered-text">
@@ -114,9 +115,10 @@ onMounted(async () => {
         <span>系统：<b>{{ visitorInfo.os }}</b></span></p>
 
         <p>
-          <a href="/portal" target="_blank">
+          <!-- <a href="/portal" target="_blank">
             欢迎你的到来，祝你有晴朗的一天！
-          </a>
+          </a> -->
+          <img src="/fig/welcome.svg" alt="Welcome" width="50%">
         </p>
       </div>
     </ContentBlock>
@@ -130,7 +132,8 @@ onMounted(async () => {
 }
 
 .themed-button {
-  background-color: var(--primary-color);
+  /* background-color: var(--primary-color); */
+  background: linear-gradient(135deg, var(--primary-color), #89dceb);
   color: var(--ctp-mocha-base);
   padding: 0.6rem 1.2rem;
   border-radius: 999px;
@@ -142,7 +145,8 @@ onMounted(async () => {
 }
 
 .themed-button:hover {
-  background-color: var(--primary-color-hover);
+  /* background-color: var(--primary-color-hover); */
+  background: linear-gradient(135deg, #94e2d5, #cba6f7);
   transform: translateY(-2px);
 }
 

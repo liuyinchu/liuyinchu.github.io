@@ -14,6 +14,7 @@
       <BlockMarkdown :content="APL1" />
       <BlockMarkdown :content="APL2" />
       <BlockMarkdown :content="colab" />
+      <BlockMarkdown :content="colab2" />
   </PageWrapper>
 </template>
 
@@ -170,6 +171,23 @@ const colab = `
 - APL2-6 [散射光成像实验](https://github.com/TaLEsCuber/CoLabR/tree/main/APL/APL2-6)
 
 
+
+---
+
+`
+
+const colab2 = `
+## CoLab —— **Co**mputational physics as a **Lab**oratory.
+
+没想到吧，**CoLab** 还可以是“计算物理实验室”的意思！
+
+所以，这个子项目的主题（或者说它的中文名）是：
+
+**计算物理也是一种实验课吗？**
+
+由于我本人计划的研究内容与代码关系密切，因此我们在企划这个与编程相关的“实验报告分享项目”。
+
+更新中，请期待！
 
 ---
 
