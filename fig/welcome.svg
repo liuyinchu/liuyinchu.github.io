@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 435 50" width="435" height="50"
+     style="background-color:#0000">
+  <!-- 背景轻度加深 -->
+  <rect x="0" y="0" width="435" height="50" fill="#000" fill-opacity="0.01"/>
+
+  <defs>
+    <!-- 用视口坐标定义渐变：左上(0,0) -> 右下(435,50) -->
+    <linearGradient id="gradText" gradientUnits="userSpaceOnUse"
+                    x1="0" y1="0" x2="435" y2="50">
+      <stop offset="0%"    stop-color="#E57219"/>
+      <stop offset="16.7%" stop-color="#EDCC87"/>
+      <stop offset="40.5%" stop-color="#B4E6CD"/>
+      <stop offset="61%"   stop-color="#69F0E1"/>
+      <stop offset="97.8%" stop-color="#47F1E8"/>
+    </linearGradient>
+  </defs>
+
+  <path id="path0">
+    <animate id="d0" attributeName="d" begin="0s" dur="7666ms" fill="freeze"
+             values="m0,25 h0 ; m0,25 h435 ; m0,25 h435 ; m0,25 h435"
+             keyTimes="0;0.69564309939995;0.82608922515001;1"/>
+  </path>
+
+  <text font-family='"Fira Code", monospace'
+        font-size="20" dominant-baseline="middle"
+        x="50%" text-anchor="middle"
+        fill="url(#gradText)">
+    <textPath xlink:href="#path0">
+      欢迎你的到来，祝你有晴朗的一天！
+    </textPath>
+  </text>
+</svg>
