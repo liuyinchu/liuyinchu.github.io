@@ -1,3 +1,20 @@
+::: postit AI?4S
+
+<img src="/fig/inro_ml_dl.jpg" alt="机器学习和深度学习介绍" width="70%">
+
+本图展示了从传统机器学习到深度学习的典型方法。左侧为主成分分析（PCA）和决策树，分别体现了降维与特征提取、基于层级结构的分类与回归。右侧橙色区域为深度学习模型：包括全连接神经网络、卷积神经网络（CNN）、图神经网络（GNN）、注意力机制与Transformer网络、U-net结构、生成对抗网络（GAN）、变分自编码器（VAE）、扩散模型，以及深度强化学习（DRL）。这些方法覆盖了表示学习、生成建模、序列建模与决策优化等主要方向。
+
+**本图来源于 [arXiv2401.02321](https://arxiv.org/abs/2401.02321)** 。
+
+:::
+
+::: postit 点烬
+空阶凝白露，  
+远岫敛昏黄。  
+归雁声已尽，  
+寒鸦点夕阳。  
+:::
+
 ::: postit 妈妈多还是女儿多
 
 这是一个看似简单，其实暗藏逻辑的小问题。
@@ -35,7 +52,8 @@
 
 ::: postit ChatGPT5尚未发布
 
-## 2025 年 9 月 9 日，Gemini 2.5 Pro 坚持称 ChatGPT5 还没有发布……
+- 2025 年 9 月 9 日，Gemini 2.5 Pro 坚持称 ChatGPT5 还没有发布……
+- 2025 年 9 月 30 日，体验下来 Gemini 像个弱智，代码能力和推理能力明显下降远没有之前好用；ChatGPT 倒是一如既往的厉害，编程和推理都不错，就是我的不知道受了什么调教，它说的话我现在都不怎么看得懂；不过，最近体验了 Grok ，感觉还可以，考虑是否付费……
 :::
 
 ::: postit 非常神奇的“TypingSVG”
@@ -54,14 +72,28 @@
 
 ::: postit 一些神秘链接长期更新中
 
+- 20250930 一个十分难绷的网站：https://superexcuse.com/
+- 20250924 （量子）如何评价 6100 比特的中性原子（光镊）方案上了 Nature? https://arxiv.org/abs/2403.12021
 - 20250909 程序员如何优雅地做副业：https://github.com/easychen/lean-side-bussiness
-- 20250906 个人大模型 https://github.com/jingyaogong/minimind
 - 20250821 量子计算 https://www.zhihu.com/question/305099454/answer/1941869743654015698
 :::
 
-::: postit 如何在macOS中强制退出应用程序 
+::: postit macOS使用心得
+### 如何在macOS中强制退出应用程序 
 - 方案一：点击菜单中的 **Apple** 标志，然后选择 **Force Quit** 。
 - 方案二：按键盘上的 **Command-Option-Escape** 。
+
+### 截图技巧
+保存到文件不按 `Control`，保存到剪贴板加按 `Control`。
+| 功能 | 保存到 | 快捷键 |
+|------|--------|--------|
+| 全屏截图 (Capture Entire Screen) | 文件 | `Command + Shift + 3` |
+| 全屏截图 (Capture Entire Screen) | 剪贴板 | `Control + Command + Shift + 3` |
+| 指定区域截图 (Capture Selected Window) | 文件 | `Command + Shift + 4` |
+| 指定区域截图 (Capture Selected Window) | 剪贴板 | `Control + Command + Shift + 4` |
+| 窗口截图 (Capture Selected Portion) | 文件 | `Command + Shift + 4` <br> 点击空格可转换为窗口截图 然后单击鼠标截图 |
+| 窗口截图 (Capture Selected Portion) | 剪贴板 | `Control + Command + Shift + 4` <br> 点击空格可转换为窗口截图 然后单击鼠标截图 |
+| 截屏和录制选项 | – | `Command + Shift + 5` |
 :::
 
 ::: postit U盘选购心得 
