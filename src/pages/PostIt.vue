@@ -159,9 +159,6 @@ const handleScroll = () => {
 .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
-/* Vue transition-group 的动画样式 
-  这是实现列表交错动画的标准方式
-*/
 .card-list-move,
 .card-list-enter-active,
 .card-list-leave-active {
@@ -181,4 +178,31 @@ const handleScroll = () => {
 .content-block:not(:last-child) {
   margin-bottom: 2rem; /* 为除最后一个元素外的所有块添加下外边距 */
 }
+
+.markdown-body code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background-color: #6c7086;
+  color: #89dceb;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+/* 要用也要改成上述形式 */
+/* :deep(pre) {
+  position: relative; 
+  background-color: rgb(24, 24, 37);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  margin: 1.5rem 0;
+  border: 1px solid var(--border-color);
+}
+
+:deep(pre code) {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+} */
 </style>

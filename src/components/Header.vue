@@ -91,11 +91,9 @@ import { RouterLink } from 'vue-router'
     <nav class="nav-menu" :class="{ 'is-active': isMenuOpen }">
       <RouterLink to="/postit" @click="closeMenu">日志</RouterLink>
       <RouterLink to="/space1" @click="closeMenu">随记</RouterLink>
-      <!-- <RouterLink to="/space2" @click="closeMenu">网络邻居</RouterLink> -->
       <RouterLink to="/resource" @click="closeMenu">资源链接</RouterLink>
       <RouterLink to="/code" @click="closeMenu">代码</RouterLink>
-      <RouterLink to="/academic" @click="closeMenu">个人学术</RouterLink>
-      <!-- <RouterLink to="/notes" @click="closeMenu">笔记</RouterLink> -->
+      <RouterLink to="/research" @click="closeMenu">学术主页</RouterLink>
     </nav>
   </header>
 </template>
@@ -163,7 +161,19 @@ function closeMenu() {
   transform: rotate(-15deg) scale(1.1);
 }
 .logo-area:hover .site-name {
-  color: var(--primary-color-hover);
+  /* color: var(--primary-color-hover); */
+  background: linear-gradient(
+    135deg,
+    #E57219 0%,
+    #EDCC87 16.7%,
+    #B4E6CD 40.5%,
+    #69F0E1 61%,
+    #47F1E8 97.8%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; /* Safari/Chrome */
+  background-clip: text;                 /* Firefox */
+  color: transparent;
 }
 
 /* ===== 菜单样式 ===== */

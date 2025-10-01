@@ -21,7 +21,7 @@
     />
 
         <LinkButtons :buttons="[
-      { text: '使用/下载/托管仓库', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/learning-and-practice-linux-server-login-welcome-script-attempt' }
+      { text: 'Click Here to Get it !', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/learning-and-practice-linux-server-login-welcome-script-attempt' }
     ]" />
 
     <BlockMarkdown :content="proj2" />
@@ -34,7 +34,7 @@
     />
 
         <LinkButtons :buttons="[
-      { text: '使用/下载/托管仓库', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/clebsch-gordan-coefficient' }
+      { text: 'Click Here to Get it !', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/clebsch-gordan-coefficient' }
     ]" />
 
     <BlockMarkdown :content="proj3" />
@@ -46,7 +46,7 @@
     />
 
         <LinkButtons :buttons="[
-      { text: '使用/下载/托管仓库', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-latex-template/template-v1.4.1' }
+      { text: 'Click Here to Get it !', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-latex-template/template-v1.4.1' }
     ]" />
 
   </PageWrapper>

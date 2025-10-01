@@ -6,10 +6,10 @@ import LinkButtons from '../components/common/LinkButtons.vue'
 
 const toc = [
   { text: '查询、百科类', id: 'sec-query' },
-  { text: '文献',         id: 'sec-papers' },
-  { text: 'Python 库、包', id: 'sec-python' },
+  { text: 'Python', id: 'sec-python' },
+  { text: 'Rust',   id: 'sec-rust' },
   { text: '电脑相关',     id: 'sec-computer' },
-  { text: '一些文章、笔记和资料', id: 'sec-notes' },
+  { text: '一些资料', id: 'sec-notes' },
   { text: '工具推荐',     id: 'sec-tools' },
   { text: '书籍推荐',     id: 'sec-books' },
   { text: '其它',         id: 'sec-others' },
@@ -21,10 +21,7 @@ const resourceText = `
 
 我在学习中收集整理的一些优质资源，欢迎探索。
 
-<h2 id="sec-query" class="sec">查询、百科类 <a href="#top" class="back-top">TOP ↑</a></h2>
-
-### [Git教程](https://liaoxuefeng.com/books/git/introduction/index.html)
-廖雪峰的 Git 教程，系统、清晰，是入门 Git 的优质资源。学 Git，就用廖雪峰教程！
+<h2 id="sec-query" class="sec">查询、百科及文献类 <a href="#top" class="back-top">TOP ↑</a></h2>
 
 ### [小时百科](https://wuli.wiki/index.html)
 一个结构化的数学与物理知识查询平台，内容简明而准确。
@@ -40,18 +37,18 @@ Gravitational Wave Open Science Center 是一个由 LIGO 和 Virgo 合作组织�
 该中心提供经过预处理和校准的 LIGO/Virgo 数据，涵盖多个观测运行周期（O1、O2、O3 等），并配套事件目录、数据质量信息和分析工具文档，方便用户下载、分析和复现引力波事件。
 GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资源门户。
 
-<h2 id="sec-papers" class="sec">文献 <a href="#top" class="back-top">TOP ↑</a></h2>
-
 ### [Nature 物理综述](https://www.nature.com/natrevphys/)
 Nature Physics 主要用于查找**综述**文章。
 
-<h2 id="sec-python" class="sec">Python 库、包 <a href="#top" class="back-top">TOP ↑</a></h2>
+<h2 id="sec-python" class="sec">人生苦短，我学 Python ！<a href="#top" class="back-top">TOP ↑</a></h2>
+
+Python 是我的主力编程语言，它是一门**脚本语言**，其强大丰富优先的**生态**是其热门的一大原因。以下整理我用过的包和库中我推荐的：
 
 ### [UV](https://docs.astral.sh/uv/)
-cargo-like 的现代 Python 包管理。一个用 Rust 编写的极快的 Python 包和项目管理器。
+Cargo-like 的**现代** Python 包管理。一个用 Rust 编写的极快的 Python 包和项目管理器，用过 Cargo 你就能想象到它有多好用。
 
 ### [Ruptures](https://centre-borelli.github.io/ruptures-docs/)
-ruptures 是一个专注于时间序列变点检测（change point detection）的 Python 库。它支持多种统计模型和检测算法，适用于信号处理、金融、异常检测等领域。
+ruptures 是一个专注于**时间序列变点检测**(change point detection) 的 Python 库。它支持多种统计模型和检测算法，适用于信号处理、金融、异常检测等领域。
 
 主要功能：
 
@@ -60,7 +57,7 @@ ruptures 是一个专注于时间序列变点检测（change point detection）�
 * 灵活定义损失函数与约束条件
 
 ### [Optuna](https://optuna.org/)
-Optuna 是一个现代化、自动化的超参数优化框架，用于高效搜索机器学习模型或算法的最佳参数组合，广泛支持 PyTorch、LightGBM、XGBoost 等库。
+Optuna 是一个现代化、自动化的**超参数优化框架**，用于高效搜索机器学习模型或算法的最佳参数组合，广泛支持 PyTorch、LightGBM、XGBoost 等库。
 
 主要功能：
 
@@ -69,10 +66,10 @@ Optuna 是一个现代化、自动化的超参数优化框架，用于高效搜�
 * 具备可视化工具和模型保存功能
 
 ### [XGBoost](https://xgboost.readthedocs.io/en/latest/index.html)
-XGBoost（eXtreme Gradient Boosting，极端梯度提升）是一种高效的机器学习算法，由华盛顿大学的Tianqi Chen开发。它是梯度提升决策树（GBDT）的一种改进实现，通过集成多个弱学习器（通常是决策树）来构建强大的预测模型。
+XGBoost（eXtreme Gradient Boosting，极端梯度提升）是一种高效的机器学习算法，由华盛顿大学的陈天奇 (Tianqi Chen) 开发。它是梯度提升决策树（GBDT）的一种改进实现，通过集成多个弱学习器（通常是决策树）来构建强大的预测模型。
 
 ### [scikit-image](https://scikit-image.org/)
-scikit-image 是 Python 的一个开源图像处理库，基于 NumPy 和 SciPy 构建，提供了丰富的图像处理算法，使用简单、功能强大，广泛应用于科研和工程实践中。
+scikit-image 是 Python 的一个**开源图像处理库**，基于 NumPy 和 SciPy 构建，提供了丰富的图像处理算法，使用简单、功能强大，广泛应用于科研和工程实践中。
 
 主要功能：
 
@@ -82,19 +79,45 @@ scikit-image 是 Python 的一个开源图像处理库，基于 NumPy 和 SciPy 
 * 颜色空间转换与几何变换
 
 ### [GWpy](https://gwpy.github.io/)
-GWpy 是一个专为引力波数据分析设计的 Python 科学计算库，广泛应用于 LIGO、Virgo 等引力波探测项目中。
+GWpy 是一个专为**引力波数据分析**设计的 Python 科学计算库，广泛应用于 LIGO、Virgo 等引力波探测项目中。
 它提供高层接口用于获取、处理和可视化引力波数据，支持时域分析、频谱计算、数据质量标记与筛选等功能，兼容主流科学库如 NumPy 与 Matplotlib，适合科研与教学场景。
 GWpy 还能直接连接 Gravitational Wave Open Science Center（GWOSC）下载公开数据，是引力波天文学研究的重要工具之一。
 
 ### [Dash](https://dash.plotly.com/)
-Dash 是最早且最值得信赖的低代码 Python 框架，可用于快速构建交互式数据应用程序。
+Dash 是最早且最值得信赖的低代码 Python 框架，可用于快速**构建交互式数据应用程序**。
 凭借广泛的用户社区和数以百万计的下载量，Dash 已成为数据科学家和机器学习工程师首选的开发工具，能够无需编写 JavaScript 代码，轻松将模型与数据洞见转化为可交付的 Web 应用。
-
-我用它开发了我们 2025 年大创的初版实验系统数字控制面板，很美观。
 
 此外，由社区维护的框架 [dash-bootstrap](https://www.dash-bootstrap-components.com/) 十分的好上手且好用，而且它内置了许多美观的[主题](https://www.dash-bootstrap-components.com/docs/themes/explorer/)。
 
+### [PySINDy](https://pysindy.readthedocs.io/en/latest/index.html)
+PySINDy 是一个用于**系统辨识**的开源工具包，核心基于 Brunton 等人在 2016 年提出的稀疏非线性动力系统辨识方法（Sparse Identification of Nonlinear Dynamical systems, SINDy）。该工具包同时实现了相关文献中的其他方法，为数据驱动的动力学建模提供了统一框架。
+
+系统辨识的目标是利用测量数据推断系统的控制方程。一旦得到这些方程，研究者即可基于模型进行未来状态预测、设计与优化控制输入，或借助解析方法开展理论分析。与黑箱方法不同，SINDy 所得到的模型具有高度可解释性与良好的泛化能力。
+
+##### *“掌握 Python 语言，享受完美人生！”*
+
+<h2 id="sec-rust" class="sec">Rust ，启动 ！ <a href="#top" class="back-top">TOP ↑</a></h2>
+
+Rust 是我目前的第一编程语言。它的性能和**安全性使**其在系统编程、嵌入式开发和高性能计算等领域备受青睐。以下是我在使用且推荐的一些资源：
+
+### [Rust 官方文档](https://www.rust-lang.org/learn)
+Rust 官方文档是学习 Rust 编程语言的权威资源，涵盖从基础语法到高级特性，适合各个水平的开发者。
+
+### [The Rust Programming Language (Rust Book)](https://doc.rust-lang.org/book/)
+《The Rust Programming Language》（通常称为 Rust Book）是学习 Rust 编程语言的权威指南，涵盖基础语法、所有权系统、错误处理、并发编程等核心概念，适合初学者和有经验的开发者。
+
+以下特别贴出几份中文翻译版：
+- [中文版 1](https://kaisery.github.io/trpl-zh-cn/) (READING)
+- [中文版 2](https://rustwiki.org/zh-CN/book/)
+- [中文版 3](https://rust-lang.xfoss.com/)
+
 <h2 id="sec-computer" class="sec">电脑相关 <a href="#top" class="back-top">TOP ↑</a></h2>
+
+### [也许应该从 Markdown 教程开始](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
+我推荐的是 GitHub 的 Markdown 教程，简洁、实用、易懂。当然，也可以参考 [Markdown 官方教程](https://www.markdownguide.org/)。
+
+### [Git教程](https://liaoxuefeng.com/books/git/introduction/index.html)
+廖雪峰的 Git 教程，系统、清晰，是入门 Git 的优质资源。学 Git，就用廖雪峰教程！
 
 ### [macOS配置指南](https://sourabhbajaj.com/mac-setup/)
 面向开发者的 macOS 系统配置指南，涵盖开发环境与效率工具。
@@ -210,6 +233,15 @@ PC Game Cheats and Mods.
 - 固体物理：David Tong 的 **Lectures on Solid State Physics**，这是一份非常好的固体物理讲义，可以在剑桥大学的课程网站上[获取](https://www.damtp.cam.ac.uk/user/tong/solidstate.html)。
 - 引力波物理：推荐给我们上课的胡一鸣老师写的[讲义](https://github.com/yiminghu-SYSU/GW_DA_notes)。
 
+### 专业书籍
+
+这一小节列出我进入研究生阶段后按照兴趣和要求阅读的一些专业书籍中我觉得很好的书籍的推荐。
+
+- 机器学习：《机器学习》（周志华）
+- 深度学习：《深度学习》（Ian Goodfellow）
+- 强化学习：《强化学习：原理与方法》（Richard S. Sutton & Andrew G. Barto）
+- 信号与系统：《信号与系统》（Alan V. Oppenheim & Alan S. Willsky）
+
 暂时先列出这些。
 
 <h2 id="sec-others" class="sec">其它 <a href="#top" class="back-top">TOP ↑</a></h2>
@@ -217,7 +249,7 @@ PC Game Cheats and Mods.
 ### [该链接已失效](https://naiixi.com)
 此链接目前无法访问，推荐移除或替换为有效资源。
 
-### [502 Bad Gateway](https://91b09.cc/)
+### [502 Bad Gateway](https://zh.annas-archive.org/)
 502 Bad Gateway 是 HTTP 状态码的一种，表示服务器作为网关或代理，从上游服务器收到无效响应。
 
 `

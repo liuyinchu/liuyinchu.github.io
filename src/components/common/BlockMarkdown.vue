@@ -173,6 +173,7 @@ onUpdated(addCopyButtons)
 .markdown-body {
   line-height: 1.8;
   font-size: 1.05rem;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
   color: var(--text-color);
 }
 
@@ -212,8 +213,12 @@ onUpdated(addCopyButtons)
 :deep(blockquote) {
   margin: 1.5rem 0;
   padding: 0.5rem 1.5rem;
-  background-color: var(--surface-color);
-  border-left: 4px solid var(--accent-color);
+  background: linear-gradient(
+  90deg,
+  #74c7ec 0%,    /* 起点 */
+  #313244 1%,   /* 中间颜色快速到位 */
+  #313244 100%   /* 后半段渐变慢慢延伸 */);
+  border-left: 2.5px solid #74c7ec;
   color: var(--ctp-mocha-subtext1);
 }
 :deep(blockquote p:last-child) { margin-bottom: 0; }
@@ -229,9 +234,9 @@ onUpdated(addCopyButtons)
 /* [新增] 分割线样式 */
 :deep(hr) {
   border: 0; /* 移除默认边框 */
-  height: 1px; /* 为线条本身的高度 */
-  margin: 3.5rem 0; /* 增加垂直间距，让分割感更强 */
-  background-color: rgb(242, 205, 205); /* 线条的基础颜色 */
+  height: 2.0px; /* 为线条本身的高度 */
+  margin: 2.0rem 0; /* 增加垂直间距，让分割感更强 */
+  background-color: #b4befe; /* 线条的基础颜色 */
   position: relative; /* 为伪元素提供定位上下文 */
   text-align: center; /* 使中间的符号居中 */
 }
@@ -263,8 +268,8 @@ onUpdated(addCopyButtons)
 /* --- 代码块样式优化 --- */
 :deep(code) {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  background-color: var(--surface-color-hover);
-  color: var(--ctp-mocha-subtext1);
+  background-color: #6c7086;
+  color: #89dceb;
   padding: 0.2em 0.4em;
   border-radius: 4px;
   font-size: 0.9em;

@@ -181,7 +181,7 @@ onBeforeUnmount(() => {
   width: 0.6ch;          /* 与字符网格对齐，避免挤动文本 */
   margin-left: 0.1ch;
   animation: caret-blink var(--caret-ms, 850ms) steps(1, end) infinite;
-  color: var(--primary-color);
+  color: var(--text-color);
 }
 
 @keyframes caret-blink {

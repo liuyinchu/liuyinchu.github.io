@@ -19,11 +19,6 @@ const notes = [
     name: 'Optics Assignment',
     desc: '2022级光学课作业个人习题解答（英文版）。',
     url: '/files/notes/ysy_optics.pdf'
-  },
-  {
-    name: '2024年大创项目：LHASSO高能粒子能量数据 AI 重构和分析',
-    desc: '给小组的汇报人做的PPT，结果他没用上；不过挺详细的，倒是可以当个关于 GNN 的介绍笔记。',
-    url: '/files/notes/lhasso_gnn_presentation_ysyversion.pdf'
   }
 ]
 

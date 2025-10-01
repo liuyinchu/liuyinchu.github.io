@@ -16,16 +16,6 @@ include current-theme.conf
 
 # font
 # 原始参考：https://github.com/patricorgi/dotfiles_demo/blob/main/.config/kitty/kitty.conf
-# font_size 18
-# font_family          Maple Mono NF CN ExtraLight
-# bold_font            Maple Mono NF CN Bold
-# italic_font          Maple Mono NF CN Italic
-# bold_italic_font     Maple Mono NF CN Bold Italic
-# font_features        MapleMono-NF-CN-ExtraLight +cv01 +ss02 +ss04 +ss05 +zero
-# font_features        MapleMono-NF-CN-Bold +cv01 +ss02 +ss04 +ss05 +zero
-# font_features        MapleMono-NF-CN-Italic +cv01 +ss02 +ss04 +ss05 +zero
-# font_features        MapleMono-NF-CN-BoldItalic +cv01 +ss02 +ss04 +ss05 +zero
-# disable_ligatures cursor
 # 字体设置
 font_size              18
 font_family      family="Maple Mono NF CN"
@@ -71,12 +61,6 @@ cursor_trail_start_threshold 2
 
 # 禁用 shell 自动改变光标形状（可选）
 shell_integration no-cursor
-
-
-
-# BEGIN_KITTY_FONTS
-
-# END_KITTY_FONTS
 ```
 
 ## 快速开始
@@ -179,9 +163,9 @@ cursor_trail_start_threshold 2
 shell_integration no-cursor
 ```
 
-## 关于ssh，请参考以下官方文件
+## 关于 `ssh`
 
-### 核心就是：
+核心就是：
 
 **直接连接时请把 `ssh` 换为 `kitten ssh`。**
 
@@ -197,9 +181,9 @@ shell_integration no-cursor
 *0.25.0 版本新增：自动 Shell 集成、文件传输和连接重用功能。*
 *0.30.0 版本新增：自动转发远程控制套接字。*
 
-`ssh kitten` 能让你轻松登录到远程主机，并自动在远端设置好环境，使其像你的本地 shell 一样舒适。你可以指定在远程主机上设置的环境变量以及要复制到那里的文件，让你的远程体验如同本地操作。此外，它还会自动在远程主机上设置 Shell 集成，并将 kitty 的 terminfo 数据库复制过去。
+`kitten ssh` 能让你轻松登录到远程主机，并自动在远端设置好环境，使其像你的本地 shell 一样舒适。你可以指定在远程主机上设置的环境变量以及要复制到那里的文件，让你的远程体验如同本地操作。此外，它还会自动在远程主机上设置 Shell 集成，并将 kitty 的 terminfo 数据库复制过去。
 
-`ssh kitten` 是对传统 `ssh` 命令行程序的一个**轻量级封装**，支持所有相同的选项、参数和配置。在交互式使用场景中，它可以完全替代 `ssh`。要试用它，只需运行：
+`kitten ssh` 是对传统 `ssh` 命令行程序的一个**轻量级封装**，支持所有相同的选项、参数和配置。在交互式使用场景中，它可以完全替代 `ssh`。要试用它，只需运行：
 
 ```sh
 kitten ssh 要连接的主机名
@@ -219,11 +203,11 @@ alias s="kitten ssh"
 map f1 new_window_with_cwd
 ```
 
-那么，按下 **F1** 键将会使用 `ssh kitten` 自动打开一个新窗口，并登录到相同的主机和相同的目录下。
+那么，按下 **F1** 键将会使用 `kitten ssh` 自动打开一个新窗口，并登录到相同的主机和相同的目录下。
 
 ### 配置
 
-`ssh kitten` 可以通过 `~/.config/kitty/ssh.conf` 文件进行配置。你可以在此文件中指定要在远程主机上设置的环境变量，以及要从本地复制到远程主机的文件。我们来看一个简单的例子：
+`kitten ssh` 可以通过 `~/.config/kitty/ssh.conf` 文件进行配置。你可以在此文件中指定要在远程主机上设置的环境变量，以及要从本地复制到远程主机的文件。我们来看一个简单的例子：
 
 ```conf
 # 复制设置一些常用工具所需的文件和目录

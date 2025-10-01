@@ -59,9 +59,9 @@ onMounted(async () => {
       <div class="button-group">
         <RouterLink to="/code" class="themed-button">代码</RouterLink>
         <RouterLink to="/resource" class="themed-button">资源链接</RouterLink>
+        <RouterLink to="/research" class="themed-button">学术主页</RouterLink>
         <RouterLink to="/notes" class="themed-button">笔记</RouterLink>
         <RouterLink to="/labreport" class="themed-button">实验报告</RouterLink>
-        <RouterLink to="/paper-switch-brush" class="themed-button">论文刷刷乐</RouterLink>
       </div>
     </ContentBlock>
 
@@ -70,8 +70,8 @@ onMounted(async () => {
         <RouterLink to="/postit" class="themed-button">日志</RouterLink>
         <RouterLink to="/space1" class="themed-button">随记</RouterLink>
         <RouterLink to="/space2" class="themed-button">网络邻居</RouterLink>
-        <RouterLink to="/academic" class="themed-button">个人学术</RouterLink>
-        <RouterLink to="/space3" class="themed-button">未开放</RouterLink>
+        <RouterLink to="/paper-switch-brush" class="themed-button">论文刷刷乐</RouterLink>
+        <RouterLink to="/academic" class="themed-button">个人学术</RouterLink>  
       </div>
     </ContentBlock>
 

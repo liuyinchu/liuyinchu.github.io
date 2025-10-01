@@ -16,13 +16,11 @@ const dockGroups = [
     color: '#94e2d5', // Mocha - Teal
     links: [
       { name: 'GitHub', url: 'https://github.com/' },
-      { name: '视频格式转换', url: 'https://cloudconvert.com' },
-      { name: 'Tikz绘图辅助', url: 'https://www.mathcha.io/' },
+      { name: '通用格式转换', url: 'https://cloudconvert.com' },
       { name: 'LaTeX公式编辑器', url: 'https://www.latexlive.com/' },
       { name: 'Google翻译', url: 'https://translate.google.com' },
       { name: '文件传输助手', url: 'https://filehelper.weixin.qq.com/' },
       { name: 'Bing', url: 'https://cn.bing.com/' },
-      { name: '菜鸟教程', url: 'https://www.runoob.com/' },
       { name: 'Google', url: 'https://www.google.com/' },
     ]
   },
@@ -31,6 +29,7 @@ const dockGroups = [
     color: '#f9e2af', // Mocha - Yellow
     links: [
       { name: 'arXiv', url: 'https://arxiv.org/' },
+      { name: '菜鸟教程', url: 'https://www.runoob.com/' },
       { name: '小时百科', url: 'https://wuli.wiki/online/index.html' },
       { name: '马克思主义文库', url: 'https://www.marxists.org/chinese/' },
       { name: 'Git教程&速查', url: 'https://liaoxuefeng.com/books/git/introduction/index.html' },
@@ -45,6 +44,8 @@ const dockGroups = [
       { name: 'B站', url: 'https://www.bilibili.com/' },
       { name: '知乎', url: 'https://www.zhihu.com/' },
       { name: 'Catppuccin调色板', url: 'https://catppuccin.com/palette/' },
+      { name: 'Pixiv', url: 'https://www.pixiv.net/' },
+      { name: '中山大学统一门户', url: 'https://portal.sysu.edu.cn/' },
     ]
   }
 ]

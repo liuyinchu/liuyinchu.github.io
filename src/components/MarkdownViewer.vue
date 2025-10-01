@@ -126,7 +126,7 @@ onMounted(async () => {
   max-width: 860px;
   margin: 2rem auto;
   padding: 0 1rem;
-  font-family: 'Inter', 'Noto Serif SC', 'Times New Roman', serif;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
   line-height: 1.9;
   font-size: 1.05rem;
   color: var(--text-color);
@@ -176,8 +176,8 @@ onMounted(async () => {
 } */
 :deep(code) {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  background-color: var(--surface-color-hover);
-  color: var(--ctp-mocha-subtext1);
+  background-color: #6c7086;
+  color: #89dceb;
   padding: 0.2em 0.4em;
   border-radius: 4px;
   font-size: 0.9em;
@@ -208,5 +208,25 @@ mjx-container {
   font-family: 'STIX Two Math', 'Latin Modern Math', 'Noto Serif SC', serif !important;
   font-size: 1.05rem;
   line-height: 1.8;
+}
+
+:deep(blockquote) { 
+  margin: 0; padding: 0 1em; color: #bac2de; border-left: .25em solid #74c7ec; 
+  background: linear-gradient(
+  90deg,
+  #74c7ec 0%,    /* 起点 */
+  #45475a 1%,   /* 中间颜色快速到位 */
+  #45475a 100%   /* 后半段渐变慢慢延伸 */
+);
+}
+
+/* [新增] 分割线样式 */
+:deep(hr) {
+  border: 0; /* 移除默认边框 */
+  height: 2.0px; /* 为线条本身的高度 */
+  margin: 0.5rem 0; /* 增加垂直间距，让分割感更强 */
+  background-color: #b4befe; /* 线条的基础颜色 */
+  position: relative; /* 为伪元素提供定位上下文 */
+  text-align: center; /* 使中间的符号居中 */
 }
 </style>

@@ -1,7 +1,15 @@
 [
   {
+    "id": "Introduction_to_the_Two_Stage_Torsion_Pendulum",
+    "title": "An Introduction to the Two-Stage Torsion Pendulum",
+    "author": "pifuyuini",
+    "date": "2025-9-27",
+    "desc": "文献阅读笔记·学习和推导两级扭摆的相关内容。",
+    "image": "/bg/outside_sky.jpg"
+  },
+  {
     "id": "learn_rust",
-    "title": "学学学习心得编程语言 Rust （长期更新）",
+    "title": "学学学习 Rust （个人笔记·长期更新）",
     "author": "liuyinchu",
     "date": "2025-9-20",
     "desc": "Rust ，启动！",
@@ -9,7 +17,7 @@
   },
   {
     "id": "note_of_configure_server",
-    "title": "学学学着使用 Linux 云主机（长期更新）",
+    "title": "学学学着使用 Linux + 云主机（个人笔记·长期更新）",
     "author": "liuyinchu",
     "date": "2025-9-6",
     "desc": "个人学习日志式笔记。",
@@ -64,27 +72,19 @@
     "image": "/bg/open.jpeg"
   },
   {
-    "id": "introduction_to_open_source_protocol",
-    "title": "开源协议简介",
-    "author": "pifuyuini",
-    "date": "2025-05-01",
-    "desc": "如果你想参与或发起一个开源项目，了解常见的开源协议是第一步。本文为你提供最基本的介绍。",
-    "image": "/bg/heroine.jpg"
-  },
-  {
     "id": "naming_guide",
-    "title": "命名规范建议",
+    "title": "规范命名建议 & 倡议",
     "author": "pifuyuini",
     "date": "2025-03-01",
     "desc": "规范命名对于代码的可读性和长期维护至关重要。本文将探讨一些常见的命名场景并给出建议。",
     "image": "/bg/camping.png"
   },
   {
-    "id": "python_note_class_specific_methods",
-    "title": "Python中类的专有方法",
+    "id": "learn_python",
+    "title": "学学学习 Python （个人笔记·长期更新）",
     "author": "pifuyuini",
     "date": "2025-01-01",
-    "desc": "这是一篇关于 Python 类中那些以双下划线开头和结尾的“魔术方法”的学习笔记。",
+    "desc": "人生苦短，我学 Python ！",
     "image": "/bg/IMG_Elysia.jpg"
   }
 ]

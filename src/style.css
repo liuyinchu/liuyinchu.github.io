@@ -223,7 +223,7 @@ a:hover {
   通过 .markdown-body 类来应用。
 
 /* --- 表格样式 --- */
-.markdown-body table {
+/* .markdown-body table {
   width: 100%;
   margin-top: 1em;
   margin-bottom: 1em;
@@ -250,7 +250,51 @@ a:hover {
   background-color: var(--surface-color-hover);
 }
 .markdown-body tbody tr:hover {
-  /* background-color: var(--accent-color); */
   background-color: rgb(147, 153, 178);
   color: var(--ctp-mocha-base);
+} */
+.markdown-body table {
+  border-spacing: 0;
+  border-collapse: collapse;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+  font-variant: tabular-nums;
+}
+
+.markdown-body td,
+.markdown-body th {
+  padding: 0;
+}
+
+.markdown-body table th {
+  font-weight: 600;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  padding: 6px 13px;
+  border: 2px solid #a6adc8;
+}
+
+.markdown-body table td>:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body table tr {
+  border-top: 2px solid #a6adc8;
+}
+
+.markdown-body table img {
+  background-color: transparent;
+}
+
+.markdown-body th {
+  font-weight: bold;
+}
+
+.markdown-body tbody tr:hover {
+  background-color: #11111b;
+  color: #89b4fa;
 }

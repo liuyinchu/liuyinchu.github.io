@@ -18,6 +18,7 @@ import YsyLatex from '../pages/YsyLatex.vue'
 import YsyDataAnalysisHelper from '../pages/YsyDataAnalysisHelper.vue'
 import BriskNexus from '../pages/BriskNexus.vue'
 import PaperSwitchBrush from '../pages/PaperSwitchBrush.vue'
+import Research from '../pages/Research.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -38,6 +39,7 @@ const routes = [
   { path: '/ysy-data-analysis-helper', component: YsyDataAnalysisHelper },
   { path: '/brisk-nexus', component: BriskNexus },
   { path: '/paper-switch-brush', component: PaperSwitchBrush },
+  { path: '/research', component: Research },
 ]
 
 const router = createRouter({
