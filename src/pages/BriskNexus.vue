@@ -1,6 +1,6 @@
 <template>
   <PageWrapper>
-    <pre align="center">
+    <pre class='ascii_text'>
 ██████╗ ██████╗ ██╗███████╗██╗  ██╗    ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗
 ██╔══██╗██╔══██╗██║██╔════╝██║ ██╔╝    ████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝
 ██████╔╝██████╔╝██║███████╗█████╔╝     ██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗
@@ -125,3 +125,11 @@ demo文件可以在 v1.3-release 中找到，不过会与 v1.4 不兼容。
 `
 
 </script>
+
+<style scoped>
+.ascii_text {
+  font-family: monospace; /* 指定 Fira Code */
+  text-align: center;                  /* 居中 */
+  white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
+}
+</style>

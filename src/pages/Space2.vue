@@ -101,9 +101,10 @@ onMounted(async () => {
 }
 
 .page-header h1 {
-  font-size: 2.8rem;
+  font-size: 3rem;
   font-weight: 800;
   color: var(--primary-color);
+  font-family: "LXGW WenKai";
 }
 
 .page-header .intro-quote {
@@ -176,6 +177,7 @@ onMounted(async () => {
   font-weight: 700;
   color: var(--primary-color);
   margin-bottom: 1rem;
+  font-family: "LXGW WenKai";
 }
 
 .section-title-small {
@@ -183,17 +185,20 @@ onMounted(async () => {
   font-weight: 600;
   color: var(--text-color);
   margin-bottom: 1rem;
+  font-family: "LXGW WenKai";
 }
 
 .section-intro {
   color: var(--ctp-mocha-subtext1);
   margin-bottom: 1.5rem;
+  font-family: "LXGW WenKai";
 }
 
 .rules-section ul {
   list-style: none;
   padding: 0;
   color: var(--text-color);
+  font-family: "LXGW WenKai";
 }
 
 .rules-section li {
@@ -217,6 +222,7 @@ onMounted(async () => {
   font-size: 0.9rem;
   line-height: 1.7;
   color: var(--ctp-mocha-subtext0);
+  font-family: "LXGW WenKai";
 }
 
 .important-notice strong {
@@ -226,6 +232,7 @@ onMounted(async () => {
 .format-section p {
   margin-bottom: 1rem;
   font-size: 0.95rem;
+  font-family: "LXGW WenKai";
 }
 
 /* 代码示例区样式 */

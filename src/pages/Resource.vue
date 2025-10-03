@@ -42,7 +42,34 @@ Nature Physics 主要用于查找**综述**文章。
 
 <h2 id="sec-python" class="sec">人生苦短，我学 Python ！<a href="#top" class="back-top">TOP ↑</a></h2>
 
-Python 是我的主力编程语言，它是一门**脚本语言**，其强大丰富优先的**生态**是其热门的一大原因。以下整理我用过的包和库中我推荐的：
+Python 是我的主力编程语言，它是一门**脚本语言**，其强大丰富优先的**生态**是其热门的一大原因。
+
+借此我也想向大家安利一下 [Python](https://docs.python.org/3/) 语言（虽然从热度上讲好像不用安利）。
+
+> A language isn't something you learn so much as something you join. — Arika Okrent
+
+如果你正在寻找一门既实用又优雅的编程语言，那么 Python 绝对值得你尝试。它不是冷冰冰的代码堆砌，而是一种能够真正让你感受到编程乐趣的语言。无论你是打算开发网站、做游戏、研究科学数据，还是单纯想培养一门新技能，Python 都能给你一个切入口。学习它的过程其实也是加入一个庞大而活跃的全球社区的过程，你会发现自己身边有无数志同道合的人，他们分享经验、互相帮助，甚至共同创造出影响世界的软件。
+
+Python 的特别之处在于它的简洁与可读性。代码往往就像自然语言一样，让初学者更容易理解，同时又保留了强大的灵活性，足以支撑各种复杂的项目。它的设计理念强调美感与简约，这不仅让编程变得更轻松，还能让你在写代码时享受到一种独特的优雅。更妙的是，它从来不限定你只能用某一种编程风格，你完全可以根据需要自由探索，不断扩展自己的思维方式。
+
+更重要的是，Python 是开源的，是一个全球志愿者社区共同努力的成果。正是这种多元化的贡献，让 Python 不断进化、保持生命力。你可能会在某个角落遇见一段由普通爱好者写下的代码，而它正在影响着数以万计的项目和开发者。这种连接感和归属感，正是很多人爱上 Python 的原因之一。
+
+所以，如果你想要一门语言既能帮助你轻松入门，又能陪伴你一路成长，甚至在未来的学习和工作中不断提供新的可能性，那 Python 一定会让你不虚此行。
+
+#### 一个起点？
+
+毫无疑问地，综合来看 Python 最好的入门方式是 [CS61A](https://cs61a.org/) 。或者 CS50X 也不错（见后文）。
+
+但是，如果你和我一样也是刚高考完且对电脑一无所知的选手，我更推荐的是我的起始方式——北理工嵩天老师的 [Python 入门课程](https://www.bilibili.com/video/BV1JL4y1x7xC)搭配浙大出版社的 Python 程序设计。它们是更适合“零基础”选手的中文入门资源。
+
+学习编程最好的方式就是直接上手多写代码多试错，所以，**不要犹豫，马上开始吧！**
+
+#### “其强大丰富优先的**生态**是其热门的一大原因”，所以接下来是我推荐的资源：
+
+### [COMPOSING PROGRAMS](https://composingprograms.com/)
+计算机圣经《计算机程序的构造和解释》（SICP）的 Python 版本，伯克利 CS61A 的配套教材。
+
+**当然，我更推荐的是[中文翻译版](https://composingprograms.netlify.app/)。**
 
 ### [UV](https://docs.astral.sh/uv/)
 Cargo-like 的**现代** Python 包管理。一个用 Rust 编写的极快的 Python 包和项目管理器，用过 Cargo 你就能想象到它有多好用。
@@ -66,7 +93,7 @@ Optuna 是一个现代化、自动化的**超参数优化框架**，用于高效
 * 具备可视化工具和模型保存功能
 
 ### [XGBoost](https://xgboost.readthedocs.io/en/latest/index.html)
-XGBoost（eXtreme Gradient Boosting，极端梯度提升）是一种高效的机器学习算法，由华盛顿大学的陈天奇 (Tianqi Chen) 开发。它是梯度提升决策树（GBDT）的一种改进实现，通过集成多个弱学习器（通常是决策树）来构建强大的预测模型。
+XGBoost（eXtreme Gradient Boosting，极端梯度提升）是一种高效的机器学习算法，由陈天奇 (Tianqi Chen) 开发。它是梯度提升决策树（GBDT）的一种改进实现，通过集成多个弱学习器（通常是决策树）来构建强大的预测模型。
 
 ### [scikit-image](https://scikit-image.org/)
 scikit-image 是 Python 的一个**开源图像处理库**，基于 NumPy 和 SciPy 构建，提供了丰富的图像处理算法，使用简单、功能强大，广泛应用于科研和工程实践中。
@@ -94,7 +121,7 @@ PySINDy 是一个用于**系统辨识**的开源工具包，核心基于 Brunton
 
 系统辨识的目标是利用测量数据推断系统的控制方程。一旦得到这些方程，研究者即可基于模型进行未来状态预测、设计与优化控制输入，或借助解析方法开展理论分析。与黑箱方法不同，SINDy 所得到的模型具有高度可解释性与良好的泛化能力。
 
-##### *“掌握 Python 语言，享受完美人生！”*
+#### *“掌握 Python 语言，享受完美人生！”*
 
 <h2 id="sec-rust" class="sec">Rust ，启动 ！ <a href="#top" class="back-top">TOP ↑</a></h2>
 
@@ -116,10 +143,10 @@ Rust 官方文档是学习 Rust 编程语言的权威资源，涵盖从基础语
 ### [也许应该从 Markdown 教程开始](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
 我推荐的是 GitHub 的 Markdown 教程，简洁、实用、易懂。当然，也可以参考 [Markdown 官方教程](https://www.markdownguide.org/)。
 
-### [Git教程](https://liaoxuefeng.com/books/git/introduction/index.html)
+### [Git 教程](https://liaoxuefeng.com/books/git/introduction/index.html)
 廖雪峰的 Git 教程，系统、清晰，是入门 Git 的优质资源。学 Git，就用廖雪峰教程！
 
-### [macOS配置指南](https://sourabhbajaj.com/mac-setup/)
+### [macOS 配置指南](https://sourabhbajaj.com/mac-setup/)
 面向开发者的 macOS 系统配置指南，涵盖开发环境与效率工具。
 
 ### [kitty](https://sw.kovidgoyal.net/kitty/)
@@ -161,7 +188,7 @@ Rust 官方文档是学习 Rust 编程语言的权威资源，涵盖从基础语
 
 B站有中文翻译过的课程视频。
 
-### [一个beamer模版](https://github.com/matze/mtheme)
+### [一个 Beamer 模版](https://github.com/matze/mtheme)
 Metropolis 是一款简洁、现代的 Beamer 主题，适合所有人使用。它力求最大限度地减少干扰，并最大限度地提升内容空间；它唯一的视觉亮点是每张幻灯片上都添加了一个（可选的）进度条。  
 
 ### [CS50X2025](https://cs50.harvard.edu/x/2025/)
@@ -196,7 +223,7 @@ Metropolis 是一款简洁、现代的 Beamer 主题，适合所有人使用。�
 ### [通用格式转换网站](https://cloudconvert.com)
 CloudConvert 是一款在线文件转换器。我们支持几乎所有音频、视频、文档、电子书、存档、图像、电子表格和演示文稿格式。
 
-### [LaTeX表格](https://tableconvert.com)
+### [LaTeX 表格](https://tableconvert.com)
 此生成器用于快速创建和在线生成 LaTeX 表格。
 
 ### [FLiNG Trainer](https://flingtrainer.com/)
@@ -260,7 +287,7 @@ PC Game Cheats and Mods.
     <!-- 顶部锚点 -->
     <div id="top"></div>
 
-    <pre align="center">
+    <pre class="ascii_text">
 ██████╗ ███████╗███████╗ ██████╗ ██╗   ██╗██████╗  ██████╗███████╗
 ██╔══██╗██╔════╝██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔════╝
 ██████╔╝█████╗  ███████╗██║   ██║██║   ██║██████╔╝██║     █████╗  
@@ -328,4 +355,12 @@ PC Game Cheats and Mods.
 
 /* 可选：若你全站没开平滑滚动，这里给当前组件开 */
 :host, :root, :global(html) { scroll-behavior: smooth; }
+</style>
+
+<style scoped>
+.ascii_text {
+  font-family: monospace; /* 指定 Fira Code */
+  text-align: center;                  /* 居中 */
+  white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
+}
 </style>

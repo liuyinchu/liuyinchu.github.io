@@ -17,11 +17,13 @@ const dockGroups = [
     links: [
       { name: 'GitHub', url: 'https://github.com/' },
       { name: '通用格式转换', url: 'https://cloudconvert.com' },
-      { name: 'LaTeX公式编辑器', url: 'https://www.latexlive.com/' },
-      { name: 'Google翻译', url: 'https://translate.google.com' },
+      { name: 'LaTeX 公式编辑器', url: 'https://www.latexlive.com/' },
+      { name: 'Google Translate', url: 'https://translate.google.com' },
       { name: '文件传输助手', url: 'https://filehelper.weixin.qq.com/' },
       { name: 'Bing', url: 'https://cn.bing.com/' },
       { name: 'Google', url: 'https://www.google.com/' },
+      { name: 'Google Drive', url: 'https://drive.google.com/drive/home' },
+      { name: '坚果云盘', url: 'https://www.jianguoyun.com/' },
     ]
   },
   {
@@ -40,10 +42,11 @@ const dockGroups = [
     color: '#fab387', // Mocha - Peach
     links: [
       { name: '网易企业邮箱', url: 'https://qy.163.com/static/login/' },
+      { name: 'Gmail', url: 'https://mail.google.com' },
       { name: 'YouTube', url: 'https://www.youtube.com/' },
       { name: 'B站', url: 'https://www.bilibili.com/' },
       { name: '知乎', url: 'https://www.zhihu.com/' },
-      { name: 'Catppuccin调色板', url: 'https://catppuccin.com/palette/' },
+      { name: 'Catppuccin 调色板', url: 'https://catppuccin.com/palette/' },
       { name: 'Pixiv', url: 'https://www.pixiv.net/' },
       { name: '中山大学统一门户', url: 'https://portal.sysu.edu.cn/' },
     ]

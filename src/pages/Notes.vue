@@ -41,7 +41,7 @@ const noteMarkdowns = notes.map((item) => ({
 
 <template>
   <PageWrapper>
-      <pre align="center">
+      <pre class="ascii_text">
 ███╗   ██╗ ██████╗ ████████╗███████╗███████╗
 ████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝██╔════╝
 ██╔██╗ ██║██║   ██║   ██║   █████╗  ███████╗
@@ -58,3 +58,11 @@ const noteMarkdowns = notes.map((item) => ({
     </template>
   </PageWrapper>
 </template>
+
+<style scoped>
+.ascii_text {
+  font-family: monospace; /* 指定 Fira Code */
+  text-align: center;                  /* 居中 */
+  white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
+}
+</style>

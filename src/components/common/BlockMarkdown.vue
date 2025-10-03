@@ -172,7 +172,7 @@ onUpdated(addCopyButtons)
 <style scoped>
 .markdown-body {
   line-height: 1.8;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
   color: var(--text-color);
 }
@@ -267,7 +267,7 @@ onUpdated(addCopyButtons)
 
 /* --- 代码块样式优化 --- */
 :deep(code) {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
   background-color: #6c7086;
   color: #89dceb;
   padding: 0.2em 0.4em;

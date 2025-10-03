@@ -1,6 +1,14 @@
 /* 引入 Catppuccin CSS 变量 */
 @import url('https://cdn.jsdelivr.net/npm/@catppuccin/palette/css/catppuccin.css');
 @import url('https://fonts.font.im/css2?family=Pacifico&display=swap');
+/* 引入霞鹜文楷（简体版） */
+@import url('https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.1.0/style.css');
+/* 代码字体 Fira Code */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
+/* 数学字体 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Math&family=Noto+Serif+SC:wght@400;700&display=swap');
+
+
 
 /* 设定网站通用主题变量：Mocha 风格 */
 :root {

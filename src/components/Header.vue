@@ -144,6 +144,7 @@ function closeMenu() {
   font-weight: bold;
   font-size: 1.25rem;
   text-decoration: none;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
 }
 
 .logo {
@@ -187,8 +188,9 @@ function closeMenu() {
   color: var(--ctp-mocha-subtext0); /* [优化] 默认颜色稍暗，突出当前页面 */
   text-decoration: none;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 1.2rem;
   transition: color 0.3s ease;
+  font-family: "LXGW WenKai";
 }
 
 /* [核心优化] 当前激活链接的样式 */

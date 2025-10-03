@@ -175,7 +175,7 @@ onMounted(async () => {
   font-size: 0.95rem;
 } */
 :deep(code) {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
   background-color: #6c7086;
   color: #89dceb;
   padding: 0.2em 0.4em;
@@ -190,7 +190,7 @@ onMounted(async () => {
   padding: 1.25rem 1.5rem;
   border-radius: 0.75rem;
   overflow-x: auto;
-  font-size: 0.95rem;
+  font-size: 1rem;
   margin: 1.5rem 0;
   border: 1px solid var(--border-color);
 }
@@ -205,7 +205,45 @@ onMounted(async () => {
 /* 其余图片、表格、引用块样式略 */
 
 mjx-container {
-  font-family: 'STIX Two Math', 'Latin Modern Math', 'Noto Serif SC', serif !important;
+  font-family: 
+    /* --- 首选字体 (本地安装) --- */
+    /* 专为数学和技术文档设计的西文字体，具有经典的 LaTeX 风格。*/
+    "Latin Modern Math",
+    "Computer Modern",
+
+    /* --- Google Fonts 备选 (网络字体) --- */
+    /* Google 提供的开源数学字体，作为 Latin Modern Math 的优秀备选。*/
+    "Noto Sans Math",
+
+    /* --- 中文字体 --- */
+    /* Google 提供的开源宋体，适用于所有平台，确保中文内容的可读性和美观性。*/
+    /* 将其放在西文字体之后，这样它仅用于渲染中文字符（或其他西文字体不支持的字符）。*/
+    "Noto Serif SC",
+
+    /* --- 平台原生备选 (按系统优化) --- */
+    /* macOS 和 iOS 平台的中文字体，效果现代、清晰。*/
+    "PingFang SC",
+    /* Windows 平台首选的无衬线中文字体，渲染效果优秀。*/
+    "Microsoft YaHei", /* 微软雅黑 */
+    "Heiti SC", /* 黑体-简，一些旧版macOS或移动设备可能使用 */
+
+    /* --- 通用西文备选 (按系统优化) --- */
+    /* 针对 Apple 设备的系统 UI 字体，会自动选择 San Francisco 字体。*/
+    -apple-system,
+    BlinkMacSystemFont,
+    /* 针对 Windows 的现代 UI 字体。*/
+    "Segoe UI",
+    /* 针对 Android 和 ChromeOS 的字体。*/
+    "Roboto",
+    /* 跨平台都非常普及的无衬线字体。*/
+    "Helvetica Neue",
+    "Arial",
+
+    /* --- 最终备选项 --- */
+    /* 如果以上所有字体都不可用，浏览器将使用其默认的无衬线字体。*/
+    /* 这里使用 sans-serif 是因为前面备选的西文字体多为无衬线，可以保持风格一致。*/
+    /* 如果你更倾向于衬线风格，可以将其改为 `serif`。*/
+    sans-serif !important;
   font-size: 1.05rem;
   line-height: 1.8;
 }

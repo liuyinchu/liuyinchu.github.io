@@ -9,10 +9,7 @@
 :::
 
 ::: postit 点烬
-空阶凝白露，  
-远岫敛昏黄。  
-归雁声已尽，  
-寒鸦点夕阳。  
+空阶凝白露，远岫敛昏黄。归雁声已尽，寒鸦点夕阳。
 :::
 
 ::: postit 妈妈多还是女儿多
@@ -72,8 +69,10 @@
 
 ::: postit 一些神秘链接长期更新中
 
+- 20251003（知乎精选）在电脑上画一个黑洞：https://zhuanlan.zhihu.com/p/20536269771
+- 20251003（知乎精选）求解最优的任意宝可梦颜色交换算法：https://zhuanlan.zhihu.com/p/695729586
 - 20250930 一个十分难绷的网站：https://superexcuse.com/
-- 20250924 （量子）如何评价 6100 比特的中性原子（光镊）方案上了 Nature? https://arxiv.org/abs/2403.12021
+- 20250924 （量子）如何评价 6100 比特的中性原子（光镊）方案上了 Nature ? https://arxiv.org/abs/2403.12021
 - 20250909 程序员如何优雅地做副业：https://github.com/easychen/lean-side-bussiness
 - 20250821 量子计算 https://www.zhihu.com/question/305099454/answer/1941869743654015698
 :::

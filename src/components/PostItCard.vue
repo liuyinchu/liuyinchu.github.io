@@ -23,6 +23,7 @@ defineProps({
   padding: 1.2em 1.5em;
   box-shadow: 0 10px 25px -5px rgba(var(--ctp-mocha-base-rgb), 0.2);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  font-family: "LXGW WenKai";
   /* transform: rotate(-1.5deg); */
 }
 
@@ -37,7 +38,7 @@ defineProps({
 }
 
 .post-it-header {
-  font-size: 1.2em;
+  font-size: 1.3em;
   font-weight: bold;
   color: var(--accent-color);
   border-bottom: 1px dashed var(--border-color);
@@ -62,4 +63,37 @@ defineProps({
   之前所有关于 table, th, td, pre, code, katex 的 :deep() 样式
   都已从此文件中删除。
 */
+</style>
+
+<style>
+.content-block:not(:last-child) {
+  margin-bottom: 2rem; /* 为除最后一个元素外的所有块添加下外边距 */
+}
+
+.markdown-body code {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  background-color: #6c7086;
+  color: #89dceb;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+/* 要用也要改成上述形式 */
+/* :deep(pre) {
+  position: relative; 
+  background-color: rgb(24, 24, 37);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  margin: 1.5rem 0;
+  border: 1px solid var(--border-color);
+}
+
+:deep(pre code) {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+} */
 </style>

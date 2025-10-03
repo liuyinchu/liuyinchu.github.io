@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 // 路径已根据你的结构调整
 import Meteors from '../components/effects/Meteors.vue'
+import LeftTocDock from '../components/LeftTocDock.vue'
+import LeftSearchDock from '../components/LeftSearchDock.vue'
 
 const articles = ref([])
 
@@ -18,8 +20,10 @@ onMounted(async () => {
 <template>
   <div class="bg-container">
     <Meteors />
+    <LeftTocDock src="/articles.json" basePath="/space1" />
+    <LeftSearchDock src="/articles.json" basePath="/space1" :left="20" top="78%" />
     <main class="article-page">
-      <h1 class="block-title">随记</h1>
+      <h1 class="block-title">随 记</h1>
       <p class="block-intro">来自远方，来自黄昏和清晨，来自十二重高天的好风轻扬，飘来生命气息的吹拂，吹在我身上。</p>
       <p class="block-intro">趁着生命气息逗留，盘桓未去，拉住我的手，快告诉我你的心声。</p>
       <p class="block-intro">莫待无常之风，携我去飘渺远方。</p>
@@ -62,15 +66,17 @@ onMounted(async () => {
   text-align: center;
 }
 .block-title {
-  font-size: 2rem;
+  font-size: 4rem;
   font-weight: bold;
   color: var(--primary-color);
-  margin-bottom: 0.5rem;
+  margin-bottom: 3rem;
+  font-family: "LXGW WenKai";
 }
 .block-intro {
-  font-size: 1.1rem;
+  font-size: 1.35rem;
   color: var(--text-color);
-  margin-bottom: 2rem;
+  margin-bottom: 4rem;
+  font-family: "LXGW WenKai";
 }
 /* .article-list {
   display: flex;
@@ -100,16 +106,17 @@ onMounted(async () => {
 }
 .article-card {
   display: flex;
-  height: 220px;
-  background: linear-gradient(135deg, #313244, #585b70);
-  backdrop-filter: blur(9.5px);
-  -webkit-backdrop-filter: blur(9.5px);
+  height: 270px;
+  background: linear-gradient(135deg, rgba(49, 50, 68, 0.6), rgba(88, 91, 112, 0.6));
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   border: 1px solid var(--border-color);
   border-radius: 1.25rem;
   overflow: hidden;
   text-decoration: none;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  font-family: "LXGW WenKai";
 }
 .article-card:hover {
   transform: translateY(-5px) scale(1.01);
@@ -118,7 +125,7 @@ onMounted(async () => {
   border-color: var(--primary-color);
 }
 .image-container {
-  flex: 0.382;
+  flex: 0.45;
   height: 100%;
 }
 .article-image {
@@ -131,28 +138,28 @@ onMounted(async () => {
   transform: scale(1.05);
 }
 .text-container {
-  flex: 0.618;
-  padding: 1.5rem 2rem;
+  flex: 0.55;
+  padding: 1.5rem 4rem;
   display: flex;
   flex-direction: column;
   text-align: left;
   color: var(--text-color);
 }
 .article-title {
-  font-size: 1.25rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--primary-color);
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.2rem;
 }
 .meta-info {
   display: flex;
-  gap: 1rem;
-  font-size: 0.85rem;
+  gap: 1.5rem;
+  font-size: 1.05rem;
   color: var(--ctp-mocha-subtext0);
-  margin-bottom: 0.75rem;
+  margin-bottom: -0.5rem;
 }
 .article-desc {
-  font-size: 0.95rem;
+  font-size: 1.2rem;
   opacity: 0.9;
   flex-grow: 1;
   overflow: hidden;

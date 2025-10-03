@@ -1,6 +1,6 @@
 <template>
   <PageWrapper>
-      <pre align="center">
+      <pre class="ascii_text">
 ██╗      █████╗ ██████╗     ██████╗ ███████╗██████╗  ██████╗ ██████╗ ████████╗███████╗
 ██║     ██╔══██╗██╔══██╗    ██╔══██╗██╔════╝██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝
 ██║     ███████║██████╔╝    ██████╔╝█████╗  ██████╔╝██║   ██║██████╔╝   ██║   ███████╗
@@ -118,7 +118,7 @@ const GPL2 = `
 - GPL2-**6** [偏振光实验](https://github.com/pifuyuini/LabR/tree/main/GPL2/GPL2-6)
 - GPL2-**7** [热辐射实验](https://github.com/pifuyuini/LabR/tree/main/GPL2/GPL2-7)
 - GPL2-**8** [夫兰克-赫兹实验](https://github.com/pifuyuini/LabR/tree/main/GPL2/GPL2-8)
-- GPL2-**9** [TEC控温实验](https://github.com/pifuyuini/LabR/tree/main/GPL2/GPL2-9)
+- GPL2-**9** [TEC 控温实验](https://github.com/pifuyuini/LabR/tree/main/GPL2/GPL2-9)
 - GPL2-**10** [塞曼效应实验](https://github.com/pifuyuini/LabR/tree/main/GPL2/GPL2-10)
 
 ---
@@ -133,7 +133,7 @@ const APL1 = `
 - APL1-**2** [材料真空兼容性测试和等离子特性研究](https://github.com/pifuyuini/LabR/tree/main/APL1/APL1-2)
 - APL1-**3** [量子密钥分发实验](https://github.com/pifuyuini/LabR/tree/main/APL1/APL1-3)
 - APL1-**4** [电子自旋共振实验](https://github.com/pifuyuini/LabR/tree/main/APL1/APL1-4)
-- APL1-**5-and-6** [α粒子的能量损失 & γ能谱实验](https://github.com/pifuyuini/LabR/tree/main/APL1/APL1-5-and-6)
+- APL1-**5-and-6** [α 粒子的能量损失 & γ 能谱实验](https://github.com/pifuyuini/LabR/tree/main/APL1/APL1-5-and-6)
 
 ---
 
@@ -161,7 +161,7 @@ const colab = `
 - [设计性实验 S.A.M.](https://github.com/TaLEsCuber/CoLabR/tree/main/GPL/proj-sam)
 - ETL1-2 [基本电路元件伏安特性的测量](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL1-2)
 - ETL1-5 [一阶电路暂态过程的研究](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL1-5)
-- ETL1-6 [R、L、C元件阻抗特性研究](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL1-6)
+- ETL1-6 [R、L、C 元件阻抗特性研究](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL1-6)
 - ETL2-1 [蓝牙音箱的焊接和调试](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL2-1)
 - ETL2-2 [测量放大器设计与实验](https://github.com/TaLEsCuber/CoLabR/tree/main/ETL/ETL2-2)
 - APL1-4 [电子自旋共振实验](https://github.com/TaLEsCuber/CoLabR/tree/main/APL/APL1-4)
@@ -193,3 +193,11 @@ const colab2 = `
 
 `
 </script>
+
+<style scoped>
+.ascii_text {
+  font-family: monospace; /* 指定 Fira Code */
+  text-align: center;                  /* 居中 */
+  white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
+}
+</style>
