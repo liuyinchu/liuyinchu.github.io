@@ -79,9 +79,24 @@ const compiledHtml = computed(() => md.render(props.content))
 }
 </style> -->
 
+<!------------------------------------------------------------------------------>
+<!------------------------------------------------------------------------------>
+<!------------------------------------------------------------------------------>
+
 <template>
-  <div ref="markdownContainer" class="markdown-body" v-html="compiledHtml"></div>
+  <div
+  ref="markdownContainer"
+  class="markdown-body"
+  :class="{ 'use-cjk': useCJK }"
+  v-html="compiledHtml"
+></div>
 </template>
+
+
+
+<!-- <template>
+  <div ref="markdownContainer" class="markdown-body" v-html="compiledHtml"></div>
+</template> -->
 
 <script setup>
 import { computed, defineProps, onMounted, onUpdated, ref } from 'vue'
@@ -99,12 +114,23 @@ import 'katex/dist/katex.min.css'
 import 'highlight.js/styles/atom-one-dark.css'
 
 // --- Props 定义 ---
+// const props = defineProps({
+//   content: {
+//     type: String,
+//     required: true
+//   }
+// })
 const props = defineProps({
   content: {
     type: String,
     required: true
+  },
+  useCJK: {                 // [ADD] 开关：仅中文替换
+    type: Boolean,
+    default: false
   }
 })
+
 
 // --- [优化] Markdown-it 实例 (保持单例模式) ---
 const md = new MarkdownIt({
@@ -175,6 +201,10 @@ onUpdated(addCopyButtons)
   font-size: 1.1rem;
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
   color: var(--text-color);
+}
+.markdown-body.use-cjk {                   /* [ADD] 配合 :class 生效 */
+  font-family: "LXGW WenKai";
+  font-size: 1.2rem;
 }
 
 /* ===== [优化] 视觉效果全面增强 ===== */

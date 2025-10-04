@@ -1,7 +1,7 @@
 <template>
   <PageWrapper>
     <!-- 文本模块 A -->
-    <BlockMarkdown :content="introText" />
+    <BlockMarkdown :content="introText" :useCJK="true" />
 
     <!-- 按钮模块 B：一行排列的跳转按钮 -->
     <LinkButtons :buttons="[
@@ -18,7 +18,7 @@
     />
 
     <!-- 第二段 Markdown 文本 -->
-    <BlockMarkdown :content="bodyText" />
+    <BlockMarkdown :content="bodyText" :useCJK="true" />
     
     <!-- 再来一个按钮模块 -->
     <LinkButtons :buttons="[

@@ -240,6 +240,8 @@ const filtered = computed(() => {
   color: #d9c28a;
   opacity: .92;
   text-align: left;
+  font-family: "LXGW WenKai";
+  font-size: 1.1rem;
 }
 
 /* 小屏微调 */

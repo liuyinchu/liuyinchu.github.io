@@ -1,6 +1,6 @@
 <template>
   <PageWrapper>
-    <BlockMarkdown :content="aboutText" />
+    <BlockMarkdown :content="aboutText" :useCJK="true" />
   </PageWrapper>
 </template>
 
@@ -12,6 +12,8 @@ import LinkButtons from '../components/common/LinkButtons.vue'
 
 const aboutText = `
 # 关于本站和作者
+
+作者是**流萤厨**，所以：“个人网站高能回，流萤厨献给流萤的真挚情书！”
 
 - **自我介绍：** 懒得写，不影响。
 - **联系方式：** 页脚有我的 GitHub 和邮箱。

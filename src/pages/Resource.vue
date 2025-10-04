@@ -121,6 +121,9 @@ PySINDy 是一个用于**系统辨识**的开源工具包，核心基于 Brunton
 
 系统辨识的目标是利用测量数据推断系统的控制方程。一旦得到这些方程，研究者即可基于模型进行未来状态预测、设计与优化控制输入，或借助解析方法开展理论分析。与黑箱方法不同，SINDy 所得到的模型具有高度可解释性与良好的泛化能力。
 
+### [Python Control](https://python-control.readthedocs.io/)
+The Python Control Systems Library (python-control) is a Python package that implements basic operations for analysis and design of feedback control systems.
+
 #### *“掌握 Python 语言，享受完美人生！”*
 
 <h2 id="sec-rust" class="sec">Rust ，启动 ！ <a href="#top" class="back-top">TOP ↑</a></h2>
@@ -306,7 +309,7 @@ PC Game Cheats and Mods.
       </ul>
     </nav>
 
-    <BlockMarkdown :content="resourceText" />
+    <BlockMarkdown :content="resourceText" :useCJK="true" />
   </PageWrapper>
 </template>
 
@@ -317,11 +320,13 @@ PC Game Cheats and Mods.
   border: 1px solid #6c7086;
   background: #313244;
   border-radius: 10px;
+  font-family: 'LXGW WenKai';
 }
 .toc-title {
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-  opacity: 0.9;
+  font-weight: 850;
+  margin-bottom: 1.0rem;
+  opacity: 0.85;
+  font-size: 1.3rem;
 }
 .toc ul {
   display: grid;
@@ -333,8 +338,9 @@ PC Game Cheats and Mods.
 .toc a {
   text-decoration: none;
   color: #cba6f7;
+  font-size: 1.2rem;
 }
-.toc a:hover { text-decoration: underline; }
+.toc a:hover { text-decoration: underline; color: var(--primary-color);}
 
 /* 标题右侧“返回顶部”按钮 */
 :deep(h2.sec) {
@@ -359,8 +365,9 @@ PC Game Cheats and Mods.
 
 <style scoped>
 .ascii_text {
-  font-family: monospace; /* 指定 Fira Code */
+  font-family: "Fira Code", monospace; /* 指定 Fira Code */
   text-align: center;                  /* 居中 */
   white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
+  font-size: 12.5px;
 }
 </style>

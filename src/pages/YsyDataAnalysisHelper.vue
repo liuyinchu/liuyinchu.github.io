@@ -9,15 +9,15 @@
    ╚═╝   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚══════╝╚═╝  ╚═╝
     </pre> 
 
-    <BlockMarkdown :content="introText" />
+    <BlockMarkdown :content="introText" :useCJK="true" />
 
-    <BlockMarkdown :content="yph1" />
+    <BlockMarkdown :content="yph1" :useCJK="true" />
 
     <LinkButtons :buttons="[
       { text: 'Click Here to Get It !', url: 'https://github.com/liuyinchu/ysy-data-analysis-helper/tree/main/ysy-plot-helper' }
     ]" />
 
-    <BlockMarkdown :content="yph2" />
+    <BlockMarkdown :content="yph2" :useCJK="true" />
 
     <ImageBlock
       src="/fig/ysy_academic_sky.png"
@@ -25,7 +25,7 @@
       width="40%"
     />
 
-    <BlockMarkdown :content="yph3" />
+    <BlockMarkdown :content="yph3" :useCJK="true" />
 
     <ImageBlock
       src="/fig/science.png"
@@ -33,7 +33,7 @@
       width="40%"
     />
 
-    <BlockMarkdown :content="yph4" />
+    <BlockMarkdown :content="yph4" :useCJK="true" />
 
     <ImageBlock
       src="/fig/ieee.png"
@@ -41,7 +41,7 @@
       width="40%"
     />
 
-    <BlockMarkdown :content="yph5" />
+    <BlockMarkdown :content="yph5" :useCJK="true" />
 
   </PageWrapper>
 </template>
@@ -178,8 +178,9 @@ const yph5 = `
 
 <style scoped>
 .ascii_text {
-  font-family: monospace; /* 指定 Fira Code */
+  font-family: "Fira Code", monospace; /* 指定 Fira Code */
   text-align: center;                  /* 居中 */
   white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
+  font-size: 12.5px;
 }
 </style>

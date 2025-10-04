@@ -9,9 +9,9 @@
 ╚═════╝ ╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═╝    ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
     </pre>  
          
-    <BlockMarkdown :content="introText" />
+    <BlockMarkdown :content="introText" :useCJK="true" />
 
-    <BlockMarkdown :content="proj1" />
+    <BlockMarkdown :content="proj1" :useCJK="true" />
 
     <!-- 图片模块 C -->
     <ImageBlock
@@ -24,7 +24,7 @@
       { text: 'Click Here to Get it !', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/learning-and-practice-linux-server-login-welcome-script-attempt' }
     ]" />
 
-    <BlockMarkdown :content="proj2" />
+    <BlockMarkdown :content="proj2" :useCJK="true" />
 
     <!-- 图片模块 C -->
     <ImageBlock
@@ -37,7 +37,7 @@
       { text: 'Click Here to Get it !', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/clebsch-gordan-coefficient' }
     ]" />
 
-    <BlockMarkdown :content="proj3" />
+    <BlockMarkdown :content="proj3" :useCJK="true" />
 
     <ImageBlock
       src="/fig/ysy_latex_ref.png"
@@ -128,8 +128,9 @@ demo文件可以在 v1.3-release 中找到，不过会与 v1.4 不兼容。
 
 <style scoped>
 .ascii_text {
-  font-family: monospace; /* 指定 Fira Code */
+  font-family: "Fira Code", monospace; /* 指定 Fira Code */
   text-align: center;                  /* 居中 */
   white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
+  font-size: 12.5px;
 }
 </style>

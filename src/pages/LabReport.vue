@@ -8,13 +8,13 @@
 ███████╗██║  ██║██████╔╝    ██║  ██║███████╗██║     ╚██████╔╝██║  ██║   ██║   ███████║
 ╚══════╝╚═╝  ╚═╝╚═════╝     ╚═╝  ╚═╝╚══════╝╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝
       </pre>       
-      <BlockMarkdown :content="introText" />
-      <BlockMarkdown :content="GPL1" />
-      <BlockMarkdown :content="GPL2" />
-      <BlockMarkdown :content="APL1" />
-      <BlockMarkdown :content="APL2" />
-      <BlockMarkdown :content="colab" />
-      <BlockMarkdown :content="colab2" />
+      <BlockMarkdown :content="introText" :useCJK="true" />
+      <BlockMarkdown :content="GPL1" :useCJK="true" />
+      <BlockMarkdown :content="GPL2" :useCJK="true" />
+      <BlockMarkdown :content="APL1" :useCJK="true" />
+      <BlockMarkdown :content="APL2" :useCJK="true" />
+      <BlockMarkdown :content="colab" :useCJK="true" />
+      <BlockMarkdown :content="colab2" :useCJK="true" />
   </PageWrapper>
 </template>
 
@@ -196,8 +196,9 @@ const colab2 = `
 
 <style scoped>
 .ascii_text {
-  font-family: monospace; /* 指定 Fira Code */
+  font-family: "Fira Code", monospace; /* 指定 Fira Code */
   text-align: center;                  /* 居中 */
   white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
+  font-size: 12.5px;
 }
 </style>

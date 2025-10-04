@@ -12,7 +12,7 @@
 
     <BlockMarkdown :content="collectingText" />
 
-    <BlockMarkdown :content="zhText" />
+    <BlockMarkdown :content="zhText" :useCJK="true" />
   </PageWrapper>
 </template>
 

@@ -50,19 +50,20 @@ const noteMarkdowns = notes.map((item) => ({
 ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚══════╝╚══════╝
       </pre>
 
-    <BlockMarkdown :content="introText" />
+    <BlockMarkdown :content="introText" :useCJK="true" />
 
     <template v-for="(item, i) in noteMarkdowns" :key="i">
-      <BlockMarkdown :content="item.content" />
-      <LinkButtons :buttons="[{ text: '下载', url: item.url }]" />
+      <BlockMarkdown :content="item.content" :useCJK="true" />
+      <LinkButtons :buttons="[{ text: 'Click Here to Get It !', url: item.url }]" />
     </template>
   </PageWrapper>
 </template>
 
 <style scoped>
 .ascii_text {
-  font-family: monospace; /* 指定 Fira Code */
+  font-family: "Fira Code", monospace; /* 指定 Fira Code */
   text-align: center;                  /* 居中 */
   white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
+  font-size: 12.5px;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <PageWrapper>
-    <BlockMarkdown :content="creditText" />
+    <BlockMarkdown :content="creditText" :useCJK="true" />
   </PageWrapper>
 </template>
 
@@ -23,6 +23,9 @@ const creditText = `
 - Markdown ：渲染 [markdown-it](https://markdown-it.docschina.org/) + 公式支持 [MathJax](https://www.mathjax.org/)
 - 网站托管：本网站部署于 GitHub Pages
 - 颜色主题：[Catppuccin Mocha](https://catppuccin.com/)
+- 字体支持：[Google Fonts](https://fonts.google.com/) 和[霞鹜文楷](https://github.com/lxgw/LxgwWenKai)及其 [CDN](https://github.com/chawyehsu/lxgw-wenkai-webfont)
+
+**真的真的十分感谢以上的各个开源项目的支持！**
 
 ---
 
@@ -37,15 +40,18 @@ const creditText = `
 - [lhasa's Blog](https://lhasa.icu/)
 
 本网站采用了大量图片素材，其中有部分来自 PIXIV 和 BiliBili 的各位画师，他们是：
-- Osot-酒保（B）
+- Osot-酒保（BiliBili）
 
-以上，暂时未列出的各位我会及时补上。
+以上，暂时未列出的各位我会**及时**补上。
+
+总之，我也非常感谢灵感和素材的提供者们！
 
 ---
 
+
 ## 版权说明
 
-**首先，对于我使用的各种素材，如果您认为侵犯了您的版权，我表达强烈的歉意，您可以通过页脚的联系方式告知我，我会第一时间删除相关资源并与您沟通后续处理事项。**
+**首先，对于我使用的各种素材，如果您认为侵犯了您的版权，我诚恳地表达我所有的歉意，您可以通过页脚的联系方式告知我，我会第一时间删除相关资源并与您沟通后续处理事项。**
 
 接下来，关于这个网站的版权，基本按照 [MIT LICENSE](https://opensource.org/license/mit) 发布：
 - 前端代码：“Copyright (c) 2024 - 2025 LiuYinChu'Space 本软件可自由使用、复制、修改、分发，前提是保留原始版权声明。
