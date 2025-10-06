@@ -131,6 +131,11 @@ onMounted(async () => {
   font-size: 1.05rem;
   color: var(--text-color);
 }
+/* 方案二：Catppuccin Mocha 原生蓝色 */
+.markdown-body :deep(::selection) {
+  background-color: #74C7EC;
+  color: #1E1E2E;
+}
 
 /* 标题样式略 */
 .markdown-body h1,
@@ -249,13 +254,17 @@ mjx-container {
 }
 
 :deep(blockquote) { 
-  margin: 0; padding: 0 1em; color: #bac2de; border-left: .25em solid #74c7ec; 
+  margin: 1.5em; 
+  padding-block: 0.01em;  /* 上下 */
+  padding-inline: 2em;   /* 左右 */
+  color: #bac2de; border-left: .25em solid #74c7ec; 
   background: linear-gradient(
   90deg,
   #74c7ec 0%,    /* 起点 */
   #45475a 1%,   /* 中间颜色快速到位 */
   #45475a 100%   /* 后半段渐变慢慢延伸 */
-);
+  );
+  font-style: italic;
 }
 
 /* [新增] 分割线样式 */

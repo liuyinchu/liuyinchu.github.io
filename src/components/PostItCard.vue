@@ -26,6 +26,11 @@ defineProps({
   font-family: "LXGW WenKai";
   /* transform: rotate(-1.5deg); */
 }
+/* 方案三：抹茶拿铁 */
+.post-it-card :deep(::selection) {
+  background-color: #DDEBE7;
+  color: #3C5249;
+}
 
 .post-it-card:hover {
   transform: rotate(0deg) scale(1.03);

@@ -198,8 +198,8 @@ onUpdated(addCopyButtons)
 <style scoped>
 .markdown-body {
   line-height: 1.8;
-  font-size: 1.1rem;
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
+  font-size: 1.15rem;
+  font-family: "Verdana",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
   color: var(--text-color);
 }
 .markdown-body.use-cjk {                   /* [ADD] 配合 :class 生效 */
@@ -240,18 +240,32 @@ onUpdated(addCopyButtons)
 }
 :deep(li) { margin-bottom: 0.6rem; }
 
-:deep(blockquote) {
+/* :deep(blockquote) {
   margin: 1.5rem 0;
   padding: 0.5rem 1.5rem;
   background: linear-gradient(
   90deg,
-  #74c7ec 0%,    /* 起点 */
-  #313244 1%,   /* 中间颜色快速到位 */
-  #313244 100%   /* 后半段渐变慢慢延伸 */);
+  #74c7ec 0%,    
+  #313244 1%,
+  #313244 100%);
   border-left: 2.5px solid #74c7ec;
   color: var(--ctp-mocha-subtext1);
+} */
+:deep(blockquote) { 
+  margin: 1.5em; 
+  padding-block: 0.01em;  /* 上下 */
+  padding-inline: 2em;   /* 左右 */
+  color: #bac2de; border-left: .25em solid #74c7ec; 
+  background: linear-gradient(
+  90deg,
+  #74c7ec 0%,    /* 起点 */
+  #313244 1%,   /* 中间颜色快速到位 */
+  #313244 100%   /* 后半段渐变慢慢延伸 */
+  );
+  font-style: italic;
 }
-:deep(blockquote p:last-child) { margin-bottom: 0; }
+/* 把最后一个段落的底部外边距去掉。 */
+/* :deep(blockquote p:last-child) { margin-bottom: 0; } */
 
 :deep(img) {
   max-width: 100%;

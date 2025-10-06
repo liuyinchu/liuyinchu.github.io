@@ -17,6 +17,22 @@
   color: var(--text-color);
   transition: background-color 0.5s ease, color 0.5s ease;
 }
+/* 方案一：紫色 */
+.page-wrapper :deep(::selection) {
+  background-color: #d8bfd8; /* 选一个淡紫色 (Thistle) 作为背景 */
+  color: #4b0082;             /* 用深靛蓝色 (Indigo) 作为文字颜色，确保高对比度 */
+}
+/* 方案二：Catppuccin Mocha 原生蓝色 */
+/* .page-wrapper :deep(::selection) {
+  background-color: #74C7EC;
+  color: #1E1E2E;
+} */
+/* 方案三：抹茶拿铁 */
+/* .page-wrapper :deep(::selection) {
+  background-color: #DDEBE7;
+  color: #3C5249;
+} */
+
 
 /* 大屏 */
 @media (min-width: 1250px) {
