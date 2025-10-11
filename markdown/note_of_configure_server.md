@@ -121,15 +121,27 @@
 
 到2025年8月26日，上述步骤是完全可用且高效的。不过，要是第一步有一些问题，先执行`sudo apt-get update`就行。
 
-## 4 conda （选）
+## 4 更现代的 Python 包管理？（20251008 更新）
 
->为什么？ -- 呃，对我来说因为我写这篇文章时我的主语言时Python，其次我当时还是学物理的，所以用conda很合理对吧？？
+> 为什么？ -- 呃，对我来说因为我写这篇文章时我的主编程语言时Python，其次我当时还是学物理的，所以用conda很合理对吧？？
 
-个人推荐 **miniconda** 而非 anaconda ，你可以多做一些这方面的考虑。
+> 并非合理，得益于 AI 的火热，Python 生态（尤其是科学计算方面）得到了蓬勃发展，一大批更现代的工具诞生，这些都导致 conda 不再是一个好选择（即使对于新手来说）。
 
-这部分可以完全问AI跟着它的指导走，只是记得告诉它你现在用的是zsh并配置好了代理。
+总之，我们应当考虑放弃 conda ，尝试以下新工具：
+- uv （已尝试，见下，此处略）：纯 Python 项目；
+- conda 系：旧 conda 新用 miniforge + mamba ，混合包管理；
+- pixi （尝试中）：新 conda，混合包管理。
 
-这里我简单更新一下我在2025年8月26日给我的新服务的配置流程：
+更详细的笔记我会放在 Python 笔记中，以下只会列出我的 conda 系安装记录。
+
+以下是我在2025年10月8日给我的macOS安装 miniforge的记录，供 Unix 类系统参考：
+1. 首先前往[官方仓库](https://github.com/conda-forge/miniforge)或[官网](https://conda-forge.org/download/)按指引下载。
+2. 下载完成后进入安装脚本（是个 `.sh` 文件），第一个要注意的是安装路径，如果不想要默认路径，直接输入新路径再 `ENTER` 就好。
+3. 然后要注意的是初始化和激活，先输入 `yes` ，然后 `conda config --set auto_activate_base false` 就行（官方仓库有写）。
+
+总之，先看仓库的指引，不懂的就问 AI ，懂之前慎重别操作就行（虽然操作了也不会出什么大问题）。
+
+以下是我在2025年8月26日给我的新服务的配置流程（仅作记录，不再推荐和参考）：
 1. 先确保系统是最新的：`sudo apt update && sudo apt upgrade -y`；
 2. 对于**Linux x86_64**：`wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`；
 3. 安装运行脚本：`bash Miniconda3-latest-Linux-x86_64.sh`，接下来需要按 `Enter` 查看许可协议，然后输入 `yes` 接受，然后输入安装路径（推荐默认 `~/miniconda3`），最后要注意选择是否在 `.bashrc` 或 `.zshrc` 中自动初始化，推荐选 `yes`，具体是这样的：
@@ -173,11 +185,11 @@
 - 初始化： `nvim` ，耐心等它搞完后再退出；
 - 最后：网上找一些教程来爽用一波。
 
-## 6 UV （推荐）
+## 6 uv （推荐）
 
 *2025 年 7 月新增*
 
-它是一个先进的Python包管理，详见[官方文档](https://docs.astral.sh/uv/)。
+它是一个现代的 Python 包管理，详见[官方文档](https://docs.astral.sh/uv/)。
 
 关于为什么要用 **uv** ，我觉得[这个视频](https://b23.tv/D0gze5b)讲得很好。而这个 UP 主也有关于 uv 的[详细教程](https://b23.tv/ee9Tpbc)，比下面这个我的写得好多了。
 
@@ -271,6 +283,7 @@ rm ~/.local/bin/uv ~/.local/bin/uvx
 		uv python pin 3.11
 		# Pinned .python-version to 3.11
 		```
+更多详细的内容我会整理在我的 Python 笔记中，下略。
 
 ## 7 Web 相关（也许）
 
@@ -809,9 +822,11 @@ cat /sys/fs/cgroup/user.slice/memory.max
 
 ---
 
-#  Linux 服务器使用笔记
+# 附录：快捷命令
 
 ### Conda
+
+**这是旧的（20251008 以前）**：
 
 ```bash
 # 新环境
@@ -825,6 +840,24 @@ conda env list
 conda create --name 新环境名称 --clone 旧环境名称
 conda remove --name 旧环境名称 --all
 conda list # 列出所有包
+```
+
+**我推荐新的：**
+（20251008 更新）
+```bash
+# 对于一个新的 miniforge
+# 先创建通用环境
+# 考虑现代包管理，我不推荐使用 pip
+mamba create -n general python=3.11 \
+  numpy scipy pandas matplotlib scikit-learn ipykernel -y
+
+# 然后是我常用的科学计算+数据处理通用环境
+mamba create -n lab11 python=3.11 \
+  numpy scipy pandas matplotlib seaborn scikit-learn ipykernel -y
+
+# 考虑到 2025 年的生态，我引入了很多新包和库
+mamba activate lab11
+mamba install -n lab11 -c conda-forge xgboost plotly polars optuna -y
 ```
 
 ### 其它
