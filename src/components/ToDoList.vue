@@ -1,5 +1,27 @@
 <template>
   <div class="todo-list-container">
+    <!-- 模式切换 -->
+    <div class="mode-switch">
+      <button
+        :class="['mode-btn', mode === 'global' ? 'active' : '']"
+        @click="setMode('global')"
+        aria-label="Switch to Global mode"
+      >
+        Total Task
+      </button>
+      <button
+        :class="['mode-btn', mode === 'daily' ? 'active' : '']"
+        @click="setMode('daily')"
+        aria-label="Switch to Daily mode"
+      >
+        Daily Task
+      </button>
+      <span v-if="mode === 'daily'" class="current-day-chip" :title="'Selected day: ' + selectedDateStr">
+        {{ selectedDateStr }}
+      </span>
+    </div>
+
+    <!-- 输入区 -->
     <div class="input-section">
       <input
         type="text"
@@ -7,25 +29,52 @@
         @keyup.enter="addTask"
         placeholder="Enter your thought..."
         class="task-input"
+        aria-label="Add a task"
       />
-      <button @click="addTask" class="add-button">+</button>
+      <button @click="addTask" class="add-button" aria-label="Add task">+</button>
     </div>
 
-    <ul class="task-list">
+    <!-- 任务列表（按模式过滤） -->
+    <ul class="task-list" role="list">
       <li
-        v-for="task in tasks"
+        v-for="task in visibleTasks"
         :key="task.id"
-        :class="['task-item', { 'completed': task.completed }]"
+        class="task-item"
+        :class="{ completed: task.completed }"
+        role="listitem"
       >
-        <label class="checkbox-container">
+        <label class="checkbox-container" :aria-label="'Toggle complete: ' + task.text">
           <input
             type="checkbox"
-            :checked="task.completed"  @change="toggleTaskCompletion(task.id)" class="hidden-checkbox"
+            class="hidden-checkbox"
+            :checked="task.completed"
+            @change="toggleTaskCompletion(task.id)"
+            aria-checked="task.completed ? 'true' : 'false'"
           />
           <span class="custom-checkbox"></span>
         </label>
-        <span class="task-text">{{ task.text }}</span>
-        <button @click="deleteTask(task.id)" class="delete-button">
+
+        <div class="task-text">{{ task.text }}</div>
+
+        <!-- 小号日期徽标（与原风格一致，轻量呈现） -->
+        <div class="task-meta">
+          <span class="date-chip" :title="'Task date'">
+            {{ task.date || 'Ever' }}
+          </span>
+        </div>
+
+        <button
+          class="delete-button"
+          @click="deleteTask(task.id)"
+          :aria-label="'Delete: ' + task.text"
+          title="Delete"
+        >
+          <!-- <svg class="delete-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M9 3v1H4v2h16V4h-5V3H9zm1 6h2v9h-2V9zm-4 0h2v9H6V9zm8 0h2v9h-2V9z"
+            />
+          </svg> -->
           <svg viewBox="0 0 24 24" fill="currentColor" class="delete-icon">
             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm3-4.5c0-.28.22-.5.5-.5s.5.22.5.5v6c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-6zm3-4.5c0-.28.22-.5.5-.5s.5.22.5.5v6c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-6zm3-4.5c0-.28.22-.5.5-.5s.5.22.5.5v6c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
           </svg>
@@ -36,51 +85,123 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
+
+/** LocalStorage keys 与日历联动事件 */
+const LS_KEYS = {
+  TODOS: 'myToDoList',
+  MODE:  'myToDoMode',
+  SEL:   'portal.selectedDate'
+}
 
 const newTaskText = ref('')
-const tasks = ref(JSON.parse(localStorage.getItem('myToDoList')) || [])
 
-watch(tasks, (newTasks) => {
-  localStorage.setItem('myToDoList', JSON.stringify(newTasks))
-}, { deep: true })
+// 读取任务并向后兼容旧结构
+const raw = safeRead(LS_KEYS.TODOS, '[]')
+const tasks = ref(Array.isArray(raw) ? raw.map(migrateTask) : [])
 
-const addTask = () => {
-  if (newTaskText.value.trim() !== '') {
-    tasks.value.push({
-      id: Date.now(),
-      text: newTaskText.value.trim(),
-      completed: false,
-    })
-    newTaskText.value = ''
-  }
+// 模式：默认全局
+const mode = ref(localStorage.getItem(LS_KEYS.MODE) === 'daily' ? 'daily' : 'global')
+
+// 当前选中日期（与 Calendar 联动）
+const selectedDateStr = ref(
+  (typeof localStorage !== 'undefined' && localStorage.getItem(LS_KEYS.SEL)) || formatDate(new Date())
+)
+
+// 过滤后的可见任务
+const visibleTasks = computed(() => {
+  if (mode.value !== 'daily') return tasks.value
+  return tasks.value.filter(t => t.date === selectedDateStr.value)
+})
+
+// 持久化
+watch(tasks, (v) => safeWrite(LS_KEYS.TODOS, v), { deep: true })
+watch(mode,  (m) => localStorage.setItem(LS_KEYS.MODE, m))
+
+// 监听 Calendar 的广播
+onMounted(() => {
+  window.addEventListener('app:date-change', onDateChange)
+  window.addEventListener('app:set-mode', onModeChange)
+})
+
+// 业务操作
+function addTask () {
+  const txt = newTaskText.value.trim()
+  if (!txt) return
+  tasks.value.push({
+    id: Date.now(),
+    text: txt,
+    completed: false,
+    date: mode.value === 'daily' ? selectedDateStr.value : null
+  })
+  newTaskText.value = ''
+}
+function deleteTask (id) {
+  tasks.value = tasks.value.filter(t => t.id !== id)
+}
+function toggleTaskCompletion (id) {
+  const t = tasks.value.find(x => x.id === id)
+  if (t) t.completed = !t.completed
+}
+function setMode (m) {
+  mode.value = m === 'daily' ? 'daily' : 'global'
 }
 
-const deleteTask = (id) => {
-  tasks.value = tasks.value.filter(task => task.id !== id)
+// 联动事件回调
+function onDateChange (e) {
+  if (!e?.detail?.date) return
+  selectedDateStr.value = e.detail.date
+  localStorage.setItem(LS_KEYS.SEL, selectedDateStr.value)
+}
+function onModeChange (e) {
+  const m = e?.detail?.mode
+  if (!m) return
+  setMode(m)
 }
 
-const toggleTaskCompletion = (id) => {
-  const task = tasks.value.find(task => task.id === id)
-  if (task) {
-    task.completed = !task.completed
+// 工具函数
+function migrateTask (t) {
+  if (typeof t === 'string') {
+    return { id: Date.now() + Math.random(), text: t, completed: false, date: null }
   }
+  if (t && typeof t === 'object') {
+    return { id: t.id ?? (Date.now() + Math.random()), text: t.text ?? '', completed: !!t.completed, date: (t.date ?? null) }
+  }
+  return { id: Date.now() + Math.random(), text: '', completed: false, date: null }
+}
+function formatDate (d) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+function safeRead (key, fallbackJson) {
+  try {
+    const s = localStorage.getItem(key)
+    return s ? JSON.parse(s) : JSON.parse(fallbackJson)
+  } catch {
+    return JSON.parse(fallbackJson)
+  }
+}
+function safeWrite (key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)) } catch {}
 }
 </script>
 
 <style scoped>
+/* ====== 原始样式风格（你提供的版本） ====== */
 .todo-list-container {
   display: flex;
   flex-direction: column;
-  height: 100%; /* 填充父卡片高度 */
-  padding: 0 1.5rem; /* 与卡片左右留白保持一致 */
-  box-sizing: border-box; /* 边框和内边距不增加总尺寸 */
+  height: 100%;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
 }
 
 .input-section {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.0rem;
 }
 
 .task-input {
@@ -89,14 +210,15 @@ const toggleTaskCompletion = (id) => {
   border: 1px solid var(--ctp-mocha-surface2);
   border-radius: 0.5rem;
   background-color: var(--ctp-mocha-surface0);
-  color: var(--ctp-mocha-text);
-  font-size: 1rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: "LXGW WenKai";
 }
 
 .task-input::placeholder {
-  color: var(--ctp-mocha-overlay0);
+  color: var(--ctp-mocha-overlay1);
 }
 
 .task-input:focus {
@@ -106,8 +228,9 @@ const toggleTaskCompletion = (id) => {
 
 .add-button {
   width: 44px;
-  height: 44px; /* 与输入框高度匹配 */
-  background-color: var(--primary-color);
+  height: 44px;
+  /* background-color: var(--primary-color); */
+  background: linear-gradient(135deg, var(--ctp-mocha-mauve), var(--ctp-mocha-blue));
   color: var(--ctp-mocha-base);
   border: none;
   border-radius: 0.5rem;
@@ -121,7 +244,8 @@ const toggleTaskCompletion = (id) => {
 }
 
 .add-button:hover {
-  background-color: var(--primary-color-hover);
+  /* background-color: var(--primary-color-hover); */
+  background: linear-gradient(135deg, var(--success-color), #89dceb);
   transform: translateY(-1px);
 }
 
@@ -129,21 +253,13 @@ const toggleTaskCompletion = (id) => {
   list-style: none;
   padding: 0;
   margin: 0;
-  flex-grow: 1; /* 让列表尽可能占据剩余空间 */
-  overflow-y: auto; /* 允许滚动 */
-  padding-right: 0.5rem; /* 为滚动条留出空间 */
-  /* 新增：限制最大高度 */
-  /* 假设一行任务高度约 3rem (48px)，4行就是 12rem (192px)。
-     根据实际 padding 和 margin 调整。
-     这里我们根据卡片总高 400px，顶部输入框 + margin 大概 44+16=60px
-     下方 padding 2rem (32px)，标题 1.5rem + margin = 24+16=40px
-     400 - 60 - 32 - 40 = 268px, 
-     所以 max-height 留给 task-list 约 250px 比较合理，
-     可以显示 4-5 行。为了严格 4 行显示，设置大约 4 * 3rem = 12rem */
-  max-height: 250px; /* 调整此值以控制可见行数。每行约 50px-60px */
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  max-height: 250px;
 }
 
-/* 定制滚动条 */
+/* 滚动条 */
 .task-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -161,15 +277,15 @@ const toggleTaskCompletion = (id) => {
   background-color: var(--ctp-mocha-surface0);
   padding: 0.8rem 1rem;
   border-radius: 0.5rem;
-  margin-bottom: 0.75rem; /* 任务项之间的间距 */
+  margin-bottom: 0.75rem;
   border: 1px solid var(--ctp-mocha-surface1);
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .task-item.completed {
   background-color: var(--ctp-mocha-surface0);
-  border-color: var(--ctp-mocha-green); /* 完成时边框颜色 */
-  opacity: 0.7; /* 略微降低透明度 */
+  border-color: var(--ctp-mocha-green);
+  opacity: 0.7;
 }
 
 .task-text {
@@ -178,27 +294,25 @@ const toggleTaskCompletion = (id) => {
   font-size: 0.95rem;
   margin-left: 0.75rem;
   word-break: break-word;
-  /* 确保划线效果能够生效 */
   transition: text-decoration 0.3s ease, color 0.3s ease;
+  font-weight: 700;
+  font-family: "LXGW WenKai";
 }
 
 .task-item.completed .task-text {
   text-decoration: line-through;
-  color: var(--ctp-mocha-overlay1); /* 完成文本颜色更柔和 */
+  color: var(--ctp-mocha-overlay1);
 }
 
 .checkbox-container {
   display: block;
   position: relative;
   cursor: pointer;
-  font-size: 22px; /* 影响自定义checkbox大小 */
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  font-size: 22px;
   user-select: none;
 }
 
-/* 隐藏浏览器默认的checkbox */
+/* 隐藏原生 checkbox */
 .hidden-checkbox {
   position: absolute;
   opacity: 0;
@@ -207,60 +321,51 @@ const toggleTaskCompletion = (id) => {
   width: 0;
 }
 
-/* 创建自定义的checkbox */
+/* 自定义圆形 checkbox */
 .custom-checkbox {
   height: 20px;
   width: 20px;
   background-color: var(--ctp-mocha-base);
   border: 2px solid var(--ctp-mocha-surface2);
-  border-radius: 50%; /* 圆形 */
+  border-radius: 50%;
   display: inline-block;
   vertical-align: middle;
   transition: all 0.2s ease;
-  position: relative; /* 用于放置伪元素对勾 */
+  position: relative;
 }
 
-/* 鼠标悬停时 */
+/* 悬停 */
 .checkbox-container:hover .custom-checkbox {
-  background-color: var(--ctp-mocha-overlay0);
+  background-color: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-/* 选中时 */
+/* 选中态：不显示对勾，只改底色与边框为绿色 */
 .hidden-checkbox:checked ~ .custom-checkbox {
-  background-color: var(--ctp-mocha-green); /* 选中时的背景色 */
+  background-color: var(--ctp-mocha-green);
   border-color: var(--ctp-mocha-green);
 }
 
-/* 选中时显示勾 - 根据新要求，我们不显示这个勾 */
+/* 维持不显示对勾 */
 .custom-checkbox:after {
-  /* 保持默认隐藏，或者直接删除这整个伪元素和其下面的样式，
-     因为你明确要求不显示对勾，这里只是注释掉显示逻辑。*/
   content: "";
   position: absolute;
-  display: none; /* 明确保持隐藏，不显示对勾 */
-  /* 以下样式即便不显示也保留，以防未来又想加上 */
+  display: none;
   left: 6px;
   top: 3px;
   width: 5px;
   height: 10px;
   border: solid var(--ctp-mocha-base);
   border-width: 0 3px 3px 0;
-  -webkit-transform: rotate(45deg);
-  -ms-transform: rotate(45deg);
   transform: rotate(45deg);
 }
 
-/* 删掉或者注释掉这一整段，因为我们不希望选中时显示对勾了 */
-/* .hidden-checkbox:checked ~ .custom-checkbox:after {
-  display: block;
-} */
-
+/* 删除按钮 */
 .delete-button {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--ctp-mocha-red); /* 删除按钮颜色 */
+  color: var(--ctp-mocha-red);
   margin-left: 1rem;
   padding: 0.2rem;
   display: flex;
@@ -277,5 +382,56 @@ const toggleTaskCompletion = (id) => {
 .delete-icon {
   width: 20px;
   height: 20px;
+}
+
+/* ====== 为模式切换与日期徽标补充的极简样式（保持同风格） ====== */
+.mode-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.75rem;
+}
+.mode-btn {
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid var(--ctp-mocha-surface2);
+  background-color: var(--ctp-mocha-surface0);
+  color: var(--ctp-mocha-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  font-family: monospace;
+  font-weight: 600;
+}
+.mode-btn.active {
+  border-color: var(--primary-color);
+  /* background-color: var(--ctp-mocha-base); */
+}
+.current-day-chip {
+  /* margin-left: auto; */
+  font-size: 0.75rem;
+  color: var(--ctp-mocha-overlay1);
+  border: 1px dashed #b4befe;
+  /* padding: 0.2rem 0.5rem; */
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.5rem;
+  /* box-shadow: inset 0 0 0 2px rgba(255,255,255,0.3); */
+  background: #b4befe;
+  color: var(--background-color);
+  /* border-color: #b4befe; */
+  font-family: monospace;
+  font-weight: 600;
+}
+.task-meta {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ctp-mocha-overlay1);
+}
+.date-chip {
+  display: inline-block;
+  border: 1px solid var(--ctp-mocha-surface2);
+  border-radius: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  font-family: monospace;
 }
 </style>

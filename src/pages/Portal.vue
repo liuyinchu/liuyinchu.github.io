@@ -85,7 +85,7 @@ onMounted(() => {
     autoplay: true,
     theme: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#1e1e2e',
     listFolded: false,
-    listMaxHeight: '150px',
+    listMaxHeight: '240px',
     audio: [
       {
         name: 'Space Walk',
@@ -166,9 +166,13 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="card frosted calendar-card">
+      <!-- <div class="card frosted calendar-card">
         <h2 class="title">Calendar</h2>
         <Calendar class="themed-calendar" />
+      </div> -->
+      <div class="card frosted weather-card">
+        <h2 class="title">Weather</h2>
+        <Weather />
       </div>
     </div>
     <div class="row-cards">
@@ -177,9 +181,13 @@ onMounted(() => {
         <ToDoList />
       </div>
 
-      <div class="card frosted weather-card">
+      <!-- <div class="card frosted weather-card">
         <h2 class="title">Weather</h2>
         <Weather />
+      </div> -->
+      <div class="card frosted calendar-card">
+        <h2 class="title">Calendar</h2>
+        <Calendar class="themed-calendar" />
       </div>
     </div>
     <div class="card frosted dock-card">
@@ -292,10 +300,11 @@ onMounted(() => {
   font-weight: bold;
   color: var(--text-color);
   margin-bottom: 1rem;
+  font-family: "Verdana",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
 }
 
 .aplayer-wrapper {
-  max-height: 300px;
+  max-height: 400px;
   overflow: hidden;
   border-radius: 0.5rem;
 }
@@ -304,10 +313,11 @@ onMounted(() => {
 :deep(.aplayer) {
   background-color: rgba(30, 30, 46, 0.3);
   backdrop-filter: blur(10px);
-  border-radius: 1rem;
-  font-family: 'Inter', sans-serif;
+  border-radius: 2rem;
+  font-family: 'LXGW WenKai', 'Inter', sans-serif;
   color: var(--text-color);
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+  height: 320px;
 }
 
 /* 播放信息标题 */
@@ -345,17 +355,18 @@ onMounted(() => {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 :deep(.aplayer-list ol li:hover) {
-  background: rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, var(--success-color), #89dceb);
+  color: var(--background-color);
 }
 
 /* ✅ 当前播放项高亮 */
 :deep(.aplayer-list-light) {
-  background: rgba(116, 199, 236, 0.15) !important;
+  background: rgba(116, 199, 236, 0.3) !important;
 }
 :deep(.aplayer-list-light .aplayer-list-title),
 :deep(.aplayer-list-light .aplayer-list-author) {
   color: var(--text-color) !important;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* 编号和作者颜色柔和 */
@@ -385,7 +396,7 @@ onMounted(() => {
 .music-card {
   flex: 1;          /* 占满剩余空间 */
   min-width: 300px; /* 给它一个最小宽度，避免太窄 */
-  height: 300px;
+  height: 400px;
   display: flex;
   flex-direction: column;
 }
@@ -393,70 +404,70 @@ onMounted(() => {
 .calendar-card {
   flex: 0 0 350px;  /* 不伸缩，固定宽度 */
   width: 350px;
-  height: 300px;
+  height: 400px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
 }
 
 /* 日历基础 */
-.themed-calendar {
+/* .themed-calendar {
   flex: 1;
   background: transparent;
   color: var(--text-color);
   font-family: 'Inter', sans-serif;
   display: flex;
   flex-direction: column;
-  font-size: 0.78rem; /* 稍微缩小一点整体字号以容纳空间 */
-}
+  font-size: 0.78rem; 
+} */
 
 /* 月份标题 */
-.themed-calendar .calendar-header {
+/* .themed-calendar .calendar-header {
   font-weight: bold;
   text-align: center;
   margin-bottom: 0.4rem;
   font-size: 0.9rem;
   color: var(--text-color);
-}
+} */
 
 /* 网格布局 */
-.themed-calendar .calendar-grid {
+/* .themed-calendar .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.2rem;
   flex: 1;
-}
+} */
 
 /* 星期标签 */
-.themed-calendar .calendar-day {
+/* .themed-calendar .calendar-day {
   text-align: center;
   opacity: 0.6;
   font-weight: 600;
   color: var(--ctp-mocha-subtext0);
-}
+} */
 
 /* 日期单元格 */
-.themed-calendar .calendar-cell {
+/* .themed-calendar .calendar-cell {
   text-align: center;
   padding: 0.3rem 0;
   border-radius: 0.4rem;
   color: var(--text-color);
   transition: background-color 0.2s ease;
   font-size: 0.75rem;
-}
+} */
 
 /* 今天高亮 */
-.themed-calendar .calendar-cell.today {
+/* .themed-calendar .calendar-cell.today {
   background-color: #74c7ec;
   color: #1e1e2e;
   font-weight: bold;
-}
+} */
 
 /* hover 效果 */
-.themed-calendar .calendar-cell:hover {
+/* .themed-calendar .calendar-cell:hover {
   background-color: rgba(255, 255, 255, 0.07);
   cursor: pointer;
-}
+} */
 
 .dock-card {
   padding: 1rem 1.5rem 2rem 1.5rem;

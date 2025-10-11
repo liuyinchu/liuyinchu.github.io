@@ -1,10 +1,20 @@
 <template>
   <div class="calendar" @keydown.stop.prevent="onKeydown">
     <div class="calendar-header">
-      <button class="nav-btn" @click="toPrevMonth" aria-label="Previous month">‹</button>
+      <button class="nav-btn" @click="toPrevMonth" aria-label="Previous month">◀</button>
       <div class="month-title" :aria-label="currentMonthAria">{{ currentMonthYear }}</div>
-      <button class="nav-btn" @click="toNextMonth" aria-label="Next month">›</button>
-      <button class="today-btn" @click="toToday">今天</button>
+      <button class="nav-btn" @click="toNextMonth" aria-label="Next month">▶</button>
+      <button class="today-btn" @click="toToday">Today</button>
+
+      <!-- 选中日期存在时，提供标红/取消标红 -->
+      <button
+        v-if="selectedDate"
+        class="mark-btn"
+        @click="toggleRedForSelected"
+        :aria-label="isRed(selectedDate) ? 'Unmark red' : 'Mark red'"
+      >
+        {{ isRed(selectedDate) ? 'Cancel' : 'Notice' }}
+      </button>
     </div>
 
     <div class="calendar-grid" role="grid" aria-label="Calendar">
@@ -14,208 +24,384 @@
 
       <button
         v-for="(cell, idx) in calendarCells"
-        :key="'cell'+idx"
+        :key="'c'+idx"
         class="calendar-cell"
-        role="gridcell"
         :class="{
-          'other-month': !cell.inCurrentMonth,
-          'today': cell.isToday,
-          'selected': isSelected(cell.date)
+          today: cell.isToday,
+          selected: isSelected(cell.date),
+          'out-this-month': !cell.inMonth,
+          'is-red': isRed(cell.date)
         }"
-        :tabindex="cell.date ? 0 : -1"
-        :disabled="!cell.date"
-        :aria-label="cell.aria"
+        :aria-selected="isSelected(cell.date) ? 'true' : 'false'"
         @click="select(cell.date)"
       >
-        <span class="date-number">{{ cell.date ? cell.date.getDate() : '' }}</span>
+        {{ cell.date.getDate() }}
       </button>
+    </div>
+
+    <!-- 标红日期列表（长期显示；点击即切 Daily 并跳转该日） -->
+    <div class="red-dates" v-if="redDatesArr.length">
+      <!-- <small class="red-title">已标红：</small> -->
+      <div class="red-list">
+        <button
+          v-for="d in redDatesSorted"
+          :key="d"
+          class="red-pill"
+          :title="'Jump to ' + d"
+          @click="jumpTo(d)"
+        >
+          {{ d }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
-const today = new Date()
-const viewDate = ref(new Date(today.getFullYear(), today.getMonth(), 1))
-const selectedDate = ref(null)
+/**
+ * 本组件仅操作 LocalStorage 并向外广播自定义事件：
+ *  - 广播：'app:date-change' { detail: { date: 'YYYY-MM-DD' } }
+ *  - 广播：'app:set-mode'    { detail: { mode: 'daily' } }（当点击标红列表时）
+ */
 
-// 修改1: 将星期数组改为中文
-const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+const LS_KEYS = {
+  REDS: 'portal.redDates',
+  SEL:  'portal.selectedDate'
+}
 
+const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+
+const viewDate = ref(new Date())     // 当前视图月份（1 号）
+const selectedDate = ref(null)       // 选中的具体日期（Date）
+
+// 标红日期数组（字符串 'YYYY-MM-DD'），用数组便于持久化/排序
+const redDatesArr = ref(readRedDates())
+
+// 计算属性：当前月份标题、ARIA 文案
 const currentMonthYear = computed(() =>
-  viewDate.value.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' })
+  `${viewDate.value.getFullYear()} - ${String(viewDate.value.getMonth()+1).padStart(2,'0')}`
 )
 const currentMonthAria = computed(() =>
-  viewDate.value.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' })
+  viewDate.value.toLocaleDateString('en', { year: 'numeric', month: 'long' })
 )
 
-function buildCalendar(d) {
-  const year = d.getFullYear();
-  const month = d.getMonth();
-  const cells = [];
-
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-
-  const prevMonthPadDays = firstDay.getDay();
-  const prevMonthLastDate = new Date(year, month, 0);
-
-  for (let i = prevMonthPadDays; i > 0; i--) {
-    const date = new Date(year, month - 1, prevMonthLastDate.getDate() - i + 1);
-    cells.push(createCellObject(date, false));
-  }
-
-  for (let i = 1; i <= lastDay.getDate(); i++) {
-    const date = new Date(year, month, i);
-    cells.push(createCellObject(date, true));
-  }
-
-  const totalCells = 42;
-  let nextMonthDay = 1;
-  while (cells.length < totalCells) {
-    const date = new Date(year, month + 1, nextMonthDay++);
-    cells.push(createCellObject(date, false));
-  }
-  
-  return cells;
-}
-
-function createCellObject(date, inCurrentMonth) {
-  if (!date) return { date: null, inCurrentMonth: false, isToday: false, aria: '' };
-  
-  const isToday = date.getFullYear() === today.getFullYear() &&
-                  date.getMonth() === today.getMonth() &&
-                  date.getDate() === today.getDate();
-
-  const aria = date.toLocaleDateString('en-CA');
-
-  return { date, inCurrentMonth, isToday, aria };
-}
-
+// 生成 6 行 × 7 列（42）格子
 const calendarCells = computed(() => buildCalendar(viewDate.value))
 
-function toPrevMonth() { viewDate.value = new Date(viewDate.value.getFullYear(), viewDate.value.getMonth() - 1, 1) }
-function toNextMonth() { viewDate.value = new Date(viewDate.value.getFullYear(), viewDate.value.getMonth() + 1, 1) }
-function toToday() {
-  const todayVal = new Date();
-  viewDate.value = new Date(todayVal.getFullYear(), todayVal.getMonth(), 1);
-  selectedDate.value = todayVal;
+// 选中当天：用于样式
+function isSelected (d) {
+  return !!(d && selectedDate.value && sameDay(d, selectedDate.value))
+}
+function isRed (d) {
+  if (!d) return false
+  return redDatesArr.value.includes(fmt(d))
 }
 
-function isSelected(d) {
-  return d && selectedDate.value && d.getTime() === selectedDate.value.getTime();
+// --- 生命周期与持久化 ---
+onMounted(() => {
+  // 恢复选中日期（若有）
+  const s = localStorage.getItem(LS_KEYS.SEL)
+  if (s) {
+    const parsed = parseDateStr(s)
+    if (parsed) {
+      selectedDate.value = parsed
+      viewDate.value = new Date(parsed.getFullYear(), parsed.getMonth(), 1)
+      emitDateChange(parsed)
+    }
+  }
+})
+
+// 标红持久化
+watch(redDatesArr, (arr) => {
+  try { localStorage.setItem(LS_KEYS.REDS, JSON.stringify(arr)) } catch {}
+}, { deep: true })
+
+// 选中日期写回（并通知 ToDoList）
+watch(selectedDate, (d) => {
+  if (!d) return
+  const s = fmt(d)
+  try { localStorage.setItem(LS_KEYS.SEL, s) } catch {}
+  emitDateChange(d)
+})
+
+// --- 交互 ---
+function select (d) {
+  if (!d) return
+  selectedDate.value = new Date(d)
 }
 
-function select(d) { if (d) selectedDate.value = new Date(d) }
+function toPrevMonth () {
+  const v = new Date(viewDate.value)
+  v.setMonth(v.getMonth() - 1, 1)
+  viewDate.value = v
+}
+function toNextMonth () {
+  const v = new Date(viewDate.value)
+  v.setMonth(v.getMonth() + 1, 1)
+  viewDate.value = v
+}
+function toToday () {
+  const t = new Date()
+  viewDate.value = new Date(t.getFullYear(), t.getMonth(), 1)
+  selectedDate.value = t
+}
 
-function onKeydown(e) {
-  if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','PageUp','PageDown','Home','End','t','T'].includes(e.key)) return;
-  
-  e.preventDefault();
-  
-  const base = selectedDate.value ?? new Date(viewDate.value.getFullYear(), viewDate.value.getMonth(), 1);
-  const cur = new Date(base);
+function toggleRedForSelected () {
+  if (!selectedDate.value) return
+  const s = fmt(selectedDate.value)
+  const idx = redDatesArr.value.indexOf(s)
+  if (idx >= 0) redDatesArr.value.splice(idx, 1)
+  else redDatesArr.value.push(s)
+}
+
+// 点击标红日期：切 Daily + 跳到该日（并滚动到该月）
+function jumpTo (dateStr) {
+  const d = parseDateStr(dateStr)
+  if (!d) return
+  viewDate.value = new Date(d.getFullYear(), d.getMonth(), 1)
+  selectedDate.value = d
+  // 通知 ToDoList 切 Daily
+  window.dispatchEvent(new CustomEvent('app:set-mode', { detail: { mode: 'daily' } }))
+}
+
+// 键盘导航（原有行为保留/增强）
+function onKeydown (e) {
+  const keys = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','PageUp','PageDown','Home','End','t','T']
+  if (!keys.includes(e.key)) return
+  e.preventDefault()
+
+  const base = selectedDate.value ?? new Date(viewDate.value.getFullYear(), viewDate.value.getMonth(), 1)
+  const cur = new Date(base)
 
   switch (e.key) {
-    case 'ArrowLeft':  cur.setDate(cur.getDate() - 1); break;
-    case 'ArrowRight': cur.setDate(cur.getDate() + 1); break;
-    case 'ArrowUp':    cur.setDate(cur.getDate() - 7); break;
-    case 'ArrowDown':  cur.setDate(cur.getDate() + 7); break;
-    case 'PageUp':     cur.setMonth(cur.getMonth() - 1); break;
-    case 'PageDown':   cur.setMonth(cur.getMonth() + 1); break;
-    case 'Home':       cur.setDate(1); break;
-    case 'End':        cur.setMonth(cur.getMonth() + 1, 0); break;
+    case 'ArrowLeft':  cur.setDate(cur.getDate() - 1); break
+    case 'ArrowRight': cur.setDate(cur.getDate() + 1); break
+    case 'ArrowUp':    cur.setDate(cur.getDate() - 7); break
+    case 'ArrowDown':  cur.setDate(cur.getDate() + 7); break
+    case 'PageUp':     cur.setMonth(cur.getMonth() - 1); break
+    case 'PageDown':   cur.setMonth(cur.getMonth() + 1); break
+    case 'Home':       cur.setDate(1); break
+    case 'End':        cur.setMonth(cur.getMonth() + 1, 0); break
     case 't':
-    case 'T':          toToday(); return;
+    case 'T':          toToday(); return
   }
-
-  selectedDate.value = cur;
+  selectedDate.value = cur
   if (cur.getMonth() !== viewDate.value.getMonth() || cur.getFullYear() !== viewDate.value.getFullYear()) {
-    viewDate.value = new Date(cur.getFullYear(), cur.getMonth(), 1);
+    viewDate.value = new Date(cur.getFullYear(), cur.getMonth(), 1)
   }
 }
+
+// --- 辅助与构造 ---
+function buildCalendar (d) {
+  const y = d.getFullYear()
+  const m = d.getMonth()
+  const cells = []
+
+  const firstDay = new Date(y, m, 1)
+  const lastDay  = new Date(y, m + 1, 0)
+
+  // 前置填充（上个月的尾部）
+  const prevPad = firstDay.getDay()
+  const prevLastDate = new Date(y, m, 0)
+  for (let i = prevPad; i > 0; i--) {
+    const date = new Date(y, m - 1, prevLastDate.getDate() - i + 1)
+    cells.push(makeCell(date, false))
+  }
+
+  // 本月
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const date = new Date(y, m, i)
+    cells.push(makeCell(date, true))
+  }
+
+  // 后置填充（下个月的开头）
+  const total = 42
+  let nextDay = 1
+  while (cells.length < total) {
+    const date = new Date(y, m + 1, nextDay++)
+    cells.push(makeCell(date, false))
+  }
+  return cells
+}
+
+function makeCell (date, inMonth) {
+  return {
+    date,
+    inMonth,
+    isToday: sameDay(date, new Date())
+  }
+}
+
+function sameDay (a, b) {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate()
+}
+
+function fmt (d) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function parseDateStr (s) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null
+  const [y, m, d] = s.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  if (Number.isNaN(dt.getTime())) return null
+  return dt
+}
+
+function readRedDates () {
+  try {
+    const s = localStorage.getItem(LS_KEYS.REDS)
+    const arr = s ? JSON.parse(s) : []
+    return Array.isArray(arr) ? arr.filter(x => typeof x === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+// 向外广播日期变化
+function emitDateChange (d) {
+  window.dispatchEvent(new CustomEvent('app:date-change', { detail: { date: fmt(d) } }))
+}
+
+// 派生：排序后的标红列表
+const redDatesSorted = computed(() => {
+  return [...redDatesArr.value].sort((a, b) => a.localeCompare(b))
+})
 </script>
 
 <style scoped>
 .calendar {
-  width: 100%; height: 100%; display: flex; flex-direction: column;
-  gap: 0.5rem; padding: 0rem; font-size: 0.85rem;
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  color: var(--text-color); background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.7rem;
+  user-select: none;
 }
+
 .calendar-header {
-  display: grid; grid-template-columns: auto 1fr auto auto;
-  align-items: center; gap: 0.5rem; user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
 }
+
 .month-title {
-  text-align: center; font-weight: 700; letter-spacing: 0.2px;
-  padding: 0.25rem 0.5rem; border-radius: 0.5rem;
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: saturate(120%) blur(2px);
+  flex: 1;
+  text-align: center;
+  font-weight: 700;
+  color: var(--text-color);
+  font-size: 17px;
+  background: var(--ctp-mocha-surface0);;
+  border-radius: 0.4rem;
+  border: 1px solid var(--ctp-mocha-surface0);
+  padding: 0.17rem 0;
 }
-.nav-btn, .today-btn {
-  border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);
-  color: var(--text-color); padding: 0.25rem 0.5rem; line-height: 1;
-  border-radius: 0.45rem; cursor: pointer;
-  transition: transform 0.06s ease, background-color 0.15s ease, border-color 0.15s ease;
+
+.nav-btn,
+.today-btn,
+.mark-btn {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--ctp-mocha-surface0);
+  background:var(--ctp-mocha-surface0);;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: monospace;
+  
 }
-.nav-btn:hover, .today-btn:hover {
-  background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12);
+
+.today-btn {
+  margin-left: auto;
+  background: linear-gradient(135deg, var(--success-color), #89dceb);
+  color: #1e1e2e;
+  border-color: var(--success-color);
 }
-.nav-btn:active, .today-btn:active {
-  transform: translateY(1px);
+.mark-btn {
+  border-color: #eba0ac;
+  background: linear-gradient(135deg, var(--danger-color), #f5c2e7);
+  color:  #1e1e2e;
 }
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.35rem;
-  flex: 1;
+  row-gap: 0.2rem;
+  column-gap: 0.5rem;
 }
 
-/* 修改2: 调整星期行(表头)的样式 */
 .calendar-day {
   text-align: center;
-  font-weight: 600;
-  padding: 0.35rem 0;
-  /* 使用一个更明亮的颜色变量，并去掉透明度 */
-  color: #94e2d5; /* 使用主文字颜色，并提供一个备用值 */
-  /* opacity: 0.9; 可以保留轻微的透明度，或直接去掉让它完全不透明 */
+  font-weight: 700;
+  color: var(--ctp-mocha-subtext0);
 }
 
 .calendar-cell {
-  position: relative; display: grid; place-items: center; padding: 0;
-  border-radius: 0.6rem;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.02);
+  text-align: center;
+  padding: 0.35rem 0;
+  border-radius: 999999rem;
   color: var(--text-color);
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.06s ease;
-  outline: none;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 0.88rem;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
 }
-.calendar-cell:hover:not(:disabled) {
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.12);
+
+.calendar-cell.selected:not(.today) {
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.3);
+  background: #b4befe;
+  color: var(--background-color);
+  border-color: #b4befe;
+}
+
+/* 长期标红（高亮） */
+.calendar-cell.is-red {
+  color: var(--ctp-mocha-red);
+  border-color: rgba(235, 111, 146, 0.35); /* 近似 Mocha red 边框 */
+  background: rgba(235, 111, 146, 0.08);
+}
+
+.calendar-cell.today {
+  background: linear-gradient(135deg, var(--success-color), #89dceb);
+  color: var(--background-color);
+  border-color: var(--success-color);
+}
+
+/* 月外日期弱化 */
+.calendar-cell.out-this-month {
+  opacity: 0.5;
+}
+
+.red-dates {
+  margin-top: -0.2rem;
+}
+.red-title {
+  color: var(--ctp-mocha-subtext0);
+}
+.red-list {
+  margin-top: 0.25rem;
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+}
+.red-pill {
+  border: 1px solid var(--ctp-mocha-red);
+  color: var(--ctp-mocha-red);
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  font-size: 0.9rem;
   cursor: pointer;
 }
-.calendar-cell:focus-visible {
-  box-shadow: 0 0 0 2px rgba(116,199,236,0.7);
-}
-.date-number {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-.other-month { opacity: 0.45; }
-.today {
-  background-color: #74c7ec; color: #1e1e2e;
-  border-color: transparent; font-weight: 800;
-}
-.selected:not(.today) {
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.22);
-  background: rgba(255,255,255,0.05);
-}
-.calendar-cell:disabled {
-  visibility: hidden;
-}
+
 @media (max-width: 460px) {
   .calendar { padding: 0.5rem; font-size: 0.8rem; }
   .month-title { font-weight: 700; }
