@@ -393,13 +393,15 @@ const redDatesSorted = computed(() => {
   display: flex; flex-wrap: wrap; gap: 0.5rem;
 }
 .red-pill {
-  border: 1px solid var(--ctp-mocha-red);
+  border: 1.5px solid var(--ctp-mocha-red);
   color: var(--ctp-mocha-red);
   background: transparent;
   border-radius: 999px;
   padding: 0.05rem 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
+  font-weight: 600;
+  font-family: monospace;
 }
 
 @media (max-width: 460px) {
