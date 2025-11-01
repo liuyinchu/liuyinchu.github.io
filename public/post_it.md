@@ -1,3 +1,9 @@
+::: postit Web小游戏合集
+
+[不知道这是啥？](https://searchplayground.google/pacman/halloween/?hl=zh-cn&gl=us)
+
+:::
+
 ::: postit AI?4S
 
 <img src="/fig/inro_ml_dl.jpg" alt="机器学习和深度学习介绍" width="70%">
@@ -101,6 +107,7 @@
 
 ::: postit 一些神秘链接长期更新中
 
+- 20251101 观望频域 PINN 中：https://www.zhihu.com/question/667611221/answer/1936376574401316105
 - 20251004 vLLM ：https://docs.vllm.ai/en/latest/index.html
 - 20251004 Transformer 快速入门：https://transformers.run/
 - 20251004 面向开发者的提示词工程：https://datawhalechina.github.io/llm-cookbook/#/

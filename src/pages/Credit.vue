@@ -13,6 +13,8 @@ import LinkButtons from '../components/common/LinkButtons.vue'
 const creditText = `
 # 致谢 & 版权
 
+本站是非盈利非商业的开源个人博客，网站的样式、设计和绝大部分功能都由我自己实现。
+
 *感谢以下项目、资源与灵感给予本站建设的重要支持！*
 
 ---
@@ -41,6 +43,11 @@ const creditText = `
 
 本网站采用了大量图片素材，其中有部分来自 PIXIV 和 BiliBili 的各位画师，他们是：
 - Osot-酒保（BiliBili）
+- Harukix（PIXIV）
+- Rafa（PIXIV）：[流萤的小裙子～](https://www.pixiv.net/artworks/118143641)、[午夜前的一刻](https://www.pixiv.net/artworks/115952605)
+- TID（PIXIV）：[在逃春天](https://www.pixiv.net/artworks/124928964)
+- Ekita玄（PIXIV）：[流萤](https://www.pixiv.net/artworks/119791514)
+- コーラ（PIXIV）：[蒼い星の夜明け](https://www.pixiv.net/artworks/48319254)
 
 以上，暂时未列出的各位我会**及时**补上。
 
@@ -55,7 +62,7 @@ const creditText = `
 
 接下来，关于这个网站的版权，基本按照 [MIT LICENSE](https://opensource.org/license/mit) 发布：
 - 前端代码：“Copyright (c) 2024 - 2025 LiuYinChu'Space 本软件可自由使用、复制、修改、分发，前提是保留原始版权声明。
-软件按“原样”提供，不附带任何明示或暗示的担保。”
+软件按‘原样’提供，不附带任何明示或暗示的担保。”
 - 原创图片：允许所有人以任意形式使用。
 - 原创文章与日志：“[CC BY-NC-ND 4.0 国际许可协议](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh-hans)，转载请务必注明出处，禁止商用及修改。”
 

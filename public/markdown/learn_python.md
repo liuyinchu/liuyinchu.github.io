@@ -6,29 +6,365 @@
 ## Python 的现代项目管理
 
 先看这些视频：
-- [现代Python项目管理全流程梳理](https://b23.tv/D0gze5b)
-- [uv](https://b23.tv/ee9Tpbc)
-- [项目结构与打包](https://www.bilibili.com/video/BV12NgLzhEKx)
+- [现代 Python 项目管理全流程梳理](https://b23.tv/D0gze5b)
+- 项目化的包管理
+    - [uv](https://b23.tv/ee9Tpbc)
+    - [项目结构与打包](https://www.bilibili.com/video/BV12NgLzhEKx)
+- 为科学计算服务，但是“现代 conda”：
+    - [关于何为“现代 conda”的一个很好的介绍](https://www.bilibili.com/video/BV1Fm4ZzDEeY)
 
-### Conda
+## 绘图工具：从 Matplotlib 到 Plotly
 
-待续……
+本节旨在记录如何在已有不错的基础的情况下快速上手更现代的 Python 绘图工具 —— `Plotly.py`。
 
-### uv
+**Plotly 的两种主要画图方式：**
 
-待续……
+1.  **Plotly Express (`plotly.express`，通常导入为 `px`)**
 
-### Pixi
+      * 这是**强烈推荐的入门方式**，也是最快的方式。
+      * 它非常高级，通常**一行代码**就能创建一个完整的、漂亮的图表。
+      * 它非常适合处理数据框 (Pandas DataFrame)。
+      * **类比**：它就像是 `matplotlib.pyplot`，提供了很多便捷的函数。
 
-待续……
+2.  **Plotly Graph Objects (`plotly.graph_objects`，通常导入为 `go`)**
 
-## Debug
+      * 这是一种更底层的、面向对象的方式。
+      * 你需要手动创建 `go.Figure()`，然后向其中添加 `go.Scatter()`（轨迹/Traces），再更新 `fig.update_layout()`（布局）。
+      * 它提供了 100% 的控制权，但也更复杂。你之前看的 `plot-schema.json` 文件，定义的就是所有这些 `go` 对象的属性。
+      * **类比**：这更像是 `matplotlib` 里操作 `Figure` 和 `Axes` 对象的底层方法。
 
-待续……
+### `plt.` $\rightarrow$ `px.`
 
-## 重要的高阶知识
+可以把 `matplotlib.pyplot as plt` 和 Plotly 的 `plotly.express as px` 看作是解决相似问题的两种工具，但是它们的设计理念有些不同。
 
-待续……
+  * **Matplotlib (`plt`)**：你通常是“一步一步地”构建图表。你先用 `plt.figure()` 创建一个“画布”，然后用 `plt.plot()` 或 `plt.scatter()` 在上面“画”东西，再用 `plt.title()`、`plt.xlabel()` 添加标题和标签，最后用 `plt.show()` "显示" 这张静态图片。
+  * **Plotly (`px`)**：你通常是“一次性地”描述你想要的图表。你用一个函数（比如 `px.scatter()`）告诉它你需要的数据 (x, y)、标题 (title)、标签 (labels) 等，它会 *返回* 一个完整的、可交互的图表对象（通常叫 `fig`）。然后你调用 `fig.show()` 来显示这个交互式图表。
+
+假设我们有这些数据：
+
+```python
+x_data = [1, 2, 3, 4, 5]
+y_data = [10, 13, 8, 11, 15]
+```
+
+利用 `matplotlib.pyplot` 绘图：
+```python
+import matplotlib.pyplot as plt
+
+x_data = [1, 2, 3, 4, 5]
+y_data = [10, 13, 8, 11, 15]
+
+plt.figure()  # 1. 创建画布
+plt.scatter(x_data, y_data)  # 2. 画散点
+plt.title("My Matplotlib Plot")  # 3. 添加标题
+plt.xlabel("X-Axis")  # 4. 添加X轴标签
+plt.ylabel("Y-Axis")  # 5. 添加Y轴标签
+plt.show()  # 6. 显示静态图
+```
+利用 `plotly.express` 绘图：
+```python
+import plotly.express as px
+import pandas as pd
+
+# Plotly Express 最好是配合 Pandas DataFrame 使用
+df = pd.DataFrame({
+    "X-Axis": [1, 2, 3, 4, 5],
+    "Y-Axis": [10, 13, 8, 11, 15]
+})
+
+# 1. 一行代码创建整个图表对象！
+# 我们在这一行里就指定了数据、x轴、y轴、标题
+fig = px.scatter(df, 
+                 x="X-Axis", 
+                 y="Y-Axis", 
+                 title="My Plotly Express Plot"
+                )
+
+# 2. 显示图表
+# 当你运行这行代码时 (例如在 Jupyter Notebook 中),
+# 会显示一个可以缩放、平移、悬停查看数据的交互式图表！
+fig.show()
+```
+
+**如果不想用 Pandas，`px` 也支持直接使用列表：**
+
+```python
+import plotly.express as px
+
+x_data = [1, 2, 3, 4, 5]
+y_data = [10, 13, 8, 11, 15]
+
+# 注意：当直接用列表时，x 和 y 轴的标签需要单独设置
+fig = px.scatter(x=x_data, 
+                 y=y_data, 
+                 title="My Plotly Express Plot",
+                 labels={'x': 'X-Axis', 'y': 'Y-Axis'} # 用 'labels' 参数设置轴标签
+                )
+fig.show()
+```
+
+**总结一下关键转变：**
+
+1.  **导入**: `import matplotlib.pyplot as plt`  $\rightarrow$  `import plotly.express as px`
+2.  **创建**: 从 `plt.figure()` + `plt.plot()` + `plt.title()`... (多步) 变为 `fig = px.scatter(...)` (一步)。
+3.  **显示**: `plt.show()`  $\rightarrow$  `fig.show()`
+4.  **最大区别**: `plt` 生成的是**静态图片**，而 `px` (Plotly) 生成的是**交互式 HTML 图表**。
+
+### `Figure` & `Axes` $\rightarrow$ `go.Figure()`
+
+`plotly.graph_objects`（通常导入为 `go`）是 Plotly 的**核心**，而`go` 的核心思想是一切皆对象。
+
+与 `matplotlib` “一步一步画” 的模式不同，`go` 的模式是 **“构建一个图表对象”**。
+
+您可以把一个图表（Figure）想象成一个\*\*“大盒子”\*\*（`go.Figure`）。这个大盒子里必须装两样东西：
+
+1.  **`data` (数据)**：这是一个**列表**，包含了您想画的所有“轨迹”(Traces)。
+
+      * `go.Scatter` 是一个“轨迹”对象，用来画散点图或折线图。
+      * `go.Bar` 是一个“轨迹”对象，用来画柱状图。
+      * `go.Pie` 是一个“轨迹”对象，用来画饼图。
+      * ...等等。
+
+2.  **`layout` (布局)**：这是一个**对象**，用来描述图表长什么样（除了数据本身）。
+
+      * `title` (标题)
+      * `xaxis` (X轴的所有设置)
+      * `yaxis` (Y轴的所有设置)
+      * `legend` (图例)
+      * ...等等。
+
+**`Figure = data (一个轨迹列表) + layout (一个布局对象)`**
+
+我们来画一个最简单的散点图，X轴是 `[1, 2, 3]`，Y轴是 `[4, 5, 6]`。
+
+```python
+import plotly.graph_objects as go
+```
+
+我们想画一个散点图，所以我们需要一个 `go.Scatter` 对象。
+
+```python
+# 定义一个“轨迹”对象
+# mode='markers' 的意思是只画点 (散点图)
+# 如果是 'lines' 则是折线图
+trace1 = go.Scatter(
+    x=[1, 2, 3],
+    y=[4, 5, 6],
+    mode='markers',
+    name='我的数据点' # 这个名字会显示在图例中
+)
+```
+
+我们的 `data` “食材”准备好了。它是一个列表，目前只包含 `trace1`。
+`data = [trace1]`
+
+现在我们创建那个“大盒子” `go.Figure`，并把“食材” `data` 传进去。
+
+```python
+# data 参数必须是一个轨迹对象的列表
+fig = go.Figure(data=[trace1])
+```
+
+*（思考：我们还没定义 `layout` 怎么办？没关系，Plotly 会使用一套默认的布局。）*
+
+```python
+fig.show()
+```
+
+由此给出一个**可以交互**的散点图。但它没有标题，轴标签也是默认的。
+
+现在我们知道了 `Figure = data + layout`。上面那个图的 `layout` 是空的，我们来把它补上。
+
+在 `go` 中，有两种最常见的方式来设置 `layout`：
+
+1.  **方式一：在创建 `go.Figure` 时传入 (推荐)**
+    ```python
+    import plotly.graph_objects as go
+
+    # 1. 准备 Data (和上面一样)
+    trace1 = go.Scatter(
+        x=[1, 2, 3],
+        y=[4, 5, 6],
+        mode='markers',
+        name='我的数据点'
+    )
+
+    # 2. 准备 Layout 对象
+    my_layout = go.Layout(
+        title='我的第一个 GO 图表',  # 设置标题
+        xaxis_title='X 轴标签',    # 设置 X 轴标题
+        yaxis_title='Y 轴标签'     # 设置 Y 轴标题
+    )
+
+    # 3. 组装 Figure，同时传入 data 和 layout
+    fig = go.Figure(data=[trace1], layout=my_layout)
+
+    # 4. 显示
+    fig.show()
+    ```
+2.  **方式二：使用 `fig.update_layout()` (常用)**
+
+    这种方式更常见，因为它允许您先创建一个图表，然后再去“更新”它的布局。
+
+    ```python
+    import plotly.graph_objects as go
+
+    # 1. 准备 Data
+    trace1 = go.Scatter(
+        x=[1, 2, 3],
+        y=[4, 5, 6],
+        mode='markers',
+        name='我的数据点'
+    )
+
+    # 2. 组装 Figure (只传入 data)
+    fig = go.Figure(data=[trace1])
+
+    # 3. 使用 update_layout() 方法来添加/修改布局
+    fig.update_layout(
+        title='我的第一个 GO 图表 (更新版)',
+        xaxis_title='X 轴标签',
+        yaxis_title='Y 轴标签',
+        # 还可以设置更多...
+        paper_bgcolor='rgba(230, 230, 230, 0.5)' # 设置图表背景色
+    )
+
+    # 4. 显示
+    fig.show()
+    ```
+
+### 示例：画一张 Bode 图
+```python
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import scipy.signal as signal
+import numpy as np
+
+num = [8]
+den = [1, 6, 11, 6]
+system = signal.TransferFunction(num, den)
+w_rad_range = np.logspace(-2, 2, 100000)
+w, mag, phase = signal.bode(system, w_rad_range)
+
+gm_db, pm, gm_freq, pm_freq = (np.nan, np.nan, np.nan, np.nan)
+try:
+    gain_crossover_indices = np.where(np.diff(np.sign(mag)))[0]
+    if len(gain_crossover_indices) > 0:
+        idx = gain_crossover_indices[0]
+        log_w = np.log10(w)
+        log_pm_freq = np.interp(0.0, [mag[idx+1], mag[idx]], [log_w[idx+1], log_w[idx]])
+        pm_freq = 10**log_pm_freq
+        phase_at_pm_freq = np.interp(log_pm_freq, log_w, phase)
+        pm = phase_at_pm_freq + 180.0
+    else:
+        print("未找到增益穿越频率 (0 dB 穿越点)，无法计算 PM。")
+    phase_crossover_indices = np.where(np.diff(np.sign(phase + 180.0)))[0]
+    if len(phase_crossover_indices) > 0:
+        idx = phase_crossover_indices[0]
+        log_w = np.log10(w)
+        log_gm_freq = np.interp(-180.0, [phase[idx+1], phase[idx]], [log_w[idx+1], log_w[idx]])
+        gm_freq = 10**log_gm_freq
+        mag_at_gm_freq = np.interp(log_gm_freq, log_w, mag)
+        gm_db = -mag_at_gm_freq
+    else:
+        print("未找到相位穿越频率 (-180 deg 穿越点)，无法计算 GM。")
+except Exception as e:
+    print(f"计算裕度时发生错误: {e}")
+
+# 创建一个 2 行 1 列的子图，并共享 X 轴
+fig = make_subplots(rows=2, cols=1,
+                    shared_xaxes=True,
+                    vertical_spacing=0.0, # 减少子图间距
+                    subplot_titles=("", ""))
+
+# --- 绘图 1: 幅度 (Magnitude) ---
+fig.add_trace(go.Scatter(
+    x=w, y=mag,
+    mode='lines',
+    name='Gain',
+    line=dict(color='blue')
+), row=1, col=1)
+
+# 添加 0 dB 水平线
+fig.add_shape(type="line",
+    x0=w[0], y0=0, x1=w[-1], y1=0,
+    line=dict(color="black", width=2, dash="dash"),
+    row=1, col=1
+)
+
+# --- 绘图 2: 相位 (Phase) ---
+fig.add_trace(go.Scatter(
+    x=w, y=phase,
+    mode='lines',
+    name='Phase',
+    line=dict(color='red')
+), row=2, col=1)
+
+# 添加 -180 deg 水平线
+fig.add_shape(type="line",
+    x0=w[0], y0=-180, x1=w[-1], y1=-180,
+    line=dict(color="black", width=2, dash="dash"),
+    row=2, col=1
+)
+
+# 标注 PM
+if not np.isnan(pm_freq) and not np.isnan(pm):
+    fig.add_shape(type="line",
+        x0=pm_freq, y0=np.min(mag), x1=pm_freq, y1=np.max(mag),
+        line=dict(color="black", width=2, dash="dash"),
+        row=1, col=1
+    )
+    phase_at_pm_freq = np.interp(np.log10(pm_freq), np.log10(w), phase)
+    fig.add_shape(type="line",
+        x0=pm_freq, y0=np.min(phase), x1=pm_freq, y1=np.max(phase),
+        line=dict(color="black", width=2, dash="dash"),
+        row=2, col=1
+    )
+    fig.add_shape(type="line",
+        x0=pm_freq, y0=-180, x1=pm_freq, y1=phase_at_pm_freq,
+        line=dict(color="red", width=3),
+        row=2, col=1
+    )
+
+# 标注 GM
+if not np.isnan(gm_freq) and not np.isnan(gm_db):
+    mag_at_gm_freq = -gm_db
+    fig.add_shape(type="line",
+        x0=gm_freq, y0=np.min(mag), x1=gm_freq, y1=np.max(mag),
+        line=dict(color="black", width=2, dash="dash"),
+        row=1, col=1
+    )
+    fig.add_shape(type="line",
+        x0=gm_freq, y0=mag_at_gm_freq, x1=gm_freq, y1=0,
+        line=dict(color="blue", width=3),
+        row=1, col=1
+    )
+    fig.add_shape(type="line",
+        x0=gm_freq, y0=np.min(phase), x1=gm_freq, y1=np.max(phase),
+        line=dict(color="black", width=2, dash="dash"),
+        row=2, col=1
+    )
+
+# 关键：设置X轴为对数尺度 (lgFreq)
+fig.update_xaxes(type="log", title_text="Frequency (rad/s)")
+fig.update_xaxes(type="log", title_text="", row=1, col=1)
+
+# 更新Y轴标签
+fig.update_yaxes(title_text="Magnitude (dB)", row=1, col=1)
+fig.update_yaxes(title_text="Phase (deg)", row=2, col=1)
+
+# 整理布局
+fig.update_layout(
+    title_text=f"Bode Plot for P(s) with GM = {gm_db:.2f} dB (@ {gm_freq:.2f} rad/s), PM = {pm:.2f} deg (@ {pm_freq:.2f} rad/s)",
+    showlegend=True,
+    hovermode="x unified", # 统一显示x轴的悬停信息
+)
+
+# 如果在 Jupyter Notebook 或 VSCode Notebook 中，fig.show() 会直接显示交互式图表
+fig.show()
+```
+
+### 如何导出图片？
 
 ## 零散知识点
 

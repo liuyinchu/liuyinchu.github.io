@@ -77,8 +77,12 @@ Python 的特别之处在于它的简洁与可读性。代码往往就像自然�
 ### [UV](https://docs.astral.sh/uv/)
 Cargo-like 的**现代** Python 包管理。一个用 Rust 编写的极快的 Python 包和项目管理器，用过 Cargo 你就能想象到它有多好用。
 
-### [Plotly](https://plotly.com/python/)
-Plotly 的 Python 图形库可以制作交互式、出版级的图表。其中包含如何制作折线图、散点图、面积图、条形图、误差线、箱线图、直方图、热图、子图、多轴图、极坐标图和气泡图的示例。
+### [Plotly.py](https://plotly.com/python/)
+Plotly 的 Python 图形库（即 Plotly.py）可以制作交互式、出版级的图表。其中包含如何制作折线图、散点图、面积图、条形图、误差线、箱线图、直方图、热图、子图、多轴图、极坐标图和气泡图的示例。
+
+- [关于如何创建 Plotly.py 里的主题](https://plotly.com/python/templates/#creating-themes)
+- [可以扔给 AI 的 Plotly 接口规范](https://github.com/plotly/plotly.js/blob/master/dist/plot-schema.json)
+- [自用 Python API reference for plotly](https://plotly.com/python-api-reference/)
 
 ### [XGBoost](https://xgboost.readthedocs.io/en/latest/index.html)
 XGBoost（eXtreme Gradient Boosting，极端梯度提升）是一种高效的机器学习算法，由陈天奇 (Tianqi Chen) 开发。它是梯度提升决策树（GBDT）的一种改进实现，通过集成多个弱学习器（通常是决策树）来构建强大的预测模型。

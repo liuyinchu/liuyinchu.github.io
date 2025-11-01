@@ -6,6 +6,11 @@ import ImageBlock from '../components/common/ImageBlock.vue'
 
 const notes = [
   {
+    name: '（组会汇报）从稀疏识别到弱形式：数据驱动建模方法初探',
+    desc: '关于两篇文献阅读、学习与复现的结果的汇报',
+    url: '/files/notes/group_conference_1_sindy.pdf'
+  },
+  {
     name: '引力波物理个人笔记',
     desc: '课程《引力波物理》的完整（暂时）个人笔记；其中部分材料来源已在文件中有详细说明；此外，与之相关的是[期末大作业](https://github.com/pifuyuini/ysy-gw-phy)。',
     url: '/files/notes/gwphy_note_ysy.pdf'

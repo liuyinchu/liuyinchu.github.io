@@ -1,12 +1,35 @@
-# 个人 kitty 配置笔记
+# 个人 kitty 配置 & 使用笔记
 
-安利：**好看**且**好用**!
+一个**好看**且**好用**的 GPU 加速渲染的终端模拟器。
+
+| 特性                 | 说明                                                               |
+| ------------------ | ---------------------------------------------------------------- |
+| **GPU 加速渲染**    | 使用 OpenGL 渲染文字和图像，速度极快、低 CPU 占用。                                 |
+| **原生图片显示**     | 支持直接显示图片（通过 `kitty +kitten icat`），可预览图片、Markdown、代码截图等。          |
+| **超强排版**        | 支持真正的连字（ligature）、emoji、组合字形（比如 FiraCode 字体的编程连字）。               |
+| **高度可配置**       | 所有配置都在 `~/.config/kitty/kitty.conf`，语法简单、热加载（改完立即生效）。            |
+| **分屏系统**        | 支持像 `tmux` 一样在一个窗口里分屏（左右/上下）。                                    |
+| **kitten 插件系统** | 自带可扩展的「kitten」，可以写 Python 脚本扩展终端功能（如 icat、diff、SSH、Unicode 输入等）。 |
+| **远程复制粘贴**      | kitty + its own `kitten ssh` 支持在 SSH 时仍使用本地剪贴板。                  |
+| **漂亮的字体渲染**     | 对字体抗锯齿、字距、透明度都有高级支持。                                             |
+| **启动超快**         | 几乎瞬间打开，性能优于 alacritty / wezterm / iTerm2。                        |
 
 官方文档详见[这里](https://sw.kovidgoyal.net/kitty/)。
 
-配置文件一般在 `~/.config/kitty/kitty.conf`。
+如果你也是 macOS ，配置文件一般会在 `~/.config/kitty/kitty.conf`。
 
-## 完整配置
+我重新学习了一些 kitty 的使用，现在这篇随记涵盖了以下内容：
+- 个人配置
+- 一个好的教程推荐
+- 关于光标的炫酷功能的配置
+- 关于 `ssh` 的说明
+- kitty 使用笔记
+
+## 我的完整配置
+
+如果你喜欢这份配置，你可以将其直接复制到你的配置文件中。
+
+此外，我还搭配了 `zsh + oh-my-zsh` 来使用。
 
 ```config
 # BEGIN_KITTY_THEME
@@ -240,3 +263,36 @@ kitten ssh --kitten interpreter=python servername
 ### 警告
 
 由于 SSH 设计上的限制，你在看到 shell 提示符出现**之前**输入的任何内容都可能会丢失。所以，最理想的做法是**等到看见 shell 提示符后再开始输入**。
+
+## 学习如何使用 kitty
+
+### 窗口与分屏
+- 窗口
+  - 全屏：`^+⌘+f`
+  - 新标签：`⌘+t`
+  - 关闭标签：`⌘+w`
+- 分屏
+  - 分割：`ctrl+shift+enter`
+  - 切换：`ctrl+shift+]` & `ctrl+shift+[`
+  - 关闭：`ctrl+shift+w`
+
+### kitten
+
+事实上，前述 ssh 功能正是由 kitty 的强大插件 kitten 所实现的。这些 kittens 都是 Python 写的，也可以自定义。
+
+下面列出一些内置插件和用法：
+| kitten 命令                     | 功能                      |
+| ----------------------------- | ----------------------- |
+| `kitty +kitten icat`          | 显示图片（fzf 预览神器）          |
+| `kitty +kitten diff`          | 颜色高亮的文件差异比较             |
+| `kitty +kitten ssh user@host` | 远程登录（保持本地剪贴板）           |
+| `kitty +kitten unicode_input` | 输入 Unicode 字符（比如 emoji） |
+| `kitty +kitten clipboard`     | 操作系统剪贴板交互               |
+| `kitty +kitten themes`        | 浏览并设置主题                 |
+| `kitty +kitten hints`         | 让终端内容变为可点击链接 / 文件 / 命令  |
+
+上述功能都十分好用啊！
+
+注意在 kitty 终端内，只用输入 `kitten` 加上后面的命令就行了。
+
+此外，`kitten ssh` 模式下，也可以使用 `kitten` 命令（如预览图片，这是非常强大的）。
