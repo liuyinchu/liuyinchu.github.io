@@ -1,5 +1,21 @@
 [
   {
+    "id": "control_personal_note",
+    "title": "动力学与控制（长期更新的个人笔记）",
+    "author": "pifuyuini",
+    "date": "2025-11-1",
+    "desc": "个人科研相关。",
+    "image": "/bg/Fashionable_Robin.JPG"
+  },
+  {
+    "id": "astro_ml_guide",
+    "title": "天文学研究中机器学习方法的实用指南",
+    "author": "pifuyuini",
+    "date": "2025-11-1",
+    "desc": "不仅仅是天文学，这也是一份很好的将 AI 技术应用到科学研究中的很好的指南。",
+    "image": "/bg/visitor.jpeg"
+  },
+  {
     "id": "Introduction_to_the_Two_Stage_Torsion_Pendulum",
     "title": "An Introduction to the Two-Stage Torsion Pendulum",
     "author": "pifuyuini",
