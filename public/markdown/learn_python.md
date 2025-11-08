@@ -233,6 +233,14 @@ fig.show()
     fig.show()
     ```
 
+### 其它小技巧
+1. 将坐标设为`log`：如果在 `px.` 中，可以直接传递参数 `x_log=True` ；如果使用的是 `go.` ，则需要用布局更新 `fig.layout.xaxis.type = 'log'` ；或者在最开始就设置也是个不错的方案 `fig = go.Figure(layout=go.Layout(xaxis=dict(type='log')))` 。
+2. 注意如果在 **VS Code Notebook** 里使用，请先设置：
+    ```python
+    import plotly.io as pio
+    pio.renderers.default = "browser"
+    ```
+
 ### 示例：画一张 Bode 图
 ```python
 import plotly.graph_objects as go
@@ -359,12 +367,38 @@ fig.update_layout(
     showlegend=True,
     hovermode="x unified", # 统一显示x轴的悬停信息
 )
-
-# 如果在 Jupyter Notebook 或 VSCode Notebook 中，fig.show() 会直接显示交互式图表
 fig.show()
 ```
 
 ### 如何导出图片？
+
+详见[官方教程](https://plotly.com/python/static-image-export/)。
+
+```python
+import plotly.io as pio
+fig.write_image("fig.png")
+fig.write_image("images/fig1.jpeg")
+fig.write_image("images/fig1.svg")
+fig.write_image("images/fig1.pdf")
+```
+> 但注意，Colab 中需 `pip install -U kaleido plotly` ，并配置chrome `pio.get_chrome()` 。
+> 此外，还有：`conda install -c conda-forge python-kaleido` 。
+
+> 除了图像格式之外，`to_image` 和 `write_image` 函数还提供了参数来指定图像的宽度和高度（以逻辑像素为单位）。它们还提供了一个缩放参数，可用于增加（scale > 1）或减少（scale < 1）结果图像的物理分辨率。
+
+通过导出图片，我们有另一种在 Notebook 中使用的方式：
+
+```python
+img_bytes = fig.to_image(format="png", width=600, height=350, scale=2)
+Image(img_bytes)
+```
+- `width=600`：图像宽度为 600 像素
+- `height=350`：图像高度为 350 像素
+- `scale = 1` → 原始分辨率
+- `scale > 1` → 提高分辨率（更清晰、更大文件）
+- `scale < 1` → 降低分辨率（更模糊、更小文件）
+- 返回的是图片的 字节数据（bytes）
+- `Image(img_bytes)` 通常用于 Jupyter Notebook，把字节流显示为实际图片
 
 ## 零散知识点
 

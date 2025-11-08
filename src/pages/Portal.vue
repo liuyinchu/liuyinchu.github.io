@@ -93,6 +93,12 @@ onMounted(() => {
         url: '/music/space_walk.m4a',
         cover: '/music/cover/default.jpg',
       },
+      {
+        name: '太空曼波～',
+        artist: '还我神ID',
+        url: '/music/太空曼波_还我神ID.m4a',
+        cover: '/music/cover/default.jpg',
+      },
       { name: '不谓侠', artist: '萧忆情Alex', url: '/music/不谓侠_萧忆情Alex.m4a', cover: '/music/cover/default5.jpg' },
       { name: 'A Letter', artist: '泽野弘之', url: '/music/a_letter.m4a', cover: '/music/cover/default4.jpg' },
       { name: 'A New Day with Hope', artist: 'HoYo-Mix', url: '/music/a_new_day_with_hope.m4a', cover: '/music/cover/default2.jpg' },

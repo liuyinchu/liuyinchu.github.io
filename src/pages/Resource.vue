@@ -74,11 +74,17 @@ Python 的特别之处在于它的简洁与可读性。代码往往就像自然�
 ### [Conda](https://github.com/conda-forge/miniforge)
 当我们谈论 Conda 时，应当谈论的是什么？
 
-### [UV](https://docs.astral.sh/uv/)
+### [uv](https://docs.astral.sh/uv/)
 Cargo-like 的**现代** Python 包管理。一个用 Rust 编写的极快的 Python 包和项目管理器，用过 Cargo 你就能想象到它有多好用。
 
+### [SciPy](https://docs.scipy.org/doc/scipy)
+SciPy 是一个非常著名的服务于科学研究的 Python 包，所以这里也不用做太多的赘述。我想指出的是，Scipy 的文档写得非常好，下面我将列一些我认为很值得看的部分（持续更新中）。
+- [教程 User Guide 目录页](https://docs.scipy.org/doc/scipy/tutorial/index.html#user-guide)：伟大，无需多言！
+- [信号处理教程](https://docs.scipy.org/doc/scipy/tutorial/signal.html)：这篇教程整篇都十分推荐阅读，包含B-样条、滤波器、FT、谱分析，每一个都很有用！
+- [API 参考](https://docs.scipy.org/doc/scipy/reference/index.html#scipy-api)：使用 AI 工具时，翻阅 API 接口，告诉 AI 准确使用方式是非常重要的（例如，新老版本的 windowing 功能就有很大不同，AI 可能对此产生幻觉）！
+
 ### [Plotly.py](https://plotly.com/python/)
-Plotly 的 Python 图形库（即 Plotly.py）可以制作交互式、出版级的图表。其中包含如何制作折线图、散点图、面积图、条形图、误差线、箱线图、直方图、热图、子图、多轴图、极坐标图和气泡图的示例。
+Plotly 的 Python 图形库，可以制作交互式、出版级的图表。其中包含如何制作折线图、散点图、面积图、条形图、误差线、箱线图、直方图、热图、子图、多轴图、极坐标图和气泡图的示例。
 
 - [关于如何创建 Plotly.py 里的主题](https://plotly.com/python/templates/#creating-themes)
 - [可以扔给 AI 的 Plotly 接口规范](https://github.com/plotly/plotly.js/blob/master/dist/plot-schema.json)
@@ -285,8 +291,13 @@ PC Game Cheats and Mods.
 - 深度学习：《深度学习》（Ian Goodfellow）
 - 强化学习：《强化学习：原理与方法》（Richard S. Sutton & Andrew G. Barto）
 - 信号与系统：《信号与系统》（Alan V. Oppenheim & Alan S. Willsky）
+- 强化学习：《强化学习的数学原理》（赵世钰）
 
 暂时先列出这些。
+
+### 更多学习资源
+
+可以在我的[学术主页](/research)找到！
 
 <h2 id="sec-others" class="sec">其它 <a href="#top" class="back-top">TOP ↑</a></h2>
 

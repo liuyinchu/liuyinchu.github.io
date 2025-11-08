@@ -11,6 +11,14 @@
 
     <BlockMarkdown :content="introText" :useCJK="true" />
 
+    <BlockMarkdown :content="mamplotly1" :useCJK="true" />
+
+    <LinkButtons :buttons="[
+      { text: 'Click Here to Visit Its GitHub Repository !', url: 'https://github.com/liuyinchu/ysy-data-analysis-helper' }
+    ]" />
+
+    <BlockMarkdown :content="yph5" :useCJK="true" />
+
     <BlockMarkdown :content="yph1" :useCJK="true" />
 
     <LinkButtons :buttons="[
@@ -41,8 +49,6 @@
       width="40%"
     />
 
-    <BlockMarkdown :content="yph5" :useCJK="true" />
-
   </PageWrapper>
 </template>
 
@@ -59,9 +65,64 @@ const introText = `
 # 个人（实验）数据处理工具
 
 这是一个合集，包含：
-- 个人绘图助手 \`ysy_plot_helper.py\` (v1.6.0)
+- （新）个人绘图助手 \`MamPlotly\`（曼波～，v1.7.0）
+- 科研绘图指引（持续更新中～）
+- 系统辨识之频率响应工具组 \`FR Utils\` （开发中～）
+- （旧）个人绘图助手 \`ysy_plot_helper.py\` (v1.6.0，暂停后续更新～)
 - 未完成/待定
 
+`
+
+const mamplotly1 = `
+
+---
+
+## 绘图助手 **MamPlotly**
+
+> A Personal Data Analysis Utils Group. Tiny, pragmatic helpers for day-to-day data analysis.
+
+保持 \`matplotlib/plotly\` 的全部灵活性，同时减少样板代码，统一风格，适用于实验记录、报告插图、频域分析与论文制图。
+
+由于首个较完善的实用发布包有个好听的别名 \`mamplotly\`（曼波地，曼波～曼波～），所以你也可以称这个包为 **MamPlotly**。
+
+本项目与安装包目前正式名称均为 \`ysy-data-analysis-helper\`（核心实现带有强烈的 YSY 风格）。
+
+一个简单的例子：
+\`\`\`python
+import numpy as np
+import mamplotly as mb                    # 推荐：别名“曼波地”
+from ysy_data_analysis_helper import iplot, mam_bode_plot, register_all  # Ultra
+
+x = np.linspace(0, 10, 1000)
+y = np.sin(x)
+
+# 一行快速成图
+mb.mamplot(x, y, 'sin(x)', plot_title='Single', y_label='Amplitude')
+
+# 交互绘图（Notebook 中常设 return_fig=False）
+iplot(x, [np.sin(x+i) for i in range(3)], [f'sin({i})' for i in range(3)],
+      'Test iplot', legend_title='Functions', return_fig=False)
+\`\`\`
+
+更完整示例见仓库的 \`mamplotly_example.ipynb\`。
+
+### 它完美兼容了原版 \`ysy_plot_helper.py\`
+
+\`\`\`python
+# 兼容原版（保持可用）
+import ysy_data_analysis_helper as yph
+yph.plot(...); yph.temp_style(...); yph.print_preset_styles()
+\`\`\`
+
+**而原版功能详见下（绘图助手 \`ysy_plot_helper.py\`）。**
+
+### 安装
+
+\`\`\`bash
+pip install https://raw.githubusercontent.com/liuyinchu/ysy-data-analysis-helper/main/artifacts/ysy_data_analysis_helper-1.7.0-py3-none-any.whl
+\`\`\`
+
+### 设计理念：薄封装，快速出图与风格一致；不企图替代 \`matplotlib/plotly\` ，而是与之配合。
 `
 
 const yph1 = `
@@ -69,6 +130,8 @@ const yph1 = `
 ---
 
 ## 绘图助手 \`ysy_plot_helper.py\`
+
+### 这份 \`.py\` 绘图脚本被我们改造为了新的功能更强大全面的 \`MamPlotly\` 包，目前进行了试用版的发布与测试，如前所述。留在这里的这个原绘图脚本及其设计想法停留在了这个v1.6.0，供其它开发者使用。
 
 一个轻量、务实的个人 Python 绘图助手，基于 Matplotlib。
 
@@ -153,9 +216,9 @@ const yph4 = `
 
 const yph5 = `
 
-### 关于科研绘图
+---
 
-我还想多分享一些信息。
+## 关于科研绘图
 
 以下是十分可靠的科研绘图建议，总的来说，要意识到“图不是装饰，是人与数据的接口”。先想清楚“给谁看、想让对方马上看到什么”，再决定图的形态与细节。
 - 了解你的受众：受众不同，信息密度与精确度不同：合作者可略、期刊需完整、学生要多解释、大众科普要极简、抓重点。

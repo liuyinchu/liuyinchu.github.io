@@ -38,19 +38,21 @@ const learningText = `
 
 My recent studies have primarily focused on building my knowledge base in two major areas: control theory and artificial intelligence.
 
-In control theory, I am rapidly covering the foundational and advanced topics of the field, ranging from "Signals and Systems" all the way to modern control theory.
+In my studies in the field of control, I have completed a quick start, from signals and systems to automatic control principles and then to modern control theory. Currently, my focus is on robust control with feedback and frequency domain-based controller design.
 
-In artificial intelligence, my current focus is on deep learning and reinforcement learning. The main textbooks I am studying are "Deep Learning" by Ian Goodfellow, et al., and "Reinforcement Learning: An Introduction" by Sutton and Barto.
+In artificial intelligence, my current focus is on deep learning and reinforcement learning.
 
-### Control Theory Studies
-I am systematically organizing my study notes on this topic and will share them here later. Please stay tuned.
+### Control Theory and Design
+I am systematically organizing my study notes on this topic, you can find them on [this page](/space1).
+- A Note of Basic Control Knowledge
+- A Note of Signal Process
+- Six-DOF Two-Stage Torsional Pendulum System
 
 ### Deep Learning
-While studying Chapter 6, I paid special attention to the discussion on activation functions. I believe the [ReLU](https://en.wikipedia.org/wiki/Rectified_linear_unit) series and [softmax](https://en.wikipedia.org/wiki/Softmax_function) are the two most important types (though [sigmoid](https://en.wikipedia.org/wiki/Logistic_function) is also noteworthy).
+Coming soon ...
 
-### Reinforcement Learning: An Introduction
-- In Chapter 3, I studied dynamic programming and found an [excellent explanation](https://www.zhihu.com/question/23995189) of the topic.
-- For the Racetrack problem in Chapter 4, I referenced an [existing solution](https://towardsdatascience.com/solving-reinforcement-learning-racetrack-exercise-building-the-environment-33712602de0c/) that greatly helped my understanding and implementation.
+### Reinforcement Learning
+Coming soon ...
 `
 
 const foucsingText = `
@@ -58,20 +60,24 @@ const foucsingText = `
 
 My current research interests focus mainly on two areas:
 
-1. **Literature on Space-based Gravitational Wave Detection**
+1. **Advanced AI Technology Used in Gravitational Wave Detection and Precision Measurement**  
    I am systematically studying related papers to deepen my understanding of the field.
 
-2. **Applications of Machine Learning in Nonlinear Dynamics**
+2. **System Identification and Dynamic Modeling**   
    I am exploring [how machine learning methods can be applied to nonlinear dynamical systems](https://arxiv.org/abs/1712.09707). At present, I am paying particular attention to the following directions:
-
+   
    * **[Sparse Identification of Nonlinear Dynamics (SINDy)](https://pysindy.readthedocs.io/en/latest/summary.html):** Planning to start with the **PySINDy** library for initial experiments.
    * **Koopman Operator Methods:** Concentrating on three aspects of study—*[notes](https://fluids.ac.uk/files/meetings/KoopmanNotes.1575558616.pdf), [dynamical modeling](https://arxiv.org/pdf/2102.02522), and [operator theory](https://arxiv.org/abs/2405.07312)*—and continuing to learn in this area.
+   
+   At the same time, I am also paying attention to the practice of applied data-driven system identification methods and trying to apply them in our experiments.
 `
 
 const practicingText = `
 ## Practicing
 
 I am designing small-scale experiments to apply the control theory knowledge I have learned to practical problems, in order to strengthen my understanding and gain hands-on experience.
+
+I participated in experiments related to the six-degree-of-freedom ultra-low frequency active vibration isolation platform and learned very useful knowledge and techniques.
 
 `
 
@@ -105,6 +111,12 @@ const zhText = `
 本站“[我的学术](/academic)”页面汇总了我的学术履历、研究兴趣及成果。“[代码](/code)”页面分享了我的开源项目，而“[随记](/space1)”则记录了我的学习笔记与思考。此外，在本站[主页](https://liuyinchu.github.io/)你也能找到一些其它的有趣的内容。在这里，我更希望分享的是学习与科研的过程，而非仅仅展示结果（当然，出于保密原因，部分内容不会公开，我对此十分谨慎）。
 
 总体而言，我投身于一个充满热情与活力的研究方向，专注于将先进的智能技术应用于动力学建模与控制，推动数据驱动方法的发展，希望能为空间引力波探测贡献自己的力量。同时，我密切关注机器人学（特别是人形机器人）的前沿进展，并从中汲取新兴技术与解决方案的灵感。
+
+## 更多优质的学习资源（持续更新中）
+- [强化学习的数学原理](https://github.com/MathFoundationRL/Book-Mathematical-Foundation-of-Reinforcement-Learning)及其优质配套[网课](https://www.bilibili.com/video/BV1sd4y167NS)
+- [动力学建模网课](https://space.bilibili.com/230105574/lists/1814739)
+- [自动控制原理网课](https://space.bilibili.com/230105574/lists/1814627)
+- [高阶控制理论网课](https://space.bilibili.com/230105574/lists/1814743)
 `
 </script>
 
