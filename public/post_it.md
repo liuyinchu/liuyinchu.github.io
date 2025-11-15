@@ -1,6 +1,23 @@
-::: postit Web小游戏合集
+::: postit 控制类期刊整理
 
-[不知道这是啥？](https://searchplayground.google/pacman/halloween/?hl=zh-cn&gl=us)
+来自[知乎](https://www.zhihu.com/question/47562549)：
+- 第一档：
+  - IEEE Transactions on Automatic Control （偏理论）
+  - Automatica （偏理论）
+  - SIAM Journal on Control and Optimization （偏理论，更数学）
+- 第二档：
+  - Systems & Control Letters （短）
+  - Control Engineering Practice （偏应用，工程与实践）
+  - IEEE Transactions on Control Systems Technology （偏应用）
+  - Annual Reviews in Control （综述，约稿）
+  - IEEE Transactions on Robotics （机器人）
+  - Journal of Process Control
+- 其它：
+  - IET Control Theory and Applications
+  - IEEE Transactions on Industrial Electronics
+  - IEEE Transactions on Industrial Informatics
+  - IEEE Transactions on Cybernetics
+  - International Journal of Control
 
 :::
 
@@ -55,6 +72,7 @@
 
 ::: postit ChatGPT5尚未发布
 
+- 2025 年 11 月 13 日，GPT 5.1 都发布了， Gemini 3 还没个影子，很遗憾！
 - 2025 年 9 月 9 日，Gemini 2.5 Pro 坚持称 ChatGPT5 还没有发布……
 - 2025 年 9 月 30 日，体验下来 Gemini 像个弱智，代码能力和推理能力明显下降远没有之前好用；ChatGPT 倒是一如既往的厉害，编程和推理都不错，就是我的不知道受了什么调教，它说的话我现在都不怎么看得懂；不过，最近体验了 Grok ，感觉还可以，考虑是否付费……
 
@@ -107,6 +125,9 @@
 
 ::: postit 一些神秘链接长期更新中
 
+- 20251115 RL 多目标优化：https://www.zhihu.com/question/361424791/answer/1968810401253799615
+- 20251115 机器人学习：https://www.zhihu.com/question/266142784/answer/1967657542919394206
+- 20251110 微舆：https://github.com/666ghj/BettaFish
 - 20251101 观望频域 PINN 中：https://www.zhihu.com/question/667611221/answer/1936376574401316105
 - 20251004 vLLM ：https://docs.vllm.ai/en/latest/index.html
 - 20251004 Transformer 快速入门：https://transformers.run/
