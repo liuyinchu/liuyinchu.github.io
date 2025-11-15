@@ -1,7 +1,15 @@
 [
   {
+    "id": "learn_pytorch",
+    "title": "学习 PyTorch （偶尔更新的个人笔记）",
+    "author": "pifuyuini",
+    "date": "2025-11-14",
+    "desc": "深度学习实践，同时也是个人科研相关。",
+    "image": "/bg/punishing_gray_raven.jpeg"
+  },
+  {
     "id": "control_personal_note",
-    "title": "动力学与控制（长期更新的个人笔记）",
+    "title": "动力学与控制·基础（长期更新的个人笔记）",
     "author": "pifuyuini",
     "date": "2025-11-1",
     "desc": "个人科研相关。",
@@ -25,7 +33,7 @@
   },
   {
     "id": "learn_rust",
-    "title": "学学学习 Rust （个人笔记·长期更新）",
+    "title": "学习 Rust （长期更新的个人笔记）",
     "author": "liuyinchu",
     "date": "2025-9-20",
     "desc": "Rust ，启动！",
@@ -33,7 +41,7 @@
   },
   {
     "id": "note_of_configure_server",
-    "title": "学学学着使用 Linux + 云主机（个人笔记·长期更新）",
+    "title": "学习 Linux + 云主机（长期更新的个人笔记）",
     "author": "liuyinchu",
     "date": "2025-9-6",
     "desc": "个人学习日志式笔记。",
@@ -44,7 +52,7 @@
     "title": "经典力学笔记",
     "author": "pifuyuini",
     "date": "2025-07-29",
-    "desc": "经典力学·复习用·个人简明总结。",
+    "desc": "个人复习用的经典力学简明总结。",
     "image": "/bg/cm_cover.png"
   },
   {
@@ -89,7 +97,7 @@
   },
   {
     "id": "learn_python",
-    "title": "学学学习 Python （个人笔记·长期更新）",
+    "title": "学习 Python （长期更新的个人笔记）",
     "author": "pifuyuini",
     "date": "2025-01-01",
     "desc": "人生苦短，我学 Python ！",

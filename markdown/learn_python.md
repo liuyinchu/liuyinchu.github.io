@@ -3,6 +3,8 @@
 > 人生苦短，我学 Python ！
 > 掌握 Python 语言，享受完美人生！
 
+---
+
 ## Python 的现代项目管理
 
 先看这些视频：
@@ -12,6 +14,8 @@
     - [项目结构与打包](https://www.bilibili.com/video/BV12NgLzhEKx)
 - 为科学计算服务，但是“现代 conda”：
     - [关于何为“现代 conda”的一个很好的介绍](https://www.bilibili.com/video/BV1Fm4ZzDEeY)
+
+---
 
 ## 绘图工具：从 Matplotlib 到 Plotly
 
@@ -399,6 +403,111 @@ Image(img_bytes)
 - `scale < 1` → 降低分辨率（更模糊、更小文件）
 - 返回的是图片的 字节数据（bytes）
 - `Image(img_bytes)` 通常用于 Jupyter Notebook，把字节流显示为实际图片
+
+### 快速上手用 Plotly 创建动画
+
+基于以下代码，可以创建用于监视深度学习训练过程的基于 `Plotly.py` 的可视化图表：
+
+```python
+import plotly.graph_objects as go
+import numpy as np
+from IPython import display
+import time
+
+# 设置图表的布局（包含坐标轴标题和样式）
+layout = go.Layout(
+    xaxis_title='Time Step',  # x轴标题
+    yaxis_title='Value',      # y轴标题
+    template='plotly_white'   # 使用 plotly_white 模板
+)
+
+# 初始化空图表
+fig = go.Figure(data=[], layout=layout)
+
+# 循环绘制 100 次图表
+for i in range(0, 100):
+    display.clear_output(wait=True)  # 清空输出区域，避免图表叠加
+    x = np.linspace(0, i, 100 * i)  # 生成 x 轴数据，步长随着 i 增大
+    y = np.sin(x)  # y 轴数据，正弦波
+
+    fig.data = []  # 清空之前的图形数据
+    fig.update_layout(title=f'Step {i}')  # 更新图表标题，显示当前的步数
+
+    # 创建新的折线图 trace
+    trace = go.Scatter(x=x, y=y, mode='lines', name=f'Trace {i}')
+    fig.add_trace(trace)  # 将新创建的折线图添加到图表中
+
+    # 显示当前图表
+    display.display(fig)
+
+    # 暂停 0.5 秒，以便更新图表
+    time.sleep(0.5)
+```
+
+以下是一个便捷且有用的封装：
+
+```python
+import plotly.graph_objects as go
+import numpy as np
+
+duration_layout = go.Layout(
+    xaxis_title='Episode',
+    yaxis_title='Duration',
+    template='plotly_white'
+)
+duration_fig = go.Figure(data=[], layout=duration_layout)
+
+def plotly_durations(show_result: bool = False):
+    """
+    使用 Plotly 动态更新训练时长曲线，
+    等价于原来的 matplotlib 版本。
+    """
+    global duration_fig
+
+    # 将全局 episode_durations 转为 tensor
+    durations_t = torch.tensor(episode_durations, dtype=torch.float)
+
+    # 每次调用都清空输出并重绘（对应原来的 plt.clf + display.clear_output）
+    if not show_result:
+        display.clear_output(wait=True)
+
+    # 清空旧曲线
+    duration_fig.data = []
+
+    # 设置标题
+    title = 'Result' if show_result else 'Training...'
+    duration_fig.update_layout(title=title)
+
+    # Episode 轴
+    x = np.arange(1, len(durations_t) + 1)
+
+    # 原始时长曲线
+    trace_duration = go.Scatter(
+        x=x,
+        y=durations_t.numpy(),
+        mode='lines',
+        name='Duration'
+    )
+    duration_fig.add_trace(trace_duration)
+
+    # 100 回合滑动平均曲线（保留原来的 unfold 逻辑）
+    if len(durations_t) >= 100:
+        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
+        means = torch.cat((torch.zeros(99), means))
+
+        trace_mean = go.Scatter(
+            x=x,
+            y=means.numpy(),
+            mode='lines',
+            name='100-episode mean'
+        )
+        duration_fig.add_trace(trace_mean)
+
+    # 显示图像
+    display.display(duration_fig)
+```
+
+---
 
 ## 零散知识点
 
@@ -792,3 +901,211 @@ print(f"User: {user.name}, Price: {price}")
 3.  **用于提供简洁的 API**：当你创建一个库或一个复杂的包时，使用 `__init__.py` 提升关键的类和函数，为用户提供一个干净的入口。
 4.  **谨慎使用初始化代码**：在 `__init__.py` 中放置的代码不应该有太多的副作用（如长时间的 I/O 操作），因为它会在导入时执行，可能会拖慢程序启动速度。
 5.  **明确定义 `__all__`**：如果你希望你的包支持 `from package import *`，请务必定义 `__all__`，以避免导出不必要的内部变量。
+
+### Python 里的迭代器及应用
+
+**迭代器**是一种可以顺序访问容器元素的对象。通过迭代器，我们可以不需要关心容器的底层结构，逐个获取元素，直到访问完所有元素。常见的迭代器例子：列表、字典、字符串、文件等。在 Python 中，迭代器有两个关键概念：迭代，即按顺序访问容器中的元素。惰性计算，不需要一次性加载所有元素，可以按需获取。
+
+在 Python 中，迭代器对象实现了两个方法：
+- `__iter__()`：返回迭代器对象本身，允许对象被迭代。
+- `__next__()`：返回容器中的下一个元素。如果没有元素了，它会抛出 `StopIteration` 异常，表示迭代完成。
+
+`map()` 函数：
+```python
+numbers = [1, 2, 3, 4, 5]
+squared = map(lambda x: x ** 2, numbers)
+
+# map 返回的是一个迭代器，我们需要通过迭代访问它
+print(next(squared))  # 输出 1
+print(next(squared))  # 输出 4
+print(next(squared))  # 输出 9
+```
+
+`zip()` 函数：
+```python
+names = ['Alice', 'Bob', 'Charlie']
+scores = [90, 85, 88]
+
+zipped = zip(names, scores)
+
+# 获取下一个元素
+print(next(zipped))  # 输出 ('Alice', 90)
+print(next(zipped))  # 输出 ('Bob', 85)
+```
+
+**来看一个很重要的例子：**
+
+> 在强化学习中，每个 episode（回合）通常会包含多个时间步，每个时间步都有一个状态（state）。当智能体执行动作后，如果它达到了一个终止状态（比如 CartPole 摆倒了，或者游戏结束），下一个状态（`next_state`）就会是 `None`，表示 episode 已经结束。
+
+```python
+non_final_mask = torch.tensor(
+    tuple(map(lambda s: s is not None, batch.next_state)),
+    device=device,
+    dtype=torch.bool
+)
+```
+这行代码的目标是生成一个布尔掩码（mask），该掩码标记了哪些样本的下一状态不是 `None`。即，如果下一状态不是终止状态，掩码值为 `True`，否则为 `False`。
+```python
+# 假设 `batch.next_state` 是一个状态列表：
+batch.next_state = [s1, s2, None, s4, None]
+# 那么，我们想要的掩码 `non_final_mask` 就应该是：
+non_final_mask = [True, True, False, True, False]
+```
+
+`map(lambda s: s is not None, batch.next_state)`
+- `map()` 是 Python 中的内置函数，它将给定的函数应用到 可迭代对象（如列表、元组）中的每一个元素上。
+- 这里，`lambda s: s is not None` 是一个匿名函数，检查每个状态是否不为 None。
+- 输入：`batch.next_state = [s1, s2, None, s4, None]`
+- 输出：`[True, True, False, True, False]
+
+`map()` 会返回一个迭代器，所以要将其转换为 tuple 来获取最终结果。tuple(map(...)) 就是将迭代器转换成元组：
+```python
+tuple(map(lambda s: s is not None, batch.next_state))  # 输出：(True, True, False, True, False)
+```
+
+接下来就是把这个元组变为一个 PyTorch 张量，略。
+
+### 如何理解 `batch = Transition(*zip(*transitions))` ？
+
+`batch = Transition(*zip(*transitions))` 是强化学习代码中最典型的 Python“解包 + 转置”技巧之一。
+我们来彻底拆开，从最底层的**数据结构变化**一步步看清楚它在干什么。
+
+假设我们从 `ReplayMemory` 里采样了一个 batch：
+
+```python
+transitions = memory.sample(3)
+```
+
+此时 `transitions` 是一个长度为 3 的 **列表**，
+每个元素都是一个 `Transition` 命名元组（包含 4 个字段）：
+
+```python
+Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
+
+transitions =
+[
+  Transition(state=s1, action=a1, next_state=s1', reward=r1),
+  Transition(state=s2, action=a2, next_state=s2', reward=r2),
+  Transition(state=s3, action=a3, next_state=s3', reward=r3)
+]
+```
+
+可以形象地画成一个二维表：
+
+| 样本 | state | action | next_state | reward |
+| -- | ----- | ------ | ---------- | ------ |
+| 1  | s1    | a1     | s1'        | r1     |
+| 2  | s2    | a2     | s2'        | r2     |
+| 3  | s3    | a3     | s3'        | r3     |
+
+我们要把它变成**每一列一个批量的张量**，即：
+
+| 字段           | 批次内容            |
+| ------------ | --------------- |
+| `state`      | (s1, s2, s3)    |
+| `action`     | (a1, a2, a3)    |
+| `next_state` | (s1', s2', s3') |
+| `reward`     | (r1, r2, r3)    |
+
+那么 `zip(*transitions)` 在干嘛呢？
+
+先看`zip` 的基本用法：
+
+```python
+a = [1, 2, 3]
+b = ['A', 'B', 'C']
+list(zip(a, b))
+→ [(1, 'A'), (2, 'B'), (3, 'C')]
+```
+
+它会把“行”打包成“列”。
+
+而在这里的 `*` 是“解包”，`*transitions` 会把列表解包成多个参数：
+
+```python
+zip(*transitions)
+→ zip(t1, t2, t3)
+```
+
+（相当于调用 zip(t1, t2, t3)，每个 t_i 是一个 Transition）
+
+由于每个 `Transition` 是一个包含 4 个元素的 tuple：
+
+```python
+t1 = (s1, a1, s1', r1)
+t2 = (s2, a2, s2', r2)
+t3 = (s3, a3, s3', r3)
+```
+
+那么 `zip(t1, t2, t3)` 就会**按位置配对**：
+
+```python
+list(zip(t1, t2, t3))
+→ [
+    (s1, s2, s3),
+    (a1, a2, a3),
+    (s1', s2', s3'),
+    (r1, r2, r3)
+  ]
+```
+
+也就是说，它把“行”转成了“列”：
+
+* 第一个元组是一整批 state；
+* 第二个元组是一整批 action；
+* 第三个元组是一整批 next_state；
+* 第四个元组是一整批 reward。
+
+这就是为什么我们称它为“批的转置（batch transpose）”。
+
+接下来，我们再用 `Transition(*...)` 封装回去。
+
+现在我们有一个这样的 tuple 列表：
+
+```python
+zipped = zip(*transitions)
+→ [(s1,s2,s3), (a1,a2,a3), (s1',s2',s3'), (r1,r2,r3)]
+```
+
+`*zipped` 会把它再解包成 4 个参数：
+
+```python
+Transition(*zipped)
+→ Transition(
+    state=(s1, s2, s3),
+    action=(a1, a2, a3),
+    next_state=(s1', s2', s3'),
+    reward=(r1, r2, r3)
+)
+```
+
+于是最终的 `batch` 是一个新的 `Transition` 命名元组，
+但每个字段现在都包含了一个“批次”的所有样本。
+
+示例效果：
+```python
+from collections import namedtuple
+
+Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
+
+t1 = Transition('s1', 'a1', "s1'", 'r1')
+t2 = Transition('s2', 'a2', "s2'", 'r2')
+t3 = Transition('s3', 'a3', "s3'", 'r3')
+
+transitions = [t1, t2, t3]
+
+batch = Transition(*zip(*transitions))
+print(batch)
+```
+
+输出：
+```txt
+Transition(
+  state=('s1', 's2', 's3'),
+  action=('a1', 'a2', 'a3'),
+  next_state=("s1'", "s2'", "s3'"),
+  reward=('r1', 'r2', 'r3')
+)
+```
+
+完美实现了“行列互换”！
