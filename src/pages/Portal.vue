@@ -9,6 +9,7 @@ const dockGroups = [
       { name: 'Suno', url: 'https://suno.com/' },
       { name: 'Gemini', url: 'https://gemini.google.com/' },
       { name: 'Grok', url: 'https://grok.com/' },
+      { name: 'Notebook LM', url: 'https://notebooklm.google.com/' },
     ]
   },
   {
