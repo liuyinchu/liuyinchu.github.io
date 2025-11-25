@@ -1,10 +1,18 @@
 [
   {
+    "id": "deep_learning_playnote",
+    "title": "深度学习实用指南",
+    "author": "pifuyuini",
+    "date": "2025-11-25",
+    "desc": "深度学习项目实践指引，同时也是个人科研相关。",
+    "image": "/bg/white_sweater.PNG"
+  },
+  {
     "id": "learn_pytorch",
     "title": "学习 PyTorch （偶尔更新的个人笔记）",
     "author": "pifuyuini",
     "date": "2025-11-14",
-    "desc": "深度学习实践，同时也是个人科研相关。",
+    "desc": "PyTorch 深度学习实践，同时也是个人科研相关。",
     "image": "/bg/punishing_gray_raven.jpeg"
   },
   {
@@ -17,10 +25,10 @@
   },
   {
     "id": "astro_ml_guide",
-    "title": "天文学研究中机器学习方法的实用指南",
+    "title": "AI4S 实用指南",
     "author": "pifuyuini",
     "date": "2025-11-1",
-    "desc": "不仅仅是天文学，这也是一份很好的将 AI 技术应用到科学研究中的很好的指南。",
+    "desc": "这份笔记从“天文学研究中机器学习方法的实用指南”升级到了“AI4S 实践指引“！",
     "image": "/bg/visitor.jpeg"
   },
   {
