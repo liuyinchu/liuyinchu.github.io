@@ -6,6 +6,11 @@ import ImageBlock from '../components/common/ImageBlock.vue'
 
 const notes = [
   {
+    name: 'Deep Learning Practice Checklist',
+    desc: '深度学习实践指引',
+    url: '/files/notes/DL_Proj_Checklist.md'
+  },
+  {
     name: '（组会汇报）从稀疏识别到弱形式：数据驱动建模方法初探',
     desc: '关于两篇文献阅读、学习与复现的结果的汇报',
     url: '/files/notes/group_conference_1_sindy.pdf'
