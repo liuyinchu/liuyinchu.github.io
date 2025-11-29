@@ -5,7 +5,7 @@
     "author": "pifuyuini",
     "date": "2025-11-25",
     "desc": "深度学习项目实践指引，同时也是个人科研相关。",
-    "image": "/bg/white_sweater.PNG"
+    "image": "/bg/Big_HeiTa.JPG"
   },
   {
     "id": "learn_pytorch",
@@ -13,7 +13,7 @@
     "author": "pifuyuini",
     "date": "2025-11-14",
     "desc": "PyTorch 深度学习实践，同时也是个人科研相关。",
-    "image": "/bg/punishing_gray_raven.jpeg"
+    "image": "/bg/Texas.JPG"
   },
   {
     "id": "control_personal_note",
@@ -21,7 +21,7 @@
     "author": "pifuyuini",
     "date": "2025-11-1",
     "desc": "个人科研相关。",
-    "image": "/bg/Fashionable_Robin.JPG"
+    "image": "/bg/Qingming_Xi.JPG"
   },
   {
     "id": "astro_ml_guide",
@@ -30,6 +30,14 @@
     "date": "2025-11-1",
     "desc": "这份笔记从“天文学研究中机器学习方法的实用指南”升级到了“AI4S 实践指引“！",
     "image": "/bg/visitor.jpeg"
+  },
+  {
+    "id": "accelerate_rustdesk_mac2win",
+    "title": "用 RustDesk 将 macOS 远程连接 Windows 11",
+    "author": "pifuyuini",
+    "date": "2025-10-15",
+    "desc": "此处主要记录利用 Google Cloud 自建加速服务器相关流程。",
+    "image": "/bg/Fashionable_Robin.JPG"
   },
   {
     "id": "Introduction_to_the_Two_Stage_Torsion_Pendulum",
