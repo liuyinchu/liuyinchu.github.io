@@ -274,7 +274,419 @@ $$
 - Simulnk 模型：基于 A.4.1、性能中、上手难度低、极度 AI 不友好；
 - Simulink 模型：基于 A.4.4、性能中、上手难度中、AI 不友好；
 
+#### A.6.1 MATLAB 代码
+
+```MATLAB
+% ---- continuous-time (absolute coords) ----
+A = [ 0,            0,            1,              0;
+      0,            0,            0,              1;
+     -k1/m1,        k1/m1,       -d1/m1,         d1/m1;
+      k1/m2, -(k1+k2)/m2,        d1/m2, -(d1+d2)/m2 ];
+
+B = [ 0, 0, 0;
+      0, 0, 0;
+      1/m1, 0, 0;
+      0,   k2/m2, d2/m2 ];
+
+C = [ -1, 1, 0, 0 ];
+
+D = zeros(1,3);
+
+% ---- relative coords r1 = x1 - xg, r2 = x2 - xg ----
+A_r = A;
+B_r = [ 0,   0;
+        0,   0;
+      1/m1, -1;
+        0,  -1 ];
+
+C_r = C;
+D_r = zeros(1,2);
+
+% ---- soft mass formulation ----
+M_soft   = [ eye(2),            zeros(2);
+             zeros(2), diag([m1, m2]) ];
+
+K_D_soft = [ zeros(2),                   eye(2);
+             [ k1,   -k1;  -k1, k1+k2 ], [ d1,   -d1;  -d1, d1+d2 ] ];
+
+F_soft   = [ zeros(2,3);
+             1, 0, 0;
+             0, k2, d2 ];
+```
+
+#### A.6.2 Python 代码
+
+```python
+import numpy as np
+
+# ---- continuous-time (absolute coords) ----
+A = np.array([
+    [0,            0,            1,              0],
+    [0,            0,            0,              1],
+    [-k1/m1,       k1/m1,       -d1/m1,         d1/m1],
+    [ k1/m2, -(k1+k2)/m2,       d1/m2, -(d1+d2)/m2]
+], dtype=float)
+
+B = np.array([
+    [0, 0, 0],
+    [0, 0, 0],
+    [1/m1, 0,   0],
+    [0,   k2/m2, d2/m2]
+], dtype=float)
+
+C = np.array([
+    [-1, 1, 0, 0]
+], dtype=float)
+
+D = np.zeros((1,3), dtype=float)
+
+# ---- relative coords r1 = x1 - xg, r2 = x2 - xg ----
+A_r = A.copy()
+B_r = np.array([
+    [0,   0],
+    [0,   0],
+    [1/m1, -1],
+    [0,   -1]
+], dtype=float)
+
+C_r = C.copy()
+D_r = np.zeros((1,2), dtype=float)
+
+# ---- soft mass formulation ----
+Mq = np.diag([m1, m2])
+K  = np.array([[ k1,   -k1],
+               [-k1, k1+k2]], dtype=float)
+Dmat = np.array([[ d1,   -d1],
+                 [-d1, d1+d2]], dtype=float)
+
+M_soft = np.block([
+    [np.eye(2),          np.zeros((2,2))],
+    [np.zeros((2,2)),    Mq]
+]).astype(float)
+
+K_D_soft = np.block([
+    [np.zeros((2,2)), np.eye(2)],
+    [K,               Dmat]
+]).astype(float)
+
+F_soft = np.array([
+    [0, 0, 0],
+    [0, 0, 0],
+    [1, 0, 0],
+    [0, k2, d2]
+], dtype=float)
+```
+
 ### A.7 关于两级质量-弹簧-阻尼系统的应用场景
+
+### A.8 如何对噪声进行建模
+
+理解“白噪声强度”的核心在于区分：
+
+- **连续时间白噪声**：由双边功率谱密度（PSD）\(S_0\)（单位：\(\mathrm{unit}^2/\mathrm{Hz}\)）定义  
+- **离散随机序列**：计算机生成的 i.i.d. 序列 \(w[k]\)
+
+#### A.8.1 白噪声
+
+令连续白噪声 \(n(t)\) 的双边 PSD 为常数：
+
+\[
+S_n^{(2)}(f)=S_0,\qquad f\in(-\infty,\infty).
+\]
+
+其幅度谱密度（ASD）为：
+
+\[
+A_0=\sqrt{S_0}\quad (\mathrm{unit}/\sqrt{\mathrm{Hz}}).
+\]
+
+定义离散噪声：
+
+\[
+n[k] = \sigma\, w[k],\qquad w[k]\sim\mathcal N(0,1)\ \text{i.i.d.}
+\]
+
+离散序列的方差为：
+
+\[
+\mathrm{Var}(n[k]) = \sigma^2.
+\]
+
+离散时间 PSD（数字角频率 \(\Omega\in[-\pi,\pi]\)）恒定：
+
+\[
+S_n^{\mathrm{DT}}(e^{j\Omega})=\sigma^2.
+\]
+
+将离散频率轴映射到物理频率 \(f\)：
+
+\[
+\Omega = 2\pi f T_s,\qquad f\in\left[-\frac{1}{2T_s},\frac{1}{2T_s}\right].
+\]
+
+离散 PSD 与连续 PSD 的转换关系为：
+
+\[
+S_n^{(2)}(f)=T_s\, S_n^{\mathrm{DT}}(e^{j2\pi fT_s}).
+\]
+
+因为 \(S_n^{\mathrm{DT}}=\sigma^2\) 为常数，有：
+
+\[
+S_n^{(2)}(f)=T_s\,\sigma^2.
+\]
+
+希望离散噪声具有连续 PSD 强度 \(S_0\)，需满足：
+
+\[
+T_s\,\sigma^2 = S_0 \quad\Longrightarrow\quad \sigma^2 = \frac{S_0}{T_s}.
+\]
+
+因此离散白噪声应为：
+
+\[
+\boxed{\, n[k] = \sqrt{\frac{S_0}{T_s}}\,\mathcal N(0,1) \, }.
+\]
+
+若使用 ASD \(A_0=\sqrt{S_0}\)：
+
+\[
+\boxed{\, n[k] = \frac{A_0}{\sqrt{T_s}}\,\mathcal N(0,1) \, }.
+\]
+
+以上即为 \(1/\sqrt{T_s}\) 缩放的根源。
+
+若使用**单边 PSD**（仅定义在 \(f\ge 0\)）：
+
+\[
+S^{(1)}(f) = 2S^{(2)}(f),\qquad f>0.
+\]
+
+对应 ASD 也会多因子 \(\sqrt{2}\)。  
+不同软件出现 \(\sqrt{2}\) 或 \(1/\sqrt{2}\) 的原因只是**单边/双边定义不同**，物理含义不变。
+
+#### A.8.2 成形滤波：白噪声经 \(G(s)\) 变成有色噪声
+
+输入白噪声 \(u(t)\)，输出：
+
+\[
+Y(j\omega)=G(j\omega)U(j\omega).
+\]
+
+输出 PSD：
+
+\[
+\boxed{\, S_y(f)=|G(j2\pi f)|^2\, S_u(f) \, }.
+\]
+
+若输入为白噪声 \(S_u(f)=S_0\)，则：
+
+\[
+\boxed{\, S_y(f)=S_0\,|G(j2\pi f)|^2,\qquad 
+A_y(f)=\sqrt{S_0}\, |G(j2\pi f)|. \, }
+\]
+
+这就是地面噪声谱、传感器噪声谱所有数学推导的统一公式。
+
+#### A.8.3 地面扰动模型：ZPK → 多项式 → PSD
+
+给定零极点：
+
+- 零点：\(z_{1,2}=-\omega_z(1\pm j)\)，\(\omega_z=1.3\cdot 2\pi\)
+- 极点组 1：\(-\sigma\pm j\omega_m\)，\(\sigma=0.03\cdot 2\pi,\ \omega_m=0.18\cdot 2\pi\)
+- 极点组 2：双重根 \(-\omega_h\)，\(\omega_h=20\cdot 2\pi\)
+- 增益：\(K = \frac{150}{3\times 10^{6}} = 5\times 10^{-7}\)
+
+关键数值：
+
+\[
+\omega_z=8.1681,\quad \sigma=0.1885,\quad \omega_m=1.1310,\quad \omega_h=125.6637.
+\]
+
+**ZPK 形式（最推荐）**
+
+\[
+\boxed{
+G_{\text{ground}}(s)
+= K
+\frac{(s-z_1)(s-z_2)}
+{(s-p_1)(s-p_2)(s+\omega_h)^2}
+}
+\]
+
+**展开为显式多项式**
+
+零点二阶因子：
+
+\[
+(s-z_1)(s-z_2)=s^2+16.33628180\,s+133.43705150.
+\]
+
+低频极点二阶因子：
+
+\[
+(s-p_1)(s-p_2)=s^2+0.3769911184\,s+1.314631306.
+\]
+
+高频双极点：
+
+\[
+(s+\omega_h)^2=s^2+251.3274123\,s+15791.3670417.
+\]
+
+四阶分母：
+
+\[
+s^4+251.7044034\,s^3+15887.42990\,s^2+6283.608012\,s+20759.82550.
+\]
+
+完整传递函数：
+
+\[
+\boxed{
+G_{\text{ground}}(s)=
+5\times 10^{-7}\;
+\frac{s^2+16.33628180\,s+133.43705150}
+{s^4+251.7044034\,s^3+15887.42990\,s^2+6283.608012\,s+20759.82550}
+}
+\]
+
+**扰动形状特征**
+
+对白噪声输入 \(S_0\)：
+
+\[
+\boxed{
+S_{x_g}(f)=S_0 \big|G_{\text{ground}}(j2\pi f)\big|^2
+}
+\]
+
+- 高频：\(\sim 1/\omega^4\)，滚降 \(-40\ \mathrm{dB/dec}\)
+- 低频附近 \(0.18\) Hz：共振峰由 \(-\sigma\pm j\omega_m\) 引起
+
+#### A.8.4 传感器本底噪声模型
+
+给定：
+
+- 零点：\((s+2)^4\)
+- 低频极点：\((s+0.1)^4\)
+- 高频极点：\((s+\omega_b)\)，\(\omega_b = 3000\cdot 2\pi = 18849.55592\)
+- 增益：\(K = \omega_b\cdot 10^{-10} = 1.884955592\times 10^{-6}\)
+
+**ZPK 形式**
+
+\[
+\boxed{
+G_{\text{sensor}}(s)=K
+\frac{(s+2)^4}{(s+0.1)^4 (s+\omega_b)}
+}
+\]
+
+**显式多项式**
+
+\[
+(s+2)^4=s^4+8s^3+24s^2+32s+16,
+\]
+
+\[
+(s+0.1)^4=s^4+0.4s^3+0.06s^2+0.004s+0.0001.
+\]
+
+完整表达式：
+
+\[
+\boxed{
+G_{\text{sensor}}(s)=
+(1.884955592\times 10^{-6})\,
+\frac{s^4+8s^3+24s^2+32s+16}
+{(s^4+0.4s^3+0.06s^2+0.004s+10^{-4})(s+18849.55592)}
+}
+\]
+
+**各频段噪声形状（渐近阶）**
+
+- **低频（漂移）**：\(|G|\sim 1/\omega^4 \Rightarrow +80\ \mathrm{dB/dec}\)
+- **中频（平坦噪声地板）**：\(\approx 10^{-10}\)
+- **高频**：\(|G|\sim 1/\omega \Rightarrow -20\ \mathrm{dB/dec}\)
+
+#### A.8.5 Tustin 离散化（必须使用双线性变换）
+
+双线性变换：
+
+\[
+\boxed{
+s = \frac{2}{T_s} \frac{1-z^{-1}}{1+z^{-1}}
+}
+\]
+
+频率映射：
+
+\[
+\Omega = 2\arctan\!\left(\frac{\omega T_s}{2}\right).
+\]
+
+对于连续系统：
+
+\[
+\dot{x}=Ax+Bu,\qquad y=Cx+Du,
+\]
+
+Tustin 离散化得到：
+
+\[
+x[k+1]=A_d x[k]+B_d u[k],\qquad y[k]=C_d x[k]+D_d u[k].
+\]
+
+矩阵公式：
+
+\[
+\boxed{
+A_d=(I-\tfrac{T_s}{2}A)^{-1}(I+\tfrac{T_s}{2}A)
+}
+\]
+
+\[
+\boxed{
+B_d=(I-\tfrac{T_s}{2}A)^{-1} T_s B
+}
+\]
+
+\[
+\boxed{
+C_d=C(I-\tfrac{T_s}{2}A)^{-1}
+}
+\]
+
+\[
+\boxed{
+D_d=D+\tfrac{T_s}{2}\,C(I-\tfrac{T_s}{2}A)^{-1}B
+}
+\]
+
+#### A.8.6 噪声注入方式（动力学扰动 + 传感器噪声）
+
+测量量：
+
+\[
+\boxed{
+y_{\text{meas}}(t)=y_{\text{true}}(t)+n_{\text{sensor}}(t)
+}
+\]
+
+动力学扰动：
+
+\[
+\dot{x}=Ax+Bu+E\, d,
+\]
+
+其中 \(d\) 包含地面位移、速度、加速度等扰动项，由运动方程确定。
+
+地面位移由白噪声经成形滤波得到：
+
+\[
+x_g = G_{\text{ground}} * u_g,\qquad
+u_g[k] \sim \frac{A_0}{\sqrt{T_s}}\, \mathcal N(0,1).
+\]
 
 ## B 控制器设计实践
 
@@ -752,151 +1164,10 @@ $$H(s) = K \frac{(s-z_1)(s-z_2)\dots(s-z_m)}{(s-p_1)(s-p_2)\dots(s-p_n)}$$
 
 ### 1.5.3 Bode 图与稳定裕度分析
 
-## 2 基本控制理论
+## 2 控制理论
 
 ### 2.1 经典控制原理
 
 ### 2.2 控制理论的现代描述
 
 ### 2.3 从连续到离散
-
----
-
-## 3 高阶控制理论概览
-
-#### 卡尔曼滤波
-
-**模型**（允许时变与控制项）
-        $$
-		\begin{aligned}
-			x_k &= A_k x_{k-1} + B_k u_k + w_k,\quad w_k \sim \mathcal N(0,Q_k)\\
-			z_k &= H_k x_k + v_k,\quad v_k \sim \mathcal N(0,R_k)
-		\end{aligned}
-		$$
-
-**递推**
-- 预测：
-    $$
-    \hat x_{k|k-1}=A_k \hat x_{k-1}+B_k u_k,\quad
-			P_{k|k-1}=A_k P_{k-1}A_k^\top+Q_k
-    $$
-- 更新：
-    $$
-    \begin{aligned}
-        \tilde y_k &= z_k - H_k \hat x_{k|k-1} \quad \text{(创新)}\\
-				S_k &= H_k P_{k|k-1} H_k^\top + R_k \quad \text{(创新协方差)}\\
-				K_k &= P_{k|k-1} H_k^\top S_k^{-1} \quad \text{(卡尔曼增益)}\\
-				\hat x_{k} &= \hat x_{k|k-1} + K_k \tilde y_k\\
-				P_{k} &= (I-K_kH_k)P_{k|k-1}(I-K_kH_k)^\top + K_k R_k K_k^\top \quad \text{(Joseph 形式)}
-    \end{aligned}
-    $$
-
-> 卡尔曼滤波的最优性体现在哪？
-
-卡尔曼滤波（Kalman Filter, KF）的“最优性”是一个在特定假设下才成立的、有严格数学定义的结论。简而言之，卡尔曼滤波的“最优性”体现在：**在线性高斯系统（Linear-Gaussian system）的假设下，它是最小均方误差（Minimum Mean Squared Error, MMSE）估计器。**
-
-这意味着，在所有可能的估计方法中（无论线性的还是非线性的），卡尔曼滤波给出的状态估计值 ($\hat{x}$) 是最接近真实状态 ($x$) 的，其“接近”的衡量标准是“均方误差”$E[\|x - \hat{x}\|^2]$ 最小。
-
-卡尔曼滤波器的核心目标是最小化 **“后验”估计误差的协方差矩阵 ($P_k$)**。
-
-* **真实状态 (True State):** $x_k$
-* **估计状态 (Estimated State):** $\hat{x}_k$
-* **估计误差 (Estimation Error):** $e_k = x_k - \hat{x}_k$
-* **误差协方差 (Error Covariance):** $P_k = E[e_k e_k^T] = E[(x_k - \hat{x}_k)(x_k - \hat{x}_k)^T]$
-
-“最优”意味着卡尔曼滤波选择了一个算法（具体来说，是卡尔曼增益 $K_k$），使得这个 $P_k$ 矩阵的“大小”最小。在数学上，这通常指最小化 $P_k$ 的迹（Trace），即 $min(tr(P_k))$。最小化迹等价于最小化所有状态变量的估计误差方差之和，这也就是**最小均方误差 (MMSE)** 的含义。
-
-我们来看更新步骤的核心公式：
-$$
-\hat{x}_k = \hat{x}_k^- + K_k (z_k - H \hat{x}_k^-)
-$$
-其中：
-* $\hat{x}_k^-$ 是**先验估计**（来自预测步骤）。
-* $z_k$ 是当前的**测量值**。
-* $(z_k - H \hat{x}_k^-)$ 是**测量残差**（Innovation）。
-* $K_k$ 是**卡尔曼增益**，它决定了我们应该“多大程度上”相信这个新的测量值。
-
-我们的目标是选择一个 $K_k$，使得“事后”误差协方差 $P_k$ 最小。
-
-$P_k$ 的推导如下：
-$$
-P_k = E[e_k e_k^T] = E[(x_k - \hat{x}_k)(x_k - \hat{x}_k)^T]
-$$
-将 $\hat{x}_k$ 的更新公式代入：
-$$
-\begin{aligned}
-x_k - \hat{x}_k &= x_k - [\hat{x}_k^- + K_k (z_k - H \hat{x}_k^-)] \\
-&= x_k - \hat{x}_k^- - K_k (H x_k + v_k - H \hat{x}_k^-) \quad (\text{因为 } z_k = H x_k + v_k) \\
-&= (x_k - \hat{x}_k^-) - K_k H (x_k - \hat{x}_k^-) - K_k v_k \\
-&= (I - K_k H) (x_k - \hat{x}_k^-) - K_k v_k \\
-&= (I - K_k H) e_k^- - K_k v_k
-\end{aligned}
-$$
-（其中 $e_k^-$ 是先验误差，$v_k$ 是测量噪声）
-
-现在我们计算 $P_k = E[( (I - K_k H) e_k^- - K_k v_k ) ( (I - K_k H) e_k^- - K_k v_k )^T]$。
-假设先验误差 $e_k^-$ 和测量噪声 $v_k$ 是不相关的（这是KF的标准假设之一），交叉项的期望为0：
-$$
-\begin{aligned}
-P_k &= (I - K_k H) E[e_k^- (e_k^-)^T] (I - K_k H)^T + K_k E[v_k v_k^T] K_k^T \\
-&= (I - K_k H) P_k^- (I - K_k H)^T + K_k R K_k^T
-\end{aligned}
-$$
-（其中 $P_k^-$ 是先验协方差，$R$ 是测量噪声协方差）
-
-**这就是最优性的关键所在：**
-我们的目标是找到一个 $K_k$，使得 $tr(P_k)$ 最小。
-$$
-P_k = P_k^- - K_k H P_k^- - P_k^- H^T K_k^T + K_k H P_k^- H^T K_k^T + K_k R K_k^T
-$$
-为了求 $tr(P_k)$ 关于 $K_k$ 的极值，我们计算 $tr(P_k)$ 对 $K_k$ 的导数，并令其为0：
-$$
-\frac{d(tr(P_k))}{dK_k} = -2(P_k^- H^T)^T + 2K_k (H P_k^- H^T + R) = 0
-$$
-整理得到：
-$$
-K_k (H P_k^- H^T + R) = P_k^- H^T
-$$
-最终解出 $K_k$：
-$$
-K_k = P_k^- H^T (H P_k^- H^T + R)^{-1}
-$$
-**结论：** 卡尔曼增益 $K_k$ **不是拍脑袋定下的，而是通过最小化事后估计误差协方差 $P_k$ 这个目标严格推导出来的**。这个 $K_k$ 值是唯一能使 $P_k$ 最小的最优解。
-
-卡尔曼滤波的“最优性”有两个层次，这取决于我们对噪声的假设有多强。
-
-**层面 1：最佳线性无偏估计 (BLUE)**
-
-如果系统满足以下条件：
-1.  **线性**系统模型 ($x_k = F x_{k-1} + ...$, $z_k = H x_k + ...$)
-2.  噪声 $w_k$ (过程噪声) 和 $v_k$ (测量噪声) 的**均值为零**。
-3.  噪声 $w_k$ 和 $v_k$ 是**不相关**的白噪声。
-4.  噪声的协方差 $Q$ 和 $R$ 已知。
-
-**注意：这个层面不要求噪声是高斯分布！**
-
-在这种条件下，卡尔曼滤波器是**最佳线性无偏估计器（Best Linear Unbiased Estimator, BLUE）**。
-* **无偏 (Unbiased):** 估计的期望值等于真实值的期望值 ($E[\hat{x}_k] = E[x_k]$)。
-* **线性 (Linear):** 估计值 $\hat{x}_k$ 是所有历史测量值 $z_1, ..., z_k$ 的线性组合。
-* **最佳 (Best):** 在所有其他线性和无偏的估计器中，卡尔曼滤波器的均方误差（即 $P_k$ 的迹）是最小的。
-
-**层面 2：最小均方误差 (MMSE)**
-
-如果我们**额外增加一个条件**：
-5.  噪声 $w_k$ 和 $v_k$ 服从**高斯分布（Gaussian）**。
-
-由于高斯分布的优良特性（高斯分布经过线性变换后仍然是高斯分布），卡尔曼滤波器此时升级为**最小均方误差（MMSE）估计器**。
-
-* **MMSE:** 此时，卡尔曼滤波不仅在*线性*估计器中是最优的，它在*所有*估计器中（包括各种复杂的**非线性**估计器）也是最优的。
-* **贝叶斯视角：** 在线性高斯假设下，卡尔曼滤波的估计值 $\hat{x}_k$ 不仅仅是一个估计值，它还是后验概率分布 $p(x_k | z_{1:k})$ 的**均值（Mean）**。而对于高斯分布来说，其均值、中位数和众数是同一个点，这个点恰好就是MMSE估计。
-
-理解了最优性的来源，也就理解了为什么会有那么多KF的变种：
-
-* **如果系统不是线性的 (Linearity fails):** KF不再是BLUE，更不是MMSE。
-    * **解决方案：** 扩展卡尔曼滤波 (EKF) 或 无迹卡尔曼滤波 (UKF)。它们试图通过线性化或采样来逼近真实系统，但它们都**不是最优的**，只是次优 (Sub-optimal) 的近似。
-* **如果噪声不是高斯的 (Gaussianity fails):** KF只是BLUE，不再是MMSE。
-    * **解决方案：** 粒子滤波 (Particle Filter)。粒子滤波通过蒙特卡洛采样来逼近真实的后验概率分布，在粒子数足够多时，它可以逼近MMSE，但计算量远大于KF。
-
-> 思考：为什么“高斯分布”假设如此特殊，能让 KF 从“最佳线性”升级为“最佳（全局）”估计器？
-
-
