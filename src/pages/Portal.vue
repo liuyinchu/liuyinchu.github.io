@@ -110,6 +110,7 @@ onMounted(() => {
       { name: '只对你有感觉', artist: '飞轮海', url: '/music/只对你有感觉_飞轮海.m4a', cover: '/music/cover/default6.jpg' },
       { name: '红色高跟鞋', artist: '蔡健雅', url: '/music/红色高跟鞋_蔡健雅.m4a', cover: '/music/cover/default5.jpg' },
       { name: 'narrative', artist: '泽野弘之', url: '/music/narrative.m4a', cover: '/music/cover/default2.jpg' },
+      { name: '花月成双', artist: '三无Marblue', url: '/music/花月成双.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
       { name: 'ninelie', artist: 'Aimer', url: '/music/ninelie.m4a', cover: '/music/cover/default4.jpg' },
       { name: '一等情事', artist: '许一鸣', url: '/music/一等情事_许一鸣.m4a', cover: '/music/cover/default7.jpg' },
       { name: 'Puppet in the Dark', artist: 'FELT', url: '/music/puppet_in_the_dark.m4a', cover: '/music/cover/default.jpg' },

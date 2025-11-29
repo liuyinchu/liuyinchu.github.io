@@ -383,108 +383,108 @@ F_soft = np.array([
 
 理解“白噪声强度”的核心在于区分：
 
-- **连续时间白噪声**：由双边功率谱密度（PSD）\(S_0\)（单位：\(\mathrm{unit}^2/\mathrm{Hz}\)）定义  
-- **离散随机序列**：计算机生成的 i.i.d. 序列 \(w[k]\)
+- **连续时间白噪声**：由双边功率谱密度（PSD）$S_0$（单位：$\mathrm{unit}^2/\mathrm{Hz}$）定义  
+- **离散随机序列**：计算机生成的 i.i.d. 序列 $w[k]$
 
 #### A.8.1 白噪声
 
-令连续白噪声 \(n(t)\) 的双边 PSD 为常数：
+令连续白噪声 $n(t)$ 的双边 PSD 为常数：
 
-\[
+$$
 S_n^{(2)}(f)=S_0,\qquad f\in(-\infty,\infty).
-\]
+$$
 
 其幅度谱密度（ASD）为：
 
-\[
+$$
 A_0=\sqrt{S_0}\quad (\mathrm{unit}/\sqrt{\mathrm{Hz}}).
-\]
+$$
 
 定义离散噪声：
 
-\[
+$$
 n[k] = \sigma\, w[k],\qquad w[k]\sim\mathcal N(0,1)\ \text{i.i.d.}
-\]
+$$
 
 离散序列的方差为：
 
-\[
+$$
 \mathrm{Var}(n[k]) = \sigma^2.
-\]
+$$
 
-离散时间 PSD（数字角频率 \(\Omega\in[-\pi,\pi]\)）恒定：
+离散时间 PSD（数字角频率 $\Omega\in[-\pi,\pi]$）恒定：
 
-\[
+$$
 S_n^{\mathrm{DT}}(e^{j\Omega})=\sigma^2.
-\]
+$$
 
-将离散频率轴映射到物理频率 \(f\)：
+将离散频率轴映射到物理频率 $f$：
 
-\[
+$$
 \Omega = 2\pi f T_s,\qquad f\in\left[-\frac{1}{2T_s},\frac{1}{2T_s}\right].
-\]
+$$
 
 离散 PSD 与连续 PSD 的转换关系为：
 
-\[
+$$
 S_n^{(2)}(f)=T_s\, S_n^{\mathrm{DT}}(e^{j2\pi fT_s}).
-\]
+$$
 
-因为 \(S_n^{\mathrm{DT}}=\sigma^2\) 为常数，有：
+因为 $S_n^{\mathrm{DT}}=\sigma^2$ 为常数，有：
 
-\[
+$$
 S_n^{(2)}(f)=T_s\,\sigma^2.
-\]
+$$
 
-希望离散噪声具有连续 PSD 强度 \(S_0\)，需满足：
+希望离散噪声具有连续 PSD 强度 $S_0$，需满足：
 
-\[
+$$
 T_s\,\sigma^2 = S_0 \quad\Longrightarrow\quad \sigma^2 = \frac{S_0}{T_s}.
-\]
+$$
 
 因此离散白噪声应为：
 
-\[
+$$
 \boxed{\, n[k] = \sqrt{\frac{S_0}{T_s}}\,\mathcal N(0,1) \, }.
-\]
+$$
 
-若使用 ASD \(A_0=\sqrt{S_0}\)：
+若使用 ASD $A_0=\sqrt{S_0}$：
 
-\[
+$$
 \boxed{\, n[k] = \frac{A_0}{\sqrt{T_s}}\,\mathcal N(0,1) \, }.
-\]
+$$
 
-以上即为 \(1/\sqrt{T_s}\) 缩放的根源。
+以上即为 $1/\sqrt{T_s}$ 缩放的根源。
 
-若使用**单边 PSD**（仅定义在 \(f\ge 0\)）：
+若使用**单边 PSD**（仅定义在 $f\ge 0$）：
 
-\[
+$$
 S^{(1)}(f) = 2S^{(2)}(f),\qquad f>0.
-\]
+$$
 
-对应 ASD 也会多因子 \(\sqrt{2}\)。  
-不同软件出现 \(\sqrt{2}\) 或 \(1/\sqrt{2}\) 的原因只是**单边/双边定义不同**，物理含义不变。
+对应 ASD 也会多因子 $\sqrt{2}$。  
+不同软件出现 $\sqrt{2}$ 或 $1/\sqrt{2}$ 的原因只是**单边/双边定义不同**，物理含义不变。
 
-#### A.8.2 成形滤波：白噪声经 \(G(s)\) 变成有色噪声
+#### A.8.2 成形滤波：白噪声经 $G(s)$ 变成有色噪声
 
-输入白噪声 \(u(t)\)，输出：
+输入白噪声 $u(t)$，输出：
 
-\[
+$$
 Y(j\omega)=G(j\omega)U(j\omega).
-\]
+$$
 
 输出 PSD：
 
-\[
+$$
 \boxed{\, S_y(f)=|G(j2\pi f)|^2\, S_u(f) \, }.
-\]
+$$
 
-若输入为白噪声 \(S_u(f)=S_0\)，则：
+若输入为白噪声 $S_u(f)=S_0$，则：
 
-\[
+$$
 \boxed{\, S_y(f)=S_0\,|G(j2\pi f)|^2,\qquad 
 A_y(f)=\sqrt{S_0}\, |G(j2\pi f)|. \, }
-\]
+$$
 
 这就是地面噪声谱、传感器噪声谱所有数学推导的统一公式。
 
@@ -492,201 +492,203 @@ A_y(f)=\sqrt{S_0}\, |G(j2\pi f)|. \, }
 
 给定零极点：
 
-- 零点：\(z_{1,2}=-\omega_z(1\pm j)\)，\(\omega_z=1.3\cdot 2\pi\)
-- 极点组 1：\(-\sigma\pm j\omega_m\)，\(\sigma=0.03\cdot 2\pi,\ \omega_m=0.18\cdot 2\pi\)
-- 极点组 2：双重根 \(-\omega_h\)，\(\omega_h=20\cdot 2\pi\)
-- 增益：\(K = \frac{150}{3\times 10^{6}} = 5\times 10^{-7}\)
+- 零点：$z_{1,2}=-\omega_z(1\pm j)$，$\omega_z=1.3\cdot 2\pi$
+- 极点组 1：$-\sigma\pm j\omega_m$，$\sigma=0.03\cdot 2\pi,\ \omega_m=0.18\cdot 2\pi$
+- 极点组 2：双重根 $-\omega_h$，$\omega_h=20\cdot 2\pi$
+- 增益：$K = \frac{150}{3\times 10^{6}} = 5\times 10^{-7}$
 
 关键数值：
 
-\[
+$$
 \omega_z=8.1681,\quad \sigma=0.1885,\quad \omega_m=1.1310,\quad \omega_h=125.6637.
-\]
+$$
 
 **ZPK 形式（最推荐）**
 
-\[
+$$
 \boxed{
 G_{\text{ground}}(s)
 = K
 \frac{(s-z_1)(s-z_2)}
 {(s-p_1)(s-p_2)(s+\omega_h)^2}
 }
-\]
+$$
 
 **展开为显式多项式**
 
 零点二阶因子：
 
-\[
+$$
 (s-z_1)(s-z_2)=s^2+16.33628180\,s+133.43705150.
-\]
+$$
 
 低频极点二阶因子：
 
-\[
+$$
 (s-p_1)(s-p_2)=s^2+0.3769911184\,s+1.314631306.
-\]
+$$
 
 高频双极点：
 
-\[
+$$
 (s+\omega_h)^2=s^2+251.3274123\,s+15791.3670417.
-\]
+$$
 
 四阶分母：
 
-\[
+$$
 s^4+251.7044034\,s^3+15887.42990\,s^2+6283.608012\,s+20759.82550.
-\]
+$$
 
 完整传递函数：
 
-\[
+$$
 \boxed{
 G_{\text{ground}}(s)=
 5\times 10^{-7}\;
 \frac{s^2+16.33628180\,s+133.43705150}
 {s^4+251.7044034\,s^3+15887.42990\,s^2+6283.608012\,s+20759.82550}
 }
-\]
+$$
 
 **扰动形状特征**
 
-对白噪声输入 \(S_0\)：
+对白噪声输入 $S_0$：
 
-\[
+$$
 \boxed{
 S_{x_g}(f)=S_0 \big|G_{\text{ground}}(j2\pi f)\big|^2
 }
-\]
+$$
 
-- 高频：\(\sim 1/\omega^4\)，滚降 \(-40\ \mathrm{dB/dec}\)
-- 低频附近 \(0.18\) Hz：共振峰由 \(-\sigma\pm j\omega_m\) 引起
+- 高频：$\sim 1/\omega^4$，滚降 $-40\ \mathrm{dB/dec}$
+- 低频附近 $0.18$ Hz：共振峰由 $-\sigma\pm j\omega_m$ 引起
 
 #### A.8.4 传感器本底噪声模型
 
 给定：
 
-- 零点：\((s+2)^4\)
-- 低频极点：\((s+0.1)^4\)
-- 高频极点：\((s+\omega_b)\)，\(\omega_b = 3000\cdot 2\pi = 18849.55592\)
-- 增益：\(K = \omega_b\cdot 10^{-10} = 1.884955592\times 10^{-6}\)
+- 零点：$(s+2)^4$
+- 低频极点：$(s+0.1)^4$
+- 高频极点：$(s+\omega_b)$，$\omega_b = 3000\cdot 2\pi = 18849.55592$
+- 增益：$K = \omega_b\cdot 10^{-10} = 1.884955592\times 10^{-6}$
 
 **ZPK 形式**
 
-\[
+$$
 \boxed{
 G_{\text{sensor}}(s)=K
 \frac{(s+2)^4}{(s+0.1)^4 (s+\omega_b)}
 }
-\]
+$$
 
 **显式多项式**
 
-\[
+$$
 (s+2)^4=s^4+8s^3+24s^2+32s+16,
-\]
+$$
 
-\[
+$$
 (s+0.1)^4=s^4+0.4s^3+0.06s^2+0.004s+0.0001.
-\]
+$$
 
 完整表达式：
 
-\[
+$$
 \boxed{
 G_{\text{sensor}}(s)=
 (1.884955592\times 10^{-6})\,
 \frac{s^4+8s^3+24s^2+32s+16}
 {(s^4+0.4s^3+0.06s^2+0.004s+10^{-4})(s+18849.55592)}
 }
-\]
+$$
 
 **各频段噪声形状（渐近阶）**
 
-- **低频（漂移）**：\(|G|\sim 1/\omega^4 \Rightarrow +80\ \mathrm{dB/dec}\)
-- **中频（平坦噪声地板）**：\(\approx 10^{-10}\)
-- **高频**：\(|G|\sim 1/\omega \Rightarrow -20\ \mathrm{dB/dec}\)
+- **低频（漂移）**：$|G|\sim 1/\omega^4 \Rightarrow +80\ \mathrm{dB/dec}$
+- **中频（平坦噪声地板）**：$\approx 10^{-10}$
+- **高频**：$|G|\sim 1/\omega \Rightarrow -20\ \mathrm{dB/dec}$
 
 #### A.8.5 Tustin 离散化（必须使用双线性变换）
 
 双线性变换：
 
-\[
+$$
 \boxed{
 s = \frac{2}{T_s} \frac{1-z^{-1}}{1+z^{-1}}
 }
-\]
+$$
 
 频率映射：
 
-\[
+$$
 \Omega = 2\arctan\!\left(\frac{\omega T_s}{2}\right).
-\]
+$$
 
 对于连续系统：
 
-\[
+$$
 \dot{x}=Ax+Bu,\qquad y=Cx+Du,
-\]
+$$
 
 Tustin 离散化得到：
 
-\[
+$$
 x[k+1]=A_d x[k]+B_d u[k],\qquad y[k]=C_d x[k]+D_d u[k].
-\]
+$$
 
 矩阵公式：
 
-\[
+$$
 \boxed{
 A_d=(I-\tfrac{T_s}{2}A)^{-1}(I+\tfrac{T_s}{2}A)
 }
-\]
+$$
 
-\[
+$$
 \boxed{
 B_d=(I-\tfrac{T_s}{2}A)^{-1} T_s B
 }
-\]
+$$
 
-\[
+$$
 \boxed{
 C_d=C(I-\tfrac{T_s}{2}A)^{-1}
 }
-\]
+$$
 
-\[
+$$
 \boxed{
 D_d=D+\tfrac{T_s}{2}\,C(I-\tfrac{T_s}{2}A)^{-1}B
 }
-\]
+$$
 
 #### A.8.6 噪声注入方式（动力学扰动 + 传感器噪声）
 
 测量量：
 
-\[
+$$
 \boxed{
 y_{\text{meas}}(t)=y_{\text{true}}(t)+n_{\text{sensor}}(t)
 }
-\]
+$$
 
 动力学扰动：
 
-\[
+$$
 \dot{x}=Ax+Bu+E\, d,
-\]
+$$
 
-其中 \(d\) 包含地面位移、速度、加速度等扰动项，由运动方程确定。
+其中 $d$ 包含地面位移、速度、加速度等扰动项，由运动方程确定。
 
 地面位移由白噪声经成形滤波得到：
 
-\[
+$$
 x_g = G_{\text{ground}} * u_g,\qquad
 u_g[k] \sim \frac{A_0}{\sqrt{T_s}}\, \mathcal N(0,1).
-\]
+$$
+
+<img src="/fig/ground_and_sensor.png" alt="扰动与噪声特性" width="95%">
 
 ## B 控制器设计实践
 
