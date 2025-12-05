@@ -132,6 +132,7 @@
 
 ::: postit 一些神秘链接长期更新中
 
+- 20251204 sysubeamer-unofficial: https://github.com/yanghw8/sysubeamer-unofficial
 - 20251115 RL 多目标优化：https://www.zhihu.com/question/361424791/answer/1968810401253799615
 - 20251115 机器人学习：https://www.zhihu.com/question/266142784/answer/1967657542919394206
 - 20251110 微舆：https://github.com/666ghj/BettaFish
