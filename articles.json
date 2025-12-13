@@ -5,7 +5,7 @@
     "author": "pifuyuini",
     "date": "2025-12-07",
     "desc": "一篇介绍 SVD 的基础笔记。",
-    "image": "/bg/big _under_the_moon.PNG"
+    "image": "/bg/big_under_the_moon.PNG"
   },
   {
     "id": "deep_learning_playnote",
@@ -37,7 +37,7 @@
     "author": "pifuyuini",
     "date": "2025-11-1",
     "desc": "这份笔记从“天文学研究中机器学习方法的实用指南”升级到了“AI4S 实践指引“！",
-    "image": "/bg/visitor.jpeg"
+    "image": "/bg/dreamy_yae_miko.png"
   },
   {
     "id": "accelerate_rustdesk_mac2win",
@@ -61,7 +61,7 @@
     "author": "liuyinchu",
     "date": "2025-9-20",
     "desc": "Rust ，启动！",
-    "image": "/bg/dreamy_yae_miko.png"
+    "image": "/bg/Skadi_by_the_Sea.jpg"
   },
   {
     "id": "note_of_configure_server",
@@ -77,7 +77,7 @@
     "author": "pifuyuini",
     "date": "2025-07-29",
     "desc": "个人复习用的经典力学简明总结。",
-    "image": "/bg/cm_cover.png"
+    "image": "/bg/neighbor.jpeg"
   },
   {
     "id": "kitty_config_log",
@@ -101,7 +101,7 @@
     "author": "pifuyuini",
     "date": "2025-07-01",
     "desc": "学习 David Tong 的 Solid State Physics 的 3. Electron Dynamics in Solids 的 AI-Help 笔记。",
-    "image": "/bg/snow_mountain_starry_sky_aurora.jpeg"
+    "image": "/bg/mountain.JPG"
   },
   {
     "id": "solid_physics_note4",
@@ -109,7 +109,7 @@
     "author": "pifuyuini",
     "date": "2025-07-01",
     "desc": "学习 David Tong 的 Solid State Physics 的 4. Phonons 的 AI-Help 笔记。",
-    "image": "/bg/open.jpeg"
+    "image": "/bg/visitor.jpeg"
   },
   {
     "id": "naming_guide",
@@ -125,6 +125,6 @@
     "author": "pifuyuini",
     "date": "2025-01-01",
     "desc": "人生苦短，我学 Python ！",
-    "image": "/bg/IMG_Elysia.jpg"
+    "image": "/bg/spring.jpg"
   }
 ]
