@@ -24,6 +24,7 @@ import BlockMarkdown from '../components/common/BlockMarkdown.vue'
 import LinkButtons from '../components/common/LinkButtons.vue'
 import ImageBlock from '../components/common/ImageBlock.vue'
 
+
 const introText = `
 
 ---

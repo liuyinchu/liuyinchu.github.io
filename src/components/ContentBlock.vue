@@ -46,7 +46,7 @@ defineProps({
   content: '';
   position: absolute;
   inset: 0; /* 覆盖整个父容器 */
-  background-color: rgba(0, 0, 0, 0.4); /* [修改] 厚重的黑色滤镜 */
+  background-color: rgba(0, 0, 0, 0.5); /* [修改] 厚重的黑色滤镜 */
   z-index: 1; /* 确保滤镜在背景之上 */
   
   /* [优化] 为滤镜的颜色变化添加过渡效果 */

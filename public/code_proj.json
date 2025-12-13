@@ -14,6 +14,13 @@
     "category": "project"
   },
   {
+    "name": "主动隔振与 MIMO 控制实践",
+    "desc": "现代控制理论与技术·期末大作业。",
+    "homepage": "/ysy-modern-control-course-work",
+    "repo": "https://github.com",
+    "category": "project"
+  },
+  {
     "name": "Brisk Nexus",
     "desc": "个人小巧思合集。",
     "homepage": "/brisk-nexus",

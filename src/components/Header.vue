@@ -70,7 +70,7 @@ import { RouterLink } from 'vue-router'
   }
 </style> -->
 
-<template>
+<!-- <template>
   <header class="site-header">
     <RouterLink to="/" class="logo-area">
       <img src="/favicon_liuyin.svg" alt="logo" class="logo" />
@@ -355,5 +355,351 @@ function closeMenu() {
   .mobile-nav-toggle {
     display: block; 
   }
+}
+</style> -->
+
+<template>
+  <header class="site-header" :class="{ 'is-scrolled': isScrolled }">
+    <div class="header-inner">
+      <RouterLink to="/" class="logo-area">
+        <div class="logo-wrapper">
+          <img src="/favicon_liuyin.svg" alt="logo" class="logo" />
+          <div class="logo-glow"></div>
+        </div>
+        <span class="site-name">LiuYinChu'Space</span>
+      </RouterLink>
+
+      <nav class="nav-menu desktop-menu">
+        <RouterLink to="/postit">日志</RouterLink>
+        <RouterLink to="/space1">随记</RouterLink>
+        <RouterLink to="/resource">资源链接</RouterLink>
+        <RouterLink to="/code">代码与项目</RouterLink>
+        <RouterLink to="/research">我的学术</RouterLink>
+      </nav>
+
+      <button
+        class="mobile-nav-toggle"
+        :class="{ 'is-active': isMenuOpen }"
+        @click="toggleMenu"
+        aria-label="Toggle navigation"
+      >
+        <span class="hamburger-box">
+          <span class="hamburger-inner"></span>
+        </span>
+      </button>
+    </div>
+
+    <Transition name="fade-slide">
+      <div v-if="isMenuOpen" class="mobile-menu-container">
+        <nav class="mobile-nav-links">
+          <RouterLink to="/postit" @click="closeMenu" style="--i:1">日志</RouterLink>
+          <RouterLink to="/space1" @click="closeMenu" style="--i:2">随记</RouterLink>
+          <RouterLink to="/resource" @click="closeMenu" style="--i:3">资源链接</RouterLink>
+          <RouterLink to="/code" @click="closeMenu" style="--i:4">代码与项目</RouterLink>
+          <RouterLink to="/research" @click="closeMenu" style="--i:5">我的学术</RouterLink>
+        </nav>
+      </div>
+    </Transition>
+  </header>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { RouterLink } from 'vue-router'
+
+const isMenuOpen = ref(false)
+const isScrolled = ref(false)
+
+function toggleMenu() {
+  isMenuOpen.value = !isMenuOpen.value
+  // 防止菜单打开时背景滚动
+  if (isMenuOpen.value) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+}
+
+function closeMenu() {
+  if (isMenuOpen.value) {
+    isMenuOpen.value = false
+    document.body.style.overflow = ''
+  }
+}
+
+// [新增] 监听滚动，给 Header 增加更明显的背景
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 20
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+</script>
+
+<style scoped>
+/* =========================================
+   1. 容器与基础布局 (Layout & Container)
+   ========================================= */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* 初始状态：极简、几乎透明 */
+  background-color: rgba(var(--ctp-mocha-base-rgb), 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 滚动后的状态：加深背景，增加阴影，增强可读性 */
+.site-header.is-scrolled {
+  background-color: rgba(var(--ctp-mocha-base-rgb), 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-inner {
+  max-width: 1200px; /* 限制最大宽度，大屏更美观 */
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1.5rem;
+}
+
+/* =========================================
+   2. Logo 区域的高级感 (Logo Aesthetics)
+   ========================================= */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  text-decoration: none;
+  group: logo-group; /* 用于 hover 状态管理 */
+}
+
+.logo-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  width: 36px; /* 稍微加大一点 */
+  height: 36px;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+/* Logo背后的光晕 */
+.logo-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, var(--primary-color) 0%, transparent 70%);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  z-index: 1;
+  filter: blur(8px);
+}
+
+.site-name {
+  font-family: 'Inter', system-ui, sans-serif; /* 英文用非衬线体更现代，若必须中文可用原字体 */
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--text-color);
+  letter-spacing: -0.02em;
+  transition: color 0.3s ease;
+}
+
+/* Hover Effect: Logo */
+.logo-area:hover .logo {
+  transform: rotate(-10deg) scale(1.1);
+}
+.logo-area:hover .logo-glow {
+  opacity: 0.4;
+  transform: scale(1.5);
+}
+.logo-area:hover .site-name {
+  background: linear-gradient(135deg, #E57219, #47F1E8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* =========================================
+   3. 桌面端导航 (Desktop Navigation)
+   ========================================= */
+.desktop-menu {
+  display: none; /* 移动优先，默认隐藏 */
+}
+
+@media (min-width: 769px) {
+  .desktop-menu {
+    display: flex;
+    gap: 0.5rem; /* 使用 pill 形状时，间距可以小一点，因为有 padding */
+    background: rgba(0, 0, 0, 0.03); /* 极淡的背景槽 */
+    padding: 4px;
+    border-radius: 99px; /* 胶囊形状容器 */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .desktop-menu a {
+    position: relative;
+    padding: 0.5rem 1.2rem;
+    color: var(--ctp-mocha-subtext0);
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border-radius: 99px; /* 胶囊按钮 */
+    transition: all 0.3s ease;
+    font-family: "LXGW WenKai", sans-serif;
+  }
+
+  /* 悬浮态：轻微亮起 */
+  .desktop-menu a:hover {
+    color: var(--text-color);
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  /* 激活态：高亮背景 + 阴影 */
+  .desktop-menu a.router-link-active {
+    background-color: var(--primary-color, #47F1E8); /* 确保你有这个变量，或者用具体颜色 */
+    color: #fff; /* 激活时文字反白，显眼 */
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(var(--primary-rgb, 71, 241, 232), 0.3);
+  }
+}
+
+/* =========================================
+   4. 移动端汉堡按钮 (Hamburger)
+   ========================================= */
+.mobile-nav-toggle {
+  display: block;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  z-index: 1002;
+}
+
+@media (min-width: 769px) {
+  .mobile-nav-toggle {
+    display: none;
+  }
+}
+
+.hamburger-box {
+  width: 24px;
+  height: 24px;
+  position: relative;
+  display: block;
+}
+
+.hamburger-inner,
+.hamburger-inner::before,
+.hamburger-inner::after {
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-color);
+  border-radius: 4px;
+  position: absolute;
+  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55), background 0.3s ease;
+}
+
+.hamburger-inner { top: 50%; transform: translateY(-50%); }
+.hamburger-inner::before { content: ''; top: -7px; left: 0; }
+.hamburger-inner::after { content: ''; top: 7px; left: 0; }
+
+/* 激活状态动画 */
+.mobile-nav-toggle.is-active .hamburger-inner { background-color: transparent; }
+.mobile-nav-toggle.is-active .hamburger-inner::before { top: 0; transform: rotate(135deg); }
+.mobile-nav-toggle.is-active .hamburger-inner::after { top: 0; transform: rotate(-135deg); }
+
+/* =========================================
+   5. 移动端全屏菜单 (Mobile Overlay)
+   ========================================= */
+.mobile-menu-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000000;
+  backdrop-filter: blur(20px);
+  z-index: 1001; /* 比 Header 低一点点，或者同级，但因为是 fixed 所以会覆盖 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.mobile-nav-links a {
+  font-size: 1.5rem;
+  color: var(--text-color);
+  text-decoration: none;
+  font-family: "LXGW WenKai", serif;
+  font-weight: 600;
+  position: relative;
+  opacity: 0;
+  transform: translateY(20px);
+  /* 这里的动画是在类名添加时触发 */
+  animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  /* 使用 CSS 变量计算延迟 */
+  animation-delay: calc(var(--i) * 0.08s);
+}
+
+.mobile-nav-links a.router-link-active {
+  color: var(--primary-color);
+}
+.mobile-nav-links a.router-link-active::after {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  margin: 0.5rem auto 0;
+}
+
+/* =========================================
+   6. 动画关键帧 (Keyframes)
+   ========================================= */
+@keyframes slideUpFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Vue Transition 组件的过渡类 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
 }
 </style>

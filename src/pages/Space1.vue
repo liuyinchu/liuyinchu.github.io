@@ -4,6 +4,8 @@ import { ref, onMounted } from 'vue'
 import Meteors from '../components/effects/Meteors.vue'
 import LeftTocDock from '../components/LeftTocDock.vue'
 import LeftSearchDock from '../components/LeftSearchDock.vue'
+import AmbientBackground from '../components/AmbientBackground.vue'
+
 
 const articles = ref([])
 
@@ -20,6 +22,7 @@ onMounted(async () => {
 <template>
   <div class="bg-container">
     <Meteors />
+    <AmbientBackground />
     <LeftTocDock src="/articles.json" basePath="/space1" />
     <LeftSearchDock src="/articles.json" basePath="/space1" :left="20" top="78%" />
     <main class="article-page">

@@ -15,6 +15,7 @@
     </header>
 
     <main class="content-area">
+      <AmbientBackground />
       <transition-group name="card-list" tag="div">
         <div v-for="block in contentBlocks" :key="block.id" class="content-block">
           <PostItCard 
@@ -39,6 +40,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import MarkdownIt from 'markdown-it';
 import mdContainer from 'markdown-it-container';
 import PostItCard from '../components/PostItCard.vue'; // 引入新组件
+import AmbientBackground from '../components/AmbientBackground.vue'
+
 
 const contentBlocks = ref([]); // 存储解析后的内容块数组
 // --- 实验功能开关 ---
