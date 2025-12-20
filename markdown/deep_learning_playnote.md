@@ -961,4 +961,4 @@
 8. **[Decide] 是否上线新配置？**
 9. **[Loop] 更新 baseline，进入下一轮；若搜索空间已成熟 → 切到贝叶斯优化。**
 
-上述 CHECKLIST 的 `.md` 文件可以在[笔记](\notes)中获取。
+上述 CHECKLIST 的 `.md` 文件可以在[笔记](https://liuyinchu.github.io/notes)中获取。

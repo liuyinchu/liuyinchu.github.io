@@ -110,14 +110,15 @@
 
 :::
 
-::: postit ChatGPT5尚未发布
+::: postit AI碎碎念
 
+- 2025 年 12 月 20 日，太伟大了，Nano Banana Pro ！
 - 2025 年 12 月 11 日，GPT 5.2 发布；但是，太伟大了，Gemini 3 Pro 的前端！
 - 2025 年 11 月 13 日，GPT 5.1 都发布了， Gemini 3 还没个影子，很遗憾！
 - 2025 年 9 月 9 日，Gemini 2.5 Pro 坚持称 ChatGPT5 还没有发布……
 - 2025 年 9 月 30 日，体验下来 Gemini 像个弱智，代码能力和推理能力明显下降远没有之前好用；ChatGPT 倒是一如既往的厉害，编程和推理都不错，就是我的不知道受了什么调教，它说的话我现在都不怎么看得懂；不过，最近体验了 Grok ，感觉还可以，考虑是否付费……
 
-2025 年 10 月 4 日：[乐](https://www.zhihu.com/question/14461028376/answer/1950531221621813759)
+和我的 Vibe-Coding 说去吧：
 - 代码有一点bug 你修一修
 - 我不要部分代码 你把修改后的完整代码发给我
 - 你的代码还是有问题
@@ -166,18 +167,20 @@
 
 ::: postit 一些神秘链接长期更新中
 
+- 20251221 一篇关于核函数的详细介绍：https://www.zhihu.com/question/58369008/answer/1969888800500068472
+- 20251221 用扩散模型生成时空物理场：https://zhuanlan.zhihu.com/p/30475667943
 - 20251204 sysubeamer-unofficial: https://github.com/yanghw8/sysubeamer-unofficial
 - 20251115 RL 多目标优化：https://www.zhihu.com/question/361424791/answer/1968810401253799615
 - 20251115 机器人学习：https://www.zhihu.com/question/266142784/answer/1967657542919394206
 - 20251110 微舆：https://github.com/666ghj/BettaFish
-- 20251101 观望频域 PINN 中：https://www.zhihu.com/question/667611221/answer/1936376574401316105
+- 20251101 频域 PINN 中：https://www.zhihu.com/question/667611221/answer/1936376574401316105
 - 20251004 vLLM ：https://docs.vllm.ai/en/latest/index.html
 - 20251004 Transformer 快速入门：https://transformers.run/
 - 20251004 面向开发者的提示词工程：https://datawhalechina.github.io/llm-cookbook/#/
-- 20251003（知乎精选）在电脑上画一个黑洞：https://zhuanlan.zhihu.com/p/20536269771
-- 20251003（知乎精选）求解最优的任意宝可梦颜色交换算法：https://zhuanlan.zhihu.com/p/695729586
+- 20251003 在电脑上画一个黑洞：https://zhuanlan.zhihu.com/p/20536269771
+- 20251003 求解最优的任意宝可梦颜色交换算法：https://zhuanlan.zhihu.com/p/695729586
 - 20250930 一个十分难绷的网站：https://superexcuse.com/
-- 20250924 （量子）如何评价 6100 比特的中性原子（光镊）方案上了 Nature ? https://arxiv.org/abs/2403.12021
+- 20250924 如何评价 6100 比特的中性原子（光镊）方案上了 Nature ? https://arxiv.org/abs/2403.12021
 - 20250909 程序员如何优雅地做副业：https://github.com/easychen/lean-side-bussiness
 - 20250821 量子计算 https://www.zhihu.com/question/305099454/answer/1941869743654015698
 :::

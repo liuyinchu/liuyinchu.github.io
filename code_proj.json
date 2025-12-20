@@ -17,7 +17,7 @@
     "name": "主动隔振与 MIMO 控制实践",
     "desc": "现代控制理论与技术·期末大作业。",
     "homepage": "/ysy-modern-control-course-work",
-    "repo": "https://github.com",
+    "repo": "https://github.com/pifuyuini/un-official-sysuspa-modern-control-course-work",
     "category": "project"
   },
   {
@@ -25,6 +25,20 @@
     "desc": "个人小巧思合集。",
     "homepage": "/brisk-nexus",
     "repo": "https://github.com/pifuyuini/brisk-nexus/tree/dev",
+    "category": "toy"
+  },
+  {
+    "name": "LiuYinChu's 2048",
+    "desc": "2048 Vue Game",
+    "homepage": "/lyc2048",
+    "repo": "",
+    "category": "toy"
+  },
+  {
+    "name": "Cyber Match",
+    "desc": "Cyber Match Vue Game",
+    "homepage": "/cyber-match",
+    "repo": "",
     "category": "toy"
   }
 ]
