@@ -46,12 +46,20 @@ const routes = [
   { path: '/research', component: Research },
   { path: '/ysy-modern-control-course-work', component: YsyModernControlCourseWork },
   { path: '/cyber-match', component: CyberMatch },
-  { path: '/lcy2048', component: LYC2048 },
+  { path: '/lyc2048', component: LYC2048 },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      // 切换页面时，瞬间回到顶部，配合 fade 动画，视觉上就是“新页面直接出现在眼前”
+      return { top: 0 }
+    }
+  }
 })
 
 export default router

@@ -253,13 +253,13 @@ onUpdated(addCopyButtons)
 } */
 :deep(blockquote) { 
   margin: 1.5em; 
-  padding-block: 0.01em;  /* 上下 */
-  padding-inline: 2em;   /* 左右 */
+  padding-block: 0.0001em;  /* 上下 */
+  padding-inline: 1em;   /* 左右 */
   color: #bac2de; border-left: .25em solid #74c7ec; 
   background: linear-gradient(
   90deg,
   #74c7ec 0%,    /* 起点 */
-  #313244 1%,   /* 中间颜色快速到位 */
+  #313244 0.3%,   /* 中间颜色快速到位 */
   #313244 100%   /* 后半段渐变慢慢延伸 */
   );
   font-style: italic;
@@ -312,7 +312,7 @@ onUpdated(addCopyButtons)
 /* --- 代码块样式优化 --- */
 :deep(code) {
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
-  background-color: #6c7086;
+  background-color: rgba(147, 153, 178, 0.25);;
   color: #89dceb;
   padding: 0.2em 0.4em;
   border-radius: 4px;

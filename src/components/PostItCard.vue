@@ -77,7 +77,7 @@ defineProps({
 
 .markdown-body code {
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
-  background-color: #6c7086;
+  background-color: rgba(147, 153, 178, 0.25);;
   color: #89dceb;
   padding: 0.2em 0.4em;
   border-radius: 4px;

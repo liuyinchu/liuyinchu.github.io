@@ -13,7 +13,7 @@ const dockGroups = [
     ]
   },
   {
-    name: '工具',
+    name: 'Tools',
     color: '#94e2d5', // Mocha - Teal
     links: [
       { name: 'GitHub', url: 'https://github.com/' },
@@ -28,7 +28,7 @@ const dockGroups = [
     ]
   },
   {
-    name: '文献',
+    name: 'Knowledge',
     color: '#f9e2af', // Mocha - Yellow
     links: [
       { name: 'arXiv', url: 'https://arxiv.org/' },
@@ -39,7 +39,7 @@ const dockGroups = [
     ]
   },
   {
-    name: '其它',
+    name: 'Something Else',
     color: '#fab387', // Mocha - Peach
     links: [
       { name: '网易企业邮箱', url: 'https://qy.163.com/static/login/' },
@@ -165,7 +165,7 @@ onMounted(() => {
   <div class="frosted-glass-layer"></div>   <!-- 毛玻璃遮罩 -->
   <div class="content-layer">               <!-- 实际内容 -->
     <div class="card frosted">
-      <h1 class="big-title">Welcome!</h1>
+      <h1 class="big-title"></h1>
       <p class="subtitle calligraphic">
         {{ typedText }}<span v-if="showCursor" class="cursor">|</span>
       </p>
@@ -253,7 +253,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 110%;
-  background-image: url('/bg/welcome.jpeg');
+  background-image: url('/bg/Firefly_Paper_Airplane.png');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center center;
@@ -277,7 +277,7 @@ onMounted(() => {
   flex: 1;
 }
 
-.card {
+/* .card {
   padding: 0.6rem 2rem 2rem 2rem;
   border-radius: 1rem;
   backdrop-filter: blur(8.5px);
@@ -285,12 +285,41 @@ onMounted(() => {
   border: 1px solid var(--border-color);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
   margin-bottom: 1.5rem;
+} */
+
+.card {
+  padding: 0.6rem 2rem 2rem 2rem;
+  margin-bottom: 1.5rem;
+  border-radius: 20px;
+  /* 渐变底色：左上亮，右下暗，模拟光照 */
+  background: linear-gradient(
+    145deg, 
+    rgba(30, 30, 46, 0.65) 0%, 
+    rgba(24, 24, 37, 0.85) 100%
+  );
+  /* 晶体边框：使用 mask 或 border-image 的简化版 - 细微白边 */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* 内阴影增加厚度感，外阴影增加悬浮感 */
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
 }
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
 
 /* 可自定义修改字号 */
 .big-title {
-  font-size: 3rem; /* 你可以改成 3rem 等 */
-  font-weight: 700;
+  font-family: "LXGW WenKai", serif;
+  font-size: 3.5rem; /* 你可以改成 3rem 等 */
+  font-weight: 800;
   color: var(--text-color);
   margin-bottom: 0.5rem;
   text-indent: 1ch; /* 大约等于两个字符宽 */
@@ -298,7 +327,7 @@ onMounted(() => {
 
 /* 可自定义修改字号 */
 .subtitle {
-  font-size: 2rem;
+  font-size: 2.3rem;
   color: #f2cdcd; /* 备选：#89b4fa,#74c7ec,#94e2d5*/
   margin: 0;
 }
@@ -308,12 +337,33 @@ onMounted(() => {
   font-family: 'Pacifico', cursive;
 }
 
-.title {
+/* .title {
   font-size: 1.5rem;
   font-weight: bold;
   color: var(--text-color);
   margin-bottom: 1rem;
   font-family: "Verdana",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
+} */
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: "Verdana",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
+}
+.title::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 1.6rem;
+  background: #89b4fa; /* Blue */
+  border-radius: 2px;
+  box-shadow: 0 0 10px #89b4fa;
 }
 
 .aplayer-wrapper {
@@ -482,7 +532,7 @@ onMounted(() => {
   cursor: pointer;
 } */
 
-.dock-card {
+/* .dock-card {
   padding: 1rem 1.5rem 2rem 1.5rem;
 }
 
@@ -535,6 +585,118 @@ onMounted(() => {
   width: 24px;
   height: 24px;
   object-fit: contain;
+} */
+
+/* ==================
+   Dock 区域 (Bento Grid)
+   ================== */
+.dock-card {
+  padding: 2.5rem;
+}
+
+.dock-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* 自适应列 */
+  gap: 2rem;
+}
+
+.dock-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dock-group-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--group-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 装饰性小圆点 */
+.dock-group-title::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--group-accent);
+  box-shadow: 0 0 8px var(--group-accent);
+}
+
+.dock-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Dock 图标按钮 */
+.dock-link {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-decoration: none;
+}
+
+.dock-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: grayscale(0.4) brightness(0.9);
+  transition: all 0.3s;
+}
+
+/* Hover 效果：发光 + 上浮 + 图标变亮 */
+.dock-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--group-accent);
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 0 0 10px var(--group-accent);
+}
+
+.dock-link:hover .dock-icon {
+  filter: grayscale(0) brightness(1.1);
+  transform: scale(1.1);
+}
+
+/* Tooltip (纯 CSS 实现) */
+.dock-tooltip {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #1e1e2e;
+  color: #cdd6f4;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  opacity: 0;
+  visibility: hidden;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  border: 1px solid var(--group-accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+.dock-link:hover .dock-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 .todo-card {
@@ -564,5 +726,20 @@ onMounted(() => {
     max-width: 100%;
     min-width: unset;
   }
+}
+
+/* ==================
+   Cursor Blink Animation
+   ================== */
+.cursor {
+  display: inline-block;
+  color: #f38ba8; /* Red */
+  font-weight: 300;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 </style>

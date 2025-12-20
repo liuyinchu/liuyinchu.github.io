@@ -3,7 +3,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import MarkdownIt from 'markdown-it'
 import mdAnchor from 'markdown-it-anchor'
 import hljs from 'highlight.js'
-import 'highlight.js/styles/atom-one-dark.css'
+import 'highlight.js/styles/github-dark.css'
 
 const props = defineProps({
   src: { type: String, required: true }
@@ -72,13 +72,14 @@ onMounted(async () => {
     linkify: true,
     typographer: true,
     highlight: function (str, lang) {
-      if (lang && hljs.getLanguage(lang)) {
-        try {
-          return `<pre class="hljs"><code>${hljs.highlight(str, { language: lang }).value}</code></pre>`
-        } catch (_) {}
+        // 增加 hljs 类名，确保样式生效
+        if (lang && hljs.getLanguage(lang)) {
+          try {
+            return `<pre class="hljs code-block"><div class="code-header"><span class="lang-tag">${lang}</span></div><code>${hljs.highlight(str, { language: lang }).value}</code></pre>`
+          } catch (_) {}
+        }
+        return `<pre class="hljs code-block"><div class="code-header"></div><code>${md.utils.escapeHtml(str)}</code></pre>`
       }
-      return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`
-    }
   })
 
   // 使用 markdown-it-anchor 插件
@@ -123,22 +124,33 @@ onMounted(async () => {
 
 <style scoped>
 .markdown-body {
-  max-width: 860px;
+  max-width: 900px;
   margin: 2rem auto;
   padding: 0 1rem;
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
+  font-family: "LXGW WenKai",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
   line-height: 1.9;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   color: var(--text-color);
 }
 /* 方案二：Catppuccin Mocha 原生蓝色 */
-.markdown-body :deep(::selection) {
+/* .markdown-body :deep(::selection) {
   background-color: #74C7EC;
   color: #1E1E2E;
-}
+} */
+/* 方案：暗金星流 (奢华质感，呼应标题) */
+/* .markdown-body :deep(::selection) {
+  background-color: rgba(243, 233, 198, 0.95);
+  color: #181825; 
+  text-shadow: none;
+} */
+.markdown-body :deep(::selection) {
+  background-color: #4df8e8; 
+  color: #11111b; 
+  text-shadow: 0 0 2px rgba(255,255,255,0.2); /* 微弱发光 */
+} 
 
 /* 标题样式略 */
-.markdown-body h1,
+/* .markdown-body h1,
 .markdown-body h2,
 .markdown-body h3 {
   margin-top: 2rem;
@@ -154,6 +166,37 @@ onMounted(async () => {
   margin-bottom: 0.75rem;
   font-weight: 600;
   color: var(--accent-color);
+} */
+/* ================== 1. 标题 ================== */
+.markdown-body :deep(h1),
+.markdown-body :deep(h2),
+.markdown-body :deep(h3),
+.markdown-body :deep(h4) {
+  color: #F3E9C6; /* 暗金标题 */
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1.2rem;
+  line-height: 1.3;
+  position: relative;
+}
+
+.markdown-body :deep(h1) {
+  font-family: 'Cinzel', serif; /* 特殊字体 */
+  font-size: 2.2rem;
+  border-bottom: 1px solid rgba(243, 233, 198, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.markdown-body :deep(h2) {
+  font-size: 1.9rem;
+}
+
+.markdown-body :deep(h3) {
+  font-size: 1.6rem;
+}
+
+.markdown-body :deep(h4) {
+  font-size: 1.3rem;
 }
 
 /* 行内代码与块代码 */
@@ -179,7 +222,7 @@ onMounted(async () => {
   padding: 0;
   font-size: 0.95rem;
 } */
-:deep(code) {
+/* :deep(code) {
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
   background-color: #6c7086;
   color: #89dceb;
@@ -190,7 +233,6 @@ onMounted(async () => {
 
 :deep(pre) {
   position: relative; 
-  /* background-color: var(--surface-color); */
   background-color: rgb(24, 24, 37);
   padding: 1.25rem 1.5rem;
   border-radius: 0.75rem;
@@ -205,6 +247,68 @@ onMounted(async () => {
   padding: 0;
   color: inherit;
   font-size: inherit;
+} */
+/* ================== 2. 代码块 (Mac Style) ================== */
+/* 行内代码 */
+.markdown-body :deep(code) {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  background-color: rgba(147, 153, 178, 0.15); /* Surface overlay */
+  color: #f5c2e7; /* Pink */
+}
+
+/* 代码块容器 */
+.markdown-body :deep(pre.code-block) {
+  position: relative;
+  background: #181825; /* Mantle dark */
+  border-radius: 12px;
+  margin: 2rem 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* 模拟 Mac 窗口头部 */
+.markdown-body :deep(.code-header) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* 语言标签放右边 */
+  height: 36px;
+  background: rgba(30, 30, 46, 0.8);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 0 1rem;
+  position: relative;
+}
+
+/* Mac 三色小圆点 */
+.markdown-body :deep(.code-header)::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #ff5f56; /* Red */
+  box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #27c93f; /* Yellow & Green */
+}
+
+.markdown-body :deep(.lang-tag) {
+  font-size: 0.75rem;
+  color: #6c7086;
+  font-family: 'Fira Code', monospace;
+  text-transform: uppercase;
+}
+
+.markdown-body :deep(pre code) {
+  display: block;
+  padding: 1.2rem;
+  overflow-x: auto;
+  background: transparent;
+  color: #cdd6f4;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  border-radius: 0;
 }
 
 /* 其余图片、表格、引用块样式略 */
@@ -255,13 +359,13 @@ mjx-container {
 
 :deep(blockquote) { 
   margin: 1.5em; 
-  padding-block: 0.01em;  /* 上下 */
-  padding-inline: 2em;   /* 左右 */
+  padding-block: 0.0002em;  /* 上下 */
+  padding-inline: 1em;   /* 左右 */
   color: #bac2de; border-left: .25em solid #74c7ec; 
   background: linear-gradient(
   90deg,
   #74c7ec 0%,    /* 起点 */
-  #45475a 1%,   /* 中间颜色快速到位 */
+  #45475a 0.5%,   /* 中间颜色快速到位 */
   #45475a 100%   /* 后半段渐变慢慢延伸 */
   );
   font-style: italic;

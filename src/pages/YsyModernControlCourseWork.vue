@@ -34,9 +34,9 @@
             <h1>CoLabM</h1>
             <p class="doc-subtitle"><strong>C</strong>ontrol-<strong>o</strong>riented <strong>Lab</strong>oratory for active isolation in <strong>M</strong>IMO systems</p>
             <div class="doc-meta">
-              <span class="tag">Final Project</span>
-              <span class="tag">Open Source</span>
-              <span class="tag">v2.0.4 Neural</span>
+              <span class="tag">Modern Control</span>
+              <span class="tag">Active Vibration Isolation</span>
+              <span class="tag">Course Work</span>
             </div>
             <div class="intro-card spotlight-card">
               <p>The following materials constitute the open-source content accompanying the final project of the course <em>Modern Control Theory and Technology</em>. They mainly include:</p>
@@ -559,11 +559,11 @@ onUnmounted(() => {
 });
 
 const attachmentLinks = {
-  'section-1': 'https://github.com/',  // 替换为您实际的文件路径
-  'section-2': 'https://github.com/',
-  'section-3': 'https://github.com/',
-  'section-4': 'https://github.com/',
-  'section-5': 'https://github.com/'
+  'section-1': 'https://github.com/pifuyuini/un-official-sysuspa-modern-control-course-work/tree/main/matlab-proj',  // 替换为您实际的文件路径
+  'section-2': 'https://github.com/pifuyuini/un-official-sysuspa-modern-control-course-work/blob/main/matlab-proj/SISO_LQG.m',
+  'section-3': 'https://github.com/pifuyuini/un-official-sysuspa-modern-control-course-work/blob/main/matlab-proj/Model.slx',
+  'section-4': 'https://github.com/pifuyuini/un-official-sysuspa-modern-control-course-work/blob/main/matlab-proj/Decoupled_LQG.m',
+  'section-5': 'https://github.com/pifuyuini/un-official-sysuspa-modern-control-course-work/blob/main/python-data-analysis/main.ipynb'
 };
 
 </script>

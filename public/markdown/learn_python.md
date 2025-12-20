@@ -117,6 +117,76 @@ rm ~/.local/bin/uv ~/.local/bin/uvx
       * 它提供了 100% 的控制权，但也更复杂。你之前看的 `plot-schema.json` 文件，定义的就是所有这些 `go` 对象的属性。
       * **类比**：这更像是 `matplotlib` 里操作 `Figure` 和 `Axes` 对象的底层方法。
 
+### 速通：`iplot(...)` 模块
+
+以下是一个常用的 Plotly 快速绘图封装：
+```python
+def iplot(
+    x,
+    y,
+    legend_name,
+    plot_title: str = '',
+    x_label: str = 'X',
+    y_label: str = 'Y',
+    plot_type: str = 'curve',
+    legend_title: str = '',
+    return_fig: bool = True,
+    show_fig: bool = False,
+):
+    """
+    Plotly 实现的标准绘图函数，使用前请导入：`import plotly.graph_objects as go`。
+
+    参数：
+        x : array-like
+        y : array-like 或多个 y 的元组/列表
+        legend_name : str 或 str 列表
+        plot_title : 图标题
+        x_label : X轴标签
+        y_label : Y轴标签
+        plot_type : 'curve' 或 'scatter'
+        legend_title : 图例标题
+        return_fig : bool, default True
+            如果为 True，则返回 `plotly.graph_objects.Figure`；否则返回 None。
+        show_fig: bool, defualt False
+    """
+    fig = go.Figure()
+
+    # 多条曲线情况（按要求：仅判断 y 是否为 list/tuple）
+    if isinstance(y, (list, tuple)):
+        for i, yi in enumerate(y):
+            name = legend_name[i] if isinstance(legend_name, (list, tuple)) else f'Line {i}'
+            mode = 'lines' if plot_type == 'curve' else 'markers'
+            fig.add_trace(go.Scatter(
+                x=x, y=yi, mode=mode, name=name,
+                hovertemplate='x=%{x:.2f}<br>y=%{y:.2f}<extra></extra>'
+            ))
+    else:
+        # 单条曲线
+        mode = 'lines' if plot_type == 'curve' else 'markers'
+        fig.add_trace(go.Scatter(
+            x=x, y=y, mode=mode, name=legend_name,
+            hovertemplate='x=%{x:.2f}<br>y=%{y:.2f}<extra></extra>'
+        ))
+
+    fig.update_layout(
+        title=dict(text=plot_title, x=0.5, xanchor='center', font=dict(size=20)),
+        xaxis=dict(title=dict(text=x_label, font=dict(size=16)), tickfont=dict(size=14)),
+        yaxis=dict(title=dict(text=y_label, font=dict(size=16)), tickfont=dict(size=14)),
+        legend=dict(title=dict(text=legend_title, font=dict(size=16)), font=dict(size=14)),
+        template='plotly_white',   # 固定样式
+        hovermode='closest'
+    )
+    if show_fig:
+        fig.show()
+    return fig if return_fig else None
+```
+
+推荐使用方式：
+```python
+fig = iplot(x, y, 'curve')
+# ...
+```
+
 ### `plt.` $\rightarrow$ `px.`
 
 可以把 `matplotlib.pyplot as plt` 和 Plotly 的 `plotly.express as px` 看作是解决相似问题的两种工具，但是它们的设计理念有些不同。

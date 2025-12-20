@@ -147,7 +147,7 @@ function onMarkdownLoaded(rawText) {
   padding: 2.5rem;
 }
 .toc-wrapper {
-  width: 240px;
+  width: 260px;
   display: none;
 }
 @media (min-width: 1100px) {

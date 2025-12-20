@@ -246,29 +246,31 @@ onMounted(() => {
 
 /* 城市名：暖色强调 */
 .highlight-city {
-  color: var(--ctp-mocha-peach);
-  font-weight: 800;
+  color: var(--ctp-mocha-lavender);
+  font-weight: 900;
+  padding: 0.05rem 0.35rem;
 }
 
 /* 天气描述：淡紫强调，首字母已在模板中处理为 capitalize */
 .highlight-desc {
   color: var(--ctp-mocha-lavender);
-  font-weight: 700;
+  font-weight: 900;
   padding: 0.05rem 0.35rem;
   border-radius: 0.5rem;
-  background: rgba(203,166,247,0.12);
-  border: 1px solid rgba(203,166,247,0.28);
+  /* background: rgba(203,166,247,0.12);
+  border: 1px solid rgba(203,166,247,0.28); */
 }
 
 /* 温度：大号数字 + 轻投影，视觉锚点 */
 .highlight-temp {
   display: inline-block;
   margin-left: 0.4rem;
-  font-weight: 900;
+  font-weight: 1000;
   font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.4rem);
-  color: var(--ctp-mocha-sky);
+  color: var(--ctp-mocha-blue);
   text-shadow: 0 2px 12px rgba(116,199,236,0.25);
   transform: translateY(1px);
+  padding: 0.05rem 0.35rem;
 }
 
 /* ===== 细节列表：对齐规整，加入分隔线与数值“胶囊” ===== */

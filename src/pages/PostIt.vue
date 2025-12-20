@@ -15,7 +15,7 @@
     </header>
 
     <main class="content-area">
-      <AmbientBackground />
+      <!-- <AmbientBackground /> -->
       <transition-group name="card-list" tag="div">
         <div v-for="block in contentBlocks" :key="block.id" class="content-block">
           <PostItCard 
@@ -155,7 +155,7 @@ const handleScroll = () => {
 .header-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(30, 30, 46, 0.5); }
 .page-title { position: relative; z-index: 2; font-size: 5rem; font-weight: 900; letter-spacing: 0.1em; text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
 
-.content-area { max-width: 1500px; margin: 0 auto; padding: 40px 61.8px; }
+.content-area { max-width: 1500px; margin: 0 auto; padding: 80px 61.8px; }
 
 .transition-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--background-color); z-index: 9999; display: flex; justify-content: center; align-items: center; }
 .animation-iframe { width: 100%; height: 100%; border: none; }
