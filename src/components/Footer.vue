@@ -137,7 +137,7 @@ import { RouterLink } from 'vue-router'
       <div class="footer-nav">
         <h4 class="nav-title">Statement</h4>
         <div class="nav-links">
-          <RouterLink to="/space2">朋友们 (FriendsLink)</RouterLink>
+          <RouterLink to="/space2">朋友们 (Friendly Links)</RouterLink>
           <RouterLink to="/about">关于我 (About)</RouterLink>
           <RouterLink to="/credit">版权说明 (Copyright)</RouterLink>
         </div>

@@ -1,5 +1,13 @@
 [
   {
+    "id": "A_First_Look_at_A4_Layout",
+    "title": "学习如何规范排版 A4 大小的文章",
+    "author": "pifuyuini",
+    "date": "2025-12-25",
+    "desc": "A4 单栏学术排版中的尺度、单位与图文规范。",
+    "image": "/bg/Skadi_the_beauty_in_the_white_dress.jpg"
+  },
+  {
     "id": "svd_intro",
     "title": "矩阵的奇异值分解及其应用简介",
     "author": "pifuyuini",
