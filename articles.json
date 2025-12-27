@@ -1,5 +1,13 @@
 [
   {
+    "id": "post_it",
+    "title": "碎碎念",
+    "author": "pifuyuini",
+    "date": "2025-12-25",
+    "desc": "置顶·个人日志。",
+    "image": "/bg/white_sweater.PNG"
+  }, 
+  {
     "id": "A_First_Look_at_A4_Layout",
     "title": "学习如何规范排版 A4 大小的文章",
     "author": "pifuyuini",

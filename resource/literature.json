@@ -1,0 +1,66 @@
+[
+  {
+    "idx": 1,
+    "name": "小时百科",
+    "url": "https://wuli.wiki/index.html",
+    "intro": "一个结构化的数学与物理知识查询平台，内容简明而准确。",
+    "add": null
+  },
+  {
+    "idx": 2,
+    "name": "马克思主义文库（中文）",
+    "url": "https://www.marxists.org/chinese/index.html",
+    "intro": "如题。",
+    "add": null
+  },
+  {
+    "idx": 3,
+    "name": "nLab",
+    "url": "https://ncatlab.org/nlab/show/HomePage",
+    "intro": "这是一个关于数学、物理与哲学协同工作的维基平台——尤其（但绝不限于）从高阶结构的视角出发：秉持对同伦理论/代数拓扑、同伦类型论、高阶范畴论以及高阶范畴代数等工具与观点的兼容并包。",
+    "add": null
+  },
+  {
+    "idx": 4,
+    "name": "GWOSC",
+    "url": "https://gwosc.org/",
+    "intro": "Gravitational Wave Open Science Center 是一个由 LIGO 和 Virgo 合作组织维护的数据平台，旨在向全球科研人员和公众开放引力波探测数据。该中心提供经过预处理和校准的 LIGO/Virgo 数据，涵盖多个观测运行周期（O1、O2、O3 等），并配套事件目录、数据质量信息和分析工具文档，方便用户下载、分析和复现引力波事件。GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资源门户。",
+    "add": null
+  },
+  { "idx": 5, "name": "IEEE Transactions on Automatic Control", "url": null, "intro": "控制领域顶级期刊，偏重理论研究。", "add": "第一档期刊，主要发表控制理论、系统理论、最优控制与稳定性等方向的高水平理论工作。" },
+{ "idx": 6, "name": "Automatica", "url": null, "intro": "国际顶级控制期刊，偏理论。", "add": "第一档期刊，覆盖控制理论、系统建模、辨识与分析，理论深度和影响力都非常高。" },
+{ "idx": 7, "name": "SIAM Journal on Control and Optimization", "url": null, "intro": "控制与优化领域的重要期刊，数学性很强。", "add": "第一档期刊，更偏向数学控制与最优化理论，对数学基础要求很高。" },
+{ "idx": 8, "name": "Systems & Control Letters", "url": null, "intro": "控制领域的重要期刊，文章较短。", "add": "第二档期刊，通常发表篇幅较短但思想集中的控制理论与方法论文。" },
+{ "idx": 9, "name": "Control Engineering Practice", "url": null, "intro": "偏应用的控制工程期刊。", "add": "第二档期刊，强调工程实现与实践，适合工业控制和工程应用相关研究。" },
+{ "idx": 10, "name": "IEEE Transactions on Control Systems Technology", "url": null, "intro": "IEEE 控制系统技术期刊，偏应用。", "add": "第二档期刊，关注控制方法在真实系统和工程中的落地与技术实现。" },
+{ "idx": 11, "name": "Annual Reviews in Control", "url": null, "intro": "控制领域综述期刊。", "add": "第二档期刊，主要发表综述性文章，通常为约稿，适合系统性回顾某一研究方向。" },
+{ "idx": 12, "name": "IEEE Transactions on Robotics", "url": null, "intro": "机器人领域的重要期刊。", "add": "第二档期刊，涵盖机器人控制、感知、规划与系统集成等方向。" },
+{ "idx": 13, "name": "Journal of Process Control", "url": null, "intro": "过程控制领域期刊。", "add": "第二档期刊，主要面向化工、流程工业和过程系统控制。" },
+{ "idx": 14, "name": "IET Control Theory and Applications", "url": null, "intro": "控制理论与应用期刊。", "add": "其它类期刊，涵盖控制理论方法及其工程应用。" },
+{ "idx": 15, "name": "IEEE Transactions on Industrial Electronics", "url": null, "intro": "工业电子领域顶级期刊。", "add": "其它类期刊，关注工业电子、电力电子、驱动与控制系统。" },
+{ "idx": 16, "name": "IEEE Transactions on Industrial Informatics", "url": null, "intro": "工业信息学方向期刊。", "add": "其它类期刊，强调信息技术在工业系统中的应用与控制。" },
+{ "idx": 17, "name": "IEEE Transactions on Cybernetics", "url": null, "intro": "控制与智能系统交叉领域期刊。", "add": "其它类期刊，涵盖控制、系统、人工智能与复杂系统。" },
+{ "idx": 18, "name": "International Journal of Control", "url": null, "intro": "控制领域老牌期刊。", "add": "其它类期刊，内容覆盖较广，包括理论与应用。" },
+{ "idx": 19, "name": "线性代数及其应用", "url": null, "intro": "线性代数教材，适合初学者。", "add": "用于线性代数入门，体系完整，适合作为第一本系统学习线代的教材。" },
+{ "idx": 20, "name": "线性代数应该这样学", "url": null, "intro": "线性代数进阶学习书籍。", "add": "适合在掌握基础线代之后进一步加深理解和应用能力。" },
+{ "idx": 21, "name": "理论力学", "url": null, "intro": "周衍柏所著理论力学教材。", "add": "国内经典理论力学教材，体系严谨，适合打牢力学基础。" },
+{ "idx": 22, "name": "电动力学导论", "url": null, "intro": "Griffiths 的经典电磁学教材。", "add": "英文原版教材，物理直觉清晰，是学习电磁学的经典之作。" },
+{ "idx": 23, "name": "电磁学拓展篇", "url": null, "intro": "梁灿彬的电磁学教材。", "add": "在常规电磁学基础上进一步拓展理论深度。" },
+{ "idx": 24, "name": "经典力学", "url": null, "intro": "高显所著经典力学教材。", "add": "作者为我的授课教师，教材也是课程使用教材，建议结合微分几何相关内容阅读以加强数学基础。" },
+{ "idx": 25, "name": "数学物理方法讲义", "url": "http://zhiqihuang.top/mmp/lectures.php", "intro": "数学物理方法课程讲义。", "add": "由黄志琦老师编写，强烈推荐。" },
+{ "idx": 26, "name": "萌新高数入门", "url": "http://zhiqihuang.top/mmp/lectures.php", "intro": "高等数学入门讲义。", "add": "同样由黄志琦老师编写，适合初学者夯实数学基础。" },
+{ "idx": 27, "name": "量子力学导论", "url": null, "intro": "Griffiths 量子力学教材。", "add": "建议用于**原子物理**和量子力学入门，讲解清晰。" },
+{ "idx": 28, "name": "热力学与统计物理笔记", "url": "https://www.bilibili.com/opus/512761697208354102", "intro": "个人感觉这个笔记是最适合本科热统课用来学习的。", "add": null },
+{ "idx": 29, "name": "量子力学", "url": null, "intro": "Cohen 的量子力学教材。", "add": "两卷本，非常系统且内容优质，我几乎完整学习过全部内容，可以确定是极好的。尤其推荐通过第二章加强线性代数基础。" },
+{ "idx": 30, "name": "Modern Quantum Mechanics", "url": null, "intro": "Sakurai 的量子力学进阶教材。", "add": "进阶学习推荐书目，概念深刻，可参考相关导读资料进行学习。" },
+{ "idx": 31, "name": "微分几何入门与广义相对论", "url": null, "intro": "梁灿彬的广义相对论教材。", "add": "结合微分几何系统介绍广义相对论，是学习该方向的重要中文教材。" },
+{ "idx": 32, "name": "广义相对论课件", "url": null, "intro": "黄志琦老师的广义相对论课件。", "add": "可在其个人网站中找到，这里未提供具体链接。" },
+{ "idx": 33, "name": "Lectures on Solid State Physics", "url": "https://www.damtp.cam.ac.uk/user/tong/solidstate.html", "intro": "David Tong 的固体物理讲义。", "add": "非常优秀的固体物理讲义，可在剑桥大学课程网站获取。" },
+{ "idx": 34, "name": "引力波数据分析讲义", "url": "https://github.com/yiminghu-SYSU/GW_DA_notes", "intro": "引力波物理相关讲义。", "add": "由胡一鸣老师编写，是引力波物理与数据分析的重要学习资料。" },
+{ "idx": 35, "name": "机器学习", "url": null, "intro": "周志华的机器学习教材。", "add": "国内机器学习经典教材，体系完整，适合系统学习。" },
+{ "idx": 36, "name": "深度学习", "url": null, "intro": "Ian Goodfellow 等人所著深度学习教材。", "add": "深度学习领域的经典教材，被广泛使用。" },
+{ "idx": 37, "name": "强化学习：原理与方法", "url": null, "intro": "Sutton 与 Barto 的强化学习教材。", "add": "强化学习领域的权威教材，系统介绍基本原理与算法。" },
+{ "idx": 38, "name": "信号与系统", "url": null, "intro": "Oppenheim 与 Willsky 的信号与系统教材。", "add": "信号与系统领域的经典教材，理论严谨，应用广泛。" },
+{ "idx": 39, "name": "强化学习的数学原理", "url": null, "intro": "赵世钰的强化学习教材。", "add": "从数学角度系统阐述强化学习理论，适合进阶学习。" }
+
+]

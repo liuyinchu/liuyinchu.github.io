@@ -1,0 +1,51 @@
+[
+  {
+    "idx": 1,
+    "name": "通用格式转换网站（CloudConvert）",
+    "url": "https://cloudconvert.com",
+    "intro": "CloudConvert 是一款在线文件转换器，支持几乎所有音频、视频、文档、电子书、存档、图像、电子表格和演示文稿格式。",
+    "add": null
+  },
+  {
+    "idx": 2,
+    "name": "LaTeX 表格（TableConvert）",
+    "url": "https://tableconvert.com",
+    "intro": "用于快速创建和在线生成 LaTeX 表格的工具。",
+    "add": null
+  },
+  {
+    "idx": 3,
+    "name": "FLiNG Trainer",
+    "url": "https://flingtrainer.com/",
+    "intro": "提供 PC 游戏作弊工具与模组的网站。",
+    "add": null
+  },
+  {
+    "idx": 4,
+    "name": "ASCII text art generator",
+    "url": "https://textkool.com/en/ascii-art-generator",
+    "intro": "ASCII 文本艺术生成器；常用字体为“ANSI Shadow”。",
+    "add": null
+  },
+  {
+    "idx": 5,
+    "name": "GitHub snk",
+    "url": "https://github.com/Platane/snk",
+    "intro": "一个将 GitHub 用户贡献图转化为贪吃蛇动画的小工具，可根据提交记录生成动态路径。",
+    "add": "[在线演示页面](https://platane.github.io/snk/)"
+  },
+  {
+    "idx": 6,
+    "name": "Readme Typing SVG",
+    "url": "https://readme-typing-svg.demolab.com/demo/",
+    "intro": "用于生成打字机效果字幕的 SVG 工具。",
+    "add": null
+  },
+  {
+    "idx": 7,
+    "name": "DeepSeek 开放平台",
+    "url": "https://platform.deepseek.com/",
+    "intro": "用于获取、使用和管理 DeepSeek API 的平台。",
+    "add": "[相关文档](https://api-docs.deepseek.com/zh-cn/)"
+  }
+]

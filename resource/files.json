@@ -1,0 +1,37 @@
+[
+  {
+    "idx": 1,
+    "name": "Deep Learning Practice Checklist",
+    "url": "/files/notes/DL_Proj_Checklist.md",
+    "intro": "深度学习实践指引。",
+    "add": null
+  },
+  {
+    "idx": 2,
+    "name": "（组会汇报）从稀疏识别到弱形式：数据驱动建模方法初探",
+    "url": "/files/notes/group_conference_1_sindy.pdf",
+    "intro": "关于两篇文献阅读、学习与复现的结果的汇报。",
+    "add": null
+  },
+  {
+    "idx": 3,
+    "name": "引力波物理个人笔记",
+    "url": "/files/notes/gwphy_note_ysy.pdf",
+    "intro": "课程《引力波物理》的完整（暂时）个人笔记；其中部分材料来源已在文件中有详细说明；此外，与之相关的是[期末大作业](https://github.com/pifuyuini/ysy-gw-phy)。",
+    "add": null
+  },
+  {
+    "idx": 4,
+    "name": "超越标准量子极限的基于多体纠缠玻色-爱因斯坦凝聚体的精密磁场测量方案设计",
+    "url": "/files/notes/QuantumMagnetometry_BEC_20250628.pdf",
+    "intro": "课程《精密测量物理导论》期末论文。",
+    "add": null
+  },
+  {
+    "idx": 5,
+    "name": "Optics Assignment",
+    "url": "/files/notes/ysy_optics.pdf",
+    "intro": "2022级光学课作业个人习题解答（英文版）。",
+    "add": null
+  }
+]
