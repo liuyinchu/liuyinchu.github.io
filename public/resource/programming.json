@@ -1,0 +1,128 @@
+[
+  {
+    "idx": 1,
+    "name": "人生苦短，我学 Python ！",
+    "url": "https://docs.python.org/3/",
+    "intro": "Python 是我的主力编程语言，它是一门**脚本语言**，其强大丰富优先的**生态**是其热门的一大原因。如果你正在寻找一门既实用又优雅的编程语言，那么 Python 绝对值得你尝试。它不是冷冰冰的代码堆砌，而是一种能够真正让你感受到编程乐趣的语言。无论你是打算开发网站、做游戏、研究科学数据，还是单纯想培养一门新技能，Python 都能给你一个切入口。学习它的过程其实也是加入一个庞大而活跃的全球社区的过程，你会发现自己身边有无数志同道合的人，他们分享经验、互相帮助，甚至共同创造出影响世界的软件。Python 的特别之处在于它的简洁与可读性。代码往往就像自然语言一样，让初学者更容易理解，同时又保留了强大的灵活性，足以支撑各种复杂的项目。它的设计理念强调美感与简约，这不仅让编程变得更轻松，还能让你在写代码时享受到一种独特的优雅。更妙的是，它从来不限定你只能用某一种编程风格，你完全可以根据需要自由探索，不断扩展自己的思维方式。更重要的是，Python 是开源的，是一个全球志愿者社区共同努力的成果。正是这种多元化的贡献，让 Python 不断进化、保持生命力。你可能会在某个角落遇见一段由普通爱好者写下的代码，而它正在影响着数以万计的项目和开发者。这种连接感和归属感，正是很多人爱上 Python 的原因之一。所以，如果你想要一门语言既能帮助你轻松入门，又能陪伴你一路成长，甚至在未来的学习和工作中不断提供新的可能性，那 Python 一定会让你不虚此行。",
+    "add": "*“掌握 Python 语言，享受完美人生！”*"
+  },
+  {
+    "idx": 2,
+    "name": "CS61A",
+    "url": "https://cs61a.org/",
+    "intro": "毫无疑问地，综合来看 Python 最好的入门方式是 CS61A （或者 CS50X 也不错）。但是，如果你和我一样也是刚高考完时对电脑一无所知的选手，我更推荐的是我的起始方式——北理工嵩天老师的 [Python 入门课程](https://www.bilibili.com/video/BV1JL4y1x7xC)搭配浙大出版社的 Python 程序设计。它们是更适合“零基础”选手的中文入门资源。学习编程最好的方式就是直接上手多写代码多试错，所以，**不要犹豫，马上开始吧！**",
+    "add": null
+  },
+  {
+    "idx": 3,
+    "name": "COMPOSING PROGRAMS",
+    "url": "https://composingprograms.com/",
+    "intro": "计算机圣经《计算机程序的构造和解释》（SICP）的 Python 版本，伯克利 CS61A 的配套教材。",
+    "add": "当然，我更推荐的是[中文翻译版](https://composingprograms.netlify.app/)。"
+  },
+  {
+    "idx": 4,
+    "name": "Conda / Miniforge",
+    "url": "https://github.com/conda-forge/miniforge",
+    "intro": "当我们谈论 Conda 时，应当谈论的是什么？",
+    "add": null
+  },
+  {
+    "idx": 5,
+    "name": "uv",
+    "url": "https://docs.astral.sh/uv/",
+    "intro": "Cargo-like 的**现代** Python 包管理。一个用 Rust 编写的极快的 Python 包和项目管理器，用过 Cargo 你就能想象到它有多好用。",
+    "add": null
+  },
+  {
+    "idx": 6,
+    "name": "SciPy",
+    "url": "https://docs.scipy.org/doc/scipy",
+    "intro": "SciPy 是一个非常著名的服务于科学研究的 Python 包，所以这里也不用做太多的赘述。我想指出的是，Scipy 的文档写得非常好，下面我将列一些我认为很值得看的部分（持续更新中）。",
+    "add": "（1）[教程 User Guide 目录页](https://docs.scipy.org/doc/scipy/tutorial/index.html#user-guide)；（2）[信号处理教程](https://docs.scipy.org/doc/scipy/tutorial/signal.html)；（3）[API 参考](https://docs.scipy.org/doc/scipy/reference/index.html#scipy-api)"
+  },
+  {
+    "idx": 7,
+    "name": "Plotly.py",
+    "url": "https://plotly.com/python/",
+    "intro": "Plotly 的 Python 图形库，可以制作交互式、出版级的图表。其中包含如何制作折线图、散点图、面积图、条形图、误差线、箱线图、直方图、热图、子图、多轴图、极坐标图和气泡图的示例。",
+    "add": "（1）[关于如何创建 Plotly.py 里的主题](https://plotly.com/python/templates/#creating-themes)；（2）[可以扔给 AI 的 Plotly 接口规范](https://github.com/plotly/plotly.js/blob/master/dist/plot-schema.json)；（3）[自用 Python API reference for plotly](https://plotly.com/python-api-reference/)"
+  },
+  {
+    "idx": 8,
+    "name": "XGBoost",
+    "url": "https://xgboost.readthedocs.io/en/latest/index.html",
+    "intro": "XGBoost（eXtreme Gradient Boosting，极端梯度提升）是一种高效的机器学习算法，由陈天奇 (Tianqi Chen) 开发。它是梯度提升决策树（GBDT）的一种改进实现，通过集成多个弱学习器（通常是决策树）来构建强大的预测模型。",
+    "add": null
+  },
+  {
+    "idx": 9,
+    "name": "Polars",
+    "url": "https://docs.pola.rs/",
+    "intro": "Polars 是一个用于数据操作的开源库，以其单机上最快的数据处理解决方案之一而闻名。它拥有结构良好、类型明确的 API，既富有表现力又易于使用。",
+    "add": null
+  },
+  {
+    "idx": 10,
+    "name": "Ruptures",
+    "url": "https://centre-borelli.github.io/ruptures-docs/",
+    "intro": "ruptures 是一个专注于**时间序列变点检测**(change point detection) 的 Python 库。它支持多种统计模型和检测算法，适用于信号处理、金融、异常检测等领域。",
+    "add": null
+  },
+  {
+    "idx": 11,
+    "name": "Optuna",
+    "url": "https://optuna.org/",
+    "intro": "Optuna 是一个现代化、自动化的**超参数优化框架**，用于高效搜索机器学习模型或算法的最佳参数组合，广泛支持 PyTorch、LightGBM、XGBoost 等库。",
+    "add": null
+  },
+  {
+    "idx": 12,
+    "name": "scikit-image",
+    "url": "https://scikit-image.org/",
+    "intro": "scikit-image 是 Python 的一个**开源图像处理库**，基于 NumPy 和 SciPy 构建，提供了丰富的图像处理算法，使用简单、功能强大，广泛应用于科研和工程实践中。",
+    "add": null
+  },
+  {
+    "idx": 13,
+    "name": "GWpy",
+    "url": "https://gwpy.github.io/",
+    "intro": "GWpy 是一个专为**引力波数据分析**设计的 Python 科学计算库，广泛应用于 LIGO、Virgo 等引力波探测项目中。它提供高层接口用于获取、处理和可视化引力波数据，支持时域分析、频谱计算、数据质量标记与筛选等功能，兼容主流科学库如 NumPy 与 Matplotlib，适合科研与教学场景。GWpy 还能直接连接 Gravitational Wave Open Science Center（GWOSC）下载公开数据，是引力波天文学研究的重要工具之一。",
+    "add": null
+  },
+  {
+    "idx": 14,
+    "name": "Dash",
+    "url": "https://dash.plotly.com/",
+    "intro": "Dash 是最早且最值得信赖的低代码 Python 框架，可用于快速**构建交互式数据应用程序**。凭借广泛的用户社区和数以百万计的下载量，Dash 已成为数据科学家和机器学习工程师首选的开发工具，能够无需编写 JavaScript 代码，轻松将模型与数据洞见转化为可交付的 Web 应用。",
+    "add": "此外，由社区维护的框架 [dash-bootstrap](https://www.dash-bootstrap-components.com/) 十分的好上手且好用，而且它内置了许多美观的[主题](https://www.dash-bootstrap-components.com/docs/themes/explorer/)。"
+  },
+  {
+    "idx": 15,
+    "name": "PySINDy",
+    "url": "https://pysindy.readthedocs.io/en/latest/index.html",
+    "intro": "PySINDy 是一个用于**系统辨识**的开源工具包，核心基于 Brunton 等人在 2016 年提出的稀疏非线性动力系统辨识方法（Sparse Identification of Nonlinear Dynamical systems, SINDy）。该工具包同时实现了相关文献中的其他方法，为数据驱动的动力学建模提供了统一框架。系统辨识的目标是利用测量数据推断系统的控制方程。一旦得到这些方程，研究者即可基于模型进行未来状态预测、设计与优化控制输入，或借助解析方法开展理论分析。与黑箱方法不同，SINDy 所得到的模型具有高度可解释性与良好的泛化能力。",
+    "add": null
+  },
+  {
+    "idx": 16,
+    "name": "Python Control",
+    "url": "https://python-control.readthedocs.io/",
+    "intro": "The Python Control Systems Library (python-control) is a Python package that implements basic operations for analysis and design of feedback control systems.",
+    "add": null
+  },
+  {
+    "idx": 17,
+    "name": "Rust ，启动 ！",
+    "url": "https://www.rust-lang.org/learn",
+    "intro": "Rust 是我目前的第一编程语言。它的性能和**安全性使**其在系统编程、嵌入式开发和高性能计算等领域备受青睐。",
+    "add": "Rust 官方文档是学习 Rust 编程语言的权威资源，涵盖从基础语法到高级特性，适合各个水平的开发者。"
+  },
+  {
+    "idx": 18,
+    "name": "The Rust Programming Language (Rust Book)",
+    "url": "https://doc.rust-lang.org/book/",
+    "intro": "《The Rust Programming Language》（通常称为 Rust Book）是学习 Rust 编程语言的权威指南，涵盖基础语法、所有权系统、错误处理、并发编程等核心概念，适合初学者和有经验的开发者。",
+    "add": "（1）[中文版 1](https://kaisery.github.io/trpl-zh-cn/) (READING)；（2）[中文版 2](https://rustwiki.org/zh-CN/book/)；（3）[中文版 3](https://rust-lang.xfoss.com/)"
+  }
+]

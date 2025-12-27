@@ -7,6 +7,20 @@
     "category": "code"
   },
   {
+    "name": "Paper Switch Brush",
+    "desc": "每日论文。",
+    "homepage": "/paper-switch-brush",
+    "repo": "",
+    "category": "project"
+  },
+  {
+    "name": "Mamplotly Academic Layout Guide",
+    "desc": "A4-Based Scientific Plotting Calculator & Palette Reference.",
+    "homepage": "/academic-plot-guide",
+    "repo": "",
+    "category": "toy"
+  },
+  {
     "name": "引力波数据处理入门学习与实践",
     "desc": "引力波物理·期末大作业。",
     "homepage": "",

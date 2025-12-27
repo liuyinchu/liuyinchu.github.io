@@ -80,15 +80,15 @@ onMounted(async () => {
     <ContentBlock title="共享内容" backgroundImage="/bg/share.jpeg">
       <div class="grid-layout">
         <RouterLink to="/code" class="glass-btn">代码与项目</RouterLink>
-        <RouterLink to="/resource" class="glass-btn">资源链接</RouterLink>
-        <RouterLink to="/notes" class="glass-btn">笔记与文件</RouterLink>
-        <RouterLink to="/labreport" class="glass-btn">实验报告分享</RouterLink>
+        <RouterLink to="/rd" class="glass-btn">资源链接</RouterLink>
+        <!-- <RouterLink to="/notes" class="glass-btn">笔记与文件</RouterLink> -->
+        <RouterLink to="/labreport" class="glass-btn">实验报告</RouterLink>
       </div>
     </ContentBlock>
 
     <ContentBlock title="开放空间" backgroundImage="/bg/open.jpeg">
       <div class="grid-layout">
-        <RouterLink to="/postit" class="glass-btn">日志与碎碎念</RouterLink>
+        <!-- <RouterLink to="/postit" class="glass-btn">日志与碎碎念</RouterLink> -->
         <RouterLink to="/space1" class="glass-btn">随记</RouterLink>
         <RouterLink to="/space2" class="glass-btn">网络邻居</RouterLink>
       </div>
@@ -109,6 +109,7 @@ onMounted(async () => {
 .centered-text {
   text-align: center;
   margin-bottom: 1rem;
+  font-family: 'LXGW WenKai';
 }
 
 /* ------------------------------------------------------------
@@ -122,6 +123,7 @@ onMounted(async () => {
   gap: 1rem; /* 按钮之间的间距 */
   margin-top: 1.2rem;
   padding: 0 0.5rem;
+  font-family: 'LXGW WenKai';
 }
 
 /* ------------------------------------------------------------
@@ -134,19 +136,19 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 0.7rem 0.5rem; /* 上下内边距 */
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: #fff; /* 默认白色文字 */
   text-decoration: none;
   text-align: center;
   
   /* 玻璃背景核心代码 */
-  background: rgba(255, 255, 255, 0.15); /* 低透明度白底 */
-  backdrop-filter: blur(8px);           /* 背景模糊 */
-  -webkit-backdrop-filter: blur(8px);   /* Safari 兼容 */
+  background: (255, 255, 255, 0.25); /* 低透明度白底 */
+  backdrop-filter: blur(16px);           /* 背景模糊 */
+  -webkit-backdrop-filter: blur(16px);   /* Safari 兼容 */
   
   /* 边框与圆角 */
-  border: 1px solid rgba(255, 255, 255, 0.25); /* 细微的白边框 */
+  border: 2px solid rgba(255, 255, 255, 0.3); /* 细微的白边框 */
   border-radius: 12px; /* 稍微现代一点的圆角，不是全圆 */
   
   /* 阴影 */

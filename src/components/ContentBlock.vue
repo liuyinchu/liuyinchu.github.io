@@ -34,6 +34,7 @@ defineProps({
 
   /* [优化] 增强过渡效果，让缩放更平滑 */
   transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  font-family: 'LXGW WenKai';
 }
 
 /* [优化] 增强悬浮效果，增加轻微的缩放 */

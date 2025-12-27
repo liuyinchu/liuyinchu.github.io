@@ -351,10 +351,10 @@ onBeforeUnmount(() => {
 .typing-content {
   position: relative;
   /* 响应式字号：针对移动端优化，大屏下不过大 */
-  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-size: clamp(1.7rem, 4vw, 3rem);
   /* 字体栈：优先使用苹果/系统字体，保证干净利落 */
-  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-weight: 700;
+  font-family: 'LXGW WenKai', "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 800;
   line-height: 1.4;
   text-align: center;
   
@@ -398,7 +398,7 @@ onBeforeUnmount(() => {
 .cursor {
   display: inline-block;
   vertical-align: middle;
-  width: 0.5em;          /* 块状宽度 */
+  width: 0.3em;          /* 块状宽度 */
   height: 1.1em;         /* 略高于文字 */
   margin-left: 0.15em;
   margin-bottom: 0.1em;  /* 视觉对齐 */

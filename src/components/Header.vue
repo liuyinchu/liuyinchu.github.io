@@ -370,9 +370,9 @@ function closeMenu() {
       </RouterLink>
 
       <nav class="nav-menu desktop-menu">
-        <RouterLink to="/postit">日志</RouterLink>
+        <!-- <RouterLink to="/postit">日志</RouterLink> -->
         <RouterLink to="/space1">随记</RouterLink>
-        <RouterLink to="/resource">资源链接</RouterLink>
+        <RouterLink to="/rd">资源链接</RouterLink>
         <RouterLink to="/code">代码与项目</RouterLink>
         <RouterLink to="/research">我的学术</RouterLink>
       </nav>
@@ -392,9 +392,9 @@ function closeMenu() {
     <Transition name="fade-slide">
       <div v-if="isMenuOpen" class="mobile-menu-container">
         <nav class="mobile-nav-links">
-          <RouterLink to="/postit" @click="closeMenu" style="--i:1">日志</RouterLink>
+          <!-- <RouterLink to="/postit" @click="closeMenu" style="--i:1">日志</RouterLink> -->
           <RouterLink to="/space1" @click="closeMenu" style="--i:2">随记</RouterLink>
-          <RouterLink to="/resource" @click="closeMenu" style="--i:3">资源链接</RouterLink>
+          <RouterLink to="/rd" @click="closeMenu" style="--i:3">资源链接</RouterLink>
           <RouterLink to="/code" @click="closeMenu" style="--i:4">代码与项目</RouterLink>
           <RouterLink to="/research" @click="closeMenu" style="--i:5">我的学术</RouterLink>
         </nav>

@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../pages/Home.vue'
 import Code from '../pages/Code.vue'
 import Resource from '../pages/Resource.vue'
-import Notes from '../pages/Notes.vue'
+// import Notes from '../pages/Notes.vue'
 import Space1 from '../pages/Space1.vue'           
 import Space2 from '../pages/Space2.vue' 
 import Space3 from '../pages/Space3.vue'          
@@ -12,7 +12,7 @@ import About from '../pages/About.vue'
 import Credit from '../pages/Credit.vue'
 import Portal from '../pages/Portal.vue'
 import LabReport from '../pages/LabReport.vue'
-import PostIt from '../pages/PostIt.vue'
+// import PostIt from '../pages/PostIt.vue'
 import Academic from '../pages/Academic.vue'
 import YsyLatex from '../pages/YsyLatex.vue'
 import YsyDataAnalysisHelper from '../pages/YsyDataAnalysisHelper.vue'
@@ -22,13 +22,21 @@ import Research from '../pages/Research.vue'
 import YsyModernControlCourseWork from '../pages/YsyModernControlCourseWork.vue'
 import CyberMatch from '../pages/CyberMatch.vue'
 import LYC2048 from '../pages/LYC2048.vue'
+import ResourceDirectory from '../pages/ResourceDirectory.vue'
+import ResourceLiterature from '../pages/ResourceLiterature.vue'
+import ResourceProgramming from '../pages/ResourceProgramming.vue'
+import ResourceComputer from '../pages/ResourceComputer.vue'
+import ResourceMaterials from '../pages/ResourceMaterials.vue'
+import ResourceTools from '../pages/ResourceTools.vue'
+import ResourceFiles from '../pages/ResourceFiles.vue'
+import AcademicGuide from '../pages/AcademicGuide.vue'
 
 
 const routes = [
   { path: '/', component: Home },
   { path: '/code', component: Code },
   { path: '/resource', component: Resource },
-  { path: '/notes', component: Notes },
+  // { path: '/notes', component: Notes },
   { path: '/space1', component: Space1 },
   { path: '/space2', component: Space2 },
   { path: '/space3', component: Space3 },
@@ -37,7 +45,7 @@ const routes = [
   { path: '/credit', component: Credit },
   { path: '/portal', component: Portal },
   { path: '/labreport', component: LabReport },
-  { path: '/postit', component: PostIt },
+  // { path: '/postit', component: PostIt },
   { path: '/academic', component: Academic },
   { path: '/ysy-latex', component: YsyLatex },
   { path: '/ysy-data-analysis-helper', component: YsyDataAnalysisHelper },
@@ -47,6 +55,14 @@ const routes = [
   { path: '/ysy-modern-control-course-work', component: YsyModernControlCourseWork },
   { path: '/cyber-match', component: CyberMatch },
   { path: '/lyc2048', component: LYC2048 },
+  { path: '/rd', component: ResourceDirectory },
+  { path: '/rliterature', component: ResourceLiterature },
+  { path: '/rprogramming', component: ResourceProgramming },
+  { path: '/rmaterials', component: ResourceMaterials },
+  { path: '/rcomputer', component: ResourceComputer },
+  { path: '/rtools', component: ResourceTools },
+  { path: '/rfiles', component: ResourceFiles },
+  { path: '/academic-plot-guide', component: AcademicGuide },
 ]
 
 const router = createRouter({

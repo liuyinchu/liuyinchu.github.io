@@ -1,0 +1,51 @@
+[
+  {
+    "idx": 1,
+    "name": "也许应该从 Markdown 教程开始",
+    "url": "https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax",
+    "intro": "我推荐的是 GitHub 的 Markdown 教程，简洁、实用、易懂。当然，也可以参考 [Markdown 官方教程](https://www.markdownguide.org/)。",
+    "add": null
+  },
+  {
+    "idx": 2,
+    "name": "Git 教程",
+    "url": "https://liaoxuefeng.com/books/git/introduction/index.html",
+    "intro": "廖雪峰的 Git 教程，系统、清晰，是入门 Git 的优质资源。学 Git，就用廖雪峰教程！",
+    "add": null
+  },
+  {
+    "idx": 3,
+    "name": "macOS 配置指南",
+    "url": "https://sourabhbajaj.com/mac-setup/",
+    "intro": "面向开发者的 macOS 系统配置指南，涵盖开发环境与效率工具。",
+    "add": null
+  },
+  {
+    "idx": 4,
+    "name": "kitty",
+    "url": "https://sw.kovidgoyal.net/kitty/",
+    "intro": "这个快速、功能丰富、基于 GPU 的终端模拟器是我目前正在使用的，美观而且好用，我的随记里有一份它的配置笔记。",
+    "add": null
+  },
+  {
+    "idx": 5,
+    "name": "FreeMove",
+    "url": "https://github.com/imDema/FreeMove",
+    "intro": "**FreeMove 是一款 Windows 工具，帮助你在不破坏程序运行或快捷方式的前提下，将默认安装在 C 盘的程序自由移动到其他磁盘，释放宝贵的系统空间。**它的原理是：先将程序文件移动到新位置，再在原位置创建符号链接，确保系统和程序依旧能够正常访问。\n\n使用非常简单：只需运行可执行文件并通过图形界面操作（需管理员权限）。\n**注意事项**：不要移动系统关键目录，否则可能导致系统故障。但移动这些目录下的**具体程序文件夹**是安全的，具体使用方法请看项目所在仓库中的说明文件。\n\n强烈推荐给想要减轻 C 盘负担、腾出空间的用户！轻量、无广告、免费开源，日常使用安全高效。",
+    "add": null
+  },
+  {
+    "idx": 6,
+    "name": "genact - a nonsense activity generator",
+    "url": "https://github.com/svenstaro/genact",
+    "intro": "在本该认真工作的时刻，假装自己正忙得不可开交，或者耐心等待电脑运行！让旁人对你的“高效多任务处理能力”刮目相看。只需打开几个 genact 实例，精彩表演立刻上演。genact 提供多种“场景”，看似在进行某些激动人心或高深莫测的操作，实际上什么都没发生。  \n这个 GitHub 项目简直是天才。",
+    "add": null
+  },
+  {
+    "idx": 7,
+    "name": "Real-ESRGAN 动漫图像与视频超分辨率解决方案",
+    "url": "https://github.com/xinntao/Real-ESRGAN",
+    "intro": "这是一个面向动漫图像与视频修复/增强的高质量开源项目，基于强大的 ESRGAN 框架发展而来，专注于实用级图像与视频还原。其中 AnimeVideo-v3 动漫视频模型 和 RealESRGAN_x4plus_anime_6B 动漫插图模型，在细节恢复、线条锐化和风格保持方面表现尤为出色，非常适合二次元内容创作与修复场景。",
+    "add": "**特别推荐：一键将图像画质提升至 4K**\n\n项目贴心地提供了 Windows / Linux / macOS 平台的可执行文件，无需复杂配置或开发环境，即可直接运行，将低分辨率动漫图像与视频高质量提升至 4K 分辨率。\n无论你是内容创作者、设计师，还是普通用户，都可以轻松获得清晰锐利、细节丰富且风格自然的超分效果，真正做到开箱即用、跨平台支持、效果专业级。"
+  }
+]
