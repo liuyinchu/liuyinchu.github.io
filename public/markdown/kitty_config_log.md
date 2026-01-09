@@ -16,20 +16,14 @@
 
 官方文档详见[这里](https://sw.kovidgoyal.net/kitty/)。
 
-如果你也是 macOS ，配置文件一般会在 `~/.config/kitty/kitty.conf`。
-
-我重新学习了一些 kitty 的使用，现在这篇随记涵盖了以下内容：
+这篇随记涵盖了以下内容：
 - 个人配置
 - 一个好的教程推荐
 - 关于光标的炫酷功能的配置
 - 关于 `ssh` 的说明
 - kitty 使用笔记
 
-## 我的完整配置
-
-如果你喜欢这份配置，你可以将其直接复制到你的配置文件中。
-
-此外，我还搭配了 `zsh + oh-my-zsh` 来使用。
+## 1 我的完整配置
 
 ```config
 # BEGIN_KITTY_THEME
@@ -51,6 +45,8 @@ font_features        MapleMono-NF-CN-Italic +cv01 +ss02 +ss04 +ss05 +zero
 font_features        MapleMono-NF-CN-SemiBoldItalic +cv01 +ss02 +ss04 +ss05 +zero
 # 光标下禁用连字渲染（防止定位错误）
 disable_ligatures cursor
+
+# ==============================================================
 
 # window
 hide_window_decorations        titlebar-only
@@ -86,15 +82,39 @@ cursor_trail_start_threshold 2
 shell_integration no-cursor
 ```
 
-## 快速开始
+如果你喜欢这份配置，你可以将其直接复制到你的配置文件中。
+
+此外，我还搭配了 `zsh + oh-my-zsh` 来使用。
+
+
+## 2 快速开始
 
 首先参考[这个教程](https://www.bilibili.com/video/BV1WJ4m1w7ms)完成最基本的配置（感谢这个很好的教程，我是跟着 TA 配的）。
 
-## 光标动画
+- 下载与安装：
+  ```bash
+  brew install kitty
+  ```
+- 配置颜色主题：
+  ```bash
+  kitty +kitten themes
+  ```
+- 下载字体：
+  ```bash
+  brew install --cask font-maple-mono-nf-cn
+  ```
+- macOS 配置文件一般会在 `~/.config/kitty/kitty.conf`
+- 配置字体：
+  ```bash
+  kitty list-fonts --psnames
+  ```
+- 其它：建议上述内容手动配置，剩下的直接复制配置文件就行。
+
+## 3 光标动画
 
 然后参考下面这个官方文档配置光标动画。
 
-### 官方文档翻译
+### 3.1 官方文档翻译
 
 #### `cursor`
 
@@ -162,7 +182,7 @@ I 型光标 (`beam`) 的厚度（单位：pts）。
 
 设置启动光标拖尾的距离阈值。此选项接受一个正整数，代表光标在启动拖尾前必须移动的最小单元格数。当光标移动距离小于此阈值时，拖尾将被跳过，以减少不必要的动画。
 
-### 我的光标配置文件
+### 3.2 我的光标配置文件
 
 ```config
 # cursor
@@ -186,13 +206,13 @@ cursor_trail_start_threshold 2
 shell_integration no-cursor
 ```
 
-## 关于 `ssh`
+## 4 关于 `ssh`
 
 核心就是：
 
 **直接连接时请把 `ssh` 换为 `kitten ssh`。**
 
-### 真正便捷的 SSH
+### 4.1 真正便捷的 SSH
 
   * 在远程主机上自动进行 **Shell 集成**。
   * 轻松将本地的 shell/编辑器配置**克隆**到远程主机。
@@ -228,7 +248,7 @@ map f1 new_window_with_cwd
 
 那么，按下 **F1** 键将会使用 `kitten ssh` 自动打开一个新窗口，并登录到相同的主机和相同的目录下。
 
-### 配置
+### 4.2 配置
 
 `kitten ssh` 可以通过 `~/.config/kitty/ssh.conf` 文件进行配置。你可以在此文件中指定要在远程主机上设置的环境变量，以及要从本地复制到远程主机的文件。我们来看一个简单的例子：
 
@@ -260,13 +280,13 @@ kitten ssh --kitten interpreter=python servername
 
 `--kitten` 参数可以指定多次，其内容遵循 `ssh.conf` 的指令格式。这些命令行参数会覆盖为匹配主机所使用的最终选项，效果如同它们被附加到 `ssh.conf` 中该主机匹配区域的末尾一样。这些参数仅对本次调用所连接的主机生效，因此任何主机名指令都将被忽略。
 
-### 警告
+### 4.3 警告
 
 由于 SSH 设计上的限制，你在看到 shell 提示符出现**之前**输入的任何内容都可能会丢失。所以，最理想的做法是**等到看见 shell 提示符后再开始输入**。
 
-## 学习如何使用 kitty
+## 5 学习如何使用 kitty
 
-### 窗口与分屏
+### 5.1 窗口与分屏
 - 窗口
   - 全屏：`^+⌘+f`
   - 新标签：`⌘+t`
@@ -276,7 +296,7 @@ kitten ssh --kitten interpreter=python servername
   - 切换：`ctrl+shift+]` & `ctrl+shift+[`
   - 关闭：`ctrl+shift+w`
 
-### kitten
+### 5.2 kitten
 
 事实上，前述 ssh 功能正是由 kitty 的强大插件 kitten 所实现的。这些 kittens 都是 Python 写的，也可以自定义。
 

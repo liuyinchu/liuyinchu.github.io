@@ -13,13 +13,6 @@
 
     <BlockMarkdown :content="proj1" :useCJK="true" />
 
-    <!-- 图片模块 C -->
-    <ImageBlock
-      src="/fig/welcome_example.png"
-      alt="效果如图所示"
-      width="70%"
-    />
-
         <LinkButtons :buttons="[
       { text: 'Click Here to Get it !', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/learning-and-practice-linux-server-login-welcome-script-attempt' }
     ]" />
@@ -38,12 +31,6 @@
     ]" />
 
     <BlockMarkdown :content="proj3" :useCJK="true" />
-
-    <ImageBlock
-      src="/fig/ysy_latex_ref.png"
-      alt="模板参考文献格式说明——建议喂给 AI 助手"
-      width="70%"
-    />
 
         <LinkButtons :buttons="[
       { text: 'Click Here to Get it !', url: 'https://github.com/pifuyuini/brisk-nexus/tree/dev/ysy-latex-template/template-v1.4.1' }
@@ -74,11 +61,11 @@ const proj1 = `
 
 ---
 
-## 学习和实践 Linux 服务器登录欢迎脚本尝试
+## 尝试学习和实践 Linux 服务器登录欢迎脚本
 
 用于通过SSH远程登陆服务器时在终端上显示欢迎词。
 
-练手时的初步尝试。
+练手之作。
 `
 
 const proj2 = `
@@ -87,11 +74,13 @@ const proj2 = `
 
 ## 学量子力学时写的 CG 系数表生成器
 
-学习 Cohen 的量子力学时，为了很好的去理解和掌握角动量耦合（CG 系数）的递推关系，因此尝试用这个递推关系去写了一个 CG 系数表生成器。
+学习 Cohen 的《量子力学》时，为了很好的去理解和掌握角动量耦合（CG 系数）的递推关系，因此尝试用这个递推关系去写了一个 CG 系数表生成器。
 
 注意其中每个数都应当加上一个根号，正负号代表根号外的正负。
 
-此外，参考了 Sakurai 的现代量子力学和[这份笔记](https://huanyushi.github.io/posts/clebsh-gordan-coefficients/)。
+此外，我还参考了 Sakurai 的《现代量子力学》和[这份笔记](https://huanyushi.github.io/posts/clebsh-gordan-coefficients/)。
+
+练手制作。
 `
 
 const proj3 = `
