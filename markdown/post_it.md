@@ -2,6 +2,42 @@
 
 ---
 
+## 旧忆
+
+> 一生悲喜有谁知，山水迢迢我去时。
+  自古无情唯远道，此时不屑是相思。
+
+<img src="/bg/Happy_Robin_Enhanced.jpg" alt="愿你安乐。" width="70%">
+
+---
+
+## Collecting
+
+**Here I organize and share some resources closely related to my study and research:**
+
+* [awesome-control-theory](https://github.com/A-make/awesome-control-theory)
+* [DRL-Pytorch](https://github.com/XinJingHao/DRL-Pytorch)
+* [PyTorch Q-learning Tutorial](https://docs.pytorch.org/tutorials/intermediate/reinforcement_q_learning.html)
+* [minimind](https://github.com/jingyaogong/minimind)
+* [Control Tutorials for MATLAB and Simulink](http://ctms.engin.umich.edu/CTMS/index.php?aux=Home)
+
+**About the robotic:**
+
+- [Robotic Systems](https://motion.cs.illinois.edu/RoboticSystems/)
+- [Open-Source Robotics](https://www.osrobotics.org/osr/)
+- [PythonRobotics](https://atsushisakai.github.io/PythonRobotics/index.html)
+
+
+---
+
+## 更多优质的学习资源（持续更新中）
+- [强化学习的数学原理](https://github.com/MathFoundationRL/Book-Mathematical-Foundation-of-Reinforcement-Learning)及其优质配套[网课](https://www.bilibili.com/video/BV1sd4y167NS)
+- [动力学建模网课](https://space.bilibili.com/230105574/lists/1814739)
+- [自动控制原理网课](https://space.bilibili.com/230105574/lists/1814627)
+- [高阶控制理论网课](https://space.bilibili.com/230105574/lists/1814743)
+
+---
+
 ## 快速解压的生理与心理技巧
 
 面对压力时，我们的大脑往往陷入“战或逃”的死循环。要实现“立竿见影”的效果，最快的方法通常不是“讲道理”，而是直接通过生理机制（身体）去骗过心理机制（大脑），强制神经系统“关机重启”。
@@ -78,7 +114,9 @@
 ---
 
 ## 点烬
-空阶凝白露，远岫敛昏黄。归雁声已尽，寒鸦点夕阳。
+
+空阶凝白露，远岫敛昏黄。
+归雁声已尽，寒鸦点夕阳。
 
 ---
 

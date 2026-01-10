@@ -3,10 +3,18 @@
     "id": "post_it",
     "title": "碎碎念",
     "author": "pifuyuini",
-    "date": "2025-12-25",
+    "date": "2025-01-11",
     "desc": "置顶·个人日志。",
     "image": "/bg/white_sweater.PNG"
   }, 
+  {
+    "id": "ddm_intro",
+    "title": "智能增强的非线性动力学数据驱动建模",
+    "author": "pifuyuini",
+    "date": "2025-01-11",
+    "desc": "智能增强的非线性动力学数据驱动建模旨在融合物理机理与数据学习，构建兼具精度、可解释性与外推能力的动力学模型。其核心是在建模与辨识协同框架下，通过稀疏结构、算子学习与深度网络等方法实现结构与参数的联合发现。该范式为复杂系统的预测、分析与控制提供了高效而可靠的新途径。",
+    "image": "/bg/Happy_Robin_Enhanced.jpg"
+  },
   {
     "id": "A_First_Look_at_A4_Layout",
     "title": "学习如何规范排版 A4 大小的文章",
