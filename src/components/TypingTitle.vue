@@ -224,6 +224,7 @@ const defaultTexts = [
   "个人网站高能回，流萤厨献给流萤的真挚情书！",
   "接下来将继续不随机的播放一些（无意义的）字幕。",
   "Welcome to LiuYinChu'Space.",
+  "愿时光清浅，许你安然。",
   "为天地立心，为生民立命，为往圣继绝学，为万世开太平。",
   "Explore unknown possibilities.",
   "致虚极，守静笃。",
@@ -235,6 +236,7 @@ const defaultTexts = [
   "记录，为了更深刻地思考。",
   "Now Code is also cheap. Show me the prompt.",
   "庸德之行，庸言之谨。",
+  "往前看，别回头！",
   "今天依旧晴朗，我亲爱的流萤。"
 ]
 

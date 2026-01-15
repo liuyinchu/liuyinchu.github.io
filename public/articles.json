@@ -8,12 +8,29 @@
     "image": "/bg/white_sweater.PNG"
   }, 
   {
+    "id": "note_of_reading",
+    "title": "文献阅读",
+    "author": "pifuyuini",
+    "date": "2025-01-13",
+    "desc": "置顶·个人文献阅读笔记。",
+    "image": "/bg/white_silk_girl_3_4K.jpg"
+  }, 
+
+  {
+    "id": "latex_cheatsheet",
+    "title": "LaTeX 实用小技巧",
+    "author": "pifuyuini",
+    "date": "2025-01-15",
+    "desc": "偶尔更新的 LaTeX 个人笔记",
+    "image": "/bg/quiet_skadi_4K.jpg"
+  }, 
+  {
     "id": "ddm_intro",
     "title": "智能增强的非线性动力学数据驱动建模",
     "author": "pifuyuini",
     "date": "2025-01-11",
     "desc": "智能增强的非线性动力学数据驱动建模旨在融合物理机理与数据学习，构建兼具精度、可解释性与外推能力的动力学模型。其核心是在建模与辨识协同框架下，通过稀疏结构、算子学习与深度网络等方法实现结构与参数的联合发现。该范式为复杂系统的预测、分析与控制提供了高效而可靠的新途径。",
-    "image": "/bg/Happy_Robin_Enhanced.jpg"
+    "image": "/bg/Sunny_Robin.jpg"
   },
   {
     "id": "A_First_Look_at_A4_Layout",
@@ -21,7 +38,7 @@
     "author": "pifuyuini",
     "date": "2025-12-25",
     "desc": "A4 单栏学术排版中的尺度、单位与图文规范。",
-    "image": "/bg/Skadi_the_beauty_in_the_white_dress.jpg"
+    "image": "/bg/quiet_firefly_4K.jpg"
   },
   {
     "id": "svd_intro",
@@ -61,7 +78,7 @@
     "author": "pifuyuini",
     "date": "2025-11-1",
     "desc": "这份笔记从“天文学研究中机器学习方法的实用指南”升级到了“AI4S 实践指引“！",
-    "image": "/bg/dreamy_yae_miko.png"
+    "image": "/bg/IMG_FireFly4.jpeg"
   },
   {
     "id": "accelerate_rustdesk_mac2win",
@@ -69,7 +86,7 @@
     "author": "pifuyuini",
     "date": "2025-10-15",
     "desc": "此处主要记录利用 Google Cloud 自建加速服务器相关流程。",
-    "image": "/bg/Fashionable_Robin.JPG"
+    "image": "/bg/heroine.jpg"
   },
   {
     "id": "Introduction_to_the_Two_Stage_Torsion_Pendulum",
@@ -93,7 +110,7 @@
     "author": "liuyinchu",
     "date": "2025-9-6",
     "desc": "个人学习日志式笔记。",
-    "image": "/bg/fireflies_on_the_seaside.jpg"
+    "image": "/bg/Spring_Firefly2.jpg"
   },
   {
     "id": "notes_classical_mechanics",
@@ -117,7 +134,7 @@
     "author": "pifuyuini",
     "date": "2025-07-01",
     "desc": "学习 David Tong 的 Solid State Physics 的 2. Band Structure 的 AI-Help 笔记。",
-    "image": "/bg/nebula.JPG"
+    "image": "/bg/IMG_Elysia.JPG"
   },
   {
     "id": "solid_physics_note3",
