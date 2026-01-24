@@ -98,7 +98,7 @@ onMounted(async () => {
       <div class="grid-layout">
         <RouterLink to="/research" class="glass-btn">我的学术主页</RouterLink>
         <RouterLink to="/academic" class="glass-btn">个人学术简历</RouterLink>  
-        <RouterLink to="/paper-switch-brush" class="glass-btn">每日论文</RouterLink>
+        <!-- <RouterLink to="/paper-switch-brush" class="glass-btn">每日论文</RouterLink> -->
       </div>
     </ContentBlock>
   </div>

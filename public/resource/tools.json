@@ -47,5 +47,12 @@
     "url": "https://platform.deepseek.com/",
     "intro": "用于获取、使用和管理 DeepSeek API 的平台。",
     "add": "[相关文档](https://api-docs.deepseek.com/zh-cn/)"
+  },
+  {
+    "idx": 8,
+    "name": "IP 测试工具组",
+    "url": "https://ipinfo.io/what-is-my-ip",
+    "intro": "用于测试当前的 IP 地址 ",
+    "add": "获取后，用以下两个工具对 IP 质量进行评估和分析：（1）[Fraud Risk](https://scamalytics.com)；（2）[全面报告](https://ping0.cc) 。"
   }
 ]

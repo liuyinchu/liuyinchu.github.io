@@ -2,6 +2,25 @@
 
 ---
 
+## 文献整理格式
+
+按以下格式用英文命名文献：
+```txt
+[PurposePrefix]_[FirstAuthorLastName][Year]_[ShortTitleKeyword]_[JournalAbbrev].pdf
+```
+Purpose Prefix Options:
+- **Shelf** – stored for long-term reference
+- **ReadLater** – queued for future reading
+- **Reading** – currently being read
+- **Core** – central or foundational papers
+
+注意需要保留用途前缀的括号，如：
+```txt
+[ReadLater]_Vrabie2009_PolicyIterationAdaptiveOptimal_Automatica.pdf
+```
+
+---
+
 ## 旧忆
 
 > 一生悲喜有谁知，山水迢迢我去时。  
@@ -242,6 +261,7 @@
 
 ## 一些神秘链接长期更新中
 
+- 20260119 MPC-Inspired Reinforcement Learning for Verifiable Model-Free Control: https://zhuanlan.zhihu.com/p/671904081
 - 20251221 一篇关于核函数的详细介绍：https://www.zhihu.com/question/58369008/answer/1969888800500068472
 - 20251221 用扩散模型生成时空物理场：https://zhuanlan.zhihu.com/p/30475667943
 - 20251204 sysubeamer-unofficial: https://github.com/yanghw8/sysubeamer-unofficial
