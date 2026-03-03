@@ -26,6 +26,8 @@ const dockGroups = [
       { name: 'Google', url: 'https://www.google.com/' },
       { name: 'Google Drive', url: 'https://drive.google.com/drive/home' },
       { name: '坚果云盘', url: 'https://www.jianguoyun.com/' },
+      { name: 'IP 测试', url: 'https://ping0.cc/' },
+      { name: '谷歌学术', url: 'https://scholar.google.com/' },
     ]
   },
   {
@@ -37,6 +39,7 @@ const dockGroups = [
       { name: '小时百科', url: 'https://wuli.wiki/online/index.html' },
       { name: '马克思主义文库', url: 'https://www.marxists.org/chinese/' },
       { name: 'Git教程&速查', url: 'https://liaoxuefeng.com/books/git/introduction/index.html' },
+      { name: 'SciPy API', url: 'https://docs.scipy.org/doc/scipy/reference/index.html#scipy-api' },
     ]
   },
   {
@@ -97,7 +100,7 @@ onMounted(() => {
       },
       {
         name: '太空曼波～',
-        artist: '还我神ID',
+        artist: '还给我神ID',
         url: '/music/太空曼波_还我神ID.m4a',
         cover: '/music/cover/default.jpg',
       },
@@ -106,6 +109,7 @@ onMounted(() => {
       { name: '不谓侠', artist: '萧忆情Alex', url: '/music/不谓侠_萧忆情Alex.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
       { name: 'A Letter', artist: '泽野弘之', url: '/music/a_letter.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
       { name: '如歌', artist: '张杰', url: '/music/如歌_张杰.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
+      { name: '放松小曲', artist: '还给我神ID', url: '/music/放松小曲_还给我神ID.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
       { name: 'A New Day with Hope', artist: 'HoYo-Mix', url: '/music/a_new_day_with_hope.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
       { name: 'Cage', artist: '泽野弘之', url: '/music/cage.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
       { name: 'Call Your Name (Gv)', artist: '泽野弘之', url: '/music/call_your_name_gv.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
@@ -124,6 +128,7 @@ onMounted(() => {
       { name: '知我', artist: '哦漏', url: '/music/知我_哦漏.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
       { name: '最熟悉的陌生人', artist: '萨克斯', url: '/music/最熟悉的陌生人_萨克斯.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
       { name: '皎洁的笑颜', artist: '陈致逸', url: '/music/皎洁的笑颜_陈致逸.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
+      { name: '沈园外', artist: '阿YueYue', url: '/music/沈园外_阿YueYue.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
       { name: '爱情转移', artist: '陈奕迅', url: '/music/爱情转移_陈奕迅.mp3', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
       { name: 'LOVE Theme from TIGA', artist: '矢野立美', url: '/music/LOVE_Theme_from_TIGA_矢野立美.m4a', cover: '/music/cover/Texas.JPG' },
       { name: '不是因为寂寞才想你', artist: 'T.R.Y', url: '/music/不是因为寂寞才想你.m4a', cover: '/music/cover/Texas.JPG' },
@@ -145,6 +150,7 @@ onMounted(() => {
       { name: '心墙', artist: '郭静', url: '/music/心墙_郭静.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
       { name: '几初的智愿', artist: 'HoYo-Mix', url: '/music/几初的智愿.m4a', cover: '/music/cover/Skadi2.PNG' },
       { name: '寂寞沙洲冷', artist: '周传雄', url: '/music/寂寞沙洲冷_周传雄.mp3', cover: '/music/cover/Skadi2.PNG' },
+      { name: '晚夜微雨问海棠', artist: '镜予歌', url: '/music/晚夜微雨问海棠_镜予歌.mp3', cover: '/music/cover/Skadi2.PNG' },
       { name: '流光记', artist: '银临', url: '/music/流光记_银临.m4a', cover: '/music/cover/Skadi2.PNG' },
       { name: '我好像在哪见过你', artist: '薛之谦', url: '/music/我好像在哪见过你_薛之谦.m4a', cover: '/music/cover/Firefly_Yeee.png' },
       { name: '眉间雪', artist: '晴愔', url: '/music/眉间雪.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },

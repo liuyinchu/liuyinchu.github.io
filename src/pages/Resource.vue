@@ -307,6 +307,9 @@ PC Game Cheats and Mods.
 ### [502 Bad Gateway](https://zh.annas-archive.org/)
 502 Bad Gateway 是 HTTP 状态码的一种，表示服务器作为网关或代理，从上游服务器收到无效响应。
 
+### [IP](https://dashboard.b2proxy.com)
+NTT.
+
 `
 </script>
 
