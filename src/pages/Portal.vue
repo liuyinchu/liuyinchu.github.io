@@ -150,7 +150,7 @@ onMounted(() => {
       { name: '心墙', artist: '郭静', url: '/music/心墙_郭静.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
       { name: '几初的智愿', artist: 'HoYo-Mix', url: '/music/几初的智愿.m4a', cover: '/music/cover/Skadi2.PNG' },
       { name: '寂寞沙洲冷', artist: '周传雄', url: '/music/寂寞沙洲冷_周传雄.mp3', cover: '/music/cover/Skadi2.PNG' },
-      { name: '晚夜微雨问海棠', artist: '镜予歌', url: '/music/晚夜微雨问海棠_镜予歌.mp3', cover: '/music/cover/Skadi2.PNG' },
+      { name: '晚夜微雨问海棠', artist: '镜予歌', url: '/music/晚夜微雨问海棠_镜予歌.m4a', cover: '/music/cover/Skadi2.PNG' },
       { name: '流光记', artist: '银临', url: '/music/流光记_银临.m4a', cover: '/music/cover/Skadi2.PNG' },
       { name: '我好像在哪见过你', artist: '薛之谦', url: '/music/我好像在哪见过你_薛之谦.m4a', cover: '/music/cover/Firefly_Yeee.png' },
       { name: '眉间雪', artist: '晴愔', url: '/music/眉间雪.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
