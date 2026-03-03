@@ -2,6 +2,32 @@
 
 ---
 
+## 鲨鱼咬光缆？
+
+<img src="/fig/internet_infra.jpg" alt="鲨鱼咬光缆" width="70%">
+
+---
+
+## 岁序更迭，骏马将晨。
+
+<img src="/fig/LiuYing_HappyNewYear.JPG" alt="2026 新春吉祥" width="50%">
+
+值此万家灯火与新岁曙光交汇之际，谨以一束清词，敬呈诸位：
+
+愿您乘岁月之马，驰骋理想原野；以心中篝火，照亮漫漫行程。愿平安常伴，犹如星辰守夜；愿健康长随，似春水东流；愿所学所思化为光芒，所行所望终有回响。纵有风雨，亦可策马扬鞭；若逢高岭，亦能极目长天。愿阖家喜乐，四时安宁；愿友朋同道，共证初心；愿天地宽阔，山河温柔，未来皆可期许。
+
+除夕烟火未散，新岁钟声将鸣。愿此刻的祝福，随马年清风，抵达您与所珍爱之人心底，化作一声温暖：新春吉祥。
+
+---
+
+## macOS 神秘网站
+
+- https://xmac.cc
+- https://appstorrent.ru/programs
+- https://www.torrentmac.net
+
+---
+
 ## 文献整理格式
 
 按以下格式用英文命名文献：
@@ -204,6 +230,10 @@ Purpose Prefix Options:
 
 ## AI 相关的碎碎念
 
+- 2026 年 3 月 2 日，太伟大了 Codex ！
+- 2026 年 3 月 1 日，傻逼 OpenAI 给老子把 GPT 降智了！
+- 2026 年 2 月 14 日，哈基米 3.1 Pro 发布（好像）！
+- 2026 年 1 月 25 日，哈基米 3 Pro，已经成弱智了，取消续费！
 - 2025 年 12 月 20 日，太伟大了，Nano Banana Pro ！
 - 2025 年 12 月 11 日，GPT 5.2 发布；但是，太伟大了，Gemini 3 Pro 的前端！
 - 2025 年 11 月 13 日，GPT 5.1 都发布了， Gemini 3 还没个影子，很遗憾！
@@ -256,6 +286,10 @@ Purpose Prefix Options:
 **将我的繁文缛节弃置于此！！！**
 
 <img src="/fig/Shield_Poke.png" alt="盾戳正是我为王的理由！" width="50%">
+
+新增装备推荐：
+
+<img src="/fig/Shield_Poke2.jpg" alt="盾戳装备推荐" width="70%">
 
 ---
 
@@ -329,10 +363,10 @@ Purpose Prefix Options:
 | USB 3.2 (Gen 1) | 5Gbps (625MB/s) | 5V/900mA 4.5W | 不支持 | 不支持 |
 | USB 3.2 (Gen 2) | 10Gbps (1250MB/s) | 20V/5A 100W | 不支持 | 不支持 |
 | USB 3.2 (Gen 2x2)| 20Gbps (2500MB/s) | 20V/5A 100W | 不支持 | 不支持 |
-| USB 3/DP(全功能USB-C)| 10Gbps (1250MB/s) | 20V/5A 100W | DP 1.4 | 不支持 |
+| USB 3/DP(全功能**USB-C**)| 10Gbps (1250MB/s) | 20V/5A 100W | DP 1.4 | 不支持 |
 | USB 4 *20Gbps* | 20Gbps (2500MB/s) | 20V/5A 100W | DP 1.4 | 可选 |
 | USB 4 *40Gbps* | 40Gbps (5000MB/s) | 20V/5A 100W | DP 1.4 | 可选 |
-| USB 4 v2 | 80Gbps (10000MB/s) | 48V/5A 240W | DP 2.1 | 可选 |
+| **USB 4 v2** | 80Gbps (10000MB/s) | 48V/5A 240W | DP 2.1 | 可选 |
 | 雷电3 (Thunderbolt 3) | 40Gbps (5000MB/s) | 20V/5A 100W | DP 1.4 | 是 |
 | 雷电4 (Thunderbolt 4) | 40Gbps (5000MB/s) | 20V/5A 100W | DP 1.4 | 是 |
 | 雷电5 (Thunderbolt 5) | 80Gbps (10000MB/s) | 48V/5A 240W | DP 2.1 | 是 |
