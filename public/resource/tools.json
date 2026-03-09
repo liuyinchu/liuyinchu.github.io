@@ -54,5 +54,19 @@
     "url": "https://ipinfo.io/what-is-my-ip",
     "intro": "用于测试当前的 IP 地址 ",
     "add": "获取后，用以下两个工具对 IP 质量进行评估和分析：（1）[Fraud Risk](https://scamalytics.com)；（2）[全面报告](https://ping0.cc) 。"
+  },
+  {
+    "idx": 9,
+    "name": "AI 论文审稿",
+    "url": "https://paperreview.ai/",
+    "intro": "Stanford Agentic Reviewer",
+    "add": "利用基本的智能体工作流程，我们的智能体审稿器能够快速提供论文审阅，并尝试给出可操作的反馈。该智能体基于从arXiv检索到的最新相关文献进行审阅。这创建了一个更快的反馈循环：您可以提交论文、获取反馈、进行更多实验/编辑，然后重新提交，从而更快地改进您的工作。"
+  },
+  {
+    "idx": 10,
+    "name": "在线键盘测试器",
+    "url": "https://www.zfrontier.com/lab/keyboardTester",
+    "intro": "用于测试键盘按键。",
+    "add": null
   }
 ]

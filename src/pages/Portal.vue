@@ -11,6 +11,8 @@ const dockGroups = [
       { name: 'Grok', url: 'https://grok.com/' },
       { name: 'Notebook LM', url: 'https://notebooklm.google.com/' },
       { name: 'AI Studio', url: 'https://aistudio.google.com/' },
+      { name: 'Colab', url: 'https://colab.research.google.com/' },
+      { name: 'Google 学术搜索实验室', url: 'https://scholar.google.com/scholar_labs/search?hl=zh-CN' },
     ]
   },
   {
@@ -24,8 +26,8 @@ const dockGroups = [
       { name: '文件传输助手', url: 'https://filehelper.weixin.qq.com/' },
       { name: 'Bing', url: 'https://cn.bing.com/' },
       { name: 'Google', url: 'https://www.google.com/' },
-      { name: 'Google Drive', url: 'https://drive.google.com/drive/home' },
-      { name: '坚果云盘', url: 'https://www.jianguoyun.com/' },
+      
+      
       { name: 'IP 测试', url: 'https://ping0.cc/' },
       { name: '谷歌学术', url: 'https://scholar.google.com/' },
     ]
@@ -46,6 +48,7 @@ const dockGroups = [
     name: 'Something Else',
     color: '#fab387', // Mocha - Peach
     links: [
+      { name: 'Google Drive', url: 'https://drive.google.com/drive/home' },
       { name: '网易企业邮箱', url: 'https://qy.163.com/static/login/' },
       { name: 'Gmail', url: 'https://mail.google.com' },
       { name: 'YouTube', url: 'https://www.youtube.com/' },
@@ -54,6 +57,7 @@ const dockGroups = [
       { name: 'Catppuccin 调色板', url: 'https://catppuccin.com/palette/' },
       { name: 'Pixiv', url: 'https://www.pixiv.net/' },
       { name: '中山大学统一门户', url: 'https://portal.sysu.edu.cn/' },
+      { name: '坚果云盘', url: 'https://www.jianguoyun.com/' },
     ]
   }
 ]
