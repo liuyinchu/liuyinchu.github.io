@@ -17,7 +17,55 @@
 - 为科学计算服务，但是“现代 conda”：
     - [关于何为“现代 conda”的一个很好的介绍](https://www.bilibili.com/video/BV1Fm4ZzDEeY)
 
-### uv
+> 2026 年 3 月锐评：uv 才是对的！！！Conda 系的真不行……
+
+### uv（[英文文档](https://docs.astral.sh/uv/) ｜ [中文文档](https://hellowac.github.io/uv-zh-cn/)）
+
+**以下为 2026.03.09 更新的最新惯用操作：**
+```bash
+# 创建文件夹，然后初始化，然后进 TOML 文件里去改 Python 版本
+mkdir [dir_name]
+uv init
+# ...
+uv python pin [py_ver]
+
+# 添加包，约等于 “pip install ...” or “conda install ...”
+# 注意，这只是一种快捷办法，最准确的操作是去 TOML 文件里写配置
+uv add [pkg_name]
+# 例子
+uv add ipykernel numpy pandas matplotlib scipy
+uv add 'stable-baseline3[extra]'
+
+# 同步环境
+uv sync
+```
+
+如果要安装 PyTorch（以下以在我的 Windows 电脑上的一次 RL 环境配置实践为例子，参考了[官方文档](https://docs.astral.sh/uv/guides/integration/pytorch/#installing-pytorch)）：
+- 完成初始化后，先改配置文件（这里我安装的事 CUDA11.8）：
+	```toml
+	[[tool.uv.index]]
+	name = "pytorch-cu118"
+	url = "https://download.pytorch.org/whl/cu118"
+	explicit = true
+
+	[tool.uv.sources]
+	torch = [
+	{ index = "pytorch-cu118", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+	]
+	torchvision = [
+	{ index = "pytorch-cu118", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+	]
+	```
+- 然后先 `uv sync` 同步；
+- 接下来补上其它的就行了。
+  ```bash
+  	uv add ipykernel numpy pandas matplotlib scipy
+	uv add 'stable-baseline3[extra]'
+
+	uv sync
+	```
+
+**以下是一些最初的学习笔记：**
 
 1. 安装 uv
     - 科学下载：`curl -LsSf https://astral.sh/uv/install.sh | sh` ；
