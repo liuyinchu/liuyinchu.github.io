@@ -68,5 +68,12 @@
     "url": "https://www.zfrontier.com/lab/keyboardTester",
     "intro": "用于测试键盘按键。",
     "add": null
+  },
+  {
+    "idx": 11,
+    "name": "Gemini 生成图片编辑器",
+    "url": "https://www.changeimageto.com/remove-gemini-watermark.html",
+    "intro": "可用于编辑由 Nano Banana 生成的图片（比如去除水印）。",
+    "add": "[类似功能网站](https://remove-watermark.mlaas.in/)。"
   }
 ]

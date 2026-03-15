@@ -26,8 +26,6 @@ const dockGroups = [
       { name: '文件传输助手', url: 'https://filehelper.weixin.qq.com/' },
       { name: 'Bing', url: 'https://cn.bing.com/' },
       { name: 'Google', url: 'https://www.google.com/' },
-      
-      
       { name: 'IP 测试', url: 'https://ping0.cc/' },
       { name: '谷歌学术', url: 'https://scholar.google.com/' },
     ]
@@ -131,6 +129,10 @@ onMounted(() => {
       { name: 'The Opening', artist: '塞壬唱片', url: '/music/the_opening.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
       { name: '知我', artist: '哦漏', url: '/music/知我_哦漏.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
       { name: '最熟悉的陌生人', artist: '萨克斯', url: '/music/最熟悉的陌生人_萨克斯.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
+      { name: '空山新雨后', artist: '锦零', url: '/music/空山新雨后_锦零.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
+      { name: '光年之外', artist: '邓紫棋', url: '/music/光年之外_邓紫棋.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
+      { name: '枫', artist: '周杰伦', url: '/music/枫_周杰伦.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
+      { name: '春三月', artist: '司南', url: '/music/春三月_司南.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
       { name: '皎洁的笑颜', artist: '陈致逸', url: '/music/皎洁的笑颜_陈致逸.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
       { name: '沈园外', artist: '阿YueYue', url: '/music/沈园外_阿YueYue.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
       { name: '爱情转移', artist: '陈奕迅', url: '/music/爱情转移_陈奕迅.mp3', cover: '/music/cover/Skadi_by_the_Sea.jpg' },

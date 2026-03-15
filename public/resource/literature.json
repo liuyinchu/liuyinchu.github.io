@@ -26,5 +26,12 @@
     "url": "https://gwosc.org/",
     "intro": "Gravitational Wave Open Science Center 是一个由 LIGO 和 Virgo 合作组织维护的数据平台，旨在向全球科研人员和公众开放引力波探测数据。该中心提供经过预处理和校准的 LIGO/Virgo 数据，涵盖多个观测运行周期（O1、O2、O3 等），并配套事件目录、数据质量信息和分析工具文档，方便用户下载、分析和复现引力波事件。GWOSC 是开展引力波天文学研究、教育与数据可视化的重要资源门户。",
     "add": null
+  },
+  {
+    "idx": 5,
+    "name": "OpenAI Codex 文档",
+    "url": "https://developers.openai.com/codex",
+    "intro": "Codex is OpenAI’s coding agent for software development.",
+    "add": null
   }
 ]
