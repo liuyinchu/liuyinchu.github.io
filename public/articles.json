@@ -11,16 +11,24 @@
     "id": "note_of_reading",
     "title": "文献阅读",
     "author": "pifuyuini",
-    "date": "2025-01-13",
+    "date": "2026-01-13",
     "desc": "置顶·个人文献阅读笔记。",
     "image": "/bg/white_silk_girl_3_4K.jpg"
   }, 
 
   {
+    "id": "uv_cheatsheet",
+    "title": "uv 使用技巧速查",
+    "author": "pifuyuini",
+    "date": "2026-03-15",
+    "desc": "Python 现代开发小技巧之 uv 拓展篇！",
+    "image": "/bg/spring.jpg"
+  }, 
+  {
     "id": "t_f_analysis",
     "title": "时频分析小技巧",
     "author": "pifuyuini",
-    "date": "2025-01-25",
+    "date": "2026-01-25",
     "desc": "Python 数据处理实践：时频分析。",
     "image": "/bg/heroine.jpg"
   }, 
@@ -28,7 +36,7 @@
     "id": "learn_python_dev",
     "title": "Python 现代开发小技巧",
     "author": "pifuyuini",
-    "date": "2025-01-22",
+    "date": "2026-01-22",
     "desc": "人生苦短，我学 Python ！",
     "image": "/bg/spring.jpg"
   }, 
@@ -36,7 +44,7 @@
     "id": "learn_python_data_analysis",
     "title": "Python 数据分析小技巧",
     "author": "pifuyuini",
-    "date": "2025-01-22",
+    "date": "2026-01-22",
     "desc": "人生苦短，我学 Python ！",
     "image": "/bg/spring.jpg"
   }, 
@@ -44,7 +52,7 @@
     "id": "latex_cheatsheet",
     "title": "LaTeX 实用小技巧",
     "author": "pifuyuini",
-    "date": "2025-01-15",
+    "date": "2026-01-15",
     "desc": "偶尔更新的 LaTeX 个人笔记",
     "image": "/bg/quiet_skadi_4K.jpg"
   }, 
@@ -52,7 +60,7 @@
     "id": "ddm_intro",
     "title": "智能增强的非线性动力学数据驱动建模",
     "author": "pifuyuini",
-    "date": "2025-01-11",
+    "date": "2026-01-11",
     "desc": "智能增强的非线性动力学数据驱动建模旨在融合物理机理与数据学习，构建兼具精度、可解释性与外推能力的动力学模型。其核心是在建模与辨识协同框架下，通过稀疏结构、算子学习与深度网络等方法实现结构与参数的联合发现。该范式为复杂系统的预测、分析与控制提供了高效而可靠的新途径。",
     "image": "/bg/Qingming_Xi.JPG"
   },
