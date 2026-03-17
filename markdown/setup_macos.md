@@ -152,6 +152,9 @@ mamba install -n lab11 -c conda-forge xgboost plotly polars optuna -y
 - 科学下载：
   ```bash
   curl -LsSf https://astral.sh/uv/install.sh | sh
+
+  # 也可以使用 Homebrew
+  brew install uv
   ```
 - 自动补全：
   ```bash
