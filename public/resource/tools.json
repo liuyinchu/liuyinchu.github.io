@@ -64,7 +64,7 @@
   },
   {
     "idx": 10,
-    "name": "在线键盘测试器",
+    "name": "Z站·装备前线·在线键盘测试器",
     "url": "https://www.zfrontier.com/lab/keyboardTester",
     "intro": "用于测试键盘按键。",
     "add": null
@@ -75,5 +75,12 @@
     "url": "https://www.changeimageto.com/remove-gemini-watermark.html",
     "intro": "可用于编辑由 Nano Banana 生成的图片（比如去除水印）。",
     "add": "[类似功能网站](https://remove-watermark.mlaas.in/)。"
+  },
+  {
+    "idx": 12,
+    "name": "Google 学术搜索实验室",
+    "url": "https://scholar.google.com/scholar_labs/search?hl=zh-CN",
+    "intro": "实验性文献检索 AI 助手。",
+    "add": null
   }
 ]

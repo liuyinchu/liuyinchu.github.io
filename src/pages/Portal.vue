@@ -12,7 +12,6 @@ const dockGroups = [
       { name: 'Notebook LM', url: 'https://notebooklm.google.com/' },
       { name: 'AI Studio', url: 'https://aistudio.google.com/' },
       { name: 'Colab', url: 'https://colab.research.google.com/' },
-      { name: 'Google 学术搜索实验室', url: 'https://scholar.google.com/scholar_labs/search?hl=zh-CN' },
     ]
   },
   {
@@ -167,6 +166,7 @@ onMounted(() => {
       { name: '若我不曾见过太阳', artist: '知更鸟', url: '/music/若我不曾见过太阳.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
       { name: '舍离去', artist: '兰音Reine', url: '/music/舍离去_兰音.m4a', cover: '/music/cover/Skadi2.PNG' },
       { name: '霜雪千年', artist: '翻唱', url: '/music/霜雪千年_翻唱.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
+      { name: '非酋', artist: '薛黛霏', url: '/music/非酋_薛黛霏.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
       { name: '青花瓷', artist: '周杰伦', url: '/music/青花瓷_周杰伦.m4a', cover: '/music/cover/Firefly_Yeee.png' },
       { name: '使一颗心免于哀伤', artist: '知更鸟', url: '/music/使一颗心免于哀伤.m4a', cover: '/music/cover/Texas.JPG' },
       { name: '听我说', artist: '周深', url: '/music/听我说_周深.m4a', cover: '/music/cover/Texas.JPG' },

@@ -87,12 +87,12 @@ const result = computed(() => {
 // --- 任务二：配色数据 ---
 // 预处理：加上 # 前缀
 const paletteRawData = [
+  ['4472C4', 'ED7D31', '70AD47', 'A54B98'],
+  ['377eb8', 'ff7f00', '4daf4a', '984ea3', 'e41a1c', 'ffff33', 'a65628', 'f781bf'],
   ['0C5DA5', '00B945', 'FF9500', 'FF2C00', '845B97', '474747', '9e9e9e'],
-  ['403990', '80A6E2', 'FBDD85', 'F46F43', 'CF3D3E'],
-  ['4E79A7', 'F28E2B', 'E15759', '76B7B2', '59A14F', 'EDC948', 'B07AA1', 'FF9DA7', '9C755F', 'BAB0AC'],
-  ['006ba4', 'ff800e', '595959', 'a2c8ec', 'ffbc79', 'cfcfcf'],
-  ['2c69b0', 'f02720', 'ac613c', '6ba3d6', 'ea6b73', 'e9c39b'],
-  ['3951A2', 'DA382A']
+  ['2c69b0', 'f02720', '595959', '6ba3d6', 'ea6b73', 'cfcfcf'],
+  ['7da6c6', 'eaaa60', '84c3b7', 'e68b81', 'b7b2d0'],
+  ['00468B', 'ED0000', '42B540', '0099B4', '925E9F']
 ];
 
 const palettes = paletteRawData.map(group => group.map(color => `#${color}`));
