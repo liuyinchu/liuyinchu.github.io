@@ -171,6 +171,8 @@ onMounted(() => {
       { name: '使一颗心免于哀伤', artist: '知更鸟', url: '/music/使一颗心免于哀伤.m4a', cover: '/music/cover/Texas.JPG' },
       { name: '听我说', artist: '周深', url: '/music/听我说_周深.m4a', cover: '/music/cover/Texas.JPG' },
       { name: '手写的从前', artist: '周杰伦', url: '/music/手写的从前.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
+      { name: '牵丝戏', artist: '银临', url: '/music/牵丝戏_银临.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
+      { name: '相思遥', artist: '兰音翻唱', url: '/music/相思遥_兰音翻唱.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
       { name: '祝福', artist: 'YOASOBI', url: '/music/祝福_YOASOBI.m4a', cover: '/music/cover/Texas.JPG' },
       { name: '烟雨行舟', artist: '伦桑', url: '/music/烟雨行舟_伦桑.m4a', cover: '/music/cover/Texas.JPG' },
       { name: '天军行阵乐', artist: 'Poe(CN)', url: '/music/天军行阵乐.flac', cover: '/music/cover/Texas.JPG' },
