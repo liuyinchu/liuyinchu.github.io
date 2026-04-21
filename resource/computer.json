@@ -47,5 +47,12 @@
     "url": "https://github.com/xinntao/Real-ESRGAN",
     "intro": "这是一个面向动漫图像与视频修复/增强的高质量开源项目，基于强大的 ESRGAN 框架发展而来，专注于实用级图像与视频还原。其中 AnimeVideo-v3 动漫视频模型 和 RealESRGAN_x4plus_anime_6B 动漫插图模型，在细节恢复、线条锐化和风格保持方面表现尤为出色，非常适合二次元内容创作与修复场景。",
     "add": "**特别推荐：一键将图像画质提升至 4K**\n\n项目贴心地提供了 Windows / Linux / macOS 平台的可执行文件，无需复杂配置或开发环境，即可直接运行，将低分辨率动漫图像与视频高质量提升至 4K 分辨率。\n无论你是内容创作者、设计师，还是普通用户，都可以轻松获得清晰锐利、细节丰富且风格自然的超分效果，真正做到开箱即用、跨平台支持、效果专业级。"
+  },
+  {
+    "idx": 8,
+    "name": "从零开始：理论/计算物理环境配置和软件安装指南",
+    "url": "https://chriswenchen.github.io/theory-computing-physics-guide/",
+    "intro": "面向理论/计算物理的环境搭建和软件安装配置教程。",
+    "add": null
   }
 ]

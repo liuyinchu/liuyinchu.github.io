@@ -124,5 +124,19 @@
     "url": "https://doc.rust-lang.org/book/",
     "intro": "《The Rust Programming Language》（通常称为 Rust Book）是学习 Rust 编程语言的权威指南，涵盖基础语法、所有权系统、错误处理、并发编程等核心概念，适合初学者和有经验的开发者。",
     "add": "（1）[中文版 1](https://kaisery.github.io/trpl-zh-cn/) (READING)；（2）[中文版 2](https://rustwiki.org/zh-CN/book/)；（3）[中文版 3](https://rust-lang.xfoss.com/)"
+  },
+  {
+    "idx": 19,
+    "name": "Gymnaisum",
+    "url": "https://gymnasium.farama.org/",
+    "intro": "RL Env Wrapper: Gymnasium is a maintained fork of OpenAI’s Gym library.",
+    "add": null
+  },
+  {
+    "idx": 20,
+    "name": "Stable-Baselines3",
+    "url": "https://stable-baselines3.readthedocs.io/en/master/index.html#",
+    "intro": "Stable Baselines3 (SB3) is a set of reliable implementations of reinforcement learning algorithms in PyTorch. It is the next major version of Stable Baselines.",
+    "add": null
   }
 ]

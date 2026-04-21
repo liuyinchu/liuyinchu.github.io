@@ -1,9 +1,22 @@
 # LaTeX 实用小技巧·个人版
 
+## 文本
+
+右对齐：`\noindent\hfill 这行文字右对齐`
+
 ## 公式
 
 - 正体：`\mathrm{}`
 - 正体粗体：`\mathbb{}`
+- 标量变量默认斜体，如 `$x$`、`$t$`、`$s$`、`$f$`、`$\omega$`；若需要显式命令，可写作 `$\mathit{A}$`。
+- 矢量统一使用粗斜体，如 `$\boldsymbol{x}$`。
+- 矩阵统一使用粗正体，如 `$\mathbf{A}$`。
+- 常量、单位、描述性下标统一使用正体，如 `$\mathrm{j}$`、`$x_\mathrm{g}$`、`$\mathbf{B}_\mathrm{u}$`、`$10\,\mathrm{Hz}$`。
+- 手写体符号用于特殊集合、算子或问题族，如 `$\mathcal{A}$`。
+- 本文所有单位矩阵统一记为 `$\mathbb{1}$`。
+- 拉普拉斯变量统一记为 `$s$`，频率统一记为 `$f$`，角频率统一记为 `$\omega$`；虚数单位统一记为 `$\mathrm{j}$`，因此频域替换优先写作 `$s=\mathrm{j}\omega$`。
+- 估计量统一加帽，如 `$\hat{\boldsymbol{x}}$`。
+- 描述性下标一律使用正体，如 `$\mathrm{g}$`、`$\mathrm{u}$`、`$\mathrm{w}$`；变量型下标保持斜体。
 
 ## 表格
 
@@ -96,3 +109,36 @@
     \bibliography{contents/ref}
     ```
 - 引用：`\cite{}`
+
+## 正则小技巧
+
+- 把 `$$ ... $$` 换成 `equation`
+
+    查找：
+
+    ```regex
+    \$\$([\s\S]*?)\$\$
+    ```
+
+    替换：
+
+    ```text
+    \\begin{equation}
+    $1
+    \\end{equation}
+    ```
+- 把 `\[ ... \]` 换成 `equation`
+
+    查找：
+
+    ```regex
+    \\\[([\s\S]*?)\\\]
+    ```
+
+    替换：
+
+    ```text
+    \\begin{equation}
+    $1
+    \\end{equation}
+    ```
