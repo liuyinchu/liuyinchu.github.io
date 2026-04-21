@@ -6,12 +6,10 @@ const dockGroups = [
     links: [
       { name: 'ChatGPT', url: 'https://chat.openai.com/' },
       { name: '深度求索', url: 'https://chat.deepseek.com/' },
-      { name: 'Suno', url: 'https://suno.com/' },
       { name: 'Gemini', url: 'https://gemini.google.com/' },
       { name: 'Grok', url: 'https://grok.com/' },
-      { name: 'Notebook LM', url: 'https://notebooklm.google.com/' },
-      { name: 'AI Studio', url: 'https://aistudio.google.com/' },
-      { name: 'Colab', url: 'https://colab.research.google.com/' },
+      { name: 'OpenRouter', url: 'https://openrouter.ai/' },
+      
     ]
   },
   {

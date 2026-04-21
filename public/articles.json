@@ -17,6 +17,14 @@
   }, 
 
   {
+    "id": "rl_intro",
+    "title": "强化学习介绍",
+    "author": "pifuyuini",
+    "date": "2026-03-15",
+    "desc": "这篇笔记来自本科毕业论文第三章。",
+    "image": "/bg/Qingming_Xi.JPG"
+  }, 
+  {
     "id": "uv_cheatsheet",
     "title": "uv 使用技巧速查",
     "author": "pifuyuini",
@@ -111,14 +119,6 @@
     "date": "2025-11-1",
     "desc": "这份笔记从“天文学研究中机器学习方法的实用指南”升级到了“AI4S 实践指引“！",
     "image": "/bg/Big_HeiTa.JPG"
-  },
-  {
-    "id": "accelerate_rustdesk_mac2win",
-    "title": "用 RustDesk 将 macOS 远程连接 Windows 11",
-    "author": "pifuyuini",
-    "date": "2025-10-15",
-    "desc": "此处主要记录利用 Google Cloud 自建加速服务器相关流程。",
-    "image": "/bg/sakura_valley.png"
   },
   {
     "id": "Introduction_to_the_Two_Stage_Torsion_Pendulum",

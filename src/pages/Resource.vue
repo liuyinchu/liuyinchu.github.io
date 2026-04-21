@@ -308,7 +308,10 @@ PC Game Cheats and Mods.
 502 Bad Gateway 是 HTTP 状态码的一种，表示服务器作为网关或代理，从上游服务器收到无效响应。
 
 ### [IP](https://dashboard.b2proxy.com)
-详见[这份教程](https://github.com/QiYongchuan/MyGitBlog/issues/141)。
+详见[这份教程](https://github.com/QiYongchuan/MyGitBlog/issues/141)。[备用选择 1（至少确定有 NTT）](https://www.ipdeep.cn/)，[备用选择 2](https://www.loongproxy.com/)，[尊贵选择](https://www.vircs.com/)
+
+### [Someting Wrong](https://jichangtuijian.com/)
+打开世界之门。
 
 `
 </script>
