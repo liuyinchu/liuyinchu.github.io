@@ -23,7 +23,7 @@ const dockGroups = [
       { name: '文件传输助手', url: 'https://filehelper.weixin.qq.com/' },
       { name: 'Bing', url: 'https://cn.bing.com/' },
       { name: 'Google', url: 'https://www.google.com/' },
-      { name: 'IP 测试', url: 'https://ping0.cc/' },
+      { name: 'IP 测试', url: 'https://ipinfo.io/what-is-my-ip' },
       { name: '谷歌学术', url: 'https://scholar.google.com/' },
     ]
   },
@@ -162,6 +162,8 @@ onMounted(() => {
       { name: '七里香', artist: '周杰伦', url: '/music/七里香_周杰伦.mp3', cover: '/music/cover/Skadi2.PNG' },
       { name: '如果当时', artist: '许嵩', url: '/music/如果当时.m4a', cover: '/music/cover/Skadi2.PNG' },
       { name: '若我不曾见过太阳', artist: '知更鸟', url: '/music/若我不曾见过太阳.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
+      { name: '青柠', artist: '徐秉龙桃十五', url: '/music/青柠_徐秉龙桃十五.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
+      { name: '西楼别序', artist: '尹昔眠', url: '/music/西楼别序_尹昔眠.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
       { name: '舍离去', artist: '兰音Reine', url: '/music/舍离去_兰音.m4a', cover: '/music/cover/Skadi2.PNG' },
       { name: '霜雪千年', artist: '翻唱', url: '/music/霜雪千年_翻唱.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
       { name: '非酋', artist: '薛黛霏', url: '/music/非酋_薛黛霏.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
