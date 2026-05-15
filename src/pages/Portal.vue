@@ -53,6 +53,7 @@ const dockGroups = [
       { name: 'Pixiv', url: 'https://www.pixiv.net/' },
       { name: '中山大学统一门户', url: 'https://portal.sysu.edu.cn/' },
       { name: '坚果云盘', url: 'https://www.jianguoyun.com/' },
+      { name: '中山大学 LaTeX 在线编辑器', url: 'https://latex.sysu.edu.cn/login' },
     ]
   }
 ]

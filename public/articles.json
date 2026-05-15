@@ -17,6 +17,22 @@
   }, 
 
   {
+    "id": "measured_psd_to_noise_generator",
+    "title": "基于功率谱密度的随机时域序列生成方法",
+    "author": "pifuyuini",
+    "date": "2026-05-16",
+    "desc": "本文给出一种由已知功率谱密度构造随机时域序列的通用方法。",
+    "image": "/bg/heroine.jpg"
+  }, 
+  {
+    "id": "raman_ms_gate_note",
+    "title": "从受激拉曼跃迁到 Mølmer-Sørensen 门",
+    "author": "pifuyuini",
+    "date": "2026-05-15",
+    "desc": "量子光学与离子阱相关。",
+    "image": "/bg/visitor.jpeg"
+  }, 
+  {
     "id": "rl_intro",
     "title": "强化学习介绍",
     "author": "pifuyuini",
