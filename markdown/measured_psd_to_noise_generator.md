@@ -27,9 +27,9 @@
 | $f$ | 频率，单位为 Hz |
 | $\omega$ | 角频率，$\omega = 2\pi f$ |
 | $S_x(f)$ | 目标量 $x$ 的单边功率谱密度 |
-| $f_s$ | 采样频率 |
+| $f_\mathrm{s}$ | 采样频率 |
 | $N$ | 时域序列长度 |
-| $\Delta f$ | 频率分辨率，$\Delta f = f_s/N$ |
+| $\Delta f$ | 频率分辨率，$\Delta f = f_\mathrm{s}/N$ |
 | $f_k$ | 离散单边频率网格点 |
 | $X_k$ | 离散傅里叶变换中的正频率复谱系数 |
 | $x[n]$ | 生成的离散时间序列 |
@@ -43,7 +43,7 @@
 输入谱应至少包含一组正频率点及其对应的非负功率谱密度值：
 
 $$
-\{(f_i, S_y(f_i))\}_{i=1}^{M}, \qquad f_i > 0,\quad S_y(f_i) \ge 0
+\{(f_i, S_y(f_i))\}_{i=1}^{M}, \qquad f_i \gt 0,\quad S_y(f_i) \ge 0
 $$
 
 其中 $y$ 为已知谱对应的物理量。实际使用前应完成以下预处理：
@@ -61,23 +61,23 @@ $$
 若已知谱对应的物理量 $y$ 与目标物理量 $x$ 在频域中满足线性关系
 
 $$
-X(j\omega) = H(j\omega)Y(j\omega),
+X(\mathrm{j}\omega) = H(\mathrm{j}\omega)Y(\mathrm{j}\omega),
 $$
 
 则目标功率谱密度为
 
 $$
-S_x(f) = |H(j2\pi f)|^2 S_y(f).
+S_x(f) = |H(\mathrm{j}2\pi f)|^2 S_y(f).
 $$
 
 常见的积分和微分关系包括：
 
 $$
-V(j\omega) = j\omega X(j\omega),
+V(\mathrm{j}\omega) = \mathrm{j}\omega X(\mathrm{j}\omega),
 $$
 
 $$
-A(j\omega) = j\omega V(j\omega).
+A(\mathrm{j}\omega) = \mathrm{j}\omega V(\mathrm{j}\omega).
 $$
 
 因此，当已知速度谱 $S_v(f)$ 时，可得到：
@@ -90,16 +90,16 @@ $$
 S_x(f) = \frac{S_v(f)}{(2\pi f)^2}.
 $$
 
-上述公式只适用于 $f>0$。直流分量应单独处理；对于零均值随机序列，直流分量设为零。
+上述公式只适用于 $f\gt 0$。直流分量应单独处理；对于零均值随机序列，直流分量设为零。
 
 ## 4. 离散频率网格与目标谱重建
 
 ### 4.1 单边频率网格
 
-给定采样频率 $f_s$ 和序列长度 $N$，频率分辨率为
+给定采样频率 $f_\mathrm{s}$ 和序列长度 $N$，频率分辨率为
 
 $$
-\Delta f = \frac{f_s}{N}.
+\Delta f = \frac{f_\mathrm{s}}{N}.
 $$
 
 用于实值逆傅里叶变换的单边频率网格为
@@ -111,7 +111,7 @@ $$
 最高可表达频率为
 
 $$
-f_{\mathrm{Nyq}} = \frac{f_s}{2}.
+f_{\mathrm{Nyq}} = \frac{f_\mathrm{s}}{2}.
 $$
 
 当 $N$ 为偶数时，网格中包含 Nyquist 点；当 $N$ 为奇数时，不存在独立的 Nyquist 频点。
@@ -125,7 +125,7 @@ $$
 = \operatorname{Interp}\bigl(\log f_i,\log S_x(f_i)\bigr).
 $$
 
-插值仅用于 $f_k>0$ 的频点。直流频点 $f_0=0$ 不参与对数插值，并按零均值约束处理。
+插值仅用于 $f_k\gt 0$ 的频点。直流频点 $f_0=0$ 不参与对数插值，并按零均值约束处理。
 
 对于超出输入谱频率范围但仍位于可表达频带内的频点，应采用预先规定的边界规则。为保证实现简单且可复现，规范实现可采用端点保持规则：低于最小有效频率的频点使用最低有效频率处的谱值，高于最大有效频率且不超过 Nyquist 频率的频点使用最高有效频率处的谱值。若采用其他外推模型，应作为方法配置的一部分明确记录。
 
@@ -140,24 +140,24 @@ $$
 本文采用如下离散傅里叶变换约定：
 
 $$
-X_k = \sum_{n=0}^{N-1} x[n]\exp\left(-j2\pi\frac{kn}{N}\right),
+X_k = \sum_{n=0}^{N-1} x[n]\exp\left(-\mathrm{j}2\pi\frac{kn}{N}\right),
 $$
 
 $$
-x[n] = \frac{1}{N}\sum_{k=0}^{N-1} X_k\exp\left(j2\pi\frac{kn}{N}\right).
+x[n] = \frac{1}{N}\sum_{k=0}^{N-1} X_k\exp\left(\mathrm{j}2\pi\frac{kn}{N}\right).
 $$
 
 在该约定下，内部正频率点的单边周期图估计满足
 
 $$
-\widehat{S}_x(f_k) = \frac{2}{f_s N}|X_k|^2,\qquad 0<k<\frac{N}{2}.
+\hat{S}_x(f_k) = \frac{2}{f_\mathrm{s} N}|X_k|^2,\qquad 0 \lt k \lt \frac{N}{2}.
 $$
 
 因此，为使生成序列的期望功率谱密度等于目标谱，应令内部频点满足
 
 $$
 \mathbb{E}\{|X_k|^2\}
-= \frac{f_s N}{2}S_x(f_k).
+= \frac{f_\mathrm{s} N}{2}S_x(f_k).
 $$
 
 ### 5.2 内部频点采样
@@ -165,7 +165,7 @@ $$
 对于非直流、非 Nyquist 的内部频点，令
 
 $$
-X_k = \sigma_k(z_{1,k}+jz_{2,k}),
+X_k = \sigma_k(z_{1,k}+\mathrm{j}z_{2,k}),
 $$
 
 其中
@@ -177,14 +177,14 @@ $$
 且
 
 $$
-\sigma_k = \sqrt{\frac{f_s N S_x(f_k)}{4}}.
+\sigma_k = \sqrt{\frac{f_\mathrm{s} N S_x(f_k)}{4}}.
 $$
 
 这样有
 
 $$
 \mathbb{E}\{|X_k|^2\}=2\sigma_k^2
-=\frac{f_s N}{2}S_x(f_k),
+=\frac{f_\mathrm{s} N}{2}S_x(f_k),
 $$
 
 与单边谱归一化一致。
@@ -208,7 +208,7 @@ $$
 
 $$
 \sigma_{\mathrm{Nyq}}
-= \sqrt{f_s N S_x(f_{\mathrm{Nyq}})}.
+= \sqrt{f_\mathrm{s} N S_x(f_{\mathrm{Nyq}})}.
 $$
 
 若应用中希望避免 Nyquist 点的特殊影响，也可将该频点设为零；该选择应在复现记录中明确。

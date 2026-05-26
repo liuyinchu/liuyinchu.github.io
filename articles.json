@@ -17,6 +17,14 @@
   }, 
 
   {
+    "id": "ai_agent_blog",
+    "title": "AI Agent 工程化使用指南",
+    "author": "pifuyuini",
+    "date": "2026-05-26",
+    "desc": "AI Agent 不是“更会聊天的 AI”，而是一个能进入你的工作区，读取文件、执行命令、修改内容、观察结果，并继续推进任务的本地协作者。本文不绑定某一个具体产品，适用于 Codex、Claude Code、Kilo Code、OpenCode 以及类似的 Agent 工具。",
+    "image": "/bg/heroine.jpg"
+  }, 
+  {
     "id": "measured_psd_to_noise_generator",
     "title": "基于功率谱密度的随机时域序列生成方法",
     "author": "pifuyuini",
