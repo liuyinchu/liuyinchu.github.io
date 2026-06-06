@@ -19,7 +19,6 @@ import YsyDataAnalysisHelper from '../pages/YsyDataAnalysisHelper.vue'
 import BriskNexus from '../pages/BriskNexus.vue'
 import PaperSwitchBrush from '../pages/PaperSwitchBrush.vue'
 import Research from '../pages/Research.vue'
-import YsyModernControlCourseWork from '../pages/YsyModernControlCourseWork.vue'
 import CyberMatch from '../pages/CyberMatch.vue'
 import LYC2048 from '../pages/LYC2048.vue'
 import ResourceDirectory from '../pages/ResourceDirectory.vue'
@@ -52,7 +51,6 @@ const routes = [
   { path: '/brisk-nexus', component: BriskNexus },
   { path: '/paper-switch-brush', component: PaperSwitchBrush },
   { path: '/research', component: Research },
-  { path: '/ysy-modern-control-course-work', component: YsyModernControlCourseWork },
   { path: '/cyber-match', component: CyberMatch },
   { path: '/lyc2048', component: LYC2048 },
   { path: '/rd', component: ResourceDirectory },
