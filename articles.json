@@ -4,18 +4,26 @@
     "title": "碎碎念",
     "author": "pifuyuini",
     "date": "2025-01-11",
-    "desc": "置顶·个人日志。",
+    "desc": "他们从来没有见过真正的黎明。他们见过的，只是别人画在墙上的一幅画而已。",
     "image": "/bg/white_sweater.PNG"
   }, 
-  {
-    "id": "note_of_reading",
-    "title": "文献阅读",
-    "author": "pifuyuini",
-    "date": "2026-01-13",
-    "desc": "置顶·个人文献阅读笔记。",
-    "image": "/bg/white_silk_girl_3_4K.jpg"
-  }, 
 
+  {
+    "id": "modernity_and_diet",
+    "title": "现代性与饮食：把世界吞入腹中",
+    "author": "pifuyuini",
+    "date": "2026-06-09",
+    "desc": "我们以为自己只是吃了一顿饭，其实是把整个世界的迁移、欲望、劳动与不可驯服的生命，一口一口吃进身体。",
+    "image": "/bg/thinking_and_writing.png"
+  }, 
+  {
+    "id": "system_identification_teaching",
+    "title": "系统辨识教程：从 PRBS 激励到状态空间子空间辨识",
+    "author": "pifuyuini",
+    "date": "2026-06-08",
+    "desc": "这篇教程重点解释为什么 PRBS 激励常用于工业辨识，怎样把最小二乘写成紧凑矩阵形式，以及 N4SID 类子空间方法如何从输入输出数据中恢复状态空间模型。",
+    "image": "/bg/Qingming_Xi.JPG"
+  }, 
   {
     "id": "ai_agent_blog",
     "title": "AI Agent 工程化使用指南",
@@ -37,7 +45,7 @@
     "title": "从受激拉曼跃迁到 Mølmer-Sørensen 门",
     "author": "pifuyuini",
     "date": "2026-05-15",
-    "desc": "量子光学与离子阱相关。",
+    "desc": "从受激拉曼跃迁的有效耦合出发，沿着近似、边带与 Magnus 展开的链条，推导离子阱 Mølmer-Sørensen 门的物理来源。",
     "image": "/bg/visitor.jpeg"
   }, 
   {
@@ -45,15 +53,15 @@
     "title": "强化学习介绍",
     "author": "pifuyuini",
     "date": "2026-03-15",
-    "desc": "这篇笔记来自本科毕业论文第三章。",
-    "image": "/bg/Qingming_Xi.JPG"
+    "desc": "以 MDP 为起点，把价值函数、Actor-Critic、PPO 与 SAC 串成一条从交互学习到连续控制的清晰路径。",
+    "image": "/bg/Texas.JPG"
   }, 
   {
     "id": "uv_cheatsheet",
     "title": "uv 使用技巧速查",
     "author": "pifuyuini",
     "date": "2026-03-15",
-    "desc": "Python 现代开发小技巧之 uv 拓展篇！",
+    "desc": "一份面向日常开发的 uv 速查手册：用最少命令完成项目、工具、Python 版本与 pip 兼容工作流的统一管理。",
     "image": "/bg/spring.jpg"
   }, 
   {
@@ -61,7 +69,7 @@
     "title": "时频分析小技巧",
     "author": "pifuyuini",
     "date": "2026-01-25",
-    "desc": "Python 数据处理实践：时频分析。",
+    "desc": "从时间—频率分辨率的权衡出发，用 STFT、CWT 与 Hilbert 方法理解非平稳信号如何展开其频谱结构。",
     "image": "/bg/heroine.jpg"
   }, 
   {
@@ -69,7 +77,7 @@
     "title": "Python 现代开发小技巧",
     "author": "pifuyuini",
     "date": "2026-01-22",
-    "desc": "人生苦短，我学 Python ！",
+    "desc": "以 uv 为核心，梳理现代 Python 项目管理、依赖环境与工具链配置的实用路线。",
     "image": "/bg/spring.jpg"
   }, 
   {
@@ -77,7 +85,7 @@
     "title": "Python 数据分析小技巧",
     "author": "pifuyuini",
     "date": "2026-01-22",
-    "desc": "人生苦短，我学 Python ！",
+    "desc": "围绕 Plotly 与科学计算可视化，把数据分析中的画图、交互展示与工程封装整理成可复用的实践笔记。",
     "image": "/bg/spring.jpg"
   }, 
   {
@@ -85,15 +93,15 @@
     "title": "LaTeX 实用小技巧",
     "author": "pifuyuini",
     "date": "2026-01-15",
-    "desc": "偶尔更新的 LaTeX 个人笔记",
-    "image": "/bg/quiet_skadi_4K.jpg"
+    "desc": "面向科研论文的个人 LaTeX 小技巧合集。",
+    "image": "/bg/Skadi_by_the_Sea.jpg"
   }, 
   {
     "id": "ddm_intro",
     "title": "智能增强的非线性动力学数据驱动建模",
     "author": "pifuyuini",
     "date": "2026-01-11",
-    "desc": "智能增强的非线性动力学数据驱动建模旨在融合物理机理与数据学习，构建兼具精度、可解释性与外推能力的动力学模型。其核心是在建模与辨识协同框架下，通过稀疏结构、算子学习与深度网络等方法实现结构与参数的联合发现。该范式为复杂系统的预测、分析与控制提供了高效而可靠的新途径。",
+    "desc": "智能增强的非线性动力学数据驱动建模旨在融合物理机理与数据学习，构建兼具精度、可解释性与外推能力的动力学模型。其核心是在建模与辨识协同框架下，通过稀疏结构、算子学习与深度网络等方法实现结构与参数的联合发现。",
     "image": "/bg/Qingming_Xi.JPG"
   },
   {
@@ -101,8 +109,8 @@
     "title": "学习如何规范排版 A4 大小的文章",
     "author": "pifuyuini",
     "date": "2025-12-25",
-    "desc": "A4 单栏学术排版中的尺度、单位与图文规范。",
-    "image": "/bg/quiet_skadi_4K.jpg"
+    "desc": "本笔记以标准 A4 纸张为起点，基于一组具体的页面参数，对正文区域、图像尺寸以及常用排版单位之间的关系进行严格计算和说明。",
+    "image": "/bg/Skadi_by_the_Sea.jpg"
   },
   {
     "id": "svd_intro",
@@ -110,78 +118,70 @@
     "author": "pifuyuini",
     "date": "2025-12-07",
     "desc": "一篇介绍 SVD 的基础笔记。",
-    "image": "/bg/big_under_the_moon.PNG"
+    "image": "/bg/Qingming_Xi.JPG"
   },
   {
     "id": "deep_learning_playnote",
     "title": "深度学习实用指南",
     "author": "pifuyuini",
     "date": "2025-11-25",
-    "desc": "深度学习项目实践指引，同时也是个人科研相关。",
-    "image": "/bg/Big_HeiTa.JPG"
+    "desc": "从指标、数据划分、baseline 到超参数搜索与误差分析，整理一套面向深度学习实验调优的工程化方法论。",
+    "image": "/bg/neighbor.jpeg"
   },
   {
     "id": "learn_pytorch",
-    "title": "学习 PyTorch （偶尔更新的个人笔记）",
+    "title": "学习 PyTorch",
     "author": "pifuyuini",
     "date": "2025-11-14",
-    "desc": "PyTorch 深度学习实践，同时也是个人科研相关。",
+    "desc": "以 Tensor 为核心入口，连接索引、形状、运算、设备、自动求导与 DQN 实例，建立 PyTorch 的实践骨架。",
     "image": "/bg/Texas.JPG"
   },
   {
     "id": "control_personal_note",
-    "title": "动力学与控制·基础（长期更新的个人笔记）",
+    "title": "动力学与控制·基础",
     "author": "pifuyuini",
-    "date": "2025-11-1",
-    "desc": "个人科研相关。",
+    "date": "2025-11-01",
+    "desc": "以两级质量—弹簧—阻尼系统为贯穿例子，从动力学建模、状态空间到噪声与控制分析建立一套可计算的系统框架。",
     "image": "/bg/Qingming_Xi.JPG"
   },
   {
     "id": "astro_ml_guide",
     "title": "AI4S 实用指南",
     "author": "pifuyuini",
-    "date": "2025-11-1",
-    "desc": "这份笔记从“天文学研究中机器学习方法的实用指南”升级到了“AI4S 实践指引“！",
-    "image": "/bg/Big_HeiTa.JPG"
+    "date": "2025-11-01",
+    "desc": "以科学问题为中心，把 AI4S 项目拆解为决策目标、物理一致的数据工程、可解释评估与可复现实验管理。",
+    "image": "/bg/neighbor.jpeg"
   },
   {
     "id": "Introduction_to_the_Two_Stage_Torsion_Pendulum",
     "title": "An Introduction to the Two-Stage Torsion Pendulum",
     "author": "pifuyuini",
-    "date": "2025-9-27",
-    "desc": "文献阅读笔记·学习和推导两级扭摆的相关内容。",
+    "date": "2025-09-27",
+    "desc": "从一级扭摆的直觉出发，解释两级扭摆如何通过共模隔离与差模响应服务于精密测量。",
     "image": "/bg/Qingming_Xi.JPG"
   },
   {
     "id": "learn_rust",
-    "title": "学习 Rust （长期更新的个人笔记）",
+    "title": "Rust 学习笔记",
     "author": "liuyinchu",
-    "date": "2025-9-20",
-    "desc": "Rust ，启动！",
-    "image": "/bg/Skadi_by_the_Sea.jpg"
+    "date": "2025-09-20",
+    "desc": "从 rustup 与 Cargo 启动，沿着所有权、借用、模式匹配与错误处理理解 Rust 的安全编程模型。",
+    "image": "/bg/sakura_valley.png"
   },
   {
     "id": "note_of_configure_server",
-    "title": "学习 Linux + 云主机（长期更新的个人笔记）",
+    "title": "Linux 云主机学习笔记",
     "author": "liuyinchu",
-    "date": "2025-9-6",
-    "desc": "个人学习日志式笔记。",
-    "image": "/bg/Spring_Firefly2.jpg"
-  },
-  {
-    "id": "notes_classical_mechanics",
-    "title": "经典力学笔记",
-    "author": "pifuyuini",
-    "date": "2025-07-29",
-    "desc": "个人复习用的经典力学简明总结。",
-    "image": "/bg/visitor.jpeg"
+    "date": "2025-09-06",
+    "desc": "一份从 SSH 登录、shell 环境、包管理到开发工具配置的云服务器搭建记录，保留实际踩坑与迁移细节。",
+    "image": "/bg/sakura_valley.png"
   },
   {
     "id": "kitty_config_log",
     "title": "终端模拟器 kitty 个人配置笔记",
     "author": "pifuyuini",
     "date": "2025-07-19",
-    "desc": "用于快速配置 macOS上的 kitty 。",
+    "desc": "把终端调成顺手的工作台：从字体、主题、光标到 kitten 与 SSH，记录 kitty 的配置与使用细节。",
     "image": "/bg/sakura_valley.png"
   },
   {
@@ -189,7 +189,7 @@
     "title": "固体物理笔记（二）：能带论",
     "author": "pifuyuini",
     "date": "2025-07-01",
-    "desc": "学习 David Tong 的 Solid State Physics 的 2. Band Structure 的 AI-Help 笔记。",
+    "desc": "从局域轨道到布洛赫波，本篇梳理周期性晶格如何将孤立能级展开为能带，并建立倒空间与布里渊区的基本语言。",
     "image": "/bg/visitor.jpeg"
   },
   {
@@ -197,7 +197,7 @@
     "title": "固体物理笔记（三）：电子动力学",
     "author": "pifuyuini",
     "date": "2025-07-01",
-    "desc": "学习 David Tong 的 Solid State Physics 的 3. Electron Dynamics in Solids 的 AI-Help 笔记。",
+    "desc": "以费米面为主线，本篇说明布洛赫电子在能带、电场、磁场与散射中的运动规律，以及这些规律如何决定材料的导电性质。",
     "image": "/bg/visitor.jpeg"
   },
   {
@@ -205,7 +205,7 @@
     "title": "固体物理笔记（四）：声子",
     "author": "pifuyuini",
     "date": "2025-07-01",
-    "desc": "学习 David Tong 的 Solid State Physics 的 4. Phonons 的 AI-Help 笔记。",
+    "desc": "从一维原子链到连续弹性场，本篇介绍晶格振动如何形成声子，并展示声子在相变、谱学和材料输运中的核心作用。",
     "image": "/bg/visitor.jpeg"
   },
   {
@@ -214,7 +214,7 @@
     "author": "pifuyuini",
     "date": "2025-03-01",
     "desc": "规范命名对于代码的可读性和长期维护至关重要。本文将探讨一些常见的命名场景并给出建议。",
-    "image": "/bg/quiet_skadi_4K.jpg"
+    "image": "/bg/neighbor.jpeg"
   },
   {
     "id": "learn_python",
