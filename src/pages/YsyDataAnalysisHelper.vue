@@ -44,7 +44,7 @@ import ImageBlock from '../components/common/ImageBlock.vue'
 
 const introText = `
 
-# 我的绘图/数据处理工具包
+# 我的绘图 & 数据处理工具包
 
 这是一个合集，它包含于我们的更大的 **Phy-Lab Digital Helper** (PlDH) 项目，本页面展示我负责的部分 **"YDAH -- Ysy's Data Analysis Helper"** 包含：
 - 绘图系列：

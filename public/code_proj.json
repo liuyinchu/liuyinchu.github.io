@@ -7,13 +7,6 @@
     "category": "code"
   },
   {
-    "name": "Paper Switch Brush",
-    "desc": "每日论文。",
-    "homepage": "/paper-switch-brush",
-    "repo": "",
-    "category": "project"
-  },
-  {
     "name": "Mamplotly Academic Layout Guide",
     "desc": "A4-Based Scientific Plotting Calculator & Palette Reference.",
     "homepage": "/academic-plot-guide",
@@ -39,13 +32,6 @@
     "desc": "个人小巧思合集。",
     "homepage": "/brisk-nexus",
     "repo": "https://github.com/pifuyuini/brisk-nexus/tree/dev",
-    "category": "toy"
-  },
-  {
-    "name": "LiuYinChu's 2048",
-    "desc": "2048 Vue Game",
-    "homepage": "/lyc2048",
-    "repo": "",
     "category": "toy"
   },
   {

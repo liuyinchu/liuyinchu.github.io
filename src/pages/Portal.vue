@@ -9,6 +9,8 @@ const dockGroups = [
       { name: 'Gemini', url: 'https://gemini.google.com/' },
       { name: 'Grok', url: 'https://grok.com/' },
       { name: 'OpenRouter', url: 'https://openrouter.ai/' },
+      { name: 'Claude', url: 'https://claude.ai/' },
+      
       
     ]
   },

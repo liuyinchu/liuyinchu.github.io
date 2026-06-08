@@ -87,7 +87,7 @@ const proj3 = `
 
 ---
 
-## 基于YsyClass样式的ysy-latex模版
+## 基于 YsyClass 样式的 ysy-latex 模版
 
 这个模板由于一些素材上的问题和一些未知的 Bug ，我目前暂时并没有打算公开（事实上你从这个名字就能发现这十分难绷）。
 
