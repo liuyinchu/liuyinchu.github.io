@@ -54,7 +54,7 @@
     "author": "pifuyuini",
     "date": "2026-03-15",
     "desc": "以 MDP 为起点，把价值函数、Actor-Critic、PPO 与 SAC 串成一条从交互学习到连续控制的清晰路径。",
-    "image": "/bg/Texas.JPG"
+    "image": "/bg/research.png"
   }, 
   {
     "id": "uv_cheatsheet",
@@ -134,7 +134,7 @@
     "author": "pifuyuini",
     "date": "2025-11-14",
     "desc": "以 Tensor 为核心入口，连接索引、形状、运算、设备、自动求导与 DQN 实例，建立 PyTorch 的实践骨架。",
-    "image": "/bg/Texas.JPG"
+    "image": "/bg/research.png"
   },
   {
     "id": "control_personal_note",
