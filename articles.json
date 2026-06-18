@@ -1,13 +1,29 @@
 [
   {
     "id": "post_it",
-    "title": "碎碎念",
+    "title": "时代正疾驰而过...",
     "author": "pifuyuini",
     "date": "2025-01-11",
     "desc": "他们从来没有见过真正的黎明。他们见过的，只是别人画在墙上的一幅画而已。",
     "image": "/bg/white_sweater.PNG"
   }, 
 
+  {
+    "id": "keyboard",
+    "title": "键影罗成方寸谱，轴声敲入半生笺",
+    "author": "pifuyuini",
+    "date": "2026-06-19",
+    "desc": "这里更像是我的机械键盘手账：记录我看中了什么、买了什么、组出了什么、用下来又觉得哪里合适或不合适。",
+    "image": "/bg/keyboards_blog.png"
+  }, 
+  {
+    "id": "hinf_robust_control_tutorial",
+    "title": "H∞ 鲁棒控制简明教程",
+    "author": "pifuyuini",
+    "date": "2026-06-19",
+    "desc": "本文面向已经熟悉经典反馈控制和线性系统基础的读者，按“性能度量、环路分析、鲁棒性建模、标准合成、工程设计方法”的顺序介绍 H∞ 鲁棒控制。",
+    "image": "/bg/Qingming_Xi.JPG"
+  }, 
   {
     "id": "modernity_and_diet",
     "title": "现代性与饮食：把世界吞入腹中",

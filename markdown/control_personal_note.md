@@ -1,1710 +1,1761 @@
-# 动力学与控制 · 基础笔记
+# 动力学与控制基础笔记
 
----
+本文整理动力学建模、信号与系统、频域分析、经典控制、状态空间方法、离散化以及扰动噪声建模。全文以两级质量-弹簧-阻尼系统作为贯穿示例，目标是把控制理论中常用的建模、分析和设计工具放在同一套符号体系下说明，便于后续推导、仿真和工程设计复用。
 
-先给出两个重要的附录。
+## 0 符号与基本约定
 
-## A 贯穿整个笔记的一个例子
+本文默认研究连续时间线性时不变系统（LTI）及其在工作点附近的小信号模型。标量变量采用斜体，如 $t$、$s$、$f$、$\omega$；矢量采用粗斜体，如 $\boldsymbol{x}$；矩阵采用粗正体，如 $\mathbf{A}$；描述性下标采用正体，如 $\boldsymbol{x}_\mathrm{g}$、$\mathbf{B}_\mathrm{u}$。拉普拉斯变量记为 $s$，频率记为 $f$，角频率记为 $\omega$，虚数单位统一写作 $\mathrm{j}$，因此频域替换写作 $s=\mathrm{j}\omega$。
 
-以下给出**图示两级质量–弹簧–阻尼系统**的完整建模与推导：
+常用的连续时间状态空间模型写作
 
-<img src="/fig/Two_Stage_Mass_Spring_Damping_System_Inverted.png" alt="理想两级质量–弹簧–阻尼系统" width="95%">
-
-###  A.1 动力学建模
-
-系统描述：  
-- 质量块 $ m_1 $ 与地基通过 $ k_1, c_1 $ 相连；  
-- 质量块 $ m_2 $ 通过 $ k_2, c_2 $ 与 $ m_1 $ 相连；  
-- 地基存在位移扰动 $ w(t) $；  
-- 驱动力 $ f(t) $ 作用于 $ m_1 $；  
-- 输出常取相对位移 $ \Delta x = x_2 - x_1 $。  
-
-约定竖直向上为正，所有元件线性、小振动，重力静挠度吸收入平衡点（故不显式出现 $ mg $）。
-
-广义坐标 $ q = [x_1, x_2]^T $，地基位移 $ w(t) $ 为外部已知函数。
-
-**动能：**
 $$
-T = \tfrac{1}{2} m_1 \dot{x}_1^2 + \tfrac{1}{2} m_2 \dot{x}_2^2
+\dot{\boldsymbol{x}}(t)=\mathbf{A}\boldsymbol{x}(t)+\mathbf{B}\boldsymbol{u}(t),
+\qquad
+\boldsymbol{y}(t)=\mathbf{C}\boldsymbol{x}(t)+\mathbf{D}\boldsymbol{u}(t).
 $$
 
-**势能：**
+若只讨论单输入单输出系统，则常把输入、输出写成 $u(t)$ 与 $y(t)$，传递函数写成
+
 $$
-V = \tfrac{1}{2} k_1 (x_1 - w)^2 + \tfrac{1}{2} k_2 (x_2 - x_1)^2
+G(s)=\frac{Y(s)}{U(s)},
 $$
 
-**Rayleigh 阻尼函数：**
-$$
-\mathcal{D} = \tfrac{1}{2} c_1 (\dot{x}_1 - \dot{w})^2 + \tfrac{1}{2} c_2 (\dot{x}_2 - \dot{x}_1)^2
-$$
+默认零初始条件。若存在非零初始条件，需要将零输入响应与零状态响应分开处理。
 
-**非保守广义力：**
-$$
-Q_1 = f, \quad Q_2 = 0
-$$
+## 1 贯穿示例：两级质量-弹簧-阻尼系统
 
-带耗散的 Lagrange 方程：
-$$
-\frac{d}{dt} \Big( \frac{\partial T}{\partial \dot{x}_i} \Big) - \frac{\partial T}{\partial x_i} + \frac{\partial \mathcal{D}}{\partial \dot{x}_i} + \frac{\partial V}{\partial x_i} = Q_i, \quad (i = 1,2)
-$$
+### 1.1 系统描述与建模假设
 
-逐项求导并整理：
-$$
-\boxed{\begin{aligned}
-m_1 \ddot{x}_1 &= -k_1 (x_1 - w) - c_1 (\dot{x}_1 - \dot{w}) + k_2 (x_2 - x_1) + c_2 (\dot{x}_2 - \dot{x}_1) + f, \\
-m_2 \ddot{x}_2 &= -k_2 (x_2 - x_1) - c_2 (\dot{x}_2 - \dot{x}_1)
-\end{aligned}}
-$$
+考虑下图所示的两级质量-弹簧-阻尼系统。质量块 $m_1$ 通过弹簧 $k_1$ 与阻尼 $c_1$ 连接到运动基座，质量块 $m_2$ 通过弹簧 $k_2$ 与阻尼 $c_2$ 连接到 $m_1$。基座位移扰动为 $w(t)$，外部控制力 $f(t)$ 作用在 $m_1$ 上，常用输出为两质量块相对位移 $\Delta x=x_2-x_1$。
 
-将 $x_1, x_2, w$ 的项分离，即得矩阵形式：
-$$
-M \ddot{x} + C \dot{x} + K x = b_f f + b_1 \dot{w} + b_0 w
-$$
+![理想两级质量-弹簧-阻尼系统](attachments/Two_Stage_Mass_Spring_Damping_System_Inverted.png)
 
+采用如下假设：
 
+- 竖直向上为正方向；
+- 元件满足线性弹簧与线性粘性阻尼关系；
+- 仅考虑工作点附近的小振动；
+- 重力导致的静挠度已吸收入平衡点，不在动态方程中显式出现；
+- $m_1\gt0$、$m_2\gt0$，通常取 $k_1\ge0$、$k_2\ge0$、$c_1\ge0$、$c_2\ge0$。
 
-### A.2 相对地基坐标形式（仅含 $\ddot{w}$）
+令广义坐标为
 
-令：
 $$
-r_1 = x_1 - w, \quad r_2 = x_2 - w, \quad r = [r_1, r_2]^T
-$$
-
-则：
-$$
-\dot{r} = \dot{x} - \dot{w} \mathbf{1}, \quad
-\ddot{r} = \ddot{x} - \ddot{w} \mathbf{1}, \quad
-\mathbf{1} = [1, 1]^T
-$$
-
-代入并整理：
-$$
-M \ddot{r} + C \dot{r} + K r = b_f f - M \mathbf{1} \ddot{w}
-$$
-
-即：
-$$
-\boxed{\begin{aligned}
-m_1 \ddot{r}_1 + (c_1 + c_2)\dot{r}_1 - c_2 \dot{r}_2 + (k_1 + k_2) r_1 - k_2 r_2 &= f - m_1 \ddot{w}, \\
-m_2 \ddot{r}_2 + c_2 \dot{r}_2 - c_2 \dot{r}_1 + k_2 r_2 - k_2 r_1 &= -m_2 \ddot{w}.
-\end{aligned}}
-$$
-
-测量量关系：
-$$
-x_1 = r_1 + w, \quad x_2 = r_2 + w, \quad \Delta x = r_2 - r_1.
-$$
-
-此表述避免了速度输入 $\dot{w}$，便于将地基扰动视为**基座加速度输入** $\ddot{w}$。
-
-### A.3 状态空间表达
-
-取状态向量：
-$$
-z = [x_1, x_2, \dot{x}_1, \dot{x}_2]^T, \quad u = [f, w, \dot{w}]^T
-$$
-
-则：
-$$
-\dot{z} =
-\underbrace{
+\boldsymbol{q}=
 \begin{bmatrix}
-0 & 0 & 1 & 0 \\
-0 & 0 & 0 & 1 \\
--\frac{k_1 + k_2}{m_1} & \frac{k_2}{m_1} & -\frac{c_1 + c_2}{m_1} & \frac{c_2}{m_1} \\
-\frac{k_2}{m_2} & -\frac{k_2}{m_2} & \frac{c_2}{m_2} & -\frac{c_2}{m_2}
-\end{bmatrix}
-}_{A}
-z
+x_1\\
+x_2
+\end{bmatrix},
+\qquad
+\boldsymbol{b}_\mathrm{f}=
+\begin{bmatrix}
+1\\
+0
+\end{bmatrix},
+\qquad
+\boldsymbol{b}_\mathrm{g}=
+\begin{bmatrix}
+1\\
+1
+\end{bmatrix}.
+$$
+
+系统动能、势能与 Rayleigh 阻尼函数分别为
+
+$$
+T=\frac{1}{2}m_1\dot{x}_1^2+\frac{1}{2}m_2\dot{x}_2^2,
+$$
+
+$$
+V=\frac{1}{2}k_1(x_1-w)^2+\frac{1}{2}k_2(x_2-x_1)^2,
+$$
+
+$$
+\mathcal{D}=\frac{1}{2}c_1(\dot{x}_1-\dot{w})^2+\frac{1}{2}c_2(\dot{x}_2-\dot{x}_1)^2.
+$$
+
+带耗散的 Lagrange 方程为
+
+$$
+\frac{\mathrm{d}}{\mathrm{d}t}
+\left(
+\frac{\partial T}{\partial \dot{x}_i}
+\right)
+-
+\frac{\partial T}{\partial x_i}
 +
-\underbrace{
-\begin{bmatrix}
-0 & 0 & 0 \\
-0 & 0 & 0 \\
-\frac{1}{m_1} & \frac{k_1}{m_1} & \frac{c_1}{m_1} \\
-0 & 0 & 0
-\end{bmatrix}
-}_{B}u
+\frac{\partial \mathcal{D}}{\partial \dot{x}_i}
++
+\frac{\partial V}{\partial x_i}
+=Q_i,
+\qquad i=1,2,
 $$
 
-输出：
+其中 $Q_1=f$、$Q_2=0$。整理得到
 
 $$
-y =
-\begin{bmatrix}
-x_1 \\ x_2 \\ \Delta x
-\end{bmatrix}
-=\underbrace{
-\begin{bmatrix}
-1 & 0 & 0 & 0 \\
-0 & 1 & 0 & 0 \\
--1 & 1 & 0 & 0
-\end{bmatrix}
-}_{C}
-z
-$$
-
-若采用相对坐标 $r$，输入可改为 $[f, \ddot{w}]$，并将 $B$ 的第二列替换为
-$[ -1, 0, -m_1^{-1}, -m_2^{-1} ]^T$。
-
-### A.4 整理一下常用的核心公式
-
-#### A.4.1 标准 $x_1$，$x_2$的微分方程组
-
-$$
-\boxed{
 \begin{aligned}
-m_1\ddot x_1+(c_1+c_2)\dot x_1-c_2\dot x_2+(k_1+k_2)x_1-k_2x_2 &= f+c_1\dot w+k_1 w,\\
-m_2\ddot x_2-c_2\dot x_1+c_2\dot x_2-k_2x_1+k_2x_2 &= 0.
-\end{aligned}}
+m_1\ddot{x}_1
+&=-k_1(x_1-w)-c_1(\dot{x}_1-\dot{w})
++k_2(x_2-x_1)+c_2(\dot{x}_2-\dot{x}_1)+f,\\
+m_2\ddot{x}_2
+&=-k_2(x_2-x_1)-c_2(\dot{x}_2-\dot{x}_1).
+\end{aligned}
 $$
 
-#### A.4.2 标准 A、B、C、D 矩阵
-
-$$z=\begin{bmatrix}x_1\\x_2\\\dot x_1\\\dot x_2\end{bmatrix},\qquad
-u=\begin{bmatrix}f\\ w\\ \dot w\end{bmatrix},\qquad
-y=\begin{bmatrix}x_1\\ x_2\\ \Delta x\end{bmatrix},\ \Delta x=x_2-x_1.$$
+写成矩阵形式为
 
 $$
-A=
+\mathbf{M}\ddot{\boldsymbol{q}}
++
+\mathbf{C}_\mathrm{m}\dot{\boldsymbol{q}}
++
+\mathbf{K}\boldsymbol{q}
+=
+\boldsymbol{b}_\mathrm{f}f
++
+\boldsymbol{b}_1\dot{w}
++
+\boldsymbol{b}_0w,
+$$
+
+其中
+
+$$
+\mathbf{M}=
+\begin{bmatrix}
+m_1&0\\
+0&m_2
+\end{bmatrix},
+\quad
+\mathbf{C}_\mathrm{m}=
+\begin{bmatrix}
+c_1+c_2&-c_2\\
+-c_2&c_2
+\end{bmatrix},
+\quad
+\mathbf{K}=
+\begin{bmatrix}
+k_1+k_2&-k_2\\
+-k_2&k_2
+\end{bmatrix},
+$$
+
+$$
+\boldsymbol{b}_1=
+\begin{bmatrix}
+c_1\\
+0
+\end{bmatrix},
+\qquad
+\boldsymbol{b}_0=
+\begin{bmatrix}
+k_1\\
+0
+\end{bmatrix}.
+$$
+
+该形式直接保留了基座位移 $w$ 与基座速度 $\dot{w}$ 的输入项，适合从绝对坐标推导传递函数，也适合检查力、位移、速度各项的物理来源。
+
+### 1.2 相对基座坐标
+
+在隔振、地面扰动和精密定位问题中，基座加速度常是更自然的扰动输入。定义相对基座位移
+
+$$
+r_1=x_1-w,
+\qquad
+r_2=x_2-w,
+\qquad
+\boldsymbol{r}=
+\begin{bmatrix}
+r_1\\
+r_2
+\end{bmatrix}.
+$$
+
+有
+
+$$
+\dot{\boldsymbol{q}}=\dot{\boldsymbol{r}}+\boldsymbol{b}_\mathrm{g}\dot{w},
+\qquad
+\ddot{\boldsymbol{q}}=\ddot{\boldsymbol{r}}+\boldsymbol{b}_\mathrm{g}\ddot{w}.
+$$
+
+代入绝对坐标方程并利用
+
+$$
+\mathbf{C}_\mathrm{m}\boldsymbol{b}_\mathrm{g}=
+\begin{bmatrix}
+c_1\\
+0
+\end{bmatrix},
+\qquad
+\mathbf{K}\boldsymbol{b}_\mathrm{g}=
+\begin{bmatrix}
+k_1\\
+0
+\end{bmatrix},
+$$
+
+可得相对坐标模型
+
+$$
+\mathbf{M}\ddot{\boldsymbol{r}}
++
+\mathbf{C}_\mathrm{m}\dot{\boldsymbol{r}}
++
+\mathbf{K}\boldsymbol{r}
+=
+\boldsymbol{b}_\mathrm{f}f
+-
+\mathbf{M}\boldsymbol{b}_\mathrm{g}\ddot{w}.
+$$
+
+展开为
+
+$$
+\begin{aligned}
+m_1\ddot{r}_1+(c_1+c_2)\dot{r}_1-c_2\dot{r}_2+(k_1+k_2)r_1-k_2r_2
+&=f-m_1\ddot{w},\\
+m_2\ddot{r}_2-c_2\dot{r}_1+c_2\dot{r}_2-k_2r_1+k_2r_2
+&=-m_2\ddot{w}.
+\end{aligned}
+$$
+
+相对坐标形式的重要优点是扰动只通过 $\ddot{w}$ 进入方程，不需要把 $w$ 与 $\dot{w}$ 同时作为独立输入。测量量之间的关系为
+
+$$
+x_1=r_1+w,
+\qquad
+x_2=r_2+w,
+\qquad
+\Delta x=x_2-x_1=r_2-r_1.
+$$
+
+### 1.3 状态空间模型
+
+取绝对坐标状态
+
+$$
+\boldsymbol{z}=
+\begin{bmatrix}
+x_1\\
+x_2\\
+\dot{x}_1\\
+\dot{x}_2
+\end{bmatrix},
+\qquad
+\boldsymbol{u}=
+\begin{bmatrix}
+f\\
+w\\
+\dot{w}
+\end{bmatrix}.
+$$
+
+则
+
+$$
+\dot{\boldsymbol{z}}=\mathbf{A}\boldsymbol{z}+\mathbf{B}\boldsymbol{u},
+$$
+
+其中
+
+$$
+\mathbf{A}=
 \begin{bmatrix}
 0&0&1&0\\
 0&0&0&1\\
--\dfrac{k_1+k_2}{m_1}&\dfrac{k_2}{m_1}&-\dfrac{c_1+c_2}{m_1}&\dfrac{c_2}{m_1}\\[3mm]
+-\dfrac{k_1+k_2}{m_1}&\dfrac{k_2}{m_1}&-\dfrac{c_1+c_2}{m_1}&\dfrac{c_2}{m_1}\\[2mm]
 \dfrac{k_2}{m_2}&-\dfrac{k_2}{m_2}&\dfrac{c_2}{m_2}&-\dfrac{c_2}{m_2}
 \end{bmatrix},
-\quad
-B=
+\qquad
+\mathbf{B}=
 \begin{bmatrix}
 0&0&0\\
 0&0&0\\
 \dfrac{1}{m_1}&\dfrac{k_1}{m_1}&\dfrac{c_1}{m_1}\\[2mm]
 0&0&0
+\end{bmatrix}.
+$$
+
+若输出取
+
+$$
+\boldsymbol{y}=
+\begin{bmatrix}
+x_1\\
+x_2\\
+\Delta x
 \end{bmatrix},
-C=
+$$
+
+则
+
+$$
+\boldsymbol{y}
+=
+\mathbf{C}_\mathrm{y}\boldsymbol{z}
++
+\mathbf{D}_\mathrm{y}\boldsymbol{u},
+\qquad
+\mathbf{C}_\mathrm{y}=
 \begin{bmatrix}
 1&0&0&0\\
 0&1&0&0\\
 -1&1&0&0
-\end{bmatrix},\qquad
-D=\mathbf{0}_{3\times 3}.
-$$
-
-#### A.4.3 相对坐标下的微分方程组
-
-$$
-\boxed{
-\begin{aligned}
-m_1\ddot r_1+(c_1+c_2)\dot r_1-c_2\dot r_2+(k_1+k_2)r_1-k_2 r_2 &= f- m_1\ddot w,\\
-m_2\ddot r_2-c_2\dot r_1+c_2\dot r_2-k_2 r_1+k_2 r_2 &= - m_2\ddot w.
-\end{aligned}}
-$$
-
-#### A.4.4 相对坐标下的 A、B、C、D 矩阵
-
-$$
-z_r=\begin{bmatrix}r_1\\ r_2\\ \dot r_1\\ \dot r_2\end{bmatrix},\qquad
-u_r=\begin{bmatrix}f\\ \ddot w\end{bmatrix},\qquad
-y_r=\begin{bmatrix}r_1\\ r_2\\ \Delta x\end{bmatrix},\ \Delta x=r_2-r_1,
-$$
-
-$$
-A_r=
-\begin{bmatrix}
-0&0&1&0\\
-0&0&0&1\\
--\dfrac{k_1+k_2}{m_1}&\dfrac{k_2}{m_1}&-\dfrac{c_1+c_2}{m_1}&\dfrac{c_2}{m_1}\\[3mm]
-\dfrac{k_2}{m_2}&-\dfrac{k_2}{m_2}&\dfrac{c_2}{m_2}&-\dfrac{c_2}{m_2}
 \end{bmatrix},
-\quad
-B_r=
+\qquad
+\mathbf{D}_\mathrm{y}=\mathbf{0}_{3\times3}.
+$$
+
+相对坐标下取
+
+$$
+\boldsymbol{z}_\mathrm{r}=
+\begin{bmatrix}
+r_1\\
+r_2\\
+\dot{r}_1\\
+\dot{r}_2
+\end{bmatrix},
+\qquad
+\boldsymbol{u}_\mathrm{r}=
+\begin{bmatrix}
+f\\
+a_\mathrm{g}
+\end{bmatrix},
+\qquad
+a_\mathrm{g}=\ddot{w}.
+$$
+
+此时系统矩阵仍为 $\mathbf{A}$，输入矩阵变为
+
+$$
+\mathbf{B}_\mathrm{r}=
 \begin{bmatrix}
 0&0\\
 0&0\\
 \dfrac{1}{m_1}&-1\\[2mm]
 0&-1
+\end{bmatrix}.
+$$
+
+若输出取相对位移与相对差动位移，
+
+$$
+\boldsymbol{y}_\mathrm{r}=
+\begin{bmatrix}
+r_1\\
+r_2\\
+r_2-r_1
 \end{bmatrix},
-C_r=
+$$
+
+则输出矩阵仍可写为
+
+$$
+\mathbf{C}_{\mathrm{y},\mathrm{r}}=
 \begin{bmatrix}
 1&0&0&0\\
 0&1&0&0\\
 -1&1&0&0
-\end{bmatrix},\qquad
-D_r=\mathbf{0}_{3\times 2}.
+\end{bmatrix},
+\qquad
+\mathbf{D}_{\mathrm{y},\mathrm{r}}=\mathbf{0}_{3\times2}.
 $$
 
-### A.5 传递函数
+### 1.4 传递函数与模态含义
 
-动刚度矩阵：
+对绝对坐标模型作拉普拉斯变换，零初始条件下有
+
 $$
-A(s) = Ms^2 + Cs + K =
+\left(\mathbf{M}s^2+\mathbf{C}_\mathrm{m}s+\mathbf{K}\right)\boldsymbol{Q}(s)
+=
+\boldsymbol{b}_\mathrm{f}F(s)
++
+\left(\boldsymbol{b}_1s+\boldsymbol{b}_0\right)W(s).
+$$
+
+定义动刚度矩阵
+
+$$
+\mathbf{Z}(s)=\mathbf{M}s^2+\mathbf{C}_\mathrm{m}s+\mathbf{K}
+=
 \begin{bmatrix}
-A_{11} & A_{12} \\
-A_{21} & A_{22}
+Z_{11}(s)&Z_{12}(s)\\
+Z_{21}(s)&Z_{22}(s)
+\end{bmatrix},
+$$
+
+其中
+
+$$
+Z_{11}=m_1s^2+(c_1+c_2)s+(k_1+k_2),
+\quad
+Z_{22}=m_2s^2+c_2s+k_2,
+\quad
+Z_{12}=Z_{21}=-(c_2s+k_2).
+$$
+
+公共分母为
+
+$$
+\begin{aligned}
+P(s)
+&=\det \mathbf{Z}(s)\\
+&=m_1m_2s^4+
+\left[m_1c_2+m_2(c_1+c_2)\right]s^3\\
+&\quad+
+\left[m_1k_2+m_2(k_1+k_2)+c_1c_2\right]s^2
++(c_1k_2+c_2k_1)s+k_1k_2.
+\end{aligned}
+$$
+
+从控制力到差动位移的传递函数为
+
+$$
+\frac{\Delta X(s)}{F(s)}
+=
+-\frac{m_2s^2}{P(s)}.
+$$
+
+从基座位移到差动位移的传递函数为
+
+$$
+\frac{\Delta X(s)}{W(s)}
+=
+-\frac{m_2s^2(c_1s+k_1)}{P(s)}.
+$$
+
+分母 $P(s)$ 的根是系统的固有极点。若阻尼较小，这些极点通常成共轭复数对，对应两个振动模态。低频模态通常表现为两个质量块近似同向运动，高频模态通常表现为两个质量块之间有明显相对运动。精确模态形状需要由广义特征值问题
+
+$$
+\left(\mathbf{K}-\omega_n^2\mathbf{M}\right)\boldsymbol{\phi}=\boldsymbol{0}
+$$
+
+求得，其中 $\omega_n$ 为无阻尼固有角频率，$\boldsymbol{\phi}$ 为模态向量。
+
+### 1.5 可控性与可观性
+
+若只有控制力 $f$ 可用，扰动 $w$、$\dot{w}$ 或 $\ddot{w}$ 不应计入控制输入矩阵。绝对坐标下控制输入列为
+
+$$
+\mathbf{B}_\mathrm{u}=
+\begin{bmatrix}
+0\\
+0\\
+\dfrac{1}{m_1}\\
+0
+\end{bmatrix}.
+$$
+
+可控性矩阵定义为
+
+$$
+\mathcal{C}_\mathrm{c}=
+\begin{bmatrix}
+\mathbf{B}_\mathrm{u}&
+\mathbf{A}\mathbf{B}_\mathrm{u}&
+\mathbf{A}^2\mathbf{B}_\mathrm{u}&
+\mathbf{A}^3\mathbf{B}_\mathrm{u}
+\end{bmatrix}.
+$$
+
+对该四阶模型直接计算可得
+
+$$
+\det \mathcal{C}_\mathrm{c}
+=
+-\frac{k_2^2}{m_1^4m_2^2}.
+$$
+
+因此在 $m_1\gt0$、$m_2\gt0$ 且 $k_2\ne0$ 时，系统对输入 $f$ 完全可控。物理上，这是因为控制力直接作用于 $m_1$，而 $m_2$ 只能通过两质量块之间的弹簧耦合间接受控；当 $k_2=0$ 时，$m_2$ 与被控质量块脱开，整体系统不可控。
+
+若输出包含 $x_1$ 与 $x_2$，则速度状态可由位置输出的动态关系反映到可观测性矩阵中，该模型通常满秩可观。若只测量 $\Delta x$，则可观性需要重新检查。实际工程中，单一差动位移传感器可能无法区分某些公共运动分量或低频漂移，因此观测器设计前必须以实际传感器输出矩阵构造
+
+$$
+\mathcal{O}=
+\begin{bmatrix}
+\mathbf{C}\\
+\mathbf{C}\mathbf{A}\\
+\mathbf{C}\mathbf{A}^2\\
+\mathbf{C}\mathbf{A}^3
 \end{bmatrix}
 $$
 
-其中：
-$$
-A_{11} = m_1 s^2 + (c_1 + c_2)s + (k_1 + k_2), \quad
-A_{22} = m_2 s^2 + c_2 s + k_2, \quad
-A_{12} = A_{21} = -(c_2 s + k_2).
-$$
+并检查 $\operatorname{rank}(\mathcal{O})$。
 
-公共分母（四阶多项式）：
-$$
-\boxed{
-D(s) = \det A(s)
-= m_1 m_2 s^4+ [m_1 c_2 + m_2 (c_1 + c_2)] s^3+ [m_1 k_2 + m_2 (k_1 + k_2) + c_1 c_2] s^2+ (c_1 k_2 + c_2 k_1) s + k_1 k_2
-}
-$$
+### 1.6 仿真模型骨架
 
-$$
-\boxed{
-\frac{\Delta X(s)}{F(s)} = \frac{-m_2 s^2}{D(s)}, \qquad
-\frac{\Delta X(s)}{W(s)} = \frac{-m_2 s^2 (c_1 s + k_1)}{D(s)}
-}
-$$
-
-基于上述传递函数解析表达，我们可以绘制出 Bode 图，并进行稳定裕度的分析，这将是后续环路整形的重要基础。
-
-### A.6 仿真模型搭建
-
-#### A.6.1 MATLAB 代码
-
-```MATLAB
-% ---- continuous-time (absolute coords) ----
-A = [ 0,            0,            1,              0;
-      0,            0,            0,              1;
-     -k1/m1,        k1/m1,       -d1/m1,         d1/m1;
-      k1/m2, -(k1+k2)/m2,        d1/m2, -(d1+d2)/m2 ];
-
-B = [ 0, 0, 0;
-      0, 0, 0;
-      1/m1, 0, 0;
-      0,   k2/m2, d2/m2 ];
-
-C = [ -1, 1, 0, 0 ];
-
-D = zeros(1,3);
-
-% ---- relative coords r1 = x1 - xg, r2 = x2 - xg ----
-A_r = A;
-B_r = [ 0,   0;
-        0,   0;
-      1/m1, -1;
-        0,  -1 ];
-
-C_r = C;
-D_r = zeros(1,2);
-
-% ---- soft mass formulation ----
-M_soft   = [ eye(2),            zeros(2);
-             zeros(2), diag([m1, m2]) ];
-
-K_D_soft = [ zeros(2),                   eye(2);
-             [ k1,   -k1;  -k1, k1+k2 ], [ d1,   -d1;  -d1, d1+d2 ] ];
-
-F_soft   = [ zeros(2,3);
-             1, 0, 0;
-             0, k2, d2 ];
-```
-
-#### A.6.2 Python 代码
+以下 Python 代码给出与本文符号一致的状态空间矩阵。这里不依赖控制专用库，只构造矩阵，后续可接入 `scipy.signal.StateSpace`、数值积分器或自定义仿真框架。
 
 ```python
 import numpy as np
 
-# ---- continuous-time (absolute coords) ----
-A = np.array([
-    [0,            0,            1,              0],
-    [0,            0,            0,              1],
-    [-k1/m1,       k1/m1,       -d1/m1,         d1/m1],
-    [ k1/m2, -(k1+k2)/m2,       d1/m2, -(d1+d2)/m2]
-], dtype=float)
 
-B = np.array([
-    [0, 0, 0],
-    [0, 0, 0],
-    [1/m1, 0,   0],
-    [0,   k2/m2, d2/m2]
-], dtype=float)
+def two_stage_model(m1, m2, c1, c2, k1, k2):
+    A = np.array(
+        [
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+            [-(k1 + k2) / m1, k2 / m1, -(c1 + c2) / m1, c2 / m1],
+            [k2 / m2, -k2 / m2, c2 / m2, -c2 / m2],
+        ],
+        dtype=float,
+    )
 
-C = np.array([
-    [-1, 1, 0, 0]
-], dtype=float)
+    B_abs = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [1.0 / m1, k1 / m1, c1 / m1],
+            [0.0, 0.0, 0.0],
+        ],
+        dtype=float,
+    )
 
-D = np.zeros((1,3), dtype=float)
+    B_rel = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, 0.0],
+            [1.0 / m1, -1.0],
+            [0.0, -1.0],
+        ],
+        dtype=float,
+    )
 
-# ---- relative coords r1 = x1 - xg, r2 = x2 - xg ----
-A_r = A.copy()
-B_r = np.array([
-    [0,   0],
-    [0,   0],
-    [1/m1, -1],
-    [0,   -1]
-], dtype=float)
+    C_y = np.array(
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [-1.0, 1.0, 0.0, 0.0],
+        ],
+        dtype=float,
+    )
 
-C_r = C.copy()
-D_r = np.zeros((1,2), dtype=float)
-
-# ---- soft mass formulation ----
-Mq = np.diag([m1, m2])
-K  = np.array([[ k1,   -k1],
-               [-k1, k1+k2]], dtype=float)
-Dmat = np.array([[ d1,   -d1],
-                 [-d1, d1+d2]], dtype=float)
-
-M_soft = np.block([
-    [np.eye(2),          np.zeros((2,2))],
-    [np.zeros((2,2)),    Mq]
-]).astype(float)
-
-K_D_soft = np.block([
-    [np.zeros((2,2)), np.eye(2)],
-    [K,               Dmat]
-]).astype(float)
-
-F_soft = np.array([
-    [0, 0, 0],
-    [0, 0, 0],
-    [1, 0, 0],
-    [0, k2, d2]
-], dtype=float)
+    D_abs = np.zeros((3, 3), dtype=float)
+    D_rel = np.zeros((3, 2), dtype=float)
+    return A, B_abs, B_rel, C_y, D_abs, D_rel
 ```
 
-### A.7 关于两级质量-弹簧-阻尼系统的应用场景
+## 2 信号与 LTI 系统基础
 
-### A.8 如何对扰动和噪声进行建模
+### 2.1 信号分类
 
-#### A.8.1 白噪声
+连续时间信号用 $x(t)$ 表示，自变量 $t$ 在连续时间轴上取值。离散时间信号用 $x[n]$ 表示，自变量 $n$ 为整数，通常来自对连续时间信号的采样：
 
-理解“白噪声强度”的核心在于区分：
-
-- **连续时间白噪声**：由双边功率谱密度（PSD）$S_0$（单位：$\mathrm{unit}^2/\mathrm{Hz}$）定义  
-- **离散随机序列**：计算机生成的 i.i.d. 序列 $w[k]$
-
-在连续系统仿真中，为了保证噪声的功率谱密度 (PSD) 强度不随采样频率 $f_s$ 或采样时间 $T_s$ 的变化而改变，必须对离散生成的随机数进行幅度缩放。
-
-令连续白噪声 $n(t)$ 的双边 PSD 为常数：
-
-$$
-S_n^{(2)}(f)=S_0,\qquad f\in(-\infty,\infty).
-$$
-
-其幅度谱密度（ASD）为：
-
-$$
-A_0=\sqrt{S_0}\quad (\mathrm{unit}/\sqrt{\mathrm{Hz}}).
-$$
-
-定义离散噪声：
-
-$$
-n[k] = \sigma\, w[k],\qquad w[k]\sim\mathcal N(0,1)\ \text{i.i.d.}
-$$
-
-离散序列的方差为：
-
-$$
-\mathrm{Var}(n[k]) = \sigma^2.
-$$
-
-离散时间 PSD（数字角频率 $\Omega\in[-\pi,\pi]$）恒定：
-
-$$
-S_n^{\mathrm{DT}}(e^{j\Omega})=\sigma^2.
-$$
-
-将离散频率轴映射到物理频率 $f$：
-
-$$
-\Omega = 2\pi f T_s,\qquad f\in\left[-\frac{1}{2T_s},\frac{1}{2T_s}\right].
-$$
-
-离散 PSD 与连续 PSD 的转换关系为：
-
-$$
-S_n^{(2)}(f)=T_s\, S_n^{\mathrm{DT}}(e^{j2\pi fT_s}).
-$$
-
-因为 $S_n^{\mathrm{DT}}=\sigma^2$ 为常数，有：
-
-$$
-S_n^{(2)}(f)=T_s\,\sigma^2.
-$$
-
-希望离散噪声具有连续 PSD 强度 $S_0$，需满足：
-
-$$
-T_s\,\sigma^2 = S_0 \quad\Longrightarrow\quad \sigma^2 = \frac{S_0}{T_s}.
-$$
-
-因此离散白噪声应为：
-
-$$
-\boxed{\, n[k] = \sqrt{\frac{S_0}{T_s}}\,\mathcal N(0,1) \, }.
-$$
-
-若使用 ASD $A_0=\sqrt{S_0}$：
-
-$$
-\boxed{\, n[k] = \frac{A_0}{\sqrt{T_s}}\,\mathcal N(0,1) \, }.
-$$
-
-以上即为 $1/\sqrt{T_s}$ 缩放的根源。
-
-若使用**单边 PSD**（仅定义在 $f\ge 0$）：
-
-$$
-S^{(1)}(f) = 2S^{(2)}(f),\qquad f>0.
-$$
-
-对应 ASD 也会多因子 $\sqrt{2}$。  
-不同软件出现 $\sqrt{2}$ 或 $1/\sqrt{2}$ 的原因只是**单边/双边定义不同**，物理含义不变。
-
-#### A.8.2 成形滤波：白噪声经 $G(s)$ 变成有色噪声
-
-输入白噪声 $u(t)$，输出：
-
-$$
-Y(j\omega)=G(j\omega)U(j\omega).
-$$
-
-输出 PSD：
-
-$$
-\boxed{\, S_y(f)=|G(j2\pi f)|^2\, S_u(f) \, }.
-$$
-
-若输入为白噪声 $S_u(f)=S_0$，则：
-
-$$
-\boxed{\, S_y(f)=S_0\,|G(j2\pi f)|^2,\qquad 
-A_y(f)=\sqrt{S_0}\, |G(j2\pi f)|. \, }
-$$
-
-这就是地面噪声谱、传感器噪声谱所有数学推导的统一公式。
-
-#### A.8.3 地面扰动模型：ZPK → 多项式 → PSD
-
-该模型模拟地壳表面的背景噪声。这并非完全随机的白噪声，而是经过地球物理结构“滤波”后的有色噪声。
-- 微震峰 (Microseismic Peak): 在 0.1 ~ 0.3 Hz 附近存在显著能量峰值。这是由海浪冲击海岸线激发的瑞利波（Rayleigh waves），全球无处不在。
-- 高频衰减: 地层对高频震动有很强的吸收作用，通常 20Hz 以上能量急剧下降。
-- 低频特性: 极低频部分通常由大气压力变化或地倾斜引起。
-
-给定零极点：
-- 零点：$z_{1,2}=-\omega_z(1\pm j)$，$\omega_z=1.3\cdot 2\pi$，波形整形:设置在约 1.3 Hz 的复数零点，用于调整高频滚降前的频谱形状。
-- 极点组 1：$-\sigma\pm j\omega_m$，$\sigma=0.03\cdot 2\pi,\ \omega_m=0.18\cdot 2\pi$，主微震峰:实部极小(低阻尼)，虚部为 $0.18 \text{ Hz}$。这不仅模拟了海浪引起的共振，也是地面位移谱中能量集中的区域，高频截止: 20 Hz。模拟地层对高频人为噪声（如交通、机械）的吸收，以及人为设定的仿真带宽上限。
-- 极点组 2：双重根 $-\omega_h$，$\omega_h=20\cdot 2\pi$
-- 增益：$K = \frac{150}{3\times 10^{6}} = 5\times 10^{-7}$，量级调整: 将单位白噪声缩放到实际地面位移级别（通常在 $\mu m$ 或 $nm$ 级别）。
-
-关键数值：
-
-$$
-\omega_z=8.1681,\quad \sigma=0.1885,\quad \omega_m=1.1310,\quad \omega_h=125.6637.
-$$
-
-**ZPK 形式（最推荐）**
-
-$$
-\boxed{
-G_{\text{ground}}(s)
-= K
-\frac{(s-z_1)(s-z_2)}
-{(s-p_1)(s-p_2)(s+\omega_h)^2}
-}
-$$
-
-**展开为显式多项式**
-
-零点二阶因子：
-
-$$
-(s-z_1)(s-z_2)=s^2+16.33628180\,s+133.43705150.
-$$
-
-低频极点二阶因子：
-
-$$
-(s-p_1)(s-p_2)=s^2+0.3769911184\,s+1.314631306.
-$$
-
-高频双极点：
-
-$$
-(s+\omega_h)^2=s^2+251.3274123\,s+15791.3670417.
-$$
-
-四阶分母：
-
-$$
-s^4+251.7044034\,s^3+15887.42990\,s^2+6283.608012\,s+20759.82550.
-$$
-
-完整传递函数：
-
-$$
-\boxed{
-G_{\text{ground}}(s)=
-5\times 10^{-5}\;
-\frac{s^2+16.33628180\,s+133.43705150}
-{s^4+251.7044034\,s^3+15887.42990\,s^2+6283.608012\,s+20759.82550}
-}
-$$
-
-**扰动形状特征**
-
-对白噪声输入 $S_0$：
-
-$$
-\boxed{
-S_{x_g}(f)=S_0 \big|G_{\text{ground}}(j2\pi f)\big|^2
-}
-$$
-
-- 高频：$\sim 1/\omega^4$，滚降 $-40\ \mathrm{dB/dec}$
-- 低频附近 $0.18$ Hz：共振峰由 $-\sigma\pm j\omega_m$ 引起
-
-物理含义:
-- 主微震峰 (Microseismic Peak): 代码中的极点 `-0.03*2*pi ± 0.18*2*pi*1i` 对应约 0.18 Hz 的频率。这是地球物理学中著名的“海洋微震峰”，由海浪冲击海岸引起，地球上任何地方都能测到这个频率的震动。
-- 高频截止 (`-20*2pi`): 20Hz 以上地面震动通常衰减很快。
-
-作用: 生成真实的地面位移信号 $x_g$，作为系统的扰动输入。
-
-#### A.8.4 传感器本底噪声模型
-
-该模型模拟精密位移传感器（如 LVDT、电容传感器）或惯性传感器（如地震计、加速度计）的内部噪声限制。
-- 1/f 噪声 (Flicker Noise): 在低频段，噪声功率与频率成反比。表现为低频漂移（Drift），这是精密控制最大的敌人。
-- 电子热噪声 (Johnson Noise): 在中高频段表现为平坦的白噪声底（Noise Floor）。
-- 带宽限制: 传感器电子电路的截止频率。
-
-给定：
-
-- 零点：$(s+2)^4$，中频平坦化: 位于 2 rad/s (~0.3 Hz)，用于抵消部分极点的影响，使中频段噪声相对平坦。
-- 低频极点：$(s+0.1)^4$，1/f 噪声模拟: 位于 0.1 rad/s (~0.016 Hz)。四重极点意味着在极低频下，噪声以极陡峭的斜率上升，模拟严重的低频漂移。
-- 高频极点：$(s+\omega_b)$，$\omega_b = 3000\cdot 2\pi = 18849.55592$，带宽限制: 3 kHz。代表传感器放大电路的通频带上限。
-- 增益：$K = \omega_b\cdot 10^{-10} = 1.884955592\times 10^{-6}$，灵敏度限制: 这里的 db2mag(-200) 约为 $10^{-10}$。这意味着在高频段，传感器的本底噪声极低（达到 $10^{-10} m/\sqrt{Hz}$ 或更低级别），属于超高精度仪器。
-
-**ZPK 形式**
-
-$$
-\boxed{
-G_{\text{sensor}}(s)=K
-\frac{(s+2)^4}{(s+0.1)^4 (s+\omega_b)}
-}
-$$
-
-**显式多项式**
-
-$$
-(s+2)^4=s^4+8s^3+24s^2+32s+16,
-$$
-
-$$
-(s+0.1)^4=s^4+0.4s^3+0.06s^2+0.004s+0.0001.
-$$
-
-完整表达式：
-
-$$
-\boxed{
-G_{\text{sensor}}(s)=
-(1.884955592\times 10^{-6})\,
-\frac{s^4+8s^3+24s^2+32s+16}
-{(s^4+0.4s^3+0.06s^2+0.004s+10^{-4})(s+18849.55592)}
-}
-$$
-
-**各频段噪声形状（渐近阶）**
-
-- **低频（漂移）**：$|G|\sim 1/\omega^4 \Rightarrow +80\ \mathrm{dB/dec}$
-- **中频（平坦噪声地板）**：$\approx 10^{-10}$
-- **高频**：$|G|\sim 1/\omega \Rightarrow -20\ \mathrm{dB/dec}$
-
-物理含义:
-- 极低频极点 (`-0.1`): 模拟 $1/f$ 噪声（粉红噪声）。在极低频下，传感器的漂移（Drift）会变得非常大，导致噪声功率谱密度（PSD）斜率上升。
-- 高频极点 (`-3000*2pi`): 模拟电子电路的带宽限制（Bandwidth Limit）。
-- 零点 (`-2`): 用于调整中频段的噪声平坦度。
-
-作用: 当我们把白噪声输入这个模型，输出的就是符合真实传感器特性的“有色噪声”。
-
-#### A.8.5 Tustin 离散化（必须使用双线性变换）
-
-双线性变换：
-
-$$
-\boxed{
-s = \frac{2}{T_s} \frac{1-z^{-1}}{1+z^{-1}}
-}
-$$
-
-频率映射：
-
-$$
-\Omega = 2\arctan\!\left(\frac{\omega T_s}{2}\right).
-$$
-
-对于连续系统：
-
-$$
-\dot{x}=Ax+Bu,\qquad y=Cx+Du,
-$$
-
-Tustin 离散化得到：
-
-$$
-x[k+1]=A_d x[k]+B_d u[k],\qquad y[k]=C_d x[k]+D_d u[k].
-$$
-
-矩阵公式：
-
-$$
-\boxed{
-A_d=(I-\tfrac{T_s}{2}A)^{-1}(I+\tfrac{T_s}{2}A)
-}
-$$
-
-$$
-\boxed{
-B_d=(I-\tfrac{T_s}{2}A)^{-1} T_s B
-}
-$$
-
-$$
-\boxed{
-C_d=C(I-\tfrac{T_s}{2}A)^{-1}
-}
-$$
-
-$$
-\boxed{
-D_d=D+\tfrac{T_s}{2}\,C(I-\tfrac{T_s}{2}A)^{-1}B
-}
-$$
-
-#### A.8.6 噪声注入方式（动力学扰动 + 传感器噪声）
-
-测量量：
-
-$$
-\boxed{
-y_{\text{meas}}(t)=y_{\text{true}}(t)+n_{\text{sensor}}(t)
-}
-$$
-
-动力学扰动：
-
-$$
-\dot{x}=Ax+Bu+E\, d,
-$$
-
-其中 $d$ 包含地面位移、速度、加速度等扰动项，由运动方程确定。
-
-地面位移由白噪声经成形滤波得到：
-
-$$
-x_g = G_{\text{ground}} * u_g,\qquad
-u_g[k] \sim \frac{A_0}{\sqrt{T_s}}\, \mathcal N(0,1).
-$$
-
-<img src="/fig/GrdDis_and_SensorNoise.png" alt="扰动与噪声特性" width="95%">
-
-#### A.8.7 其它类型的扰动与噪声
-1. 液压致动器干扰 (Hydraulic Actuator Noise)：模拟液压系统中流体压力波动引起的力干扰。
-    - 传递函数:
-    $$
-    H_x(s) = \frac{2.4 \times 10^8}{s^2 + 72s + 90^2}
-    $$
-    - 特征: 二阶系统，共振频率约 90 rad/s (~14 Hz)，阻尼较小。
-2. 材料厚度/硬度变化 (Thickness/Hardness Disturbance)：模拟轧制过程中进入轧机的金属材料厚度不均。
-    - 传递函数:
-    $$
-    F_{ix}(s) = \frac{10^4}{s + 0.05}
-    $$
-    - 特征: 极低频干扰（近乎直流漂移），表现为慢速变化的负载。
-3. 轧辊偏心干扰 (Rolling Eccentricity)：模拟旋转机械的偏心引起的周期性干扰。
-    - 传递函数:$$F_{ex}(s) = \frac{3 \times 10^4 s}{s^2 + 0.125s + 6^2}$$
-    - 特征: 带通/共振特性，中心频率 6 rad/s (~1 Hz)，模拟转速引起的周期性振动。
-
-### A.9 广义系统组合 (Augmented System Assembly)
-
-为了设计最优控制器（如 LQG 或 $H_\infty$），我们需要告诉控制器：“扰动不是纯随机的，它有特定的频谱特征”。代码将物理模型、地面扰动模型和传感器噪声模型合并成一个巨大的“广义系统”（Augmented System）。
-
-$$
-A_{total} = \begin{bmatrix}
-A_{sys} & B_{sys \leftarrow dis} \cdot C_{dis} & 0 \\
-0 & A_{dis} & 0 \\
-0 & 0 & A_{sn}
-\end{bmatrix}
-$$
-
-- 左上角 ($A_{sys}$): 原始物理系统（2-DOF 平台）。
-- 中间 ($A_{dis}$): 地面扰动滤波器。注意右上角的耦合项 $B_{sys \leftarrow dis} \cdot C_{dis}$。这意味着：扰动滤波器的输出（有色地面震动）直接变成了物理系统的输入。
-- 右下角 ($A_{sn}$): 传感器噪声滤波器。它在 A 矩阵中是解耦的（全零块），但在输出矩阵 C 中会耦合。
-
-控制器读到的测量值 = 真实的系统位置 + 传感器噪声。
-$$
-y_{total} = C_{sys} \cdot x_{sys} + 0 \cdot x_{dis} + C_{sn} \cdot x_{sn}
-$$
-
-## B 控制器设计实践
-
-### B.1 对 A 中模型进行可控性分析
-
-只有 $u$（第一列）是控制力，其余项均为扰动。因此，进行可控性分析时，应选取的输入矩阵 $B_u$ 为：
-$$
-B_u = \begin{bmatrix}
-0 \\
-0 \\
-\frac{1}{m_1} \\
-0
-\end{bmatrix}
-$$
-
-系统状态方程为：
-$$
-\dot x = Ax + B_u u
-$$
-其中，系统矩阵 $A$ 为：
-$$
-A=\begin{bmatrix}
-0 & 0 & 1 & 0 \\
-0 & 0 & 0 & 1 \\
--\frac{k_1+k_2}{m_1} & \frac{k_2}{m_1} & -\frac{c_1+c_2}{m_1} & \frac{c_2}{m_1} \\
-\frac{k_2}{m_2} & -\frac{k_2}{m_2} & \frac{c_2}{m_2} & -\frac{c_2}{m_2}
-\end{bmatrix}
-$$
-
-对于该四阶系统，可控性矩阵 $\mathcal{C}$ 定义为：
-$$
-\mathcal C = [B_u, AB_u, A^2B_u, A^3B_u]
-$$
-经过直接计算，该矩阵的行列式为：
-$$
-\det(\mathcal C) = -\frac{k_2^2}{m_1^4 m_2^2}
-$$
-根据行列式的结果分析系统的可控性：
-- 完全可控条件：只要满足 $k_2 \neq 0$、$m_1 \neq 0$、$m_2 \neq 0$，则有 $\det(\mathcal C) \neq 0$，这意味着 $\operatorname{rank}(\mathcal C) = 4$。此时系统对输入 $u$ 是完全可控的。
-- 不可控条件：当 $k_2 = 0$ 时，$\det(\mathcal C) = 0$，可控性矩阵的秩降为 2，此时系统不可控。
-
-物理上的理解是控制力 $u$ 仅直接作用在质量块 $m_1$ 上。
-- 当 $k_2 > 0$ 时（存在耦合）：两个质量块通过刚度为 $k_2$ 的弹簧相互耦合。因此，通过控制 $m_1$ 的运动，可以利用弹簧力间接驱动 $m_2$。最终，系统的四个状态（两个质块的位置和速度）都能被控制到任意值，故系统可控。
-- 当 $k_2 = 0$ 时（失去耦合）：两个质量块不再相连。第二个质量块 $m_2$ 既没有受到直接控制力，也没有受到来自 $m_1$ 的间接弹簧力作用。它的位移和速度完全无法被输入 $u$ 影响，只能自由运动。因此，系统整体不可控。
----
-
-以下是知识性笔记整理。
-
-## 1 信号与系统
-
-### 1.1 信号的基本概念
-
-#### 1.1.1 分类
-
-* **连续时间信号 (Continuous-Time Signal, CT)**
-    * **定义：** 信号在时间上是连续的，在任意一个时刻都有确定的值。可以想象成一条连续的曲线。
-    * **表示：** 通常用 $x(t)$ 来表示，其中 $t$ 是连续的时间变量。
-    * **例子：** 语音信号、模拟电视信号、温度变化曲线、电压电流随时间的变化。
-
-* **离散时间信号 (Discrete-Time Signal, DT)**
-    * **定义：** 信号只在某些离散的时刻有值，在其他时刻没有定义。可以想象成一系列独立的点。
-    * **表示：** 通常用 $x[n]$ 来表示，其中 $n$ 是离散的整数变量，代表采样时刻。
-    * **例子：** 数字音频信号（CD）、股票每日收盘价、计算机处理的图像像素值。
-
-> **关键区别：** 连续时间信号的自变量是连续的，离散时间信号的自变量是离散的。离散时间信号通常是通过对连续时间信号进行**采样**（sampling）得到的。
-
-* **周期信号 (Periodic Signal)**
-    * **定义：** 信号在一定时间间隔后会重复出现。
-    * **连续时间周期信号：** 存在一个正数 $T_0$ (基波周期)，使得 $x(t) = x(t + T_0)$ 对于所有 $t$ 都成立。
-    * **离散时间周期信号：** 存在一个正整数 $N_0$ (基波周期)，使得 $x[n] = x[n + N_0]$ 对于所有整数 $n$ 都成立。
-    * **例子：** 正弦波、方波、交流电。
-
-* **非周期信号 (Aperiodic Signal)**
-    * **定义：** 信号不重复出现，或者说找不到一个满足周期条件的 $T_0$ 或 $N_0$。
-    * **例子：** 单位冲激信号、阶跃信号、一段语音（通常是非周期的）。
-
-> 上述内容只是概念性的介绍，实际上尤其是离散周期信号是比较复杂的。
-
-* **信号的能量 (Energy) $E$：**
-    * **连续时间信号：** $E = \int_{-\infty}^{\infty} |x(t)|^2 dt$
-    * **离散时间信号：** $E = \sum_{n=-\infty}^{\infty} |x[n]|^2$
-
-* **信号的平均功率 (Average Power) $P$：**
-    * **连续时间信号：** $P = \lim_{T \to \infty} \frac{1}{2T} \int_{-T}^{T} |x(t)|^2 dt$
-    * **离散时间信号：** $P = \lim_{N \to \infty} \frac{1}{2N+1} \sum_{n=-N}^{N} |x[n]|^2$
-
-* **能量信号 (Energy Signal)**
-    * **定义：** 能量 $E$ 为一个有限正值 ($0 < E < \infty$)，而平均功率 $P = 0$。
-    * **特点：** 信号在时间上是有限的，或者幅度会随着时间趋于无穷而衰减到零。
-    * **例子：** 单位冲激信号、衰减指数信号 $e^{-at}u(t)$ ($a>0$)。
-
-* **功率信号 (Power Signal)**
-    * **定义：** 平均功率 $P$ 为一个有限正值 ($0 < P < \infty$)，而总能量 $E = \infty$。
-    * **特点：** 信号持续时间无限长，且其幅度不会衰减到零。
-    * **例子：** 周期信号（如正弦波、方波）、直流信号 $x(t) = C$。
-
-#### 1.1.2 信号的变换
-
-假设我们有一个信号 $x(t)$。
-
-1.  **翻转 (Time Reversal / Folding)**
-    * **运算：** $y(t) = x(-t)$
-    * **效果：** 信号相对于时间轴 $t=0$ 进行翻转（镜像）。
-    * **例子：** 如果 $x(t)$ 是从0开始上升的，那么 $x(-t)$ 就是从0开始下降的。
-
-2.  **时移 (Time Shift)**
-    * **运算：** $y(t) = x(t - t_0)$
-    * **效果：**
-        * 如果 $t_0 > 0$，信号向右（正方向）移动 $t_0$ 单位。这被称为**延迟** (delay)。
-        * 如果 $t_0 < 0$，信号向左（负方向）移动 $|t_0|$ 单位。这被称为**超前** (advance)。
-    * **记忆技巧：** $t-t_0$ ，“减” 表示向右移，“加” 表示向左移。想想 $x(t-2)$，原信号在 $t=0$ 的点现在要到 $t=2$ 才能出现，所以是右移。
-
-3.  **尺度变换 (Time Scaling)**
-    * **运算：** $y(t) = x(at)$
-    * **效果：**
-        * 如果 $|a| > 1$，信号被**压缩**。例如，$x(2t)$ 会比 $x(t)$ 变化得快一倍，持续时间缩短一半。
-        * 如果 $0 < |a| < 1$，信号被**扩展**。例如，$x(t/2)$ 会比 $x(t)$ 变化得慢一倍，持续时间延长一倍。
-        * 如果 $a < 0$，除了压缩或扩展外，还会伴随**翻转**（因为有负号）。
-
-**组合运算：** 当这些运算组合在一起时，比如 $x(at - b)$，处理顺序很重要。通常建议先进行尺度变换和翻转，再进行时移，或者反过来。
-
-* **方法一（先移后缩）：**
-    1.  对 $x(t)$ 先进行时移：$x(t - t_{shift})$
-    2.  再对结果进行尺度变换：$x(a(t - t_{shift})) = x(at - at_{shift})$。
-        此时 $b = at_{shift}$，所以 $t_{shift} = b/a$。
-        这意味着，如果信号是 $x(at-b)$，它相对于原信号向右移动了 $b/a$。
-
-* **方法二（先缩后移）：**
-    1.  对 $x(t)$ 先进行尺度变换：$x(at)$
-    2.  再对结果进行时移：$x(a(t - t_{shift}')) = x(at - at_{shift}')$
-        此时 $b = at_{shift}'$，所以 $t_{shift}' = b/a$。
-
-无论哪种方法，最终结果都是一样的，但理解过程有助于避免混淆。最简单的方法是找到信号中的关键点，比如 $x(0)$ 对应的位置，然后计算新信号中该点位于何处。
-
-例如，对于 $y(t) = x(2t - 4)$：
-让 $2t - 4 = 0 \implies t = 2$。这意味着原信号在 $t=0$ 处的值，现在出现在新信号的 $t=2$ 处。所以它是向右移动了 2 个单位，并且被压缩了一半。
-
-#### 1.1.3 基本信号
-
-* **连续时间单位冲激信号 (Dirac Delta Function)**：用 $\delta(t)$ 表示。
-    * **定义：**
-        1.  $\delta(t) = 0$, 当 $t \neq 0$
-        2.  $\int_{-\infty}^{\infty} \delta(t) dt = 1$
-    * **物理意义：** 想象一个在 $t=0$ 时刻发生的一个**极短但强度极大**的“冲击”或“脉冲”，其持续时间无限接近于零，但其“面积”（或“能量”）为1。
-    * **图像：** 通常用一个带箭头的竖直线表示，箭头旁边标上“1”表示其面积。
-    * **重要性质：**
-        * **抽样特性 (Sampling Property)：**
-            $f(t)\delta(t) = f(0)\delta(t)$
-            $\int_{-\infty}^{\infty} f(t)\delta(t-t_0) dt = f(t_0)$
-            这意味着冲激信号可以“提取”出另一个信号在特定时刻的值。这个性质在系统分析中非常有用。
-        * **时移冲激：** $\delta(t-t_0)$ 表示冲激发生在 $t_0$ 时刻。
-        * **偶函数：** $\delta(t) = \delta(-t)$
-
-* **离散时间单位冲激信号 (Unit Sample Sequence)**：用 $\delta[n]$ 表示。
-    * **定义：**
-        1.  $\delta[n] = 1$, 当 $n = 0$
-        2.  $\delta[n] = 0$, 当 $n \neq 0$
-    * **物理意义：** 在 $n=0$ 处有一个值为 1 的样本，其他地方都为 0。
-    * **图像：** 在 $n=0$ 处画一个向上值为1的箭头（或点），其他点为0。
-    * **重要性质：**
-        * **抽样特性：**
-            $f[n]\delta[n] = f[0]\delta[n]$
-            $\sum_{n=-\infty}^{\infty} f[n]\delta[n-n_0] = f[n_0]$
-        * **时移冲激：** $\delta[n-n_0]$ 表示冲激发生在 $n_0$ 时刻。
-        * **偶函数：** $\delta[n] = \delta[-n]$
-
-> **理解冲激信号：** 冲激信号就像一个“瞬间的力”或者一个“瞬间的事件”。在工程中，比如一个榔头敲击一下，或者一个闪电，都可以近似地看作是一个冲激信号。
-
-* **连续时间单位阶跃信号**：用 $u(t)$ 表示。
-    * **定义：**
-        $u(t) = 1$, 当 $t \ge 0$
-        $u(t) = 0$, 当 $t < 0$
-    * **物理意义：** 表示一个信号从某一时刻开始“突然”从 0 变为 1 并保持。
-    * **图像：** 在 $t=0$ 处有一个跳变，从 0 变为 1。
-    * **与冲激信号的关系：**
-        * 冲激信号是阶跃信号的导数：$\delta(t) = \frac{du(t)}{dt}$
-        * 阶跃信号是冲激信号的积分：$u(t) = \int_{-\infty}^{t} \delta(\tau) d\tau$
-        * 这个关系非常重要，它连接了冲激和阶跃这两个基本信号。
-
-* **离散时间单位阶跃信号**：用 $u[n]$ 表示。
-    * **定义：**
-        $u[n] = 1$, 当 $n \ge 0$
-        $u[n] = 0$, 当 $n < 0$
-    * **与冲激信号的关系：**
-        * $\delta[n] = u[n] - u[n-1]$ （离散冲激是两个阶跃信号的差分）
-        * $u[n] = \sum_{k=-\infty}^{n} \delta[k]$ （离散阶跃是离散冲激的求和）
-
-> **理解阶跃信号：** 阶跃信号就像一个“开关”，从某一时刻开始接通。比如，一个灯泡在某一刻突然被点亮，之后一直亮着。
-
-* **连续时间实指数信号：** $x(t) = Ce^{at}$
-    * **如果 $a > 0$：** 信号随时间**指数增长**。
-    * **如果 $a < 0$：** 信号随时间**指数衰减**。
-    * **如果 $a = 0$：** 信号是**直流信号** $x(t) = C$。
-    * **与单位阶跃组合：** $x(t) = Ce^{at}u(t)$ 表示一个从 $t=0$ 开始的指数信号。
-
-* **离散时间实指数信号：** $x[n] = C\alpha^n$
-    * **如果 $|\alpha| > 1$：** 信号随 $n$ **指数增长**。
-    * **如果 $0 < |\alpha| < 1$：** 信号随 $n$ **指数衰减**。
-    * **如果 $\alpha = 1$：** 信号是**直流信号** $x[n] = C$。
-    * **如果 $\alpha = -1$：** 信号在 $C$ 和 $-C$ 之间**交替变化**（振荡）。
-    * **与单位阶跃组合：** $x[n] = C\alpha^n u[n]$ 表示一个从 $n=0$ 开始的指数信号。
-
-> **理解指数信号：** 指数信号在自然界中非常常见，比如放射性衰变、电容器充放电、人口增长等。
-
-* **连续时间正弦信号：** $x(t) = A\cos(\omega_0 t + \phi)$ 或 $A\sin(\omega_0 t + \phi)$
-    * $A$ 是**幅度 (Amplitude)**。
-    * $\omega_0$ 是**角频率 (Angular Frequency)**，单位是弧度/秒 (rad/s)。它决定了信号变化的快慢。
-    * $\phi$ 是**相位 (Phase)**，单位是弧度 (rad)。它决定了信号波形相对于原点的偏移。
-    * **周期 $T_0 = 2\pi / \omega_0$**
-    * **频率 $f_0 = \omega_0 / (2\pi)$**，单位是赫兹 (Hz)。
-
-* **复指数信号 (Complex Exponential Signal)：** $x(t) = Ce^{j\omega_0 t}$
-    * 根据欧拉公式：$e^{j\theta} = \cos\theta + j\sin\theta$
-    * 所以，$e^{j\omega_0 t} = \cos(\omega_0 t) + j\sin(\omega_0 t)$
-    * **重要性：** 复指数信号是周期信号和非周期信号在频域分析（傅里叶分析）中的“基石”。任何正弦信号都可以表示为一对共轭复指数信号的和。
-    * **在LTI系统中：** 复指数信号输入LTI系统，输出仍然是相同频率的复指数信号，只是幅度和相位可能发生变化。这是一个非常重要的性质。
-
-* **离散时间正弦信号：** $x[n] = A\cos(\Omega_0 n + \phi)$ 或 $A\sin(\Omega_0 n + \phi)$
-    * $\Omega_0$ 是**离散时间角频率 (Discrete-Time Angular Frequency)**，单位是弧度 (rad)。
-    * **离散时间信号的周期性：** 与连续时间信号不同，离散时间正弦信号不一定都是周期信号。要使 $x[n]$ 周期为 $N_0$，必须满足 $\Omega_0 N_0 = 2\pi k$ (其中 $k$ 是整数)，即 $\Omega_0 / (2\pi) = k/N_0$ 必须是一个有理数。
-    * **离散时间复指数信号：** $x[n] = Ce^{j\Omega_0 n}$
-        * 它也具有类似连续时间复指数信号的重要性。
-        * 值得注意的是，$e^{j(\Omega_0 + 2\pi)n} = e^{j\Omega_0 n}e^{j2\pi n} = e^{j\Omega_0 n} \cdot 1 = e^{j\Omega_0 n}$。这意味着在离散时间中，频率 $\Omega_0$ 和 $\Omega_0 + 2\pi$ 是等效的。所有独特的离散时间频率都位于一个 $2\pi$ 的区间内，例如 $[-\pi, \pi)$ 或 $[0, 2\pi)$。这在采样和数字信号处理中非常重要。
-
-> **理解正弦信号：** 正弦信号是周期运动的数学描述，是自然界中最基本的振动形式。在电路、通信、声学等领域无处不在。
-
-* **连续时间斜坡信号：** $r(t) = t u(t)$
-    * **定义：**
-        $r(t) = t$, 当 $t \ge 0$
-        $r(t) = 0$, 当 $t < 0$
-    * **图像：** 从 $t=0$ 开始以 45 度角向上倾斜的直线。
-    * **与阶跃信号的关系：** 斜坡信号是阶跃信号的积分：$r(t) = \int_{-\infty}^{t} u(\tau) d\tau$
-
-### 1.2 系统的基本概念
-
-在信号与系统中，**系统（System）** 是处理信号的实体。它可以看作是一个“黑箱”，接收一个或多个输入信号，并产生一个或多个输出信号。
-
-系统可以是物理设备（如电路、滤波器），也可以是数学模型（如描述物理过程的方程）。我们的目标是理解当给定一个输入信号时，系统会如何响应并产生输出信号。
-
-通常，我们用 $y(t) = T\{x(t)\}$（连续时间）或 $y[n] = T\{x[n]\}$（离散时间）来表示系统，其中 $T$ 代表系统的变换或操作。
-
-**线性**是系统最重要的性质之一，因为它极大地简化了系统分析。一个系统是线性的，必须同时满足**齐次性**和**叠加性**（或称可加性）。
-
-* **齐次性 (Homogeneity)**：如果输入 $x(t)$ 产生输出 $y(t)$，那么输入 $ax(t)$ 会产生输出 $ay(t)$，其中 $a$ 是任意常数。
-    * **数学表示：** $T\{ax(t)\} = aT\{x(t)\}$
-
-* **叠加性 (Additivity)**：如果输入 $x_1(t)$ 产生输出 $y_1(t)$，输入 $x_2(t)$ 产生输出 $y_2(t)$，那么输入 $(x_1(t) + x_2(t))$ 会产生输出 $(y_1(t) + y_2(t))$。
-    * **数学表示：** $T\{x_1(t) + x_2(t)\} = T\{x_1(t)\} + T\{x_2(t)\}$
-
-* **线性系统定义：** 同时满足齐次性和叠加性的系统。可以合写为：
-    $T\{a x_1(t) + b x_2(t)\} = a T\{x_1(t)\} + b T\{x_2(t)\} = a y_1(t) + b y_2(t)$
-
-* **非线性系统：** 不满足线性条件的系统。
-    * **例子：** $y(t) = x^2(t)$ (平方运算), $y(t) = \cos(x(t))$ (三角函数), $y(t) = x(t) + 1$ (有常数项或直流偏置的系统通常是非线性的，因为 $T\{ax(t)\} = ax(t)+1 \neq a(x(t)+1)$)
-
-> **为什么线性重要？** 对于线性系统，我们只要知道它对几个基本信号的响应，就可以推导出它对任意复杂信号的响应。这在傅里叶分析和卷积等后续内容中会体现出来。
-
-**时不变性**描述了系统参数是否随时间变化。
-
-* **时不变系统定义：** 系统的特性不随时间变化。如果输入 $x(t)$ 产生输出 $y(t)$，那么将输入延迟（或超前）$t_0$ 单位时间，即 $x(t-t_0)$，将导致输出同样延迟（或超前）$t_0$ 单位时间，即 $y(t-t_0)$。
-    * **数学表示：** 如果 $x(t) \xrightarrow{T} y(t)$，那么 $x(t-t_0) \xrightarrow{T} y(t-t_0)$。
-    * **例子：** $y(t) = 2x(t)$ (放大器), $y(t) = \frac{dx(t)}{dt}$ (微分器)。它们的特性（放大倍数或微分操作）不随时间改变。
-
-* **时变系统：** 系统的特性随时间变化的系统。
-    * **例子：** $y(t) = tx(t)$ (乘上时间 $t$), $y(t) = \cos(t)x(t)$ (系统增益随时间变化)。一个随着时间老化的电子元件组成的电路，其特性也可能是时变的。
-
-> **为什么时不变重要？** 结合线性性，线性时不变（**LTI**）系统是信号与系统课程中最重要的系统类型。LTI系统可以用**冲激响应**完全描述，这为时域（卷积）和频域（傅里叶变换、拉普拉斯变换等）分析提供了强大工具。
-
-**因果性**关系到系统的输出是否只依赖于当前和过去的输入，而不依赖于未来的输入。
-
-* **因果系统定义：** 系统的输出 $y(t)$（或 $y[n]$）仅取决于当前时刻 $t$（或 $n$）以及之前时刻的输入 $x(\tau)$（或 $x[k]$，其中 $\tau \le t$ 或 $k \le n$）。换句话说，系统不能“预知未来”。
-    * **物理可实现性：** 所有的物理系统在实时运行时都必须是因果的。
-    * **例子：** $y(t) = x(t-1)$ (延迟系统), $y(t) = \int_{-\infty}^{t} x(\tau)d\tau$ (积分器)。
-    * **离散时间：** $y[n] = x[n] + x[n-1]$。
-
-* **非因果系统：** 系统的输出依赖于未来的输入。
-    * **例子：** $y(t) = x(t+1)$ (超前系统), $y(t) = x(t-1) + x(t+1)$。
-    * **非物理可实现性：** 实时处理中，非因果系统是无法物理实现的。但在离线数据处理（比如图像处理，可以事先知道所有数据）或理论分析中，非因果系统是允许存在的。
-
-**稳定性**是指系统在面对有界输入时，其输出是否也保持有界。
-
-* **BIBO 稳定 (Bounded-Input Bounded-Output Stable) 定义：**
-    如果对于任何有界输入信号 $x(t)$（即 $|x(t)| \le M_x < \infty$ 对于所有 $t$），系统的输出 $y(t)$ 也是有界的（即 $|y(t)| \le M_y < \infty$ 对于所有 $t$），那么系统是 BIBO 稳定的。
-    * 简单来说，输入不会让输出“爆炸”或无限增长。
-
-* **稳定系统：** 满足 BIBO 稳定条件的系统。
-    * **LTI 系统的稳定性条件（提前了解，后续会详讲）：** 对于连续时间LTI系统，如果其冲激响应 $h(t)$ 绝对可积，即 $\int_{-\infty}^{\infty} |h(t)|dt < \infty$，则系统稳定。对于离散时间LTI系统，如果其冲激响应 $h[n]$ 绝对可和，即 $\sum_{n=-\infty}^{\infty} |h[n]| < \infty$，则系统稳定。
-    * **例子：** $y(t) = \frac{1}{2}x(t)$。
-
-* **不稳定系统：** 不满足 BIBO 稳定条件的系统。即使输入有界，输出也可能无界。
-    * **例子：** 积分器 $y(t) = \int_{-\infty}^{t} x(\tau)d\tau$ 对于恒定输入 $x(t)=1$ 就会输出 $y(t)=t$，这是无界的，所以积分器是不稳定的。
-
-* **无记忆系统定义：** 系统的输出在任何时刻只取决于**当前时刻**的输入。
-    * **例子：** $y(t) = 2x(t)$ (放大器), $y(t) = x^2(t)$。
-    * **离散时间：** $y[n] = x[n]$。
-
-* **有记忆系统定义：** 系统的输出不仅取决于当前时刻的输入，还取决于**过去或未来**的输入。这意味着系统内部有“存储”过去信息的能力。
-    * **例子：** $y(t) = x(t-1)$ (延迟系统), $y(t) = \int_{-\infty}^{t} x(\tau)d\tau$ (积分器，需要“记住”过去的输入值), $y(t) = \frac{dx(t)}{dt}$ (微分器，理论上需要知道输入在无穷小时间步内的变化)。
-    * **离散时间：** $y[n] = x[n] + x[n-1]$。
-
-### 1.3 采样与重构
-
-在现实世界中，我们遇到的信号大多是**连续时间信号**（模拟信号），比如声音、温度、电压等。然而，计算机和数字系统只能处理**离散时间信号**（数字信号）。**采样**就是将连续时间信号转换为离散时间信号的过程，而**重构**则是尝试从离散时间信号恢复出原始的连续时间信号。
-
-#### 1.3.1 采样
-
-* **定义：** 采样是将一个连续时间信号 $x(t)$ 在一系列离散的时刻上进行测量，从而得到一个离散时间信号 $x[n]$ 的过程。
-* **采样间隔 (Sampling Period) $T_s$：** 相邻采样点之间的时间间隔。
-* **采样频率 (Sampling Frequency) $f_s$：** 每秒采样的次数， $f_s = 1/T_s$。对应的角频率为 $\omega_s = 2\pi f_s = 2\pi/T_s$。
-* **数学表示：**
-    一个简单的采样模型是将连续时间信号 $x(t)$ 乘以一个周期性的冲激串 $p(t) = \sum_{n=-\infty}^{\infty} \delta(t - nT_s)$：
-    $x_s(t) = x(t)p(t) = \sum_{n=-\infty}^{\infty} x(nT_s)\delta(t - nT_s)$
-    然后，离散时间信号 $x[n]$ 就是 $x(nT_s)$。
-
-* **采样对频谱的影响：**
-    当一个连续时间信号被采样后，其频谱会发生变化。原始信号 $X(j\omega)$ 的频谱会在频率轴上以 $\omega_s$ 为周期进行**周期延拓**（或称为**周期复制**）。
-    $$X_s(j\omega) = \frac{1}{T_s} \sum_{k=-\infty}^{\infty} X(j(\omega - k\omega_s))$$
-    这意味着，原始信号的频谱每隔 $\omega_s$ 就会复制一份。
-
-为了无失真地从采样信号中恢复原始信号，需要满足什么条件？
-
-* **采样定理：** 为了能够完美地从采样信号中重构出原始的连续时间信号，**采样频率 $f_s$ 必须至少是原始信号最高频率分量 $f_{max}$ 的两倍。**
-    即：$f_s \ge 2f_{max}$，或者 $\omega_s \ge 2\omega_{max}$。
-
-* **奈奎斯特频率 (Nyquist Frequency) $f_N = f_s/2$：** 这是采样频率的一半。
-* **奈奎斯特速率 (Nyquist Rate) $2f_{max}$：** 这是完美重构所需的最小采样频率。
-
-* **混叠 (Aliasing)：**
-    如果采样频率不满足采样定理（即 $f_s < 2f_{max}$），那么在采样的频谱中，原始信号的周期复制会发生**重叠**。当重叠发生时，高频分量会“伪装”成低频分量，导致无法区分原始信号中的高频和低频，从而使得从采样信号中无法准确恢复出原始信号。这种现象称为**混叠**。
-
-    * **如何避免混叠：**
-        1.  **提高采样频率：** 确保 $f_s \ge 2f_{max}$。
-        2.  **抗混叠滤波器 (Anti-aliasing Filter)：** 在采样之前，使用一个低通滤波器（称为抗混叠滤波器）滤除原始信号中高于奈奎斯特频率 $f_N$ 的所有频率分量。这确保了进入采样器的信号是**带宽受限**的，从而避免了混叠的发生。
-
-#### 1.3.2 重构
-
-**重构**是从离散时间信号 $x[n]$ 恢复出原始的连续时间信号 $x(t)$ 的过程。
-
-* **理想重构：**
-    如果采样满足采样定理（没有混叠），理论上可以通过一个**理想的低通滤波器（Ideal Low-Pass Filter）**来完美重构原始信号。
-    * **理想低通滤波器特性：**
-        * 在通带（$-\omega_N \le \omega \le \omega_N$ 或 $- \pi/T_s \le \omega \le \pi/T_s$）内，增益为 $T_s$。
-        * 在阻带（通带之外）内，增益为 $0$。
-    * **数学表示：**
-        理想重构滤波器的频率响应为：
-        $H_{rec}(j\omega) = \begin{cases} T_s, & |\omega| < \omega_s/2 \\ 0, & |\omega| \ge \omega_s/2 \end{cases}$
-        通过这个滤波器，周期复制的频谱会被滤除，只留下中心位置的原始频谱。
-
-* **实际重构：**
-    在实际应用中，理想低通滤波器是无法物理实现的（因为它的冲激响应是非因果且无限长的）。我们通常使用**非理想的低通滤波器**进行近似重构，这会导致一定程度的失真。
-
-    * **零阶保持 (Zero-Order Hold, ZOH)：** 最简单的重构方式之一，它将每个采样值保持恒定直到下一个采样点。这在数字-模拟转换器（DAC）中很常见。
-    * **一阶保持 (First-Order Hold, FOH)：** 用直线连接相邻的采样点。
-
-#### 1.3.3 频率分辨率
-
-- 采样率 (Sampling Rate, $f_s$) 决定了能分析的最大频率范围。根据奈奎斯特定理，您最多能无失真地分析到 $f_s / 2$ 的频率。
-- 采样间隔 (Sampling Interval, $T_s$) 是采样率的倒数：$T_s = 1 / f_s$。
-- 采样时间 (Observation Time, $T_{obs}$) / 段长 $M$：如果该段有 $M$ 个采样点，那么总时长 $T_{obs} = M \times T_s = M / f_s$。（在 Welch 方法中，这是指用于单次 FFT 的那一段信号的总时长。）
-- 频率分辨率 (Frequency Resolution, $\Delta f$)：分析方法能够区分开的两个靠得最近的频率之间的最小间隔。
-
-$M$ 点 FFT 接受 $M$ 个时域采样点（来自一个长度为 $T_{obs}$ 的信号段）。它输出 $M$ 个复数值。这 $M$ 个复数值代表了信号在 $M$ 个离散频率点上的幅度和相位。这 $M$ 个频率点（或称“频箱”/ bins）均匀地分布在由采样率 $f_s$ 决定的总频率范围 $0$ Hz 到 $f_s$ Hz 之间。总范围是 $f_s$，被 $M$ 个点瓜分。那么每个点之间的间隔（即频率分辨率 $\Delta f$）自然就是：
-$$\Delta f = \frac{\text{Total Frequency Range}}{\text{Number of Bins}} = \frac{f_s}{M}$$
-
-频率分辨率 $\Delta f$ 和观测时长 $T_{obs}$ 之间存在一个倒数关系（类似于海森堡不确定性原理）：
-$$\Delta f \approx \frac{1}{T_{obs}}$$
-
-让我们用一个直观的例子来理解：
-- 假设想分辨两个非常接近的频率：$f_1 = 100 \text{ Hz}$ 和 $f_2 = 100.1 \text{ Hz}$。
-- 这两个信号的频率差 $\Delta f = 0.1 \text{ Hz}$。
-- 当这两个信号叠加时，它们会产生一个“拍频”（Beat Frequency），其周期为 $T_{beat} = 1 / \Delta f = 1 / 0.1 = 10$ 秒。
-- 关键点：必须至少观测 10 秒钟（一个完整的拍频周期），才能在时域上完整地看到这两个信号“先同相、再反相、最后又回到同相”的完整过程，从而在频域上确认这是两个不同的频率。如果只观测了 1 秒钟（$T_{obs} = 1s$），这两个信号看起来几乎完全一样，FFT 会认为它们是同一个频率（大约 100 Hz）。
-- 结论：要想分辨出 $\Delta f$ 的频率差，您必须观测 $T_{obs} \ge 1 / \Delta f$ 的时间。反过来说，如果只观测了 $T_{obs}$ 的时间，能达到的最佳分辨率 $\Delta f$ 也就是 $1 / T_{obs}$。
-
-将两种视角联系起来，我们从物理视角得到了 $\Delta f \approx 1 / T_{obs}$。我们又知道 $T_{obs} = M / f_s$。将后者代入前者：
-$$\Delta f \approx \frac{1}{(M / f_s)} = \frac{f_s}{M}$$
-两个视角完美统一。
-
-> 最后，关于 "$\approx$" (约等于)：$\Delta f = f_s / M$ 是 FFT 频箱的精确间距。但我们用 "$\approx$" (约等于) 来表示物理分辨率，是因为这还受到窗函数的影响。例如，Hanning 窗的主瓣宽度大约是矩形窗（即不做任何处理）的 1.5 倍，所以要真正“分辨”开两个峰值（例如达到瑞利准则），它们之间的间隔可能需要 $1.5 \times (f_s / M)$。因此，用 $\approx$ 来表示物理分辨率是更严谨的。
-
-### 1.4 傅里叶变换
-
-Coming soon ...
-
-### 1.5 频域分析
-
-#### 1.5.1 LTI系统的频率响应
-
-我们知道，LTI系统对输入信号进行“操作”后得到输出信号。那么，如果输入的信号是一个**纯正弦波**（或者更广义地说是**复指数信号**），LTI系统会如何响应呢？
-
-答案是：**LTI系统对复指数信号的响应仍然是同频率的复指数信号，只不过幅度会改变，相位会偏移。** 这个改变的幅度比例和偏移的相位量，就揭示了系统对该频率信号的“处理能力”，也就是它的**频率响应**。
-
-在《信号与系统》中，我们常常使用**复指数信号** $e^{j\omega t}$ 来分析系统。
-* $j$ 是虚数单位。
-* $\omega$ 是角频率（rad/s）。
-* $t$ 是时间。
-
-为什么选择复指数信号呢？因为它是LTI系统的**特征函数（Eigenfunction）**。这意味着，当一个复指数信号 $e^{j\omega t}$ 作为输入 $x(t)$ 进入LTI系统时，输出 $y(t)$ 仍然是同频率的复指数信号，只是被一个**复常数** $H(j\omega)$ 缩放了：
-
-$y(t) = H(j\omega) e^{j\omega t}$
-
-这个复常数 $H(j\omega)$ 就是我们说的**频率响应**。
-
-假设LTI系统的**冲激响应**是 $h(t)$。我们知道，对于LTI系统，输出 $y(t)$ 是输入 $x(t)$ 和冲激响应 $h(t)$ 的**卷积**：
-
-$$y(t) = x(t) * h(t) = \int_{-\infty}^{\infty} x(\tau) h(t - \tau) d\tau$$
-
-现在，我们让输入 $x(t) = e^{j\omega t}$：
-
-$$y(t) = \int_{-\infty}^{\infty} e^{j\omega \tau} h(t - \tau) d\tau$$
-
-为了把 $e^{j\omega t}$ 提出来，我们做变量替换：$u = t - \tau$，那么 $\tau = t - u$， $d\tau = -du$。积分上下限也会交换，所以：
-
-$$y(t) = \int_{\infty}^{-\infty} e^{j\omega (t - u)} h(u) (-du) = \int_{-\infty}^{\infty} e^{j\omega t} e^{-j\omega u} h(u) du$$
-
-我们可以把 $e^{j\omega t}$ 提出来，因为它与积分变量 $u$ 无关：
-
-$$y(t) = e^{j\omega t} \int_{-\infty}^{\infty} h(u) e^{-j\omega u} du$$
-
-看到积分部分了吗？$\int_{-\infty}^{\infty} h(u) e^{-j\omega u} du$ 这不就是**冲激响应 $h(t)$ 的傅里叶变换**吗！
-
-所以，我们定义**频率响应 $H(j\omega)$ 为系统冲激响应 $h(t)$ 的傅里叶变换**：
-
-$$
-\boxed{
-    H(j\omega) = \mathcal{F}\{h(t)\} = \int_{-\infty}^{\infty} h(t) e^{-j\omega t} dt
-    }
-$$
-
-由于 $H(j\omega)$ 是一个复数（通常是复数，除非系统响应非常特殊），我们可以用**极坐标形式**来表示它：
-
-$$H(j\omega) = |H(j\omega)| e^{j\phi(\omega)}$$
-
-这里：
-- **$|H(j\omega)|$ 是频率响应的“模”（Magnitude Response），也叫幅度响应。**   
-- **$\phi(\omega)$ 是频率响应的“相位”（Phase Response）。**
-
-**幅度响应 $|H(j\omega)|$**
-
-* **定义：** 它表示LTI系统对不同频率的复指数信号（或正弦信号）的**幅度增益**。
-* **物理意义：** 如果一个频率为 $\omega$ 的信号输入系统，它的幅度会乘以 $|H(j\omega)|$。
-    * 如果 $|H(j\omega)| > 1$，系统在该频率下有**增益**（放大）。
-    * 如果 $|H(j\omega)| < 1$，系统在该频率下有**衰减**（ attenuate）。
-    * 如果 $|H(j\omega)| = 1$，系统在该频率下**幅度不变**。
-* **应用：**
-    * **滤波器设计：**
-        * **低通滤波器：** 在低频段 $|H(j\omega)|$ 接近1，高频段 $|H(j\omega)|$ 接近0（通过低频，衰减高频）。
-        * **高通滤波器：** 在高频段 $|H(j\omega)|$ 接近1，低频段 $|H(j\omega)|$ 接近0。
-        * **带通滤波器：** 在某个频率带内 $|H(j\omega)|$ 接近1，其他频率接近0。
-        * **带阻滤波器：** 在某个频率带内 $|H(j\omega)|$ 接近0，其他频率接近1。
-    * **均衡器：** 音频设备中的均衡器就是通过调整不同频率的幅度响应来改变音质。
-
-**相位响应 $\phi(\omega)$**
-
-* **定义：** 它表示LTI系统对不同频率的复指数信号（或正弦信号）的**相位偏移**。
-* **物理意义：** 如果一个频率为 $\omega$ 的信号输入系统，它的相位会增加 $\phi(\omega)$。
-    * 正的 $\phi(\omega)$ 意味着相位提前。
-    * 负的 $\phi(\omega)$ 意味着相位滞后。
-    * 相位滞后 $-\phi(\omega)$ 对应着时间上的延迟 $\Delta t = \frac{-\phi(\omega)}{\omega}$。
-* **物理意义举例：**
-    * 想象一个理想的音频放大器，你希望它只放大声音，而不改变声音的“和谐度”或不同频率声音的“相对到达时间”。如果相位响应是非线性的，会导致不同频率分量的时间延迟不同，从而引起**相位失真**，使声音听起来模糊或不自然。
-    * 在通信系统中，相位失真会影响信号的解调，导致数据错误。
-    * **理想情况：** 对于不引起相位失真的系统，我们通常希望相位响应是频率的线性函数，即 $\phi(\omega) = -k\omega$ (其中 $k$ 是常数)。这意味着所有频率分量都延迟了相同的固定时间 $k$，即纯时延，不会改变信号的波形。
-
-通常，我们通过绘制两个图来可视化LTI系统的频率响应：
-1.  **幅度响应图：** $20 \log_{10} |H(j\omega)|$ (通常用分贝 dB 表示) 对 $\omega$ 绘制。
-2.  **相位响应图：** $\phi(\omega)$ (用弧度或度数表示) 对 $\omega$ 绘制。
-
-#### 1.5.2 传递函数
-
-我们之前讨论了LTI系统的**冲激响应 $h(t)$** 和**频率响应 $H(j\omega)$**。它们都是描述系统特性的方法。
-
-传递函数 $H(s)$ 可以认为是频率响应 $H(j\omega)$ 的一个更广义的版本，它是系统冲激响应 $h(t)$ 的**拉普拉斯变换 (Laplace Transform)**：
-
-$$H(s) = \mathcal{L}\{h(t)\} = \int_{0^{-}}^{\infty} h(t) e^{-st} dt$$
-
-* 这里的 $s$ 是一个**复变量**，通常写成 $s = \sigma + j\omega$。
-    * 当 $\sigma = 0$ 时，即 $s = j\omega$，拉普拉斯变换就退化成了傅里叶变换。所以，**频率响应 $H(j\omega)$ 其实就是传递函数 $H(s)$ 在虚轴上的取值。**
-* 拉普拉斯变换的引入，主要是为了更方便地处理**非稳态（暂态）信号**和**初始条件**，同时也能描述**不稳定系统**（傅里叶变换要求系统稳定）。它在分析电路、控制系统等领域非常常用。
-
-对于一个LTI系统，如果输入是 $X(s)$ （输入信号的拉普拉斯变换），输出是 $Y(s)$ （输出信号的拉普拉斯变换），那么：
-
-$$Y(s) = H(s) X(s)$$
-
-所以，**传递函数 $H(s)$ 也可以定义为系统输出的拉普拉斯变换与输入拉普拉斯变换之比**，且默认所有初始条件为零。
-
-$$
-H(s) = \frac{Y(s)}{X(s)}
-$$ 
-(在零初始条件下)
-
-对于大多数由线性微分方程描述的LTI系统（比如RC电路、RLC电路、机械系统等），它们的传递函数通常可以表示为 $s$ 的**有理分式**，也就是两个多项式的比值：
-
-$$
-H(s) = \frac{N(s)}{D(s)} = \frac{b_m s^m + b_{m-1} s^{m-1} + \dots + b_1 s + b_0}{a_n s^n + a_{n-1} s^{n-1} + \dots + a_1 s + a_0}
-$$
-
-* $N(s)$ 是分子多项式。
-* $D(s)$ 是分母多项式。
-* $b_i$ 和 $a_i$ 是常数系数。
-
-**零点与极点**
-
-* **零点 (Zeros)：** 是使传递函数 $H(s)$ 的**分子 $N(s)$ 等于零**的 $s$ 值。
-    * 如果 $s=z_k$ 是一个零点，那么 $H(z_k)=0$。
-    * 在这些频率（如果 $z_k$ 在虚轴上）或 $s$ 平面上的这些点，系统对输入信号的响应为零。可以想象成，在这些频率下，系统“拒绝”信号通过。
-* **极点 (Poles)：** 是使传递函数 $H(s)$ 的**分母 $D(s)$ 等于零**的 $s$ 值。
-    * 如果 $s=p_k$ 是一个极点，那么 $H(p_k) \to \infty$。
-    * 在这些频率（如果 $p_k$ 在虚轴上）或 $s$ 平面上的这些点，系统对输入信号的响应会变得无穷大。这通常与系统的**固有模式**或**自然响应**有关。极点的位置决定了系统的稳定性和响应特性。
-
-我们把分子和分母多项式进行因式分解，就可以把传递函数写成**零点-极点形式**：
-
-$$H(s) = K \frac{(s-z_1)(s-z_2)\dots(s-z_m)}{(s-p_1)(s-p_2)\dots(s-p_n)}$$
-
-* $z_1, z_2, \dots, z_m$ 是零点。
-* $p_1, p_2, \dots, p_n$ 是极点。
-* $K$ 是一个常数增益因子。
-
-**为什么是 $(s-z_k)$ 和 $(s-p_k)$ 的形式？**
-举个例子，如果 $s=2$ 是一个零点，那么当 $s=2$ 时 $N(s)$ 必须为零，所以 $(s-2)$ 必然是 $N(s)$ 的一个因子。同理，极点也是这样。
-
-#### 1.5.3 从传递函数到频域响应
-
-#### 1.5.4 Bode 图与稳定裕度分析
-
-## 2 控制理论
-
-### 2.1 经典控制原理
-
-#### 2.1.1 被控对象建模概述与 SISO 问题概述
-
-控制系统设计之所以需要“被控对象模型”，核心原因在于：一方面，闭环控制的效果取决于对象对输入、扰动与初始条件的动态响应；另一方面，很多工程系统并不允许用“反复试错”去调参，因为成本、效率、复杂性甚至安全风险都使试错不可行。模型把对象行为用数学形式“搬到纸面/计算机里”，从而允许在虚拟情境下预测闭环性能、比较设计取舍并为控制器综合提供依据。
-
-真实对象往往极其复杂，因此控制建模通常追求的是“足够准确而不过度复杂”的**名义模型**（nominal model），它只需抓住与控制性能直接相关的主要动态与关键非线性。与之相对，**校准模型**（calibration model）更接近“真实对象”，包含更多细节；二者差异构成**建模误差**。控制设计一般基于名义模型，但最终要作用于真实对象，因此需要考虑鲁棒性，并尽量掌握误差的某种界或量化描述。
-
-对象模型可以来自两类互补思路：其一是依据守恒定律与物理/化学机理建立方程；其二是预设模型结构后用实验数据辨识参数（黑箱）。工程上常把两者结合：用机理认识确定主导动态、非线性与时变特性，再用数据拟合难以从一阶原理精确给出的部分参数或子模块。与此同时，执行器往往具有强非线性与自身动态，在不少系统中甚至成为主导动态，因此“对象模型”在控制意义上通常应把执行器一并纳入。
-
-控制中常见的模型结构包括：连续时间的微分方程/状态空间模型，离散时间的差分方程模型，以及二者混合的采样/混合系统。建模时也常按“单输入单输出/多输入多输出、线性/非线性、时不变/时变、连续/采样、输入输出模型/状态空间模型、集总参数/分布参数”等维度分类，以明确后续分析与设计可用的工具链。
-
-其中，状态空间模型用一阶向量微分方程刻画“内部状态”的演化；在一般非线性形式下可写为
-
-$$
-\dot x(t)=f(x(t),u(t),t),\quad y(t)=g(x(t),u(t),t),
-$$
-
-而在**线性时不变**（LTI）情形下为
-
-$$
-\dot x(t)=Ax(t)+Bu(t),\quad y(t)=Cx(t)+Du(t).
-$$
-
-LTI 的“线性”可由叠加原理定义，“时不变”对应时间平移不改变系统本质响应结构。
-
-对于大量经典控制分析，更常用的是**输入—输出**形式（高阶微分方程直接联系输入与输出）。这类模型与状态空间模型可相互转换，但在 SISO 场景下，输入—输出形式更容易导出传递函数并进入频域法框架。
-
-真实系统通常含非线性，但在某个工作点附近，常可用一阶泰勒展开得到线性近似。用增量变量 $\Delta x=x-x_Q$、$\Delta u=u-u_Q$ 可得到小信号模型
-
-$$
-\Delta\dot x(t)=A\Delta x(t)+B\Delta u(t),\quad \Delta y(t)=C\Delta x(t)+D\Delta u(t),
-$$
-
-其有效性依赖于系统是否被保持在工作点邻域内，并应始终把线性化误差视作建模误差的一部分。
-
-在经典控制原理中，**SISO（Single-Input Single-Output）**对象的基本抽象是：输入 $u(t)$ 经过被控对象（含执行器与被控过程）产生输出 $x(t)$（或 $y(t)$）。当对象可近似为 LTI 时，就可以在“时域—复频域—频域”之间建立一套互相贯通的表示。
-
-对 LTI SISO 的输入—输出微分方程进行拉普拉斯变换，可以把“微分运算”变为代数运算，从而把动态系统抽象成复频域中的代数比值，基本结构是
-
 $$
-U(s)\ \xrightarrow{\ \ G(s)\ \ }\ X(s),
+x[n]=x(nT_s),
 \qquad
-G(s)=\frac{X(s)}{U(s)}.
+T_s=\frac{1}{f_s}.
 $$
 
-这里 $G(s)$ 是**传递函数**，本质上刻画了对象对输入的动态映射（通常默认零初始条件，或把初始条件响应单独处理）。
-
-拉普拉斯变换的两条常用定理：若 $F(s)=\mathcal L\{f(t)\}$，在满足相应收敛与稳定条件时，有
+周期信号满足重复关系。连续时间信号若存在 $T_0\gt0$ 使得
 
 $$
-f(0^+)=\lim_{s\to\infty} sF(s),\qquad
-\lim_{t\to\infty} f(t)=\lim_{s\to 0} sF(s),
+x(t+T_0)=x(t),
 $$
 
-分别对应**初值定理**与**终值定理**。它们在稳态误差、稳态值与瞬态起始行为的快速判断中非常常用。
-
-单位阶跃 $u(t)=1(t)$ 的拉普拉斯变换 $\mathcal L\{1(t)\}=1/s$。这使“阶跃响应”成为检验对象动态特性的标准手段，因为它既简单又能暴露主导极点带来的时间尺度。
-
-以一阶典型形式为例（常见于热过程、液位、带惯性/阻尼的简化环节等）：
+则为周期信号。离散时间信号若存在正整数 $N_0$ 使得
 
 $$
-G(s)=\frac{a}{s+a}.
+x[n+N_0]=x[n],
 $$
 
-对单位阶跃输入，其时域响应可写成
+则为周期信号。连续正弦信号总是周期的；离散正弦信号
 
 $$
-x(t)=1-e^{-at}=1-e^{-t/\tau},\quad \tau=\frac{1}{a}.
+x[n]=A\cos(\Omega_0n+\phi)
 $$
 
-因此 $\tau$ 具有清晰的工程含义：当 $t=\tau$ 时，$x(\tau)=1-e^{-1}\approx 0.63$，即输出达到最终值的约 63%。常用的“调整时间”（settling time）近似也可由指数项衰减阈值得到，例如按 2% 标准，令 $e^{-t/\tau}\le 0.02$ 得 $t\approx 3.9\tau$，工程上常记为 $T_s\approx 4\tau$。这一套结论把“极点位置”直接转译成“响应快慢”的时间尺度。
+只有在 $\Omega_0/(2\pi)$ 为有理数时才是周期信号。
 
-当输入为正弦信号时，LTI 系统输出仍为同频正弦，只是幅值缩放、相位滞后。把这一频域刻画写成频率响应函数：
-
-$$
-G(j\omega)=G(s)\big|_{s=j\omega},
-$$
-
-并用
+能量与平均功率定义为
 
 $$
-M(\omega)=|G(j\omega)|,\qquad \varphi(\omega)=\angle G(j\omega)
-$$
-
-分别表示幅频特性与相频特性。把幅值用分贝表示并对频率作对数坐标，就得到经典的 **Bode 图**：幅值图用 $20\log_{10}|G(j\omega)|$（dB）对 $\omega$ 作图，相位图用 $\angle G(j\omega)$ 对 $\omega$ 作图。它的核心价值在于：频域形状与极点/零点结构高度对应，并且能直接服务于稳定裕度与鲁棒性判断。
-
-在 Bode 图基础上给出了“稳定裕度”的读图方式。以开环频率响应 $L(j\omega)$（经典单位负反馈结构中常取 $L=G\cdot C$，此处聚焦对象侧可先理解为开环环路传递）为对象，通常定义：
-
-当幅值穿越 0 dB 的频率为增益交叉频率 $\omega_{gc}$（即 $|L(j\omega_{gc})|=1$）时，相位裕度近似为
-
-$$
-\mathrm{PM}=180^\circ+\angle L(j\omega_{gc}).
-$$
-
-当相位穿越 $-180^\circ$ 的频率为相位交叉频率 $\omega_{pc}$（即 $\angle L(j\omega_{pc})=-180^\circ$）时，增益裕度可由
-
-$$
-\mathrm{GM}=\frac{1}{|L(j\omega_{pc})|}
-$$
-
-给出，并常以 dB 表示为 $20\log_{10}(\mathrm{GM})$。这些量衡量了“离临界不稳定还有多远”，在存在建模误差时尤其重要，因为名义模型与真实对象的差异可能把系统从“看似稳定”推到“实际不稳定”。这种“用裕度对抗不确定性”的思想与鲁棒控制动机是一致的。
-
-经典的二阶环节来源：质量—弹簧—阻尼系统
-
-$$
-m\ddot x+b\dot x+kx=F,
-$$
-
-写成标准形式可得到自然频率与阻尼比
-
-$$
-\omega_n=\sqrt{\frac{k}{m}},\qquad
-\zeta=\frac{b}{2\sqrt{km}},
-$$
-
-并引入阻尼振荡频率
-
-$$
-\omega_d=\omega_n\sqrt{1-\zeta^2}\quad (0<\zeta<1).
-$$
-
-在单位阶跃等典型输入下，欠阻尼响应呈现“指数包络衰减的振荡”
-
-$$
-x(t)=1-\frac{e^{-\zeta\omega_n t}}{\sqrt{1-\zeta^2}}\sin(\omega_d t+\phi),
-$$
-
-这直接解释了两类工程现象：其一是 $\zeta$ 越小，振荡越明显且超调越大；其二是 $\omega_n$ 越大，整体时间尺度越短（响应更快）。
-
-二阶系统常用瞬态指标：延迟时间 $T_d$（到达最终值 50% 的时间）、上升时间 $T_r$（常取 10%–90%）、峰值时间 $T_p$、最大超调量 $M_p$、调整时间 $T_s$（进入并保持在某误差带内的时间，如 2% 或 5%）。这些指标将“波形外观”转化为可用于规格约束与参数整定的量化语言，也是经典控制在工程规范中的常用表达方式。
-
-进一步把二阶环节转到频域：
-
-$$
-G(s)=\frac{\omega_n^2}{s^2+2\zeta\omega_n s+\omega_n^2},
-\quad
-G(j\omega)=\frac{\omega_n^2}{\omega_n^2-\omega^2+j2\zeta\omega_n\omega}.
-$$
-
-令 $\Omega=\omega/\omega_n$，可得
-
-$$
-|G(j\omega)|=\frac{1}{\sqrt{(1-\Omega^2)^2+4\zeta^2\Omega^2}},
+E=\int_{-\infty}^{\infty}|x(t)|^2\,\mathrm{d}t,
 \qquad
-\angle G(j\omega)=-\arctan\!\Big(\frac{2\zeta\Omega}{1-\Omega^2}\Big).
+P=\lim_{T\to\infty}\frac{1}{2T}\int_{-T}^{T}|x(t)|^2\,\mathrm{d}t,
 $$
 
-幅频曲线是否出现“共振峰”取决于阻尼比：当阻尼较小（经典结论是 $\zeta<1/\sqrt{2}$）时，$|G(j\omega)|$ 会在某一频率附近达到最大值，表现为共振放大；阻尼增大则峰值被压平，系统更“钝化”。这一频域现象与时域的超调、振铃是一体两面：共振越尖锐，时域越容易出现明显振荡与较大超调。
-
-#### 2.1.2 SISO 回路分析
-
-经典 SISO 控制回路分析的核心，是把“闭环性能与稳定性”统一归结为开环环路传递函数 $L(s)$ 及其在频域的几何性质。围绕这一主线，可以在统一的框架下解释跟踪、扰动抑制、噪声敏感性与鲁棒稳定性，并据此形成“开环整形（open-loop shaping）—闭环整形（closed-loop shaping）”的分析与设计逻辑。
-
-<img src="/fig/siso_loop_inverted.png" alt="SISO 环路分析" width="70%">
-
-考虑单位负反馈的 SISO 结构，参考输入为 $R(s)$，误差信号为 $E(s)$，控制器为 $C(s)$，被控对象为 $G(s)$，输出为 $Y(s)$，且测量通道可含噪声与扰动。最基本关系是
+离散情形为
 
 $$
-E(s)=R(s)-Y_m(s),\qquad U(s)=C(s)E(s),
-$$
-
-其中 $Y_m(s)$ 是反馈测量信号。在常见的“单位测量”情形下取 $H(s)=1$，若测量噪声 $N(s)$ 叠加在输出测量上，则
-
-$$
-Y_m(s)=Y(s)+N(s).
-$$
-
-把控制器与对象串联形成环路传递函数
-
-$$
-L(s)\triangleq C(s)G(s).
-$$
-
-这一定义非常关键：闭环大部分可观测的行为（稳定裕度、带宽、扰动抑制区间、噪声放大区间）都可以用 $L(s)$ 的频域形状来解释。并且由于 $L=C\cdot G$，在 Bode 图上满足“乘积变加和”的直观规律：幅值（dB）可相加、相位可相加，从而控制器整形可被直接理解为“在频域对对象特性做补偿/塑形”。
-
-先忽略扰动与噪声（$D(s)=0,\;N(s)=0$），闭环输出满足
-
-$$
-Y(s)=G(s)U(s)=G(s)C(s)E(s)=L(s)\big(R(s)-Y(s)\big).
-$$
-
-整理得到闭环参考到输出的传递函数
-
-$$
-T(s)\triangleq \frac{Y(s)}{R(s)}=\frac{L(s)}{1+L(s)}.
-$$
-
-相应地，误差满足
-
-$$
-E(s)=R(s)-Y(s)=\frac{1}{1+L(s)}R(s).
-$$
-
-由此自然引出灵敏度函数
-
-$$
-S(s)\triangleq \frac{E(s)}{R(s)}=\frac{1}{1+L(s)}.
-$$
-
-因此，跟踪性能与误差衰减本质上由 $T(s)$ 与 $S(s)$ 决定，而二者都完全由 $L(s)$ 决定。
-
-将扰动与噪声放在两个典型位置：输入侧扰动（加在对象输入处）与测量噪声（加在反馈测量处）。这两类信号对输出的影响形式不同，直接决定了开环整形的基本取向。
-
-**（1）输入侧扰动抑制）**  
-设扰动 $D(s)$ 叠加在对象输入端，即对象实际输入为 $U(s)+D(s)$，则
-
-$$
-Y(s)=G(s)\big(U(s)+D(s)\big)=G(s)\big(C(s)E(s)+D(s)\big).
-$$
-
-在 $R(s)=0$ 时，可得扰动到输出的传递函数
-
-$$
-\frac{Y(s)}{D(s)}=\frac{G(s)}{1+L(s)}=G(s)S(s).
-$$
-
-这给出一个直接结论：若在某频段 $|L(j\omega)|$ 很大，则
-$|S(j\omega)|\approx 1/|L(j\omega)|$ 很小，输入侧扰动在该频段被显著压制。
-
-**（2）测量噪声传递）**  
-若 $N(s)$ 叠加在测量端，$Y_m=Y+N$，则
-
-$$
-E(s)=R(s)-Y(s)-N(s).
-$$
-
-在 $R(s)=0$ 时推得
-
-$$
-\frac{Y(s)}{N(s)}=-\frac{L(s)}{1+L(s)}=-T(s).
-$$
-
-因此，测量噪声在输出端的呈现由 $|T(j\omega)|$ 决定。若在某频段
-$|L(j\omega)|\ll 1$，则 $|T(j\omega)|\approx |L(j\omega)|$ 很小，测量噪声不易被“放大传到输出”。
-
-这两条结论合在一起，形成经典的频域分工：低频希望 $|L|$ 大，使 $S$ 小，从而误差小、扰动抑制强；高频希望 $|L|$ 小，使 $T$ 小，从而测量噪声不易传到输出，并避免高频未建模动态被强行闭环而破坏鲁棒稳定性。
-
-闭环特征方程为 $1+L(s)=0$。在频域中，闭环稳定性可以借助 Nyquist 判据来判断：Nyquist 曲线围绕 $-1$ 点的绕数与开环右半平面极点数共同决定闭环右半平面极点数，从而决定闭环稳定性。手稿强调的要点是：稳定性判断与裕度评估都能“在开环上完成”，因此开环整形是最直接、最可视化的设计手段。
-
-在工程上更常用的是 Bode 图上的稳定裕度。
-
-在增益交叉频率 $\omega_c$（满足 $|L(j\omega_c)|=1$，即 0 dB）处定义相位裕度
-
-$$
-\mathrm{PM}=180^\circ+\angle L(j\omega_c).
-$$
-
-在相位交叉频率 $\omega_p$（满足 $\angle L(j\omega_p)=-180^\circ$）处定义增益裕度
-
-$$
-\mathrm{GM}=\frac{1}{|L(j\omega_p)|},
+E=\sum_{n=-\infty}^{\infty}|x[n]|^2,
 \qquad
-\mathrm{GM}_{\mathrm{dB}}=-20\log_{10}|L(j\omega_p)|.
+P=\lim_{N\to\infty}\frac{1}{2N+1}
+\sum_{n=-N}^{N}|x[n]|^2.
 $$
 
-裕度越大，意味着系统在增益变化、相位滞后增加或存在建模误差时仍有更强的稳定余量，因此“高 PM、高 GM”通常被作为鲁棒稳定性的直观指标之一。
+能量信号满足 $0\lt E\lt\infty$ 且 $P=0$；功率信号满足 $E=\infty$ 且 $0\lt P\lt\infty$。有限持续时间脉冲通常是能量信号，正弦波和常值信号通常是功率信号。
 
-设
+### 2.2 基本信号与常用运算
 
-$$
-G_0(s)=\frac{B_0(s)}{A_0(s)},\qquad C(s)=\frac{P(s)}{L(s)},
-$$
-
-闭环特征多项式为
+连续时间单位冲激 $\delta(t)$ 满足
 
 $$
-A_{\mathrm{cl}}(s)=A_0(s)L(s)+B_0(s)P(s).
+\delta(t)=0\quad (t\ne0),
+\qquad
+\int_{-\infty}^{\infty}\delta(t)\,\mathrm{d}t=1.
 $$
 
-闭环稳定性不仅要求 $Y/R$ 稳定，还要求所有内部信号到内部信号的传递函数稳定。一个核心必要条件是闭环特征多项式
-$A_{\mathrm{cl}}(s)$ 的根全部位于左半平面。
-
-#### 2.1.3 超前滞后补偿器与环路整形
-
-开环整形的思想是：不直接从闭环公式硬推参数，而是先提出对
-$L(j\omega)$ 的频域形状要求，再用控制器 $C(s)$ 去补偿对象
-$G(s)$ 的不足，从而让闭环的 $S$ 与 $T$ 在关键频段满足性能目标并保持足够裕度。
-
-首先我们介绍一种最常用的控制器：PID 控制器。
-
-在单位负反馈结构下，PID 以误差 $e(t)$ 为输入，输出控制量 $u(t)$。手稿给出了 PID 的典型“标准形式”（含微分滤波）：
+其抽样性质为
 
 $$
-C_{\mathrm{PID}}(s)
-=K_p\left(1+\frac{1}{T_r s}+\frac{T_d s}{\gamma_d T_d s+1}\right),
+\int_{-\infty}^{\infty}x(t)\delta(t-t_0)\,\mathrm{d}t=x(t_0).
 $$
 
-其中 $K_p$ 为比例增益，$T_r$（也常写作 $T_i$）为积分时间常数，$T_d$ 为微分时间常数，$\gamma_d>0$ 为微分滤波系数。这里把理想微分项 $T_d s$ 替换为
-$\dfrac{T_d s}{\gamma_d T_d s+1}$ 的动机非常直接：理想微分对高频噪声增益无界，而实际系统测量噪声与传感器高频不确定性普遍存在，因此必须用一阶滤波把高频增益封顶，使“相位超前的好处”尽量集中在交叉频率附近，同时抑制高频噪声放大。
-
-在工程实现上，PID 还常写成“串联（series）”或“并联（parallel）”形式。手稿给出的典型表达分别为
+连续时间单位阶跃为
 
 $$
-C_{\text{series}}(s)
-=K_s\left(1+\frac{I_s}{s}\right)
- \left(1+\frac{D_s s}{\gamma_s D_s s+1}\right),
+u(t)=
+\begin{cases}
+1,&t\ge0,\\
+0,&t\lt0.
+\end{cases}
 $$
 
-$$
-C_{\text{parallel}}(s)
-=K_p+\frac{I_p}{s}+\frac{D_p s}{\gamma_p D_p s+1}.
-$$
-
-三种写法本质上是同一类控制律的不同参数化：差别在于参数之间的映射关系以及工程整定时“改哪个旋钮更直观”。开环整形更关心它们对 $L(j\omega)$ 的**幅相形状**的影响，因此无论采用哪一种形式，最终都应回到 Bode 图检查交叉频率、相位裕度与增益裕度是否满足目标。
-
-从频域角度看，PID 三项对开环形状的作用可以归纳为一条连续的整形逻辑。比例项主要实现幅值整体平移
-$20\log_{10}K_p$（dB），因此直接决定交叉频率的大致位置；积分项
-$\dfrac{1}{T_r s}$ 在低频引入 $-20$ dB/dec 的斜率并附加 $-90^\circ$ 相位，它的主要收益是显著抬升低频环路增益，从而降低稳态误差并强化低频扰动抑制，但代价是相位裕度减少、振荡风险上升；微分项（经滤波）在中频提供正相位增益，倾向于改善交叉附近的相位裕度与瞬态品质（减小超调、增强阻尼），但若滤波不足或带宽推得过高，会引入高频增益抬升，导致噪声敏感性与鲁棒性恶化。手稿对这一点的表述非常明确：D 项“提供相位超前”但“对噪声敏感”，因此实际常用带滤波的微分环节而非理想微分。
-
-因此，把 PID 作为开环整形工具时，合理的思路通常不是把它当作“时域经验律”，而是把它视为对 $L(j\omega)$ 的三段式塑形：用 $K_p$ 设定交叉频率量级，用 I 项把低频 $|L|$ 拉起来以压低 $|S|$，再用（滤波的）D 项把交叉附近的相位拉起来以获得期望的 PM，同时谨慎控制高频增益以免 $|T|$ 与未建模动态被放大。
-
-以下给出两类经典整定方法，它们在开环整形中的定位更适合被理解为“提供起点的参数初始化”，随后仍需用 Bode 图对 GM、PM 与频带分工进行校核与修正。
-
-第一类是 **Ziegler–Nichols 振荡法**。其核心操作是先关闭 I、D，仅用比例控制逐步增大 $K_p$，直到闭环出现持续等幅振荡，此时的比例增益记为临界增益 $K_c$，振荡周期记为 $P_c$。随后按经验表给出 P、PI、PID 的参数选择，例如 PID 常取
+两者满足
 
 $$
-K_p\approx 0.60K_c,\qquad
-T_r\approx 0.5P_c,\qquad
-T_d\approx \frac{P_c}{8},
+\delta(t)=\frac{\mathrm{d}u(t)}{\mathrm{d}t},
+\qquad
+u(t)=\int_{-\infty}^{t}\delta(\tau)\,\mathrm{d}\tau.
 $$
 
-PI 常取 $K_p\approx 0.45K_c$、$T_r\approx P_c/1.2$ 等。该方法的优点是简单直接、无需对象模型细节；缺点也同样明显：它以“逼近临界稳定”的闭环实验为基础，所得参数往往偏激进，容易带来较大的超调与对不确定性较弱的鲁棒性，因此更适合作为初始值，再通过目标裕度（PM、GM）与噪声/带宽约束进行整形修正。
-
-第二类是 **Cohen–Coon 反应曲线法**。它先把对象用一阶惯性纯滞后（FOPDT）模型近似：
+离散时间单位冲激与阶跃为
 
 $$
-G(s)\approx \frac{K_0 e^{-Ls}}{\tau_0 s+1},
+\delta[n]=
+\begin{cases}
+1,&n=0,\\
+0,&n\ne0,
+\end{cases}
+\qquad
+u[n]=
+\begin{cases}
+1,&n\ge0,\\
+0,&n\lt0.
+\end{cases}
 $$
 
-其中 $K_0$ 为静态增益，$\tau_0$ 为时间常数，$L$ 为等效纯滞后。然后通过阶跃响应的“反应曲线”估计这些参数，并代入经验表得到 P/PI/PID 的参数。与振荡法相比，反应曲线法显式利用了对象的惯性与滞后特征，通常能给出更“贴合对象动态尺度”的初始整定。对开环整形而言，其价值在于：FOPDT 模型直接揭示了对象的相位滞后来源（尤其是 $e^{-Ls}$ 所代表的不可补偿相位损失），从而提醒设计者在设定交叉频率时必须为相位裕度留出更现实的余量，而不能仅凭增益把带宽推高。
-
-无论采用哪种整定法，都应回到频域指标进行核验，尤其是将得到的 $L(j\omega)$ 与目标 GM、PM 对照；若 PM 偏小，通常需要通过增加相位超前（例如引入超前环节或适当的 D 项并配合滤波）来修正，而不是单纯降低增益导致带宽与低频性能整体下滑。
-
-通过观察 PID 控制器可以发现，它也可以理解为由以下三种环节组成：
-
-**（1）比例环节 $C(s)=K_p$**  
-比例只改变幅值，不改变相位。在 Bode 幅值图上表现为整体平移
-$20\log_{10}K_p$ dB。它能快速改变交叉频率与低频增益，但若单纯依靠增大
-$K_p$ 来提高低频性能，往往会牺牲相位裕度并诱发振荡风险。
-
-**（2）超前补偿（lead）**
+并满足
 
 $$
-C(s)=K\frac{s+z}{s+p},\qquad (p>z>0)
+\delta[n]=u[n]-u[n-1],
+\qquad
+u[n]=\sum_{k=-\infty}^{n}\delta[k].
 $$
 
-超前补偿在一段频带内提供正相位“隆起”，同时带来幅值的局部抬升，常用于在不显著降低交叉频率的前提下提高相位裕度，改善瞬态品质并增强鲁棒稳定性。
-
-**（3）滞后补偿（lag）**
+信号的时间变换包括时移、翻转和尺度变换。对 $y(t)=x(at-b)$，分析时应先求关键点映射：原信号中 $t_0$ 处的特征点在新信号中满足
 
 $$
-C(s)=K\frac{s+z}{s+p},\qquad (z>p>0)
+at-b=t_0,
+\qquad
+t=\frac{t_0+b}{a}.
 $$
 
-滞后补偿倾向于增强低频增益、相对压低中高频增益，并在一段频带内引入负相位，常用于提高稳态精度或低频扰动抑制，但需警惕其对相位裕度的不利影响。
+这样比凭直觉判断“左移”或“右移”更可靠，尤其在 $a\lt0$ 时可以同时处理翻转和缩放。
 
-<img src="/fig/lead_inverted.png" alt="超前补偿器 Bode 图" width="70%">
+### 2.3 系统性质
 
-<img src="/fig/lag_inverted.png" alt="滞后补偿器 Bode 图" width="70%">
+系统是把输入信号映射为输出信号的规则，可写作 $y(t)=\mathcal{T}\{x(t)\}$。常见性质如下。
 
-特别注意其中的超前–滞后网络，它用一个零极点对精确塑形交叉附近的幅相；我们可以把超前–滞后网络统一写成一阶零极点比：
-
-$$
-C(s)=\frac{\tau_1 s+1}{\tau_2 s+1}.
-$$
-
-当 $\tau_1>\tau_2$ 时，零点 $-1/\tau_1$ 更靠近虚轴而极点
-$-1/\tau_2$ 更靠左，这会在中频引入一段**正相位“隆起”**，即所谓超前补偿（lead）。从 Bode 近似形状看，它在 $\omega$ 从 $1/\tau_1$ 到 $1/\tau_2$ 的频段使幅值呈上升趋势并提供相位超前，最典型的用途就是把交叉频率附近的相位裕度抬高，从而提高鲁棒稳定性并改善瞬态阻尼。但超前补偿的代价也很明确：它会抬升一定的高频增益，因此若交叉频率设得过高或对象高频不确定性较强，就可能导致噪声传递与未建模动态风险上升，这也是工程上常把超前环节“对准交叉附近”而避免过宽频带抬升的原因。
-
-当 $\tau_1<\tau_2$ 时，零点更靠左而极点更靠近虚轴，在中频引入**负相位**并形成“低频增益较高、随后下折”的幅值特征，这对应滞后补偿（lag）。它的主要用途是提高低频环路增益以改善稳态精度与低频抗扰（压低 $|S|$），同时尽量让交叉频率附近的幅值与带宽不被过度推高。由于滞后补偿会带来额外相位滞后，若不加控制容易侵蚀相位裕度，因此滞后环节通常被安排在比交叉频率低得多的频段工作，使其相位损失在交叉附近尽可能小，而主要贡献集中在低频增益的抬升。
-
-接下来我们介绍闭环整形（Closed-loop shaping）：用 $T$ 与 $S$ 直接表达性能与权衡。
-
-由定义
+- 线性：满足齐次性与叠加性，
 
 $$
-T(s)=\frac{L(s)}{1+L(s)},\qquad
-S(s)=\frac{1}{1+L(s)},
+\mathcal{T}\{\alpha x_1(t)+\beta x_2(t)\}
+=
+\alpha\mathcal{T}\{x_1(t)\}
++
+\beta\mathcal{T}\{x_2(t)\}.
 $$
 
-立即得到基本恒等式
+- 时不变：若 $x(t)\mapsto y(t)$，则 $x(t-t_0)\mapsto y(t-t_0)$。
+- 因果：任意时刻的输出只依赖当前与过去输入，不依赖未来输入。
+- BIBO 稳定：任意有界输入产生有界输出。
+- 有记忆：输出依赖当前以外的输入样本或内部状态；无记忆系统只依赖当前输入。
+
+LTI 系统由冲激响应完全描述。连续时间卷积为
+
+$$
+y(t)=(h*x)(t)=\int_{-\infty}^{\infty}h(\tau)x(t-\tau)\,\mathrm{d}\tau,
+$$
+
+离散时间卷积为
+
+$$
+y[n]=(h*x)[n]=\sum_{k=-\infty}^{\infty}h[k]x[n-k].
+$$
+
+连续时间 LTI 系统 BIBO 稳定的充分必要条件是
+
+$$
+\int_{-\infty}^{\infty}|h(t)|\,\mathrm{d}t\lt\infty.
+$$
+
+离散时间 LTI 系统对应条件为
+
+$$
+\sum_{n=-\infty}^{\infty}|h[n]|\lt\infty.
+$$
+
+### 2.4 采样、重构与频率分辨率
+
+采样过程可写成
+
+$$
+x[n]=x(nT_s),
+\qquad
+f_s=\frac{1}{T_s},
+\qquad
+\omega_s=2\pi f_s.
+$$
+
+理想冲激采样的频谱为
+
+$$
+X_s(\mathrm{j}\omega)
+=
+\frac{1}{T_s}
+\sum_{k=-\infty}^{\infty}
+X\left(\mathrm{j}(\omega-k\omega_s)\right).
+$$
+
+采样会使连续频谱以 $\omega_s$ 为周期复制。若原信号最高频率为 $f_\mathrm{max}$，无混叠采样需要
+
+$$
+f_s\ge2f_\mathrm{max}.
+$$
+
+$f_s/2$ 称为奈奎斯特频率。实际系统中，被采样信号通常不严格带限，因此采样前需要抗混叠低通滤波器。
+
+理想重构使用理想低通滤波器保留中心频谱并去掉周期复制。实际数模转换常采用零阶保持（ZOH）或一阶保持（FOH）。ZOH 会引入幅值下垂和相位滞后，其频率响应含有类似 $\operatorname{sinc}$ 的包络，在高频控制系统中需要纳入带宽估计。
+
+长度为 $M$ 的 FFT 对应频率格点间隔
+
+$$
+\Delta f=\frac{f_s}{M}.
+$$
+
+由于观测时长 $T_\mathrm{obs}=MT_s=M/f_s$，也可写成
+
+$$
+\Delta f=\frac{1}{T_\mathrm{obs}}.
+$$
+
+窗函数会改变主瓣宽度与旁瓣泄漏，因此 $\Delta f$ 是频箱间隔，不等同于任何窗函数下都能无歧义分辨两个相邻频率的实际能力。增大观测时长是提高低频分辨率的根本手段，单纯提高采样率只会扩大可分析频带。
+
+### 2.5 傅里叶变换与拉普拉斯变换
+
+连续时间傅里叶变换定义为
+
+$$
+X(\mathrm{j}\omega)
+=
+\mathcal{F}\{x(t)\}
+=
+\int_{-\infty}^{\infty}x(t)e^{-\mathrm{j}\omega t}\,\mathrm{d}t.
+$$
+
+反变换为
+
+$$
+x(t)=\frac{1}{2\pi}
+\int_{-\infty}^{\infty}X(\mathrm{j}\omega)e^{\mathrm{j}\omega t}\,\mathrm{d}\omega.
+$$
+
+对 LTI 系统，复指数 $e^{\mathrm{j}\omega t}$ 是特征函数。若输入为 $x(t)=e^{\mathrm{j}\omega t}$，则
+
+$$
+y(t)=H(\mathrm{j}\omega)e^{\mathrm{j}\omega t},
+$$
+
+其中
+
+$$
+H(\mathrm{j}\omega)
+=
+\int_{-\infty}^{\infty}h(t)e^{-\mathrm{j}\omega t}\,\mathrm{d}t.
+$$
+
+因此频率响应就是冲激响应的傅里叶变换，表示系统对各频率正弦分量的幅值缩放与相位偏移。
+
+拉普拉斯变换定义为
+
+$$
+X(s)=\mathcal{L}\{x(t)\}
+=
+\int_{0^-}^{\infty}x(t)e^{-st}\,\mathrm{d}t,
+\qquad
+s=\sigma+\mathrm{j}\omega.
+$$
+
+当收敛域包含虚轴时，令 $s=\mathrm{j}\omega$ 即得到频率响应。对由常系数线性微分方程描述的 SISO 系统，传递函数通常为有理函数
+
+$$
+G(s)=
+\frac{b_ms^m+b_{m-1}s^{m-1}+\cdots+b_0}
+{a_ns^n+a_{n-1}s^{n-1}+\cdots+a_0}.
+$$
+
+分子根为零点，分母根为极点。极点决定自然响应、稳定性和主要时间尺度；零点决定输入到输出通道中的抵消、相位特性和初始响应方向。
+
+## 3 频域分析
+
+### 3.1 Bode 图
+
+对频率响应 $G(\mathrm{j}\omega)$，幅值和相位为
+
+$$
+M(\omega)=|G(\mathrm{j}\omega)|,
+\qquad
+\varphi(\omega)=\angle G(\mathrm{j}\omega).
+$$
+
+Bode 幅值图绘制
+
+$$
+20\log_{10}|G(\mathrm{j}\omega)|
+$$
+
+随对数频率的变化，相位图绘制 $\angle G(\mathrm{j}\omega)$。将传递函数分解为增益、零点和极点后，可用渐近线快速判断幅值斜率与相位变化：
+
+- 常数增益 $K$ 只使幅值整体平移 $20\log_{10}|K|$；
+- 实零点 $(1+s/\omega_z)$ 在 $\omega_z$ 后使斜率增加 $20\,\mathrm{dB}/\mathrm{dec}$，相位最多贡献约 $+90^\circ$；
+- 实极点 $(1+s/\omega_p)^{-1}$ 在 $\omega_p$ 后使斜率减少 $20\,\mathrm{dB}/\mathrm{dec}$，相位最多贡献约 $-90^\circ$；
+- 共轭复极点可能产生共振峰，峰值大小由阻尼比控制。
+
+### 3.2 一阶与二阶典型环节
+
+一阶惯性环节
+
+$$
+G(s)=\frac{K}{\tau s+1}
+$$
+
+对单位阶跃的响应为
+
+$$
+y(t)=K\left(1-e^{-t/\tau}\right)u(t).
+$$
+
+时间常数 $\tau$ 表示输出达到最终值约 $63.2\%$ 的时间。按 $2\%$ 误差带估计，调整时间约为 $4\tau$。
+
+标准二阶环节为
+
+$$
+G(s)=
+\frac{\omega_n^2}
+{s^2+2\zeta\omega_ns+\omega_n^2},
+$$
+
+其中 $\omega_n$ 为无阻尼自然角频率，$\zeta$ 为阻尼比。欠阻尼情形 $0\lt\zeta\lt1$ 下，阻尼振荡频率为
+
+$$
+\omega_d=\omega_n\sqrt{1-\zeta^2}.
+$$
+
+典型瞬态指标包括峰值时间、超调量和调整时间：
+
+$$
+T_p=\frac{\pi}{\omega_d},
+\qquad
+M_p=e^{-\frac{\pi\zeta}{\sqrt{1-\zeta^2}}},
+\qquad
+T_s\approx\frac{4}{\zeta\omega_n}
+\quad (2\%\ \mathrm{criterion}).
+$$
+
+频率响应为
+
+$$
+G(\mathrm{j}\omega)
+=
+\frac{\omega_n^2}
+{\omega_n^2-\omega^2+\mathrm{j}2\zeta\omega_n\omega}.
+$$
+
+令 $\Omega=\omega/\omega_n$，有
+
+$$
+|G(\mathrm{j}\omega)|
+=
+\frac{1}
+{\sqrt{(1-\Omega^2)^2+4\zeta^2\Omega^2}}.
+$$
+
+当 $\zeta\lt1/\sqrt{2}$ 时，幅频曲线存在共振峰。共振峰越尖，时域响应通常越容易出现超调和振铃。
+
+### 3.3 稳定裕度与 Nyquist 判据
+
+单位负反馈中，令开环环路传递函数为
+
+$$
+L(s)=C(s)G(s).
+$$
+
+闭环特征方程为
+
+$$
+1+L(s)=0.
+$$
+
+Bode 图中常用两个裕度衡量闭环离临界不稳定的距离。增益交叉频率 $\omega_\mathrm{gc}$ 满足
+
+$$
+|L(\mathrm{j}\omega_\mathrm{gc})|=1.
+$$
+
+相位裕度为
+
+$$
+\mathrm{PM}=180^\circ+\angle L(\mathrm{j}\omega_\mathrm{gc}).
+$$
+
+相位交叉频率 $\omega_\mathrm{pc}$ 满足
+
+$$
+\angle L(\mathrm{j}\omega_\mathrm{pc})=-180^\circ.
+$$
+
+增益裕度为
+
+$$
+\mathrm{GM}
+=
+\frac{1}{|L(\mathrm{j}\omega_\mathrm{pc})|},
+\qquad
+\mathrm{GM}_\mathrm{dB}
+=
+-20\log_{10}|L(\mathrm{j}\omega_\mathrm{pc})|.
+$$
+
+Nyquist 判据从复平面几何角度判断闭环稳定性：开环频率响应曲线对 $-1$ 点的环绕数，与开环右半平面极点数共同决定闭环右半平面极点数。工程上常先用 Bode 裕度快速判断，再在存在右半平面极点、纯延迟或复杂不确定性时回到 Nyquist 图核验。
+
+## 4 经典 SISO 控制
+
+### 4.1 单位负反馈与基本闭环函数
+
+考虑单位负反馈结构。参考输入为 $R(s)$，误差信号为 $E(s)$，控制器为 $C(s)$，被控对象为 $G(s)$，输出为 $Y(s)$。
+
+![SISO 环路分析](attachments/siso_loop_inverted.png)
+
+环路传递函数定义为
+
+$$
+L(s)=C(s)G(s).
+$$
+
+忽略扰动和噪声时，有
+
+$$
+Y(s)=L(s)\left(R(s)-Y(s)\right).
+$$
+
+因此参考到输出的闭环传递函数为互补灵敏度函数
+
+$$
+T(s)=\frac{Y(s)}{R(s)}
+=
+\frac{L(s)}{1+L(s)}.
+$$
+
+误差到参考的传递函数为灵敏度函数
+
+$$
+S(s)=\frac{E(s)}{R(s)}
+=
+\frac{1}{1+L(s)}.
+$$
+
+二者满足
 
 $$
 S(s)+T(s)=1.
 $$
 
-这条关系揭示了闭环整形的一个不可回避的事实：在同一频率点上，无法同时让 $|S|$ 与 $|T|$ 都很小。换言之，闭环对误差/扰动的“抑制能力”和对噪声/高频成分的“过滤能力”之间存在结构性权衡。工程上通常采取的策略是频段分配：在需要跟踪与抗扰的低频使 $|S|$ 小、$|T|$ 接近 1；在噪声主导或不确定性主导的高频使 $|T|$ 小、$|S|$ 接近 1。
+这条恒等式说明，无法在同一频率点同时让 $|S|$ 与 $|T|$ 都任意小。典型设计策略是在低频提高 $|L|$，使 $|S|$ 小，从而改善跟踪和低频扰动抑制；在高频降低 $|L|$，使 $|T|$ 小，从而抑制测量噪声和高频未建模动态的影响。
 
-通过权函数 $W_1(s),W_2(s)$ 把期望的频域性能写成不等式约束，例如
+### 4.2 扰动与测量噪声通道
 
-$$
-|T(j\omega)|\le \frac{1}{|W_1(j\omega)|}
-\quad(\text{偏重低频跟踪/带宽指标}),
-$$
+若输入侧扰动 $D(s)$ 加在对象输入端，则
 
 $$
-|S(j\omega)|\le \frac{1}{|W_2(j\omega)|}
-\quad(\text{偏重高频鲁棒/敏感性约束}),
+Y(s)=G(s)\left(C(s)E(s)+D(s)\right).
 $$
 
-从而把“整形要求”转化为可用于系统化设计的方法形式（例如以 $\mathcal H_\infty$ 思路表述的混合灵敏度约束）。这里的关键不是采用哪一种算法，而是理解：权函数本质上是在频域写下“哪里该小、哪里可大”的工程规范。
-
-此外，在增益交叉附近还能把相位裕度与灵敏度大小联系起来。若在 $\omega_c$ 处 $|L|=1$ 且相位裕度为 $\theta_{\mathrm{PM}}$，则
+当 $R(s)=0$ 时，
 
 $$
-L(j\omega_c)=e^{j(-\pi+\theta_{\mathrm{PM}})},
+\frac{Y(s)}{D(s)}
+=
+\frac{G(s)}{1+L(s)}
+=
+G(s)S(s).
+$$
+
+因此在 $|L|\gg1$ 的频段，输入侧扰动被闭环显著压低。
+
+若测量噪声 $N(s)$ 加在反馈测量端，即 $Y_\mathrm{m}(s)=Y(s)+N(s)$，则在 $R(s)=0$ 时
+
+$$
+\frac{Y(s)}{N(s)}
+=
+-\frac{L(s)}{1+L(s)}
+=
+-T(s).
+$$
+
+因此测量噪声主要由互补灵敏度 $T$ 传到输出。高频设计要求 $|T|$ 足够小，本质上要求高频环路增益 $|L|$ 足够低。
+
+### 4.3 稳态误差与系统型别
+
+对单位负反馈，误差为
+
+$$
+E(s)=S(s)R(s)=\frac{R(s)}{1+L(s)}.
+$$
+
+若闭环稳定，可用终值定理求稳态误差：
+
+$$
+e_\mathrm{ss}
+=
+\lim_{t\to\infty}e(t)
+=
+\lim_{s\to0}sE(s).
+$$
+
+开环 $L(s)$ 在原点的极点个数称为系统型别。型别越高，对低阶多项式参考输入的稳态误差越小。例如，单位阶跃参考 $R(s)=1/s$ 时，若 $L(0)$ 有足够大的直流增益，则稳态误差小；若 $L(s)$ 含积分环节，且闭环稳定，则阶跃稳态误差可为零。积分提高低频增益，但同时引入相位滞后，因此必须结合相位裕度一起设计。
+
+### 4.4 PID 控制
+
+带微分滤波的 PID 可写成
+
+$$
+C_\mathrm{PID}(s)
+=
+K_p
+\left(
+1+\frac{1}{T_is}
++\frac{T_ds}{\gamma_dT_ds+1}
+\right),
+$$
+
+其中 $K_p$ 为比例增益，$T_i$ 为积分时间常数，$T_d$ 为微分时间常数，$\gamma_d$ 为微分滤波系数。比例项改变整体开环增益；积分项提升低频增益并降低稳态误差；微分项在中频提供相位超前，改善阻尼和相位裕度。理想微分会无限放大高频噪声，因此工程实现必须加入滤波。
+
+并联形式常写作
+
+$$
+C_\mathrm{parallel}(s)
+=
+K_p+\frac{K_i}{s}
++\frac{K_ds}{\tau_fs+1}.
+$$
+
+串联形式常写作
+
+$$
+C_\mathrm{series}(s)
+=
+K_s
+\left(1+\frac{1}{T_is}\right)
+\left(1+\frac{T_ds}{\gamma_dT_ds+1}\right).
+$$
+
+不同参数化形式便于不同场景下整定，但最终都应回到开环 $L(\mathrm{j}\omega)$ 检查交叉频率、相位裕度、增益裕度和高频噪声放大。
+
+经典整定法如 Ziegler-Nichols 振荡法和 Cohen-Coon 反应曲线法，适合作为初始参数来源。它们不应替代裕度检查、执行器饱和检查、噪声敏感性检查和实际工况验证。
+
+### 4.5 超前、滞后与环路整形
+
+一阶超前或滞后补偿器可统一写作
+
+$$
+C(s)=K\frac{\tau_1s+1}{\tau_2s+1}.
+$$
+
+当 $\tau_1\gt\tau_2$ 时，零点 $-1/\tau_1$ 比极点 $-1/\tau_2$ 更靠近虚轴，该环节在中频提供正相位，称为超前补偿。它常用于提高交叉频率附近的相位裕度。
+
+![超前补偿器 Bode 图](attachments/lead_inverted.png)
+
+当 $\tau_1\lt\tau_2$ 时，该环节主要提高低频相对增益，并在中频带来负相位，称为滞后补偿。它常用于改善稳态精度和低频扰动抑制，但必须避免在交叉频率附近损失过多相位裕度。
+
+![滞后补偿器 Bode 图](attachments/lag_inverted.png)
+
+环路整形的一般流程是：
+
+1. 根据跟踪和扰动抑制要求确定低频 $|L|$；
+2. 根据响应速度确定期望交叉频率或带宽；
+3. 根据相位裕度、增益裕度和不确定性设置交叉附近的斜率与相位；
+4. 根据噪声和未建模动态限制高频 $|L|$；
+5. 反复检查 $S$、$T$、控制量 $U/R$ 以及扰动通道。
+
+### 4.6 根轨迹与极点配置
+
+闭环极点决定线性系统的主要瞬态形状。若开环为 $K G_0(s)$，单位负反馈闭环特征方程为
+
+$$
+1+KG_0(s)=0.
+$$
+
+当增益 $K$ 从 $0$ 变化到 $\infty$ 时，闭环极点在复平面中的轨迹称为根轨迹。根轨迹提供了从“增益变化”到“极点移动”的直观连接，可用于判断增益增大是否会带来更快响应、更多振荡或失稳风险。
+
+在状态空间中，若 $(\mathbf{A},\mathbf{B})$ 可控，可用状态反馈
+
+$$
+\boldsymbol{u}=-\mathbf{K}_\mathrm{x}\boldsymbol{x}+\boldsymbol{r}
+$$
+
+把闭环矩阵
+
+$$
+\mathbf{A}_\mathrm{cl}
+=
+\mathbf{A}-\mathbf{B}\mathbf{K}_\mathrm{x}
+$$
+
+的极点配置到期望位置。极点配置可以精确指定名义闭环动态，但不会自动处理控制能量、测量噪声和模型不确定性，因此通常要结合鲁棒性与执行器约束检查。
+
+## 5 状态空间与现代控制
+
+### 5.1 状态空间模型与解
+
+连续时间 LTI 系统为
+
+$$
+\dot{\boldsymbol{x}}=\mathbf{A}\boldsymbol{x}+\mathbf{B}\boldsymbol{u},
+\qquad
+\boldsymbol{y}=\mathbf{C}\boldsymbol{x}+\mathbf{D}\boldsymbol{u}.
+$$
+
+状态转移矩阵为
+
+$$
+\boldsymbol{\Phi}(t)=e^{\mathbf{A}t}.
+$$
+
+给定初始状态 $\boldsymbol{x}(0)$，解为
+
+$$
+\boldsymbol{x}(t)
+=
+e^{\mathbf{A}t}\boldsymbol{x}(0)
++
+\int_{0}^{t}
+e^{\mathbf{A}(t-\tau)}
+\mathbf{B}\boldsymbol{u}(\tau)\,\mathrm{d}\tau.
+$$
+
+若对状态作相似变换 $\boldsymbol{x}=\mathbf{T}\boldsymbol{\xi}$，其中 $\mathbf{T}$ 非奇异，则
+
+$$
+\dot{\boldsymbol{\xi}}
+=
+\mathbf{T}^{-1}\mathbf{A}\mathbf{T}\boldsymbol{\xi}
++
+\mathbf{T}^{-1}\mathbf{B}\boldsymbol{u},
+\qquad
+\boldsymbol{y}
+=
+\mathbf{C}\mathbf{T}\boldsymbol{\xi}
++
+\mathbf{D}\boldsymbol{u}.
+$$
+
+相似变换不改变系统输入输出传递函数，也不改变矩阵 $\mathbf{A}$ 的特征值。
+
+### 5.2 可控性与可观性
+
+连续时间 LTI 系统的可控性矩阵为
+
+$$
+\mathcal{C}_\mathrm{c}
+=
+\begin{bmatrix}
+\mathbf{B}&
+\mathbf{A}\mathbf{B}&
+\cdots&
+\mathbf{A}^{n-1}\mathbf{B}
+\end{bmatrix}.
+$$
+
+若
+
+$$
+\operatorname{rank}(\mathcal{C}_\mathrm{c})=n,
+$$
+
+则系统完全可控。可观性矩阵为
+
+$$
+\mathcal{O}
+=
+\begin{bmatrix}
+\mathbf{C}\\
+\mathbf{C}\mathbf{A}\\
+\vdots\\
+\mathbf{C}\mathbf{A}^{n-1}
+\end{bmatrix}.
+$$
+
+若
+
+$$
+\operatorname{rank}(\mathcal{O})=n,
+$$
+
+则系统完全可观。
+
+PBH 判据给出等价条件。系统可控当且仅当对 $\mathbf{A}$ 的任意特征值 $\lambda$，
+
+$$
+\operatorname{rank}
+\begin{bmatrix}
+\lambda\mathbb{1}-\mathbf{A}&\mathbf{B}
+\end{bmatrix}
+=n.
+$$
+
+系统可观当且仅当
+
+$$
+\operatorname{rank}
+\begin{bmatrix}
+\lambda\mathbb{1}-\mathbf{A}\\
+\mathbf{C}
+\end{bmatrix}
+=n.
+$$
+
+可控性关注输入能否影响所有动态模态；可观性关注输出能否反映所有动态模态。不可控但稳定的模态不会影响可稳定性，不可观但稳定的模态不会影响可检测性。工程设计中，状态反馈至少需要可稳定，观测器至少需要可检测。
+
+### 5.3 状态反馈、LQR 与积分增广
+
+状态反馈控制律
+
+$$
+\boldsymbol{u}
+=
+-\mathbf{K}_\mathrm{x}\boldsymbol{x}
++
+\mathbf{N}\boldsymbol{r}
+$$
+
+得到闭环系统
+
+$$
+\dot{\boldsymbol{x}}
+=
+\left(\mathbf{A}-\mathbf{B}\mathbf{K}_\mathrm{x}\right)\boldsymbol{x}
++
+\mathbf{B}\mathbf{N}\boldsymbol{r}.
+$$
+
+若系统可控，可通过极点配置指定闭环极点。若需要在性能与控制能量之间折中，可采用线性二次型调节器（LQR），最小化
+
+$$
+J=
+\int_{0}^{\infty}
+\left(
+\boldsymbol{x}^{\mathrm{T}}\mathbf{Q}\boldsymbol{x}
++
+\boldsymbol{u}^{\mathrm{T}}\mathbf{R}\boldsymbol{u}
+\right)
+\mathrm{d}t,
+$$
+
+其中 $\mathbf{Q}\succeq0$、$\mathbf{R}\succ0$。反馈增益为
+
+$$
+\mathbf{K}_\mathrm{x}
+=
+\mathbf{R}^{-1}\mathbf{B}^{\mathrm{T}}\mathbf{P},
+$$
+
+$\mathbf{P}$ 满足连续代数 Riccati 方程
+
+$$
+\mathbf{A}^{\mathrm{T}}\mathbf{P}
++
+\mathbf{P}\mathbf{A}
+-
+\mathbf{P}\mathbf{B}\mathbf{R}^{-1}\mathbf{B}^{\mathrm{T}}\mathbf{P}
++
+\mathbf{Q}
+=
+\mathbf{0}.
+$$
+
+若需要消除阶跃参考或常值扰动造成的稳态误差，可引入积分状态。例如对输出误差 $\boldsymbol{e}=\boldsymbol{r}-\boldsymbol{y}$，定义
+
+$$
+\dot{\boldsymbol{x}}_\mathrm{I}=\boldsymbol{r}-\boldsymbol{y}.
+$$
+
+增广后对 $[\boldsymbol{x}^{\mathrm{T}},\boldsymbol{x}_\mathrm{I}^{\mathrm{T}}]^{\mathrm{T}}$ 设计反馈。积分增广会增加低频环路增益，同时也会增加相位滞后和饱和风险，必须配置抗积分饱和策略。
+
+### 5.4 状态观测器与 Kalman 滤波
+
+若状态不能全部测量，可构造 Luenberger 观测器
+
+$$
+\dot{\hat{\boldsymbol{x}}}
+=
+\mathbf{A}\hat{\boldsymbol{x}}
++
+\mathbf{B}\boldsymbol{u}
++
+\mathbf{L}
+\left(
+\boldsymbol{y}
+-
+\mathbf{C}\hat{\boldsymbol{x}}
+-
+\mathbf{D}\boldsymbol{u}
+\right).
+$$
+
+估计误差 $\tilde{\boldsymbol{x}}=\boldsymbol{x}-\hat{\boldsymbol{x}}$ 满足
+
+$$
+\dot{\tilde{\boldsymbol{x}}}
+=
+\left(\mathbf{A}-\mathbf{L}\mathbf{C}\right)
+\tilde{\boldsymbol{x}}.
+$$
+
+若 $(\mathbf{A},\mathbf{C})$ 可观，可配置 $\mathbf{A}-\mathbf{L}\mathbf{C}$ 的极点。观测器极点通常比控制闭环极点更快，但过快会放大测量噪声。
+
+Kalman 滤波在随机扰动模型下选择最小均方误差估计器。设
+
+$$
+\dot{\boldsymbol{x}}
+=
+\mathbf{A}\boldsymbol{x}
++
+\mathbf{B}\boldsymbol{u}
++
+\mathbf{G}\boldsymbol{w},
+\qquad
+\boldsymbol{y}
+=
+\mathbf{C}\boldsymbol{x}
++
+\boldsymbol{v},
+$$
+
+其中过程噪声与测量噪声协方差分别为 $\mathbf{Q}_\mathrm{w}$ 与 $\mathbf{R}_\mathrm{v}$。连续稳态 Kalman 增益为
+
+$$
+\mathbf{L}
+=
+\mathbf{P}\mathbf{C}^{\mathrm{T}}\mathbf{R}_\mathrm{v}^{-1},
+$$
+
+其中 $\mathbf{P}$ 满足
+
+$$
+\mathbf{A}\mathbf{P}
++
+\mathbf{P}\mathbf{A}^{\mathrm{T}}
+-
+\mathbf{P}\mathbf{C}^{\mathrm{T}}
+\mathbf{R}_\mathrm{v}^{-1}
+\mathbf{C}\mathbf{P}
++
+\mathbf{G}\mathbf{Q}_\mathrm{w}\mathbf{G}^{\mathrm{T}}
+=
+\mathbf{0}.
+$$
+
+LQR 与 Kalman 滤波组合得到 LQG 控制器。分离原理说明，在满足条件时，可分别设计状态反馈与状态估计器；但 LQG 的鲁棒裕度未必好，工程上仍需检查频域裕度和不确定性。
+
+### 5.5 MIMO 系统要点
+
+多输入多输出系统中，单个传递函数变为传递函数矩阵
+
+$$
+\mathbf{G}(s)=
+\mathbf{C}(s\mathbb{1}-\mathbf{A})^{-1}\mathbf{B}
++
+\mathbf{D}.
+$$
+
+MIMO 控制需要处理通道耦合。一个输入可能同时影响多个输出，一个输出也可能受多个输入共同影响。常用分析工具包括奇异值、相对增益阵（RGA）、解耦控制、LQR、模型预测控制和 $\mathcal{H}_\infty$ 控制。频域中常用最大奇异值 $\bar{\sigma}(\mathbf{G}(\mathrm{j}\omega))$ 描述最坏方向增益，用最小奇异值 $\underline{\sigma}(\mathbf{G}(\mathrm{j}\omega))$ 描述最弱方向增益。
+
+## 6 连续系统的离散化与数字控制
+
+### 6.1 零阶保持离散化
+
+数字控制器以采样周期 $T_s$ 运行。若输入在采样间隔内由零阶保持器保持常值，连续系统
+
+$$
+\dot{\boldsymbol{x}}=\mathbf{A}\boldsymbol{x}+\mathbf{B}\boldsymbol{u}
+$$
+
+可精确离散为
+
+$$
+\boldsymbol{x}[k+1]
+=
+\mathbf{A}_\mathrm{d}\boldsymbol{x}[k]
++
+\mathbf{B}_\mathrm{d}\boldsymbol{u}[k],
+$$
+
+其中
+
+$$
+\mathbf{A}_\mathrm{d}=e^{\mathbf{A}T_s},
+\qquad
+\mathbf{B}_\mathrm{d}
+=
+\int_{0}^{T_s}e^{\mathbf{A}\tau}\mathbf{B}\,\mathrm{d}\tau.
+$$
+
+若 $\mathbf{A}$ 非奇异，也可写作
+
+$$
+\mathbf{B}_\mathrm{d}
+=
+\mathbf{A}^{-1}
+\left(e^{\mathbf{A}T_s}-\mathbb{1}\right)\mathbf{B}.
+$$
+
+连续极点 $s_i$ 映射为离散极点
+
+$$
+z_i=e^{s_iT_s}.
+$$
+
+连续稳定条件 $\operatorname{Re}(s_i)\lt0$ 对应离散稳定条件 $|z_i|\lt1$。
+
+### 6.2 Tustin 双线性变换
+
+Tustin 离散化采用双线性变换
+
+$$
+s=
+\frac{2}{T_s}
+\frac{1-z^{-1}}{1+z^{-1}}.
+$$
+
+对应频率映射为
+
+$$
+\Omega
+=
+2\arctan\left(\frac{\omega T_s}{2}\right),
+$$
+
+其中 $\Omega$ 为离散时间数字角频率。该映射会产生频率扭曲，高频附近尤其明显。若需要在指定频率 $\omega_0$ 处保持准确，可采用预畸变。
+
+状态空间双线性离散化可写为
+
+$$
+\mathbf{A}_\mathrm{d}
+=
+\left(\mathbb{1}-\frac{T_s}{2}\mathbf{A}\right)^{-1}
+\left(\mathbb{1}+\frac{T_s}{2}\mathbf{A}\right),
 $$
 
 $$
-1+L(j\omega_c)=1-e^{j\theta_{\mathrm{PM}}},
+\mathbf{B}_\mathrm{d}
+=
+\left(\mathbb{1}-\frac{T_s}{2}\mathbf{A}\right)^{-1}
+T_s\mathbf{B},
 $$
 
 $$
-|S(j\omega_c)|=\frac{1}{|1-e^{j\theta_{\mathrm{PM}}}|}.
+\mathbf{C}_\mathrm{d}
+=
+\mathbf{C}
+\left(\mathbb{1}-\frac{T_s}{2}\mathbf{A}\right)^{-1},
 $$
 
-它直观说明：相位裕度越小，$1+L$ 越可能接近零，从而 $S$ 越可能出现尖峰，系统对不确定性与扰动越敏感。
+$$
+\mathbf{D}_\mathrm{d}
+=
+\mathbf{D}
++
+\frac{T_s}{2}
+\mathbf{C}
+\left(\mathbb{1}-\frac{T_s}{2}\mathbf{A}\right)^{-1}
+\mathbf{B}.
+$$
 
-#### 2.1.4 SISO 控制器设计与极点配置
+Tustin 法常用于把连续滤波器或补偿器离散化，因为左半平面会映射到单位圆内，稳定性保持较好。若仿真的是真实零阶保持控制系统，则对象离散化通常优先用 ZOH。
 
-#### 2.1.5 零极点分析初步
+### 6.3 数字实现中的工程问题
 
-### 2.2 控制理论的现代描述
+数字控制实现需要同时考虑采样、计算延迟、量化、饱和和抗混叠。采样频率应显著高于闭环带宽，常见经验是至少为闭环带宽的 $10$ 到 $20$ 倍，但高带宽、高延迟或低相位裕度系统需要更保守。一次采样周期的纯延迟在频域近似贡献相位滞后
 
-#### 2.2.1 状态空间表述
+$$
+\varphi_\mathrm{delay}(\omega)=-\omega T_s.
+$$
 
-#### 2.2.2 可控性与可观性
+因此采样和计算延迟会直接侵蚀相位裕度。实际部署前应把采样保持器、计算延迟、执行器饱和、传感器滤波和限幅逻辑纳入闭环仿真。
 
-#### 2.2.3 状态观测器
+## 7 扰动与噪声建模
 
-#### 2.2.4 MIMO 问题概述
+### 7.1 PSD、ASD 与离散白噪声缩放
 
-### 2.3 从连续到离散
+连续随机信号常用功率谱密度（PSD）描述频率分布。若双边 PSD 为常数
+
+$$
+S_n^{(2)}(f)=S_0,
+\qquad
+f\in(-\infty,\infty),
+$$
+
+则幅度谱密度（ASD）为
+
+$$
+A_0=\sqrt{S_0}.
+$$
+
+用计算机生成离散白噪声时，若
+
+$$
+n[k]=\sigma w[k],
+\qquad
+w[k]\sim\mathcal{N}(0,1),
+$$
+
+则离散序列方差为 $\sigma^2$。离散时间 PSD 与物理频率下的双边 PSD 满足
+
+$$
+S_n^{(2)}(f)
+=
+T_sS_n^\mathrm{DT}\left(e^{\mathrm{j}2\pi fT_s}\right).
+$$
+
+若希望离散噪声对应连续双边 PSD $S_0$，需取
+
+$$
+\sigma^2=\frac{S_0}{T_s},
+\qquad
+n[k]=\sqrt{\frac{S_0}{T_s}}\,w[k].
+$$
+
+若以双边 ASD $A_0$ 给定，则
+
+$$
+n[k]=\frac{A_0}{\sqrt{T_s}}\,w[k].
+$$
+
+单边 PSD 与双边 PSD 的关系为
+
+$$
+S^{(1)}(f)=2S^{(2)}(f),
+\qquad
+f\gt0.
+$$
+
+因此不同软件或文献中出现 $\sqrt{2}$ 系数，通常来自单边与双边谱定义不同，而不是物理模型不同。
+
+### 7.2 成形滤波与有色噪声
+
+白噪声经稳定线性滤波器 $G_\mathrm{n}(s)$ 后得到有色噪声。若输入 PSD 为 $S_u(f)$，输出 PSD 为
+
+$$
+S_y(f)
+=
+\left|G_\mathrm{n}(\mathrm{j}2\pi f)\right|^2S_u(f).
+$$
+
+若输入是双边白噪声 $S_u(f)=S_0$，则
+
+$$
+S_y(f)
+=
+S_0
+\left|G_\mathrm{n}(\mathrm{j}2\pi f)\right|^2,
+\qquad
+A_y(f)
+=
+\sqrt{S_0}
+\left|G_\mathrm{n}(\mathrm{j}2\pi f)\right|.
+$$
+
+地面扰动、传感器本底噪声、执行器压力波动和材料厚度变化，都可以用“白噪声源加成形滤波器”的方式建模。这样做的优点是既保留随机性，又能把工程上可测的频谱形状纳入仿真。
+
+### 7.3 地面扰动模型
+
+地面位移扰动常表现为有色噪声，低频含慢漂移，中频可能有微震峰，高频能量随地层与结构传递快速衰减。一个示例成形滤波器可写为
+
+$$
+G_\mathrm{ground}(s)
+=
+K
+\frac{(s-z_1)(s-z_2)}
+{(s-p_1)(s-p_2)(s+\omega_h)^2},
+$$
+
+其中
+
+$$
+z_{1,2}=-\omega_z(1\pm\mathrm{j}),
+\qquad
+p_{1,2}=-\sigma\pm\mathrm{j}\omega_m.
+$$
+
+若取
+
+$$
+\omega_z=1.3\cdot2\pi,
+\qquad
+\sigma=0.03\cdot2\pi,
+\qquad
+\omega_m=0.18\cdot2\pi,
+\qquad
+\omega_h=20\cdot2\pi,
+$$
+
+则 $p_{1,2}$ 在约 $0.18\,\mathrm{Hz}$ 附近形成低阻尼峰，高频双极点提供约 $-40\,\mathrm{dB}/\mathrm{dec}$ 的滚降。对白噪声输入 $u_\mathrm{g}$，地面位移可写为
+
+$$
+x_\mathrm{g}=G_\mathrm{ground}*u_\mathrm{g}.
+$$
+
+其 PSD 为
+
+$$
+S_{x_\mathrm{g}}(f)
+=
+S_{u_\mathrm{g}}(f)
+\left|G_\mathrm{ground}(\mathrm{j}2\pi f)\right|^2.
+$$
+
+### 7.4 传感器本底噪声模型
+
+传感器噪声通常包含低频漂移、中频白噪声底和高频带宽限制。示例模型可写为
+
+$$
+G_\mathrm{sensor}(s)
+=
+K
+\frac{(s+2)^4}
+{(s+0.1)^4(s+\omega_b)},
+\qquad
+\omega_b=3000\cdot2\pi.
+$$
+
+低频四重极点模拟低频漂移或 $1/f$ 型噪声增强，中频零点使谱形趋于平坦，高频极点模拟电子带宽限制。测量信号可写为
+
+$$
+y_\mathrm{meas}(t)
+=
+y_\mathrm{true}(t)+n_\mathrm{sensor}(t).
+$$
+
+扰动与噪声频谱示意如下。
+
+![扰动与噪声特性](attachments/GrdDis_and_SensorNoise.png)
+
+### 7.5 广义系统组合
+
+为了进行 LQG、$\mathcal{H}_\infty$ 或混合灵敏度设计，常把物理对象、扰动成形滤波器和传感器噪声滤波器组合为广义系统。设物理对象为
+
+$$
+\dot{\boldsymbol{x}}_\mathrm{p}
+=
+\mathbf{A}_\mathrm{p}\boldsymbol{x}_\mathrm{p}
++
+\mathbf{B}_\mathrm{u}\boldsymbol{u}
++
+\mathbf{B}_\mathrm{d}\boldsymbol{d},
+$$
+
+扰动滤波器为
+
+$$
+\dot{\boldsymbol{x}}_\mathrm{d}
+=
+\mathbf{A}_\mathrm{d}\boldsymbol{x}_\mathrm{d}
++
+\mathbf{B}_\mathrm{d0}\boldsymbol{w}_\mathrm{d},
+\qquad
+\boldsymbol{d}
+=
+\mathbf{C}_\mathrm{d}\boldsymbol{x}_\mathrm{d},
+$$
+
+传感器噪声滤波器为
+
+$$
+\dot{\boldsymbol{x}}_\mathrm{n}
+=
+\mathbf{A}_\mathrm{n}\boldsymbol{x}_\mathrm{n}
++
+\mathbf{B}_\mathrm{n0}\boldsymbol{w}_\mathrm{n},
+\qquad
+\boldsymbol{n}
+=
+\mathbf{C}_\mathrm{n}\boldsymbol{x}_\mathrm{n}.
+$$
+
+则增广状态
+
+$$
+\boldsymbol{x}_\mathrm{a}
+=
+\begin{bmatrix}
+\boldsymbol{x}_\mathrm{p}\\
+\boldsymbol{x}_\mathrm{d}\\
+\boldsymbol{x}_\mathrm{n}
+\end{bmatrix}
+$$
+
+满足块上三角结构
+
+$$
+\mathbf{A}_\mathrm{a}
+=
+\begin{bmatrix}
+\mathbf{A}_\mathrm{p}&\mathbf{B}_\mathrm{d}\mathbf{C}_\mathrm{d}&\mathbf{0}\\
+\mathbf{0}&\mathbf{A}_\mathrm{d}&\mathbf{0}\\
+\mathbf{0}&\mathbf{0}&\mathbf{A}_\mathrm{n}
+\end{bmatrix}.
+$$
+
+测量输出为
+
+$$
+\boldsymbol{y}_\mathrm{meas}
+=
+\mathbf{C}_\mathrm{p}\boldsymbol{x}_\mathrm{p}
++
+\mathbf{C}_\mathrm{n}\boldsymbol{x}_\mathrm{n}.
+$$
+
+这种建模方式使控制器看到的不是抽象白噪声，而是具有明确频谱结构的扰动和测量误差。
+
+## 8 工程设计流程
+
+控制系统设计不应只停留在公式推导。一个较稳妥的流程如下。
+
+1. 明确目标：列出跟踪精度、扰动抑制、响应速度、超调、控制力限制、噪声限制和安全约束。
+2. 建立模型：从物理方程得到名义模型，识别执行器、传感器、延迟、饱和和主要非线性。
+3. 线性化与验证：在工作点附近得到 LTI 模型，并用实验或高保真仿真检查主要频段内的误差。
+4. 分析开环：检查极点、零点、模态、频率响应、可控性和可观性。
+5. 选择结构：根据任务选择 PID、超前滞后、状态反馈、LQR、观测器、LQG 或鲁棒控制。
+6. 设计与整形：同时检查 $S$、$T$、裕度、带宽、控制量和扰动通道，而不是只看参考跟踪。
+7. 离散化实现：选择采样率、离散化方法、滤波器结构、限幅和抗积分饱和逻辑。
+8. 仿真验证：覆盖标称参数、参数摄动、扰动谱、传感器噪声、初始条件和极端输入。
+9. 实机调试：先低增益、低带宽、限幅运行，再逐步提高性能；保留回退参数和安全停机条件。
+10. 记录结论：保存模型版本、参数、测试工况、频域图、时域响应和失败案例。
+
+对本文贯穿示例而言，建议至少完成以下检查：
+
+- $\mathbf{A}$ 的极点是否全部在左半平面；
+- $(\mathbf{A},\mathbf{B}_\mathrm{u})$ 是否可控；
+- 实际传感器输出对应的 $(\mathbf{A},\mathbf{C})$ 是否可观或可检测；
+- $\Delta X/F$ 与 $\Delta X/W$ 的 Bode 图是否符合物理直觉；
+- 设计闭环后 $S$ 是否在扰动主频段足够小；
+- $T$ 是否在测量噪声主频段足够小；
+- 控制力是否在最坏扰动和参考输入下超过执行器限制；
+- 离散实现是否因采样、延迟或滤波造成明显相位裕度损失。
