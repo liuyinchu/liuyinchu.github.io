@@ -199,6 +199,7 @@ onMounted(async () => {
   font-size: 1.3rem;
 }
 
+
 /* 行内代码与块代码 */
 /* .markdown-body code {
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
@@ -379,5 +380,69 @@ mjx-container {
   background-color: #b4befe; /* 线条的基础颜色 */
   position: relative; /* 为伪元素提供定位上下文 */
   text-align: center; /* 使中间的符号居中 */
+}
+
+@media (max-width: 768px) {
+  .markdown-body {
+    margin: 1rem auto;
+    padding: 0 0.2rem;
+    font-size: 1.03rem;
+    line-height: 1.85;
+  }
+
+  .markdown-body :deep(h1),
+  .markdown-body :deep(h2),
+  .markdown-body :deep(h3),
+  .markdown-body :deep(h4) {
+    margin-top: 2.1rem;
+    margin-bottom: 1rem;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+
+  .markdown-body :deep(h1) {
+    font-size: clamp(1.8rem, 7vw, 2.15rem);
+  }
+
+  .markdown-body :deep(h2) {
+    font-size: clamp(1.55rem, 6vw, 1.9rem);
+  }
+
+  .markdown-body :deep(h3) {
+    font-size: clamp(1.35rem, 5vw, 1.6rem);
+  }
+
+  .markdown-body :deep(h4) {
+    font-size: clamp(1.18rem, 4vw, 1.3rem);
+  }
+
+  .markdown-body :deep(.header-anchor) {
+    display: none;
+  }
+
+  :deep(blockquote) {
+    margin: 1.35em 0;
+    padding-inline: 0.9em;
+  }
+
+  .markdown-body :deep(pre.code-block) {
+    margin: 1.5rem 0;
+  }
+
+  .markdown-body :deep(pre code) {
+    padding: 1rem;
+    font-size: 0.86rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .markdown-body {
+    font-size: 1rem;
+    line-height: 1.82;
+  }
+
+  .markdown-body :deep(h1) {
+    font-size: clamp(1.62rem, 7vw, 1.95rem);
+  }
 }
 </style>

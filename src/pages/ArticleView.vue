@@ -155,4 +155,65 @@ function onMarkdownLoaded(rawText) {
     display: block;
   }
 }
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1.25rem 0.85rem 2rem;
+  }
+
+  .title-container {
+    padding: 3.25rem 1.15rem;
+    margin-bottom: 1.6rem;
+    border-radius: 0.9rem;
+  }
+
+  .title-container::before {
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.34),
+      rgba(0, 0, 0, 0.62)
+    );
+  }
+
+  .header-content h1 {
+    font-size: clamp(2.05rem, 8.5vw, 2.65rem);
+    line-height: 1.16;
+    margin-bottom: 0.85rem;
+    text-wrap: balance;
+  }
+
+  .header-content .meta-info {
+    gap: 0.35rem 0.75rem;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    flex-wrap: wrap;
+  }
+
+  .main-content-area {
+    display: block;
+  }
+
+  .article-wrapper {
+    padding: 1.25rem 0.95rem;
+    border-radius: 0.7rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .page-container {
+    padding: 1rem 0.75rem 1.75rem;
+  }
+
+  .title-container {
+    padding: 2.8rem 1rem;
+  }
+
+  .header-content h1 {
+    font-size: clamp(1.85rem, 8vw, 2.25rem);
+  }
+
+  .article-wrapper {
+    padding: 0.95rem 0.75rem;
+  }
+}
 </style>

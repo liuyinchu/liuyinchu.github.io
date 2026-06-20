@@ -1,7 +1,7 @@
 <script setup>
 import TypingTitle from '../components/TypingTitle.vue'
 import ContentBlock from '../components/ContentBlock.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 /* ----------------------------------------------------------------
    逻辑部分完全保持原样 (100% Original Logic)
@@ -14,6 +14,124 @@ const visitorInfo = ref({
   browser: '未知',
   os: '未知'
 })
+
+const INTRO_STORAGE_KEY = 'liuyinchu-home-entry-seen'
+const INTRO_DURATION = 3600
+const INTRO_SETTLE_DELAY = 420
+
+const introWords = [
+  'Hi',
+  'Space',
+  'Journey',
+  'Explore',
+  'Record',
+  'Create',
+  'Code',
+  'Project',
+  'Resource',
+  'Research',
+  'Academic',
+  'Welcome'
+]
+
+function shouldShowIntroOnFirstPaint() {
+  const hasSeenIntro = window.localStorage.getItem(INTRO_STORAGE_KEY) === 'true'
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  return !hasSeenIntro && !reduceMotion
+}
+
+const showIntro = ref(shouldShowIntroOnFirstPaint())
+const introProgress = ref(0)
+const introOffset = ref(0)
+const introWordTrack = ref(null)
+
+let introFrameId = 0
+let introFinishTimer = 0
+let originalBodyOverflow = ''
+
+function easeIntro(t) {
+  return t < 0.5
+    ? 4 * t * t * t
+    : 1 - Math.pow(-2 * t + 2, 3) / 2
+}
+
+function getIntroWordHeight() {
+  const firstWord = introWordTrack.value?.firstElementChild
+  return firstWord?.getBoundingClientRect().height || 96
+}
+
+function rememberIntro() {
+  window.localStorage.setItem(INTRO_STORAGE_KEY, 'true')
+}
+
+function finishIntro(shouldRemember = true) {
+  if (introFrameId) {
+    window.cancelAnimationFrame(introFrameId)
+    introFrameId = 0
+  }
+
+  if (introFinishTimer) {
+    window.clearTimeout(introFinishTimer)
+    introFinishTimer = 0
+  }
+
+  if (showIntro.value) {
+    document.body.style.overflow = originalBodyOverflow
+  }
+
+  showIntro.value = false
+  introProgress.value = 100
+
+  if (shouldRemember) rememberIntro()
+}
+
+async function startIntro() {
+  showIntro.value = true
+  introProgress.value = 0
+  introOffset.value = 0
+  originalBodyOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+
+  await nextTick()
+
+  const startedAt = window.performance.now()
+  const lastWordIndex = introWords.length - 1
+
+  function animate(now) {
+    const rawProgress = Math.min((now - startedAt) / INTRO_DURATION, 1)
+    const easedProgress = easeIntro(rawProgress)
+    const wordHeight = getIntroWordHeight()
+
+    introProgress.value = easedProgress * 100
+    introOffset.value = -lastWordIndex * wordHeight * easedProgress
+
+    if (rawProgress < 1) {
+      introFrameId = window.requestAnimationFrame(animate)
+      return
+    }
+
+    introProgress.value = 100
+    introOffset.value = -lastWordIndex * wordHeight
+    introFinishTimer = window.setTimeout(() => finishIntro(true), INTRO_SETTLE_DELAY)
+  }
+
+  introFrameId = window.requestAnimationFrame(animate)
+}
+
+function startIntroIfNeeded() {
+  const hasSeenIntro = window.localStorage.getItem(INTRO_STORAGE_KEY) === 'true'
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (hasSeenIntro) return
+
+  if (reduceMotion) {
+    rememberIntro()
+    return
+  }
+
+  startIntro()
+}
 
 function parseVisitorDevice() {
   const ua = navigator.userAgent
@@ -38,6 +156,7 @@ const visitorCountAvailable = true
 
 onMounted(async () => {
   parseVisitorDevice()
+  startIntroIfNeeded()
 
   try {
     const res = await fetch('https://ipapi.co/json/')
@@ -48,10 +167,46 @@ onMounted(async () => {
     visitorInfo.value.ip = '无法获取'
   }
 })
+
+onBeforeUnmount(() => {
+  finishIntro(false)
+})
 </script>
 
 <template>
-  
+  <Transition name="entry-intro">
+    <div
+      v-if="showIntro"
+      class="entry-intro"
+      role="status"
+      aria-live="polite"
+      aria-label="Welcome to LiuYinChu'Space"
+    >
+      <div class="entry-progress" aria-hidden="true">
+        <div
+          class="entry-progress__bar"
+          :style="{ width: `${introProgress}%` }"
+        ></div>
+      </div>
+
+      <div class="entry-word-stage" aria-hidden="true">
+        <div
+          ref="introWordTrack"
+          class="entry-word-track"
+          :style="{ transform: `translate3d(0, ${introOffset}px, 0)` }"
+        >
+          <div
+            v-for="word in introWords"
+            :key="word"
+            class="entry-word"
+          >
+            {{ word }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
+
   <section class="typing-screen">
     <TypingTitle />
   </section>
@@ -105,6 +260,89 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.entry-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #cdd6f4;
+  background:
+    linear-gradient(180deg, rgba(17, 17, 27, 0.96), rgba(30, 30, 46, 0.98)),
+    #1e1e2e;
+}
+
+.entry-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  overflow: visible;
+  background: rgba(205, 214, 244, 0.22);
+  box-shadow: 0 1px 18px rgba(137, 180, 250, 0.22);
+}
+
+.entry-progress__bar {
+  height: 100%;
+  background: linear-gradient(90deg, #74c7ec, #cba6f7, #f5c2e7);
+  box-shadow:
+    0 0 18px rgba(137, 180, 250, 0.72),
+    0 0 34px rgba(203, 166, 247, 0.52);
+  transition: width 80ms linear;
+}
+
+.entry-word-stage {
+  position: relative;
+  width: min(86vw, 920px);
+  height: clamp(3.8rem, 8.4vw, 6.2rem);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 24%,
+    #000 76%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 24%,
+    #000 76%,
+    transparent 100%
+  );
+}
+
+.entry-word-track {
+  will-change: transform;
+}
+
+.entry-word {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: clamp(3.8rem, 8.4vw, 6.2rem);
+  font-family: 'Inter', 'LXGW WenKai', sans-serif;
+  font-size: clamp(2.45rem, 8.5vw, 5.65rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  color: #f5f6ff;
+  text-shadow: 0 16px 52px rgba(137, 180, 250, 0.28);
+}
+
+.entry-intro-enter-active,
+.entry-intro-leave-active {
+  transition: opacity 0.45s ease;
+}
+
+.entry-intro-enter-from,
+.entry-intro-leave-to {
+  opacity: 0;
+}
+
 /* 保持原有的居中样式 */
 .centered-text {
   text-align: center;
@@ -171,5 +409,27 @@ onMounted(async () => {
 .glass-btn:active {
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+@media (max-width: 768px) {
+  .entry-progress {
+    height: 7px;
+  }
+
+  .entry-word-stage,
+  .entry-word {
+    height: clamp(3.15rem, 14vw, 4.6rem);
+  }
+
+  .entry-word {
+    font-size: clamp(2.2rem, 12vw, 4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entry-intro-enter-active,
+  .entry-intro-leave-active,
+  .entry-progress__bar {
+    transition: none;
+  }
 }
 </style>
