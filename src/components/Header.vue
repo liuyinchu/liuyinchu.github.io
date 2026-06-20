@@ -299,7 +299,17 @@ onUnmounted(() => {
 
 .logo-area:hover .site-name,
 .logo-area:focus-visible .site-name {
-  color: #fff;
+  background: linear-gradient(
+    135deg,
+    #E57219 0%,
+    #EDCC87 16.7%,
+    #B4E6CD 40.5%,
+    #69F0E1 61%,
+    #47F1E8 97.8%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .nav-menu {
