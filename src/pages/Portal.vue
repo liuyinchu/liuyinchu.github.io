@@ -1,778 +1,1173 @@
 <script setup>
-const dockGroups = [
+import APlayer from 'aplayer'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import Calendar from '../components/Calendar.vue'
+import ToDoList from '../components/ToDoList.vue'
+import Weather from '../components/Weather.vue'
+
+const wallpaper = '/bg/Firefly_Paper_Airplane.png'
+const bootMessage = 'Wishing your day stays bright —— like sunshine that chose to stay just for you.'
+
+const topApps = [
   {
-    name: 'Advanced AI',
-    color: '#cba6f7', // Mocha - Mauve
-    links: [
-      { name: 'ChatGPT', url: 'https://chat.openai.com/' },
-      { name: '深度求索', url: 'https://chat.deepseek.com/' },
-      { name: 'Gemini', url: 'https://gemini.google.com/' },
-      { name: 'Grok', url: 'https://grok.com/' },
-      { name: 'OpenRouter', url: 'https://openrouter.ai/' },
-      { name: 'Claude', url: 'https://claude.ai/' },
-      
-      
-    ]
+    id: 'todo',
+    label: 'TODO',
+    title: 'TODO List',
+    icon: 'https://www.google.com/s2/favicons?sz=128&domain_url=https://todoist.com/',
+    align: 'left',
+    windowClass: 'window-todo',
   },
   {
-    name: 'Tools',
-    color: '#94e2d5', // Mocha - Teal
-    links: [
-      { name: 'GitHub', url: 'https://github.com/' },
-      { name: '通用格式转换', url: 'https://cloudconvert.com' },
-      { name: 'LaTeX 公式编辑器', url: 'https://www.latexlive.com/' },
-      { name: 'Google Translate', url: 'https://translate.google.com' },
-      { name: '文件传输助手', url: 'https://filehelper.weixin.qq.com/' },
-      { name: 'Bing', url: 'https://cn.bing.com/' },
-      { name: 'Google', url: 'https://www.google.com/' },
-      { name: 'IP 测试', url: 'https://ipinfo.io/what-is-my-ip' },
-      { name: '谷歌学术', url: 'https://scholar.google.com/' },
-    ]
+    id: 'music',
+    label: 'Music',
+    title: 'Music',
+    icon: '/music/cover/default.jpg',
+    align: 'right',
+    windowClass: 'window-music',
   },
   {
-    name: 'Knowledge',
-    color: '#f9e2af', // Mocha - Yellow
-    links: [
-      { name: 'arXiv', url: 'https://arxiv.org/' },
-      { name: '菜鸟教程', url: 'https://www.runoob.com/' },
-      { name: '小时百科', url: 'https://wuli.wiki/online/index.html' },
-      { name: '马克思主义文库', url: 'https://www.marxists.org/chinese/' },
-      { name: 'Git教程&速查', url: 'https://liaoxuefeng.com/books/git/introduction/index.html' },
-      { name: 'SciPy API', url: 'https://docs.scipy.org/doc/scipy/reference/index.html#scipy-api' },
-    ]
+    id: 'weather',
+    label: 'Weather',
+    title: 'Weather',
+    icon: 'https://www.google.com/s2/favicons?sz=128&domain_url=https://www.qweather.com/',
+    align: 'right',
+    windowClass: 'window-weather',
   },
   {
-    name: 'Something Else',
-    color: '#fab387', // Mocha - Peach
-    links: [
-      { name: 'Google Drive', url: 'https://drive.google.com/drive/home' },
-      { name: '网易企业邮箱', url: 'https://qy.163.com/static/login/' },
-      { name: 'Gmail', url: 'https://mail.google.com' },
-      { name: 'YouTube', url: 'https://www.youtube.com/' },
-      { name: 'B站', url: 'https://www.bilibili.com/' },
-      { name: '知乎', url: 'https://www.zhihu.com/' },
-      { name: 'Catppuccin 调色板', url: 'https://catppuccin.com/palette/' },
-      { name: 'Pixiv', url: 'https://www.pixiv.net/' },
-      { name: '中山大学统一门户', url: 'https://portal.sysu.edu.cn/' },
-      { name: '坚果云盘', url: 'https://www.jianguoyun.com/' },
-      { name: '中山大学 LaTeX 在线编辑器', url: 'https://latex.sysu.edu.cn/login' },
-    ]
-  }
+    id: 'calendar',
+    label: 'Calendar',
+    title: 'Calendar',
+    icon: 'https://www.google.com/s2/favicons?sz=128&domain_url=https://calendar.google.com/',
+    align: 'right',
+    windowClass: 'window-calendar',
+  },
 ]
 
-import APlayer from 'aplayer'
-import { onMounted, ref } from 'vue'
-import Calendar from '../components/Calendar.vue'
-import ToDoList from '../components/ToDoList.vue' // 引入 ToDoList 组件
-import Weather from '../components/Weather.vue'   // 引入 Weather 组件
+const bottomApps = [
+  {
+    id: 'map',
+    label: 'Map',
+    title: 'Site Map',
+    icon: '/favicon_liuyin.svg',
+    windowClass: 'window-map',
+  },
+  {
+    id: 'dock',
+    label: 'Dock',
+    title: 'Dock',
+    icon: 'https://www.google.com/s2/favicons?sz=128&domain_url=https://github.com/',
+    windowClass: 'window-dock',
+  },
+]
 
-const fullText = 'Wishing your day stays bright —— like sunshine that chose to stay just for you.'
-const typedText = ref('')
-const showCursor = ref(true)
+const quickLinks = [
+  { name: 'ChatGPT', url: 'https://chat.openai.com/' },
+  { name: 'Claude', url: 'https://claude.ai/' },
+  { name: 'GitHub', url: 'https://github.com/' },
+  { name: 'Google', url: 'https://www.google.com/' },
+  { name: 'Translate', url: 'https://translate.google.com/' },
+  { name: 'Gmail', url: 'https://mail.google.com/' },
+  { name: 'Drive', url: 'https://drive.google.com/drive/home' },
+]
 
-onMounted(() => {
-  let i = 0
-  const interval = setInterval(() => {
-    typedText.value += fullText[i]
-    i++
-    if (i >= fullText.length) {
-      clearInterval(interval)
-      showCursor.value = false  // 打完字就移除光标（或保留，下面可以自选）
-    }
-  }, 100)
+const siteMapSections = [
+  {
+    title: 'Jottings',
+    description: '随记、开放空间与日常记录。',
+    links: [
+      { name: '随记', path: '/space1' },
+      { name: '网络邻居', path: '/space2' },
+    ],
+  },
+  {
+    title: 'Resources',
+    description: '文献、编程、计算机、资料、工具与文件。',
+    links: [
+      { name: '资源链接', path: '/rd' },
+      { name: '文献', path: '/rliterature' },
+      { name: '编程', path: '/rprogramming' },
+      { name: '计算机', path: '/rcs' },
+      { name: '资料', path: '/rmaterials' },
+      { name: '工具', path: '/rtools' },
+      { name: '文件', path: '/rfiles' },
+    ],
+  },
+  {
+    title: 'Code',
+    description: '代码、项目与实验报告入口。',
+    links: [
+      { name: '代码与项目', path: '/code' },
+      { name: '实验报告', path: '/labreport' },
+    ],
+  },
+  {
+    title: 'About',
+    description: '自我介绍、学术主页、版权与说明。',
+    links: [
+      { name: '关于', path: '/about' },
+      { name: '我的学术', path: '/research' },
+      { name: '个人学术简历', path: '/academic' },
+      { name: '版权说明', path: '/credit' },
+    ],
+  },
+]
 
-  // 如果你希望光标一直闪烁在最后，可以注释掉上面那行
+const activeWindow = ref(null)
+const now = ref(new Date())
+const dockGroups = ref([])
+const musicTracks = ref([])
+const aplayerContainer = ref(null)
+const loadingData = ref(true)
+const dataError = ref('')
+const isBooting = ref(true)
+let clockTimer
+let bootTimer
+let player
+
+const allWindowApps = computed(() => [...topApps, ...bottomApps])
+const activeApp = computed(() => allWindowApps.value.find((app) => app.id === activeWindow.value))
+const rightTopApps = computed(() => topApps.filter((app) => app.align === 'right'))
+const todoApp = computed(() => topApps.find((app) => app.id === 'todo'))
+
+const menuTime = computed(() => (
+  now.value.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  + ' '
+  + now.value.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+))
+
+function iconForUrl(url, size = 96) {
+  return `https://www.google.com/s2/favicons?sz=${size}&domain_url=${encodeURIComponent(url)}`
+}
+
+function openWindow(id) {
+  activeWindow.value = id
+}
+
+function closeWindow() {
+  activeWindow.value = null
+}
+
+async function loadPortalData() {
+  loadingData.value = true
+  dataError.value = ''
+
+  try {
+    const [musicRes, dockRes] = await Promise.all([
+      fetch('/data/portal-music.json'),
+      fetch('/data/portal-dock.json'),
+    ])
+
+    if (!musicRes.ok) throw new Error(`Music JSON ${musicRes.status}`)
+    if (!dockRes.ok) throw new Error(`Dock JSON ${dockRes.status}`)
+
+    musicTracks.value = await musicRes.json()
+    dockGroups.value = await dockRes.json()
+  } catch (error) {
+    dataError.value = `Portal data failed: ${error.message}`
+  } finally {
+    loadingData.value = false
+  }
+}
+
+function destroyPlayer() {
+  if (player) {
+    player.destroy()
+    player = null
+  }
+}
+
+async function mountPlayer() {
+  await nextTick()
+  if (activeWindow.value !== 'music' || !aplayerContainer.value || !musicTracks.value.length || player) return
+
+  player = new APlayer({
+    container: aplayerContainer.value,
+    autoplay: false,
+    theme: '#89b4fa',
+    listFolded: false,
+    listMaxHeight: '246px',
+    audio: musicTracks.value,
+  })
+}
+
+watch(activeWindow, async (next) => {
+  if (next !== 'music') destroyPlayer()
+  else await mountPlayer()
 })
 
-const aplayerContainer = ref(null)
+watch(musicTracks, async () => {
+  if (activeWindow.value === 'music') await mountPlayer()
+})
 
 onMounted(() => {
-  new APlayer({
-    container: aplayerContainer.value,
-    autoplay: true,
-    theme: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#1e1e2e',
-    listFolded: false,
-    listMaxHeight: '240px',
-    audio: [
-      {
-        name: 'Space Walk',
-        artist: 'HoYo-Mix',
-        url: '/music/space_walk.m4a',
-        cover: '/music/cover/default.jpg',
-      },
-      {
-        name: '太空曼波～',
-        artist: '还给我神ID',
-        url: '/music/太空曼波_还我神ID.m4a',
-        cover: '/music/cover/default.jpg',
-      },
-      { name: '夜的钢琴曲五', artist: '石进', url: '/music/夜的钢琴曲五_石进.m4a', cover: '/music/cover/IMG_FireFly6.jpg' },
-      { name: '下一个天亮', artist: '郭静', url: '/music/下一个天亮_郭静.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
-      { name: '不谓侠', artist: '萧忆情Alex', url: '/music/不谓侠_萧忆情Alex.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
-      { name: 'A Letter', artist: '泽野弘之', url: '/music/a_letter.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '如歌', artist: '张杰', url: '/music/如歌_张杰.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '放松小曲', artist: '还给我神ID', url: '/music/放松小曲_还给我神ID.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: 'A New Day with Hope', artist: 'HoYo-Mix', url: '/music/a_new_day_with_hope.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: 'Cage', artist: '泽野弘之', url: '/music/cage.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: 'Call Your Name (Gv)', artist: '泽野弘之', url: '/music/call_your_name_gv.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
-      { name: 'Flower Dance', artist: 'DJ Okawari', url: '/music/flower_dance.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '只对你有感觉', artist: '飞轮海', url: '/music/只对你有感觉_飞轮海.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
-      { name: '红色高跟鞋', artist: '蔡健雅', url: '/music/红色高跟鞋_蔡健雅.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
-      { name: '三生三世', artist: '张杰', url: '/music/三生三世_张杰.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: 'narrative', artist: '泽野弘之', url: '/music/narrative.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
-      { name: '花月成双', artist: '三无Marblue', url: '/music/花月成双.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
-      { name: 'ninelie', artist: 'Aimer', url: '/music/ninelie.m4a', cover: '/music/cover/Qingming_Xi_Square.JPG' },
-      { name: '一等情事', artist: '许一鸣', url: '/music/一等情事_许一鸣.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: 'Puppet in the Dark', artist: 'FELT', url: '/music/puppet_in_the_dark.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: 'Revolution', artist: 'The Score', url: '/music/revolution.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: 'sh0ut', artist: 'SawanoHiroyuki[nZk]', url: '/music/sh0ut.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: 'The Opening', artist: '塞壬唱片', url: '/music/the_opening.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '知我', artist: '哦漏', url: '/music/知我_哦漏.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '最熟悉的陌生人', artist: '萨克斯', url: '/music/最熟悉的陌生人_萨克斯.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '空山新雨后', artist: '锦零', url: '/music/空山新雨后_锦零.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '光年之外', artist: '邓紫棋', url: '/music/光年之外_邓紫棋.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '枫', artist: '周杰伦', url: '/music/枫_周杰伦.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '春三月', artist: '司南', url: '/music/春三月_司南.m4a', cover: '/music/cover/Happy_Robin_Enhanced.jpg' },
-      { name: '皎洁的笑颜', artist: '陈致逸', url: '/music/皎洁的笑颜_陈致逸.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '沈园外', artist: '阿YueYue', url: '/music/沈园外_阿YueYue.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '爱情转移', artist: '陈奕迅', url: '/music/爱情转移_陈奕迅.mp3', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: 'LOVE Theme from TIGA', artist: '矢野立美', url: '/music/LOVE_Theme_from_TIGA_矢野立美.m4a', cover: '/music/cover/Texas.JPG' },
-      { name: '不是因为寂寞才想你', artist: 'T.R.Y', url: '/music/不是因为寂寞才想你.m4a', cover: '/music/cover/Texas.JPG' },
-      { name: 'Da Capo', artist: 'HoYo-Mix', url: '/music/Da_Capo.m4a', cover: '/music/cover/Qute_Robin_4K.jpg' },
-      { name: '伯虎说', artist: '唐伯虎', url: '/music/伯虎说_唐伯虎.m4a', cover: '/music/cover/Qute_Robin_4K.jpg' },
-      { name: '剑心', artist: '张杰', url: '/music/剑心_张杰.m4a', cover: '/music/cover/Qute_Robin_4K.jpg' },
-      { name: '西厢寻他', artist: '唐伯虎', url: '/music/西厢寻他_唐伯虎.m4a', cover: '/music/cover/Qute_Robin_4K.jpg' },
-      { name: '心外江湖', artist: '音阙诗听', url: '/music/心外江湖_音阙诗听.m4a', cover: '/music/cover/Qute_Robin_4K.jpg' },
-      { name: '这世界那么多人', artist: '莫文蔚', url: '/music/这世界那么多人_莫文蔚.m4a', cover: '/music/cover/Qute_Robin_4K.jpg' },
-      { name: '爱情讯息', artist: '郭静', url: '/music/爱情讯息_郭静.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
-      { name: '关键词', artist: '林俊杰', url: '/music/关键词_林俊杰.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '最后一哈', artist: '沐源鸽', url: '/music/最后一哈_沐源鸽.m4a', cover: '/music/cover/Firefly_Looking.png' },
-      { name: '跳楼机（1.1曼波版）', artist: '曼波~曼波~', url: '/music/跳楼机_曼波版.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '关山酒', artist: '兰音Reine', url: '/music/关山酒_兰音.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '环佩凭栏望千帆', artist: '陈致逸', url: '/music/环佩凭栏望千帆_陈致逸.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '花海', artist: '周杰伦', url: '/music/花海.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '听', artist: '张杰', url: '/music/听_张杰.m4a', cover: '/music/cover/Firefly_Looking.png' },
-      { name: '画', artist: '邓紫棋', url: '/music/画.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '心墙', artist: '郭静', url: '/music/心墙_郭静.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
-      { name: '几初的智愿', artist: 'HoYo-Mix', url: '/music/几初的智愿.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '寂寞沙洲冷', artist: '周传雄', url: '/music/寂寞沙洲冷_周传雄.mp3', cover: '/music/cover/Skadi2.PNG' },
-      { name: '晚夜微雨问海棠', artist: '镜予歌', url: '/music/晚夜微雨问海棠_镜予歌.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '流光记', artist: '银临', url: '/music/流光记_银临.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '我好像在哪见过你', artist: '薛之谦', url: '/music/我好像在哪见过你_薛之谦.m4a', cover: '/music/cover/Firefly_Yeee.png' },
-      { name: '眉间雪', artist: '晴愔', url: '/music/眉间雪.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '天涯过客', artist: '周杰伦', url: '/music/天涯过客_周杰伦.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '天地缓缓', artist: '兰音Reine', url: '/music/天地缓缓_兰音Reine.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '七里香', artist: '周杰伦', url: '/music/七里香_周杰伦.mp3', cover: '/music/cover/Skadi2.PNG' },
-      { name: '如果当时', artist: '许嵩', url: '/music/如果当时.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '若我不曾见过太阳', artist: '知更鸟', url: '/music/若我不曾见过太阳.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '青柠', artist: '徐秉龙桃十五', url: '/music/青柠_徐秉龙桃十五.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '西楼别序', artist: '尹昔眠', url: '/music/西楼别序_尹昔眠.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '舍离去', artist: '兰音Reine', url: '/music/舍离去_兰音.m4a', cover: '/music/cover/Skadi2.PNG' },
-      { name: '霜雪千年', artist: '翻唱', url: '/music/霜雪千年_翻唱.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
-      { name: '非酋', artist: '薛黛霏', url: '/music/非酋_薛黛霏.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
-      { name: '青花瓷', artist: '周杰伦', url: '/music/青花瓷_周杰伦.m4a', cover: '/music/cover/Firefly_Yeee.png' },
-      { name: '使一颗心免于哀伤', artist: '知更鸟', url: '/music/使一颗心免于哀伤.m4a', cover: '/music/cover/Texas.JPG' },
-      { name: '听我说', artist: '周深', url: '/music/听我说_周深.m4a', cover: '/music/cover/Texas.JPG' },
-      { name: '手写的从前', artist: '周杰伦', url: '/music/手写的从前.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '牵丝戏', artist: '银临', url: '/music/牵丝戏_银临.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '相思遥', artist: '兰音翻唱', url: '/music/相思遥_兰音翻唱.m4a', cover: '/music/cover/Skadi_by_the_Sea.jpg' },
-      { name: '祝福', artist: 'YOASOBI', url: '/music/祝福_YOASOBI.m4a', cover: '/music/cover/Texas.JPG' },
-      { name: '烟雨行舟', artist: '伦桑', url: '/music/烟雨行舟_伦桑.m4a', cover: '/music/cover/Texas.JPG' },
-      { name: '天军行阵乐', artist: 'Poe(CN)', url: '/music/天军行阵乐.flac', cover: '/music/cover/Texas.JPG' },
-      { name: '突然的自我', artist: '伍佰', url: '/music/突然的自我_伍佰.mp3', cover: '/music/cover/Texas.JPG' },
-      { name: '我们的歌谣', artist: '凤凰传奇', url: '/music/我们的歌谣_凤凰传奇.m4a', cover: '/music/cover/Texas.JPG' },
-      { name: '循迹', artist: '王子健', url: '/music/循迹_王子健.m4a', cover: '/music/cover/Texas.JPG' },
-      { name: 'Refrain', artist: 'AnanRyoko', url: '/music/Refrain_AnanRyoko.m4a', cover: '/music/cover/Firefly_Looking.png' },
-      { name: '贝加尔湖畔', artist: '李健', url: '/music/贝加尔湖畔_李健.m4a', cover: '/music/cover/Colored_Violet_Evergarden.png' },
-    ].map(track => ({
-      ...track,
-      cover: track.cover || '/music/cover/default.jpg',
-    })),
-  })
+  loadPortalData()
+  clockTimer = window.setInterval(() => {
+    now.value = new Date()
+  }, 30000)
+
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  bootTimer = window.setTimeout(() => {
+    isBooting.value = false
+  }, reduceMotion ? 250 : 3200)
+})
+
+onBeforeUnmount(() => {
+  destroyPlayer()
+  window.clearInterval(clockTimer)
+  window.clearTimeout(bootTimer)
 })
 </script>
 
 <template>
-  <div class="portal-wrapper">
-  <div class="background-layer"></div>      <!-- 背景图 -->
-  <div class="frosted-glass-layer"></div>   <!-- 毛玻璃遮罩 -->
-  <div class="content-layer">               <!-- 实际内容 -->
-    <div class="card frosted">
-      <h1 class="big-title"></h1>
-      <p class="subtitle calligraphic">
-        {{ typedText }}<span v-if="showCursor" class="cursor">|</span>
-      </p>
-    </div>
-    <!-- 播放器 + 日历并排 -->
-    <div class="row-cards">
-      <div class="card frosted music-card">
-        <h2 class="title">Music Player</h2>
-        <div class="aplayer-wrapper">
-          <div ref="aplayerContainer"></div>
-        </div>
-      </div>
+  <main class="portal-desktop" :style="{ '--portal-wallpaper': `url(${wallpaper})` }">
+    <div class="wallpaper" aria-hidden="true"></div>
+    <div class="desktop-vignette" aria-hidden="true"></div>
 
-      <!-- <div class="card frosted calendar-card">
-        <h2 class="title">Calendar</h2>
-        <Calendar class="themed-calendar" />
-      </div> -->
-      <div class="card frosted weather-card">
-        <h2 class="title">Weather</h2>
-        <Weather />
-      </div>
-    </div>
-    <div class="row-cards">
-      <div class="card frosted todo-card">
-        <h2 class="title">ToDo List</h2>
-        <ToDoList />
-      </div>
+    <Transition name="boot">
+      <section v-if="isBooting" class="boot-screen" aria-label="Portal loading">
+        <p class="boot-handwriting">{{ bootMessage }}</p>
+      </section>
+    </Transition>
 
-      <!-- <div class="card frosted weather-card">
-        <h2 class="title">Weather</h2>
-        <Weather />
-      </div> -->
-      <div class="card frosted calendar-card">
-        <h2 class="title">Calendar</h2>
-        <Calendar class="themed-calendar" />
-      </div>
-    </div>
-    <div class="card frosted dock-card">
-      <h2 class="title">Dock</h2>
-      <div class="dock-groups">
-        <div
-          v-for="group in dockGroups"
-          :key="group.name"
-          class="dock-group"
-          :style="{ '--group-accent': group.color }"
+    <header class="portal-menu-bar" aria-label="Portal menu bar">
+      <div class="menu-left">
+        <button
+          v-if="todoApp"
+          class="menu-app-button todo-menu-button"
+          type="button"
+          :class="{ 'is-active': activeWindow === todoApp.id }"
+          aria-label="Open TODO List"
+          @click="openWindow(todoApp.id)"
         >
-          <h3 class="dock-group-title">{{ group.name }}</h3>
-          <div class="dock-grid">
-            <a
-              v-for="site in group.links"
-              :key="site.url"
-              :href="site.url"
-              class="dock-link"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img
-                :src="`https://www.google.com/s2/favicons?sz=64&domain_url=${site.url}`"
-                :alt="site.name"
-                class="dock-icon"
-              />
-            </a>
-          </div>
+          <span class="app-light"></span>
+          <span>{{ todoApp.label }}</span>
+        </button>
+      </div>
+
+      <div class="menu-center">
+        <span class="menu-title">LiuYinChu Portal</span>
+        <span class="menu-status">{{ loadingData ? 'Syncing' : 'Ready' }}</span>
+      </div>
+
+      <div class="menu-right">
+        <button
+          v-for="app in rightTopApps"
+          :key="app.id"
+          class="menu-app-button icon-menu-button"
+          type="button"
+          :class="{ 'is-active': activeWindow === app.id }"
+          :aria-label="`Open ${app.label}`"
+          @click="openWindow(app.id)"
+        >
+          <img :src="app.icon" alt="">
+          <span>{{ app.label }}</span>
+        </button>
+        <span class="menu-clock">{{ menuTime }}</span>
+      </div>
+    </header>
+
+    <section
+      v-if="activeApp"
+      class="mac-window"
+      :class="activeApp.windowClass"
+      :aria-label="activeApp.title"
+    >
+      <div class="window-titlebar">
+        <div class="traffic-lights" aria-label="Window controls">
+          <button class="traffic-light close" type="button" aria-label="Close window" @click="closeWindow"></button>
+          <button class="traffic-light minimize" type="button" aria-label="Minimize unavailable" disabled></button>
+          <button class="traffic-light zoom" type="button" aria-label="Zoom unavailable" disabled></button>
+        </div>
+        <div class="window-title">
+          <img :src="activeApp.icon" alt="">
+          <span>{{ activeApp.title }}</span>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+
+      <div class="window-body">
+        <div v-if="dataError" class="portal-error">{{ dataError }}</div>
+
+        <section v-if="activeWindow === 'music'" class="mac-app-content music-app">
+          <div class="app-panel-heading">
+            <p>Now playing</p>
+            <h1>Music Library</h1>
+          </div>
+          <div v-if="loadingData" class="portal-loading">Loading music library...</div>
+          <div v-else ref="aplayerContainer" class="aplayer-mount"></div>
+        </section>
+
+        <section v-else-if="activeWindow === 'weather'" class="mac-app-content widget-shell weather-shell">
+          <div class="app-panel-heading">
+            <p>Forecast</p>
+            <h1>Weather</h1>
+          </div>
+          <Weather class="portal-widget weather-widget" />
+        </section>
+
+        <section v-else-if="activeWindow === 'calendar'" class="mac-app-content widget-shell calendar-shell">
+          <div class="app-panel-heading">
+            <p>Schedule</p>
+            <h1>Calendar</h1>
+          </div>
+          <Calendar class="portal-widget calendar-widget" />
+        </section>
+
+        <section v-else-if="activeWindow === 'todo'" class="mac-app-content widget-shell todo-shell">
+          <div class="app-panel-heading">
+            <p>Focus board</p>
+            <h1>TODO List</h1>
+          </div>
+          <ToDoList class="portal-widget todo-widget" />
+        </section>
+
+        <section v-else-if="activeWindow === 'map'" class="mac-app-content map-window-content">
+          <div class="app-panel-heading">
+            <p>Website map</p>
+            <h1>LiuYinChu'Space</h1>
+          </div>
+          <div class="site-map-grid">
+            <article v-for="section in siteMapSections" :key="section.title" class="site-map-card">
+              <h2>{{ section.title }}</h2>
+              <p>{{ section.description }}</p>
+              <div class="site-map-links">
+                <RouterLink
+                  v-for="link in section.links"
+                  :key="link.path"
+                  :to="link.path"
+                  class="site-map-link"
+                >
+                  {{ link.name }}
+                </RouterLink>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section v-else-if="activeWindow === 'dock'" class="mac-app-content dock-window-content">
+          <div class="app-panel-heading">
+            <p>Resource dock</p>
+            <h1>Dock</h1>
+          </div>
+          <div
+            v-for="group in dockGroups"
+            :key="group.name"
+            class="link-group"
+            :style="{ '--group-accent': group.color }"
+          >
+            <h2>{{ group.name }}</h2>
+            <div class="link-grid">
+              <a
+                v-for="site in group.links"
+                :key="site.url"
+                :href="site.url"
+                class="link-tile"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img :src="iconForUrl(site.url, 96)" alt="">
+                <span>{{ site.name }}</span>
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <nav class="bottom-launcher" aria-label="Portal launcher">
+      <button
+        class="launcher-end-button"
+        type="button"
+        :class="{ 'is-active': activeWindow === 'map' }"
+        aria-label="Open website map"
+        @click="openWindow('map')"
+      >
+        <img :src="bottomApps[0].icon" alt="">
+        <span>Map</span>
+      </button>
+
+      <div class="quick-launcher" aria-label="Common links">
+        <a
+          v-for="site in quickLinks"
+          :key="site.url"
+          :href="site.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="quick-launcher-link"
+          :aria-label="site.name"
+        >
+          <img :src="iconForUrl(site.url, 128)" alt="">
+          <span>{{ site.name }}</span>
+        </a>
+      </div>
+
+      <button
+        class="launcher-end-button"
+        type="button"
+        :class="{ 'is-active': activeWindow === 'dock' }"
+        aria-label="Open Dock"
+        @click="openWindow('dock')"
+      >
+        <img :src="bottomApps[1].icon" alt="">
+        <span>Dock</span>
+      </button>
+    </nav>
+  </main>
 </template>
 
 <style scoped>
-.portal-wrapper {
+.portal-desktop {
+  --portal-text: rgba(245, 246, 255, 0.94);
+  --portal-muted: rgba(205, 214, 244, 0.72);
+  --portal-border: rgba(255, 255, 255, 0.16);
+  --portal-window: rgba(24, 24, 37, 0.72);
+  --portal-toolbar: rgba(30, 30, 46, 0.74);
+
   position: relative;
-  width: 100%;
-  min-height: 100vh;
+  width: 100vw;
+  height: 100dvh;
   overflow: hidden;
-  height: 110%;
-  display: flex;
-  flex-direction: column;
+  color: var(--portal-text);
+  background: #181825;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'LXGW WenKai', system-ui, sans-serif;
 }
 
-.background-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 110%;
-  background-image: url('/bg/Firefly_Paper_Airplane.png');
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center center;
-  background-attachment: fixed; /* ⬅️ 背景固定在视口，可选 */
-  z-index: 0;
-}
-
-.frosted-glass-layer {
+.wallpaper,
+.desktop-vignette {
   position: absolute;
   inset: 0;
-  backdrop-filter: blur(0px);
-  background-color: var(--frosted-glass);
-  z-index: 1;
+  pointer-events: none;
 }
 
-.content-layer {
-  position: relative;
-  z-index: 2;
-  padding: 2rem;
-  color: var(--text-color);
-  flex: 1;
+.wallpaper {
+  background-image: var(--portal-wallpaper);
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.02);
 }
 
-/* .card {
-  padding: 0.6rem 2rem 2rem 2rem;
-  border-radius: 1rem;
-  backdrop-filter: blur(8.5px);
-  background-color: rgba(30, 30, 46, 0.6);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1.5rem;
-} */
-
-.card {
-  padding: 0.6rem 2rem 2rem 2rem;
-  margin-bottom: 1.5rem;
-  border-radius: 20px;
-  /* 渐变底色：左上亮，右下暗，模拟光照 */
-  background: linear-gradient(
-    145deg, 
-    rgba(30, 30, 46, 0.65) 0%, 
-    rgba(24, 24, 37, 0.85) 100%
-  );
-  /* 晶体边框：使用 mask 或 border-image 的简化版 - 细微白边 */
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  /* 内阴影增加厚度感，外阴影增加悬浮感 */
-  box-shadow: 
-    inset 0 1px 1px rgba(255, 255, 255, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(12px);
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
-}
-.card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 
-    inset 0 1px 1px rgba(255, 255, 255, 0.1),
-    0 16px 48px rgba(0, 0, 0, 0.5);
+.desktop-vignette {
+  background:
+    linear-gradient(180deg, rgba(17, 17, 27, 0.62), rgba(17, 17, 27, 0.16) 38%, rgba(17, 17, 27, 0.56)),
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.07), transparent 34rem);
 }
 
-
-/* 可自定义修改字号 */
-.big-title {
-  font-family: "LXGW WenKai", serif;
-  font-size: 3.5rem; /* 你可以改成 3rem 等 */
-  font-weight: 800;
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
-  text-indent: 1ch; /* 大约等于两个字符宽 */
-}
-
-/* 可自定义修改字号 */
-.subtitle {
-  font-size: 2.3rem;
-  color: #f2cdcd; /* 备选：#89b4fa,#74c7ec,#94e2d5*/
-  margin: 0;
-}
-
-/* 使用 Playfair Display 字体（Google 字体） */
-.calligraphic {
-  font-family: 'Pacifico', cursive;
-}
-
-/* .title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--text-color);
-  margin-bottom: 1rem;
-  font-family: "Verdana",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
-} */
-.title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-color);
-  margin-bottom: 1.2rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.boot-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  font-family: "Verdana",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
-}
-.title::before {
-  content: '';
-  display: block;
-  width: 6px;
-  height: 1.6rem;
-  background: #89b4fa; /* Blue */
-  border-radius: 2px;
-  box-shadow: 0 0 10px #89b4fa;
+  justify-content: center;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(180, 190, 254, 0.14), transparent 28rem),
+    rgba(17, 17, 27, 0.82);
+  backdrop-filter: blur(18px);
 }
 
-.aplayer-wrapper {
-  max-height: 400px;
+.boot-handwriting {
+  position: relative;
+  max-width: min(78vw, 860px);
+  margin: 0;
   overflow: hidden;
-  border-radius: 0.5rem;
+  color: rgba(245, 246, 255, 0.92);
+  font-family: 'LXGW WenKai', 'Bradley Hand', 'Segoe Print', cursive;
+  font-size: clamp(1.35rem, 3vw, 2.6rem);
+  font-weight: 600;
+  line-height: 1.55;
+  text-align: center;
+  text-shadow: 0 0 24px rgba(137, 180, 250, 0.36);
+  white-space: nowrap;
+  animation: handwriting-reveal 2.45s cubic-bezier(0.2, 0.82, 0.18, 1) both;
 }
 
-/* 穿透 APlayer 的样式 */
-:deep(.aplayer) {
-  background-color: rgba(30, 30, 46, 0.3);
-  backdrop-filter: blur(10px);
-  border-radius: 2rem;
-  font-family: 'LXGW WenKai', 'Inter', sans-serif;
-  color: var(--text-color);
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
-  height: 320px;
+.boot-handwriting::after {
+  content: '';
+  position: absolute;
+  top: 13%;
+  bottom: 13%;
+  width: 2px;
+  background: rgba(245, 246, 255, 0.7);
+  box-shadow: 0 0 18px rgba(245, 246, 255, 0.62);
+  animation: handwriting-caret 2.45s cubic-bezier(0.2, 0.82, 0.18, 1) both;
 }
 
-/* 播放信息标题 */
-:deep(.aplayer-title) {
-  color: var(--text-color);
-  font-weight: bold;
-}
-:deep(.aplayer-author) {
-  color: var(--ctp-mocha-overlay1);
+.boot-leave-active {
+  transition: opacity 0.56s ease, filter 0.56s ease;
 }
 
-/* 控件 hover 高亮 */
-:deep(.aplayer-icon:hover svg path) {
-  fill: #74c7ec !important;
+.boot-leave-to {
+  opacity: 0;
+  filter: blur(8px);
 }
 
-/* 播放进度条高亮 */
-:deep(.aplayer-bar) {
-  background: rgba(255, 255, 255, 0.1);
-}
-:deep(.aplayer-played) {
-  background: #74c7ec !important;
-}
-:deep(.aplayer-volume-bar .aplayer-volume) {
-  background-color: #74c7ec !important;
-}
-
-/* 播放列表整体 */
-:deep(.aplayer-list) {
-  background: transparent;
-}
-:deep(.aplayer-list ol li) {
-  background: transparent;
-  color: var(--text-color);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-:deep(.aplayer-list ol li:hover) {
-  background: linear-gradient(135deg, var(--success-color), #89dceb);
-  color: var(--background-color);
+.portal-menu-bar {
+  position: absolute;
+  top: max(0.65rem, env(safe-area-inset-top));
+  right: clamp(0.7rem, 2.4vw, 1.8rem);
+  left: clamp(0.7rem, 2.4vw, 1.8rem);
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) auto minmax(18rem, 1fr);
+  align-items: center;
+  height: clamp(2.25rem, 4vw, 2.8rem);
+  padding: 0 clamp(0.45rem, 1.3vw, 0.7rem);
+  color: rgba(245, 246, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(24, 24, 37, 0.36);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 20px 70px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(26px) saturate(155%);
+  box-sizing: border-box;
 }
 
-/* ✅ 当前播放项高亮 */
-:deep(.aplayer-list-light) {
-  background: rgba(116, 199, 236, 0.3) !important;
-}
-:deep(.aplayer-list-light .aplayer-list-title),
-:deep(.aplayer-list-light .aplayer-list-author) {
-  color: var(--text-color) !important;
-  font-weight: 700;
-}
-
-/* 编号和作者颜色柔和 */
-:deep(.aplayer-list-index),
-:deep(.aplayer-list-author) {
-  color: var(--ctp-mocha-overlay1);
-}
-
-/* 滚动条样式 */
-:deep(.aplayer-list::-webkit-scrollbar) {
-  width: 6px;
-}
-:deep(.aplayer-list::-webkit-scrollbar-thumb) {
-  background-color: rgba(116, 199, 236, 0.4);
-  border-radius: 3px;
-}
-:deep(.aplayer-list::-webkit-scrollbar-thumb:hover) {
-  background-color: rgba(116, 199, 236, 0.7);
-}
-
-.row-cards {
+.menu-left,
+.menu-center,
+.menu-right {
   display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
 }
 
-.music-card {
-  flex: 1;          /* 占满剩余空间 */
-  min-width: 300px; /* 给它一个最小宽度，避免太窄 */
-  height: 400px;
-  display: flex;
-  flex-direction: column;
-}
-
-.calendar-card {
-  flex: 0 0 350px;  /* 不伸缩，固定宽度 */
-  width: 350px;
-  height: 400px;
-  display: flex;
-  flex-direction: column;
+.menu-left {
   justify-content: flex-start;
 }
 
-/* 日历基础 */
-/* .themed-calendar {
-  flex: 1;
-  background: transparent;
-  color: var(--text-color);
-  font-family: 'Inter', sans-serif;
-  display: flex;
-  flex-direction: column;
-  font-size: 0.78rem; 
-} */
+.menu-center {
+  justify-content: center;
+  gap: 0.72rem;
+}
 
-/* 月份标题 */
-/* .themed-calendar .calendar-header {
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 0.4rem;
-  font-size: 0.9rem;
-  color: var(--text-color);
-} */
+.menu-right {
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
 
-/* 网格布局 */
-/* .themed-calendar .calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.2rem;
-  flex: 1;
-} */
+.menu-title {
+  font-size: 0.88rem;
+  font-weight: 780;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
 
-/* 星期标签 */
-/* .themed-calendar .calendar-day {
-  text-align: center;
-  opacity: 0.6;
-  font-weight: 600;
-  color: var(--ctp-mocha-subtext0);
-} */
-
-/* 日期单元格 */
-/* .themed-calendar .calendar-cell {
-  text-align: center;
-  padding: 0.3rem 0;
-  border-radius: 0.4rem;
-  color: var(--text-color);
-  transition: background-color 0.2s ease;
+.menu-status,
+.menu-clock {
+  color: rgba(205, 214, 244, 0.72);
   font-size: 0.75rem;
-} */
-
-/* 今天高亮 */
-/* .themed-calendar .calendar-cell.today {
-  background-color: #74c7ec;
-  color: #1e1e2e;
-  font-weight: bold;
-} */
-
-/* hover 效果 */
-/* .themed-calendar .calendar-cell:hover {
-  background-color: rgba(255, 255, 255, 0.07);
-  cursor: pointer;
-} */
-
-/* .dock-card {
-  padding: 1rem 1.5rem 2rem 1.5rem;
+  font-weight: 620;
+  white-space: nowrap;
 }
 
-.dock-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 1.8rem;
-}
-
-.dock-group {
-  --group-accent: #89b4fa;
-}
-
-.dock-group-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--group-accent);
-  margin-bottom: 0.6rem;
-  padding-left: 0.25rem;
-  border-left: 4px solid var(--group-accent);
-}
-
-.dock-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-  gap: 0.75rem;
-  justify-items: start;
-  align-items: center;
-}
-
-.dock-link {
-  width: 48px;
-  height: 48px;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 0.75rem;
-  display: flex;
+.menu-app-button {
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.dock-link:hover {
-  background-color: var(--group-accent, rgba(255, 255, 255, 0.1));
-  transform: scale(1.08);
-  box-shadow: 0 0 0 1px var(--group-accent, #74c7ec33);
-}
-
-.dock-icon {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-} */
-
-/* ==================
-   Dock 区域 (Bento Grid)
-   ================== */
-.dock-card {
-  padding: 2.5rem;
-}
-
-.dock-groups {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* 自适应列 */
-  gap: 2rem;
-}
-
-.dock-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.dock-group-title {
-  font-size: 1.2rem;
+  gap: 0.42rem;
+  min-width: 2.25rem;
+  height: 1.45rem;
+  padding: 0 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.48rem;
+  color: rgba(245, 246, 255, 0.84);
+  background: rgba(255, 255, 255, 0.1);
+  font: inherit;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--group-accent);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  cursor: pointer;
+  transition: transform 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
 }
 
-/* 装饰性小圆点 */
-.dock-group-title::after {
-  content: '';
-  width: 8px;
-  height: 8px;
+.menu-app-button:hover,
+.menu-app-button:focus-visible,
+.menu-app-button.is-active {
+  border-color: rgba(180, 190, 254, 0.42);
+  background: rgba(180, 190, 254, 0.2);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.todo-menu-button {
+  min-width: 3.15rem;
+}
+
+.app-light {
+  width: 0.48rem;
+  height: 0.48rem;
   border-radius: 50%;
-  background: var(--group-accent);
-  box-shadow: 0 0 8px var(--group-accent);
+  background: #f38ba8;
+  box-shadow: 0 0 14px rgba(243, 139, 168, 0.7);
 }
 
-.dock-grid {
+.icon-menu-button img {
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 0.24rem;
+}
+
+.mac-window {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 12;
+  display: flex;
+  width: min(920px, calc(100vw - 3rem));
+  max-height: min(690px, calc(100dvh - 8.4rem));
+  min-height: 24rem;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.05rem;
+  background: var(--portal-window);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 34px 90px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+  backdrop-filter: blur(30px) saturate(155%);
+}
+
+.window-music { width: min(780px, calc(100vw - 3rem)); }
+.window-weather { width: min(520px, calc(100vw - 3rem)); }
+.window-calendar { width: min(600px, calc(100vw - 3rem)); }
+.window-todo { width: min(690px, calc(100vw - 3rem)); }
+.window-map { width: min(860px, calc(100vw - 3rem)); }
+
+.window-titlebar {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr) 5rem;
+  align-items: center;
+  min-height: 2.65rem;
+  padding: 0 0.9rem;
+  background: var(--portal-toolbar);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+}
+
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+}
+
+.traffic-light {
+  width: 0.78rem;
+  height: 0.78rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+}
+
+.traffic-light.close {
+  background: #ff5f57;
+  cursor: pointer;
+}
+
+.traffic-light.minimize {
+  background: #febc2e;
+}
+
+.traffic-light.zoom {
+  background: #28c840;
+}
+
+.traffic-light:disabled {
+  cursor: default;
+}
+
+.window-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 0;
+  color: rgba(245, 246, 255, 0.9);
+  font-size: 0.88rem;
+  font-weight: 760;
+}
+
+.window-title img {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 0.28rem;
+}
+
+.window-body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: clamp(1rem, 2vw, 1.35rem);
+}
+
+.portal-loading,
+.portal-error {
+  padding: 2rem;
+  color: var(--portal-muted);
+  text-align: center;
+}
+
+.portal-error {
+  color: #f38ba8;
+}
+
+.mac-app-content {
+  display: grid;
+  gap: 1.05rem;
+  min-height: 100%;
+}
+
+.app-panel-heading {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.app-panel-heading p,
+.app-panel-heading h1 {
+  margin: 0;
+}
+
+.app-panel-heading p {
+  color: rgba(180, 190, 254, 0.82);
+  font-size: 0.78rem;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-panel-heading h1 {
+  color: rgba(245, 246, 255, 0.96);
+  font-size: clamp(1.45rem, 2.4vw, 2.1rem);
+  line-height: 1.08;
+}
+
+.aplayer-mount {
+  min-height: 24rem;
+}
+
+:deep(.aplayer) {
+  margin: 0;
+  border-radius: 1rem;
+  color: #cdd6f4;
+  background: rgba(30, 30, 46, 0.64);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+:deep(.aplayer-pic) {
+  border-radius: 0 0.9rem 0.9rem 0;
+}
+
+:deep(.aplayer-list ol li) {
+  border-top-color: rgba(180, 190, 254, 0.1);
+  color: #cdd6f4;
+  background: transparent;
+}
+
+:deep(.aplayer-list ol li:hover),
+:deep(.aplayer-list-light) {
+  color: #11111b !important;
+  background: rgba(180, 190, 254, 0.9) !important;
+}
+
+:deep(.aplayer-list-light .aplayer-list-title),
+:deep(.aplayer-list-light .aplayer-list-author) {
+  color: #11111b !important;
+}
+
+:deep(.aplayer-info),
+:deep(.aplayer-list) {
+  border-color: rgba(180, 190, 254, 0.1);
+}
+
+.widget-shell :deep(.weather-container),
+.widget-shell :deep(.todo-list-container),
+.widget-shell :deep(.calendar),
+.widget-shell :deep(.calendar-container),
+.widget-shell :deep(.todo-container) {
+  border: 1px solid rgba(180, 190, 254, 0.12);
+  border-radius: 1rem;
+  background: rgba(30, 30, 46, 0.58);
+  box-shadow: none;
+}
+
+.map-window-content,
+.dock-window-content {
+  gap: 1.25rem;
+}
+
+.site-map-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.site-map-card {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem;
+  border: 1px solid rgba(180, 190, 254, 0.13);
+  border-radius: 1rem;
+  background: rgba(30, 30, 46, 0.54);
+}
+
+.site-map-card h2,
+.site-map-card p {
+  margin: 0;
+}
+
+.site-map-card h2 {
+  color: #cba6f7;
+  font-size: 0.96rem;
+  letter-spacing: 0.03em;
+}
+
+.site-map-card p {
+  color: var(--portal-muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.site-map-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 0.48rem;
 }
 
-/* Dock 图标按钮 */
-.dock-link {
-  position: relative;
-  width: 56px;
-  height: 56px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
+.site-map-link {
+  padding: 0.42rem 0.6rem;
+  border: 1px solid rgba(180, 190, 254, 0.16);
+  border-radius: 999px;
+  color: rgba(245, 246, 255, 0.88);
+  background: rgba(69, 71, 90, 0.42);
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-decoration: none;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.site-map-link:hover,
+.site-map-link:focus-visible {
+  border-color: rgba(203, 166, 247, 0.42);
+  background: rgba(203, 166, 247, 0.16);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.link-group {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.link-group h2 {
+  margin: 0;
+  color: var(--group-accent, #b4befe);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.9rem, 1fr));
+  gap: 0.82rem;
+}
+
+.link-tile {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  min-height: 5.5rem;
+  padding: 0.82rem 0.45rem;
+  border: 1px solid rgba(180, 190, 254, 0.12);
+  border-radius: 0.95rem;
+  color: rgba(245, 246, 255, 0.9);
+  background: rgba(49, 50, 68, 0.52);
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.link-tile:hover,
+.link-tile:focus-visible {
+  border-color: rgba(180, 190, 254, 0.35);
+  background: rgba(69, 71, 90, 0.74);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.link-tile img {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+}
+
+.link-tile span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 0.83rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.bottom-launcher {
+  position: absolute;
+  right: 50%;
+  bottom: max(1.15rem, env(safe-area-inset-bottom));
+  z-index: 18;
+  display: grid;
+  grid-template-columns: auto minmax(21rem, 34rem) auto;
+  align-items: center;
+  width: min(72rem, calc(100vw - 3rem));
+  min-height: clamp(4.1rem, 8vw, 5rem);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.25rem;
+  background: rgba(24, 24, 37, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 26px 72px rgba(0, 0, 0, 0.34);
+  transform: translateX(50%);
+  backdrop-filter: blur(26px) saturate(165%);
+}
+
+.launcher-end-button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.55rem;
+  height: 100%;
+  min-width: clamp(6.4rem, 12vw, 9.2rem);
+  padding: 0 0.9rem;
+  border: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(245, 246, 255, 0.88);
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 760;
+  cursor: pointer;
+  text-align: left;
+}
+
+.launcher-end-button:last-child {
+  border-right: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.launcher-end-button:hover,
+.launcher-end-button:focus-visible,
+.launcher-end-button.is-active {
+  background: rgba(180, 190, 254, 0.14);
+  outline: none;
+}
+
+.launcher-end-button:first-child {
+  border-radius: 1.2rem 0 0 1.2rem;
+}
+
+.launcher-end-button:last-child {
+  border-radius: 0 1.2rem 1.2rem 0;
+}
+
+.launcher-end-button img {
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 0.7rem;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+}
+
+.quick-launcher {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  gap: clamp(0.35rem, 1vw, 0.65rem);
+  min-width: 0;
+  padding: 0 0.75rem;
+}
+
+.quick-launcher-link {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  width: clamp(2.6rem, 4.6vw, 3.35rem);
+  color: rgba(245, 246, 255, 0.86);
   text-decoration: none;
+  transition: transform 0.18s ease;
 }
 
-.dock-icon {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  filter: grayscale(0.4) brightness(0.9);
-  transition: all 0.3s;
+.quick-launcher-link:hover,
+.quick-launcher-link:focus-visible {
+  outline: none;
+  transform: translateY(-0.45rem) scale(1.06);
 }
 
-/* Hover 效果：发光 + 上浮 + 图标变亮 */
-.dock-link:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--group-accent);
-  transform: translateY(-5px) scale(1.05);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 0 0 10px var(--group-accent);
+.quick-launcher-link img {
+  width: clamp(2.1rem, 4vw, 2.8rem);
+  height: clamp(2.1rem, 4vw, 2.8rem);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
 }
 
-.dock-link:hover .dock-icon {
-  filter: grayscale(0) brightness(1.1);
-  transform: scale(1.1);
-}
-
-/* Tooltip (纯 CSS 实现) */
-.dock-tooltip {
-  position: absolute;
-  bottom: -30px;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: #1e1e2e;
-  color: #cdd6f4;
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  border-radius: 6px;
-  opacity: 0;
-  visibility: hidden;
+.quick-launcher-link span {
+  max-width: 4.5rem;
+  overflow: hidden;
+  font-size: 0.64rem;
+  font-weight: 650;
+  line-height: 1.15;
+  text-align: center;
+  text-overflow: ellipsis;
   white-space: nowrap;
-  transition: all 0.2s ease;
-  pointer-events: none;
-  border: 1px solid var(--group-accent);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  z-index: 10;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
 }
 
-.dock-link:hover .dock-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-.todo-card {
-  flex: 1;
-  min-width: 300px;
-  height: 400px;
-  display: flex;
-  flex-direction: column;
-}
-
-.weather-card {
-  flex: 0 0 350px;
-  width: 350px;
-  height: 400px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 媒体查询，处理在小屏幕下 to-do list 宽度为 weather 的 1:1 关系 */
-@media (max-width: 750px) { /* 调整断点，如果卡片宽度增加，可能需要更宽的断点 */
-  .row-cards {
-    flex-direction: column;
+@keyframes handwriting-reveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
   }
-  .todo-card,
-  .weather-card {
-    flex: 1 1 100%;
-    max-width: 100%;
-    min-width: unset;
+  100% {
+    clip-path: inset(0 0 0 0);
   }
 }
 
-/* ==================
-   Cursor Blink Animation
-   ================== */
-.cursor {
-  display: inline-block;
-  color: #f38ba8; /* Red */
-  font-weight: 300;
-  animation: blink 1s step-end infinite;
+@keyframes handwriting-caret {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  8%,
+  84% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+@media (max-width: 900px) {
+  .portal-menu-bar {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .menu-title,
+  .menu-status,
+  .menu-clock,
+  .icon-menu-button span {
+    display: none;
+  }
+
+  .menu-center {
+    min-width: 1rem;
+  }
+
+  .site-map-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-launcher {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    width: calc(100vw - 1rem);
+  }
+
+  .launcher-end-button {
+    min-width: 4.8rem;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0.25rem;
+    padding: 0 0.48rem;
+    text-align: center;
+  }
+
+  .launcher-end-button img {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .quick-launcher {
+    overflow-x: auto;
+    justify-content: flex-start;
+    scrollbar-width: none;
+  }
+
+  .quick-launcher::-webkit-scrollbar {
+    display: none;
+  }
+
+  .quick-launcher-link {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .boot-handwriting {
+    white-space: normal;
+  }
+
+  .portal-menu-bar {
+    right: 0.55rem;
+    left: 0.55rem;
+    height: 2.45rem;
+  }
+
+  .menu-app-button {
+    height: 1.55rem;
+    padding: 0 0.44rem;
+  }
+
+  .mac-window {
+    top: calc(50% - 0.2rem);
+    width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 8.5rem);
+    min-height: 23rem;
+  }
+
+  .window-titlebar {
+    grid-template-columns: 4.2rem minmax(0, 1fr) 4.2rem;
+  }
+
+  .window-body {
+    padding: 0.85rem;
+  }
+
+  .app-panel-heading h1 {
+    font-size: 1.35rem;
+  }
+
+  .link-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bottom-launcher {
+    min-height: 4.45rem;
+    bottom: max(0.55rem, env(safe-area-inset-bottom));
+  }
+
+  .launcher-end-button span,
+  .quick-launcher-link span {
+    display: none;
+  }
+
+  .launcher-end-button {
+    min-width: 3.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-handwriting,
+  .boot-handwriting::after,
+  .quick-launcher-link,
+  .menu-app-button,
+  .site-map-link,
+  .link-tile {
+    animation: none;
+    transition: none;
+  }
+
+  .boot-handwriting {
+    clip-path: none;
+  }
 }
 </style>

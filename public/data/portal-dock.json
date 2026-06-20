@@ -1,0 +1,154 @@
+[
+  {
+    "name": "Advanced AI",
+    "color": "#cba6f7",
+    "links": [
+      {
+        "name": "ChatGPT",
+        "url": "https://chat.openai.com/"
+      },
+      {
+        "name": "深度求索",
+        "url": "https://chat.deepseek.com/"
+      },
+      {
+        "name": "Gemini",
+        "url": "https://gemini.google.com/"
+      },
+      {
+        "name": "Grok",
+        "url": "https://grok.com/"
+      },
+      {
+        "name": "OpenRouter",
+        "url": "https://openrouter.ai/"
+      },
+      {
+        "name": "Claude",
+        "url": "https://claude.ai/"
+      }
+    ]
+  },
+  {
+    "name": "Tools",
+    "color": "#94e2d5",
+    "links": [
+      {
+        "name": "GitHub",
+        "url": "https://github.com/"
+      },
+      {
+        "name": "通用格式转换",
+        "url": "https://cloudconvert.com"
+      },
+      {
+        "name": "LaTeX 公式编辑器",
+        "url": "https://www.latexlive.com/"
+      },
+      {
+        "name": "Google Translate",
+        "url": "https://translate.google.com"
+      },
+      {
+        "name": "文件传输助手",
+        "url": "https://filehelper.weixin.qq.com/"
+      },
+      {
+        "name": "Bing",
+        "url": "https://cn.bing.com/"
+      },
+      {
+        "name": "Google",
+        "url": "https://www.google.com/"
+      },
+      {
+        "name": "IP 测试",
+        "url": "https://ipinfo.io/what-is-my-ip"
+      },
+      {
+        "name": "谷歌学术",
+        "url": "https://scholar.google.com/"
+      }
+    ]
+  },
+  {
+    "name": "Knowledge",
+    "color": "#f9e2af",
+    "links": [
+      {
+        "name": "arXiv",
+        "url": "https://arxiv.org/"
+      },
+      {
+        "name": "菜鸟教程",
+        "url": "https://www.runoob.com/"
+      },
+      {
+        "name": "小时百科",
+        "url": "https://wuli.wiki/online/index.html"
+      },
+      {
+        "name": "马克思主义文库",
+        "url": "https://www.marxists.org/chinese/"
+      },
+      {
+        "name": "Git教程&速查",
+        "url": "https://liaoxuefeng.com/books/git/introduction/index.html"
+      },
+      {
+        "name": "SciPy API",
+        "url": "https://docs.scipy.org/doc/scipy/reference/index.html#scipy-api"
+      }
+    ]
+  },
+  {
+    "name": "Something Else",
+    "color": "#fab387",
+    "links": [
+      {
+        "name": "Google Drive",
+        "url": "https://drive.google.com/drive/home"
+      },
+      {
+        "name": "网易企业邮箱",
+        "url": "https://qy.163.com/static/login/"
+      },
+      {
+        "name": "Gmail",
+        "url": "https://mail.google.com"
+      },
+      {
+        "name": "YouTube",
+        "url": "https://www.youtube.com/"
+      },
+      {
+        "name": "B站",
+        "url": "https://www.bilibili.com/"
+      },
+      {
+        "name": "知乎",
+        "url": "https://www.zhihu.com/"
+      },
+      {
+        "name": "Catppuccin 调色板",
+        "url": "https://catppuccin.com/palette/"
+      },
+      {
+        "name": "Pixiv",
+        "url": "https://www.pixiv.net/"
+      },
+      {
+        "name": "中山大学统一门户",
+        "url": "https://portal.sysu.edu.cn/"
+      },
+      {
+        "name": "坚果云盘",
+        "url": "https://www.jianguoyun.com/"
+      },
+      {
+        "name": "中山大学 LaTeX 在线编辑器",
+        "url": "https://latex.sysu.edu.cn/login"
+      }
+    ]
+  }
+]

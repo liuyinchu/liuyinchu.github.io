@@ -1,10 +1,15 @@
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
+
+const route = useRoute()
+const isPortalRoute = computed(() => route.path === '/portal')
 </script>
 
 <template>
-  <Header />
+  <Header v-if="!isPortalRoute" />
 
   <!-- 页面过渡动画 -->
   <!-- <transition name="fade-slide" mode="out-in">
@@ -13,7 +18,7 @@ import Footer from './components/Footer.vue'
   <transition name="seamless-fade" mode="out-in">
     <router-view />
   </transition>
-  <Footer />
+  <Footer v-if="!isPortalRoute" />
 </template>
 
 <style>
