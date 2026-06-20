@@ -1,705 +1,532 @@
-<!-- <template>
-  <header class="site-header">
-    <RouterLink to="/" class="logo-area">
-      <img src="/favicon_liuyin.svg" alt="logo" class="logo" />
-      <span class="site-name">LiuYinChu'Space</span>
-    </RouterLink>
-
-    <nav class="nav-menu">
-      <RouterLink to="/code">代码</RouterLink>
-      <RouterLink to="/resource">资源链接</RouterLink>
-      <RouterLink to="/notes">笔记</RouterLink>
-      <RouterLink to="/space2">网络邻居</RouterLink>
-      <RouterLink to="/space1">随记</RouterLink>
-    </nav>
-  </header>
-</template>
-
-<script setup>
-import { RouterLink } from 'vue-router'
-</script>
-
-<style scoped>
-/* ===== 导航栏基础样式 ===== */
-.site-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: var(--surface-color);
-    padding: 0.75rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    backdrop-filter: blur(6px); /* 毛玻璃效果 */
-    -webkit-backdrop-filter: blur(6px);
-  }
-  
-  /* ===== Logo区域 ===== */
-  .logo-area {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-color);
-    font-weight: bold;
-    font-size: 1.25rem;
-    text-decoration: none;
-  }
-  
-  .logo {
-    width: 32px;
-    height: 32px;
-  }
-  
-  /* ===== 菜单样式 ===== */
-  .nav-menu {
-    display: flex;
-    gap: 1.5rem;
-  }
-  
-  .nav-menu a {
-    color: var(--text-color);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 1rem;
-    transition: color 0.3s ease;
-  }
-  
-  .nav-menu a:hover {
-    color: var(--primary-color);
-  }
-</style> -->
-
-<!-- <template>
-  <header class="site-header">
-    <RouterLink to="/" class="logo-area">
-      <img src="/favicon_liuyin.svg" alt="logo" class="logo" />
-      <span class="site-name">LiuYinChu'Space</span>
-    </RouterLink>
-
-    <button
-      class="mobile-nav-toggle"
-      :class="{ 'is-active': isMenuOpen }"
-      @click="toggleMenu"
-      aria-label="Toggle navigation"
-    >
-      <span class="hamburger-box">
-        <span class="hamburger-inner"></span>
-      </span>
-    </button>
-
-    <nav class="nav-menu" :class="{ 'is-active': isMenuOpen }">
-      <RouterLink to="/postit" @click="closeMenu">日志</RouterLink>
-      <RouterLink to="/space1" @click="closeMenu">随记</RouterLink>
-      <RouterLink to="/resource" @click="closeMenu">资源链接</RouterLink>
-      <RouterLink to="/code" @click="closeMenu">代码</RouterLink>
-      <RouterLink to="/research" @click="closeMenu">学术主页</RouterLink>
-    </nav>
-  </header>
-</template>
-
-<script setup>
-import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
-
-// [新增] 用于控制移动端菜单的显示/隐藏状态
-const isMenuOpen = ref(false)
-
-// [新增] 切换菜单状态的函数
-function toggleMenu() {
-  isMenuOpen.value = !isMenuOpen.value
-}
-
-// [新增] 点击菜单项后关闭菜单（在移动端非常有用）
-function closeMenu() {
-  if (isMenuOpen.value) {
-    isMenuOpen.value = false
-  }
-}
-</script>
-
-<style scoped>
-/* ===== 导航栏基础样式 ===== */
-.site-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* [优化] 增加背景色的透明度，让毛玻璃效果更明显 */
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.8);
-  padding: 0.75rem 2rem; /* [优化] 略微增加水平内边距 */
-  border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
-  z-index: 1000; /* [优化] 增加 z-index，确保在最上层 */
-  backdrop-filter: blur(8px); /* [优化] 增加模糊半径 */
-  -webkit-backdrop-filter: blur(8px);
-}
-
-/* ===== Logo区域 ===== */
-.logo-area {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem; /* [优化] 略微增加间距 */
-  color: var(--text-color);
-  font-weight: bold;
-  font-size: 1.25rem;
-  text-decoration: none;
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji",'Inter','Noto Serif SC','Times New Roman',serif;
-}
-
-.logo {
-  width: 32px;
-  height: 32px;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* [新增] 为 logo 添加过渡效果 */
-}
-
-.site-name {
-  transition: color 0.3s ease; /* [新增] 为网站名称添加过渡效果 */
-}
-
-/* [核心优化] Logo区域的悬浮效果 */
-.logo-area:hover .logo {
-  transform: rotate(-15deg) scale(1.1);
-}
-.logo-area:hover .site-name {
-  /* color: var(--primary-color-hover); */
-  background: linear-gradient(
-    135deg,
-    #E57219 0%,
-    #EDCC87 16.7%,
-    #B4E6CD 40.5%,
-    #69F0E1 61%,
-    #47F1E8 97.8%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent; /* Safari/Chrome */
-  background-clip: text;                 /* Firefox */
-  color: transparent;
-}
-
-/* ===== 菜单样式 ===== */
-.nav-menu {
-  display: flex;
-  gap: 2rem; /* [优化] 略微增加链接间距 */
-}
-
-.nav-menu a {
-  position: relative; /* [新增] 为下划线伪元素提供定位上下文 */
-  color: var(--ctp-mocha-subtext0); /* [优化] 默认颜色稍暗，突出当前页面 */
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 1.2rem;
-  transition: color 0.3s ease;
-  font-family: "LXGW WenKai";
-}
-
-/* [核心优化] 当前激活链接的样式 */
-.nav-menu a.router-link-active {
-  color: var(--primary-color);
-  font-weight: 600;
-}
-
-/* [核心优化] 链接悬浮效果：下划线从中间展开 */
-.nav-menu a::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  bottom: -6px;
-  left: 0;
-  background-color: var(--primary-color-hover);
-  transform: scaleX(0); /* 默认隐藏 */
-  transform-origin: center;
-  transition: transform 0.3s ease;
-}
-
-.nav-menu a:hover {
-  color: var(--text-color);
-}
-
-.nav-menu a:hover::after {
-  transform: scaleX(1); /* 悬浮时展开 */
-}
-/* 激活链接在悬浮时依然保持高亮 */
-.nav-menu a.router-link-active:hover {
-    color: var(--primary-color-hover);
-}
-
-
-/* ===== [修正与改进] 移动端响应式样式 ===== */
-
-/* 汉堡按钮容器 */
-.mobile-nav-toggle {
-  display: none; /* 桌面端默认隐藏 */
-  position: relative;
-  width: 40px;
-  height: 40px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  z-index: 1001; /* 确保在最上层 */
-  padding: 0; /* 移除默认内边距 */
-}
-
-/* 汉堡按钮的“三条线”的定位和基础样式 */
-.hamburger-box {
-  position: relative;
-  width: 24px;
-  height: 24px;
-  margin: 8px; /* 将定位从 absolute 改为 margin，更稳定 */
-}
-
-/* 这是中间那条线，也是上下两条线的定位基准 */
-.hamburger-inner {
-  position: absolute;
-  top: 50%;
-  width: 24px;
-  height: 2px;
-  background-color: var(--text-color);
-  border-radius: 2px;
-  transform: translateY(-50%);
-  /* [改进] 为自身也添加过渡效果 */
-  transition: background-color 0.1s 0.2s ease-in-out; 
-}
-
-/* 这是上面和下面两条线 */
-.hamburger-inner::before,
-.hamburger-inner::after {
-  content: '';
-  position: absolute;
-  left: 0; /* <<< 新增这一行以修复错位问题 */
-  width: 24px;
-  height: 2px;
-  background-color: var(--text-color);
-  border-radius: 2px;
-  /* [改进] 将过渡效果放在这里，更平滑 */
-  transition: transform 0.3s 0.1s ease-in-out;
-}
-
-.hamburger-inner::before {
-  top: -8px; /* 从中心点向上偏移8px */
-}
-
-.hamburger-inner::after {
-  top: 8px;  /* [修正] 改为top，方便计算。从中心点向下偏移8px */
-}
-
-
-/* --- 核心修正：汉堡按钮激活时的动画 -> X --- */
-
-/* 当按钮激活时，中间的线“消失” */
-.mobile-nav-toggle.is-active .hamburger-inner {
-  background-color: transparent; /* 背景变透明，视觉上消失 */
-  transition: background-color 0.1s ease-in-out;
-}
-
-/* 上面的线：向下移动8px到中心，然后旋转45度 */
-.mobile-nav-toggle.is-active .hamburger-inner::before {
-  transform: translateY(8px) rotate(45deg);
-}
-
-/* 下面的线：向上移动8px到中心，然后旋转-45度 */
-.mobile-nav-toggle.is-active .hamburger-inner::after {
-  transform: translateY(-8px) rotate(-45deg);
-}
-
-
-/* ===== 移动端导航菜单样式 (媒体查询) ===== */
-
-/* 当屏幕宽度小于 768px 时 */
-@media (max-width: 768px) {
-  /* 导航菜单的样式 (这部分您的代码是正确的，予以保留和微调) */
-  .nav-menu {
-    position: absolute;
-    top: 100%; /* 定位在导航栏正下方 */
-    left: 0;
-    width: 100%;
-    background-color: rgba(var(--ctp-mocha-base-rgb), 0.9); /* 轻微调高透明度 */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-    padding: 1rem 0;
-
-    /* 默认隐藏，带动画效果 */
-    transform: translateY(-10px); /* [改进] 从轻微向上偏移的位置开始 */
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  /* 导航菜单激活时的样式 */
-  .nav-menu.is-active {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  /* 菜单项样式 */
-  .nav-menu a {
-    width: 100%;
-    text-align: center;
-    padding: 1rem 0;
-    font-size: 1.2rem;
-  }
-  
-  /* 菜单项下划线位置调整 */
-  .nav-menu a::after {
-      bottom: 8px; 
-  }
-
-  /* 在移动端显示汉堡按钮 */
-  .mobile-nav-toggle {
-    display: block; 
-  }
-}
-</style> -->
-
 <template>
-  <header class="site-header" :class="{ 'is-scrolled': isScrolled }">
+  <header
+    class="site-header"
+    :class="{
+      'is-scrolled': isScrolled,
+      'is-hidden': isHeaderHidden && !isMenuOpen,
+      'is-menu-open': isMenuOpen,
+    }"
+  >
     <div class="header-inner">
-      <RouterLink to="/" class="logo-area">
-        <div class="logo-wrapper">
-          <img src="/favicon_liuyin.svg" alt="logo" class="logo" />
-          <div class="logo-glow"></div>
-        </div>
+      <RouterLink to="/" class="logo-area" @click="closeMenu">
+        <span class="logo-shell" aria-hidden="true">
+          <img src="/favicon_liuyin.svg" alt="" class="logo" />
+        </span>
         <span class="site-name">LiuYinChu'Space</span>
       </RouterLink>
 
-      <nav class="nav-menu desktop-menu">
-        <!-- <RouterLink to="/postit">日志</RouterLink> -->
-        <RouterLink to="/space1">随记</RouterLink>
-        <RouterLink to="/rd">资源链接</RouterLink>
-        <RouterLink to="/code">代码与项目</RouterLink>
-        <RouterLink to="/research">我的学术</RouterLink>
+      <nav class="nav-menu desktop-menu" aria-label="Primary navigation">
+        <RouterLink
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          :class="{ 'is-active': isActive(item) }"
+        >
+          {{ item.label }}
+        </RouterLink>
       </nav>
 
       <button
         class="mobile-nav-toggle"
         :class="{ 'is-active': isMenuOpen }"
-        @click="toggleMenu"
+        type="button"
+        :aria-expanded="isMenuOpen.toString()"
+        aria-controls="mobile-nav"
         aria-label="Toggle navigation"
+        @click="toggleMenu"
       >
-        <span class="hamburger-box">
+        <span class="hamburger-box" aria-hidden="true">
           <span class="hamburger-inner"></span>
         </span>
       </button>
     </div>
 
-    <Transition name="fade-slide">
-      <div v-if="isMenuOpen" class="mobile-menu-container">
-        <nav class="mobile-nav-links">
-          <!-- <RouterLink to="/postit" @click="closeMenu" style="--i:1">日志</RouterLink> -->
-          <RouterLink to="/space1" @click="closeMenu" style="--i:2">随记</RouterLink>
-          <RouterLink to="/rd" @click="closeMenu" style="--i:3">资源链接</RouterLink>
-          <RouterLink to="/code" @click="closeMenu" style="--i:4">代码与项目</RouterLink>
-          <RouterLink to="/research" @click="closeMenu" style="--i:5">我的学术</RouterLink>
+    <Teleport to="body">
+      <Transition name="mobile-menu">
+        <nav
+          v-if="isMenuOpen"
+          id="mobile-nav"
+          class="mobile-menu-container"
+          aria-label="Mobile navigation"
+        >
+          <RouterLink
+            v-for="(item, index) in navItems"
+            :key="item.to"
+            :to="item.to"
+            :class="{ 'is-active': isActive(item) }"
+            :style="{ '--i': index + 1 }"
+            @click="closeMenu"
+          >
+            {{ item.label }}
+          </RouterLink>
         </nav>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </header>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 
+const navItems = [
+  {
+    label: '随记',
+    to: '/space1',
+    match: ['/space1'],
+  },
+  {
+    label: '资源链接',
+    to: '/rd',
+    match: [
+      '/rd',
+      '/resource',
+      '/rliterature',
+      '/rprogramming',
+      '/rmaterials',
+      '/rcomputer',
+      '/rtools',
+      '/rfiles',
+    ],
+  },
+  {
+    label: '代码与项目',
+    to: '/code',
+    match: [
+      '/code',
+      '/brisk-nexus',
+      '/ysy-latex',
+      '/ysy-data-analysis-helper',
+      '/cyber-match',
+      '/lyc2048',
+    ],
+  },
+  {
+    label: '赛博会客厅',
+    to: '/portal',
+    match: ['/portal', '/space2', '/space3'],
+  },
+  {
+    label: '关于',
+    to: '/about',
+    match: ['/about', '/credit', '/academic', '/research', '/academic-plot-guide'],
+  },
+]
+
+const route = useRoute()
 const isMenuOpen = ref(false)
 const isScrolled = ref(false)
+const isHeaderHidden = ref(false)
+const currentPath = computed(() => route.path)
+
+let lastScrollY = 0
+let ticking = false
+
+function isActive(item) {
+  return item.match.some((path) => (
+    currentPath.value === path || currentPath.value.startsWith(`${path}/`)
+  ))
+}
+
+function setBodyLocked(locked) {
+  document.body.style.overflow = locked ? 'hidden' : ''
+}
 
 function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value
-  // 防止菜单打开时背景滚动
-  if (isMenuOpen.value) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
+  isHeaderHidden.value = false
+  setBodyLocked(isMenuOpen.value)
 }
 
 function closeMenu() {
-  if (isMenuOpen.value) {
-    isMenuOpen.value = false
-    document.body.style.overflow = ''
-  }
+  if (!isMenuOpen.value) return
+  isMenuOpen.value = false
+  setBodyLocked(false)
 }
 
-// [新增] 监听滚动，给 Header 增加更明显的背景
-const handleScroll = () => {
-  isScrolled.value = window.scrollY > 20
+function updateHeaderState() {
+  const scrollY = Math.max(window.scrollY, 0)
+  const delta = scrollY - lastScrollY
+
+  isScrolled.value = scrollY > 12
+
+  if (isMenuOpen.value || scrollY <= 16) {
+    isHeaderHidden.value = false
+  } else if (delta > 8 && scrollY > 96) {
+    isHeaderHidden.value = true
+  } else if (delta < -8) {
+    isHeaderHidden.value = false
+  }
+
+  lastScrollY = scrollY
+  ticking = false
 }
+
+function handleScroll() {
+  if (ticking) return
+  ticking = true
+  window.requestAnimationFrame(updateHeaderState)
+}
+
+watch(
+  () => route.fullPath,
+  () => {
+    closeMenu()
+    isHeaderHidden.value = false
+    lastScrollY = Math.max(window.scrollY, 0)
+    isScrolled.value = lastScrollY > 12
+  },
+)
 
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
+  lastScrollY = Math.max(window.scrollY, 0)
+  isScrolled.value = lastScrollY > 12
+  window.addEventListener('scroll', handleScroll, { passive: true })
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  setBodyLocked(false)
 })
 </script>
 
 <style scoped>
-/* =========================================
-   1. 容器与基础布局 (Layout & Container)
-   ========================================= */
 .site-header {
   position: sticky;
   top: 0;
   z-index: 1000;
   width: 100%;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  
-  /* 初始状态：极简、几乎透明 */
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(var(--ctp-mocha-base-rgb), 0.56);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  transition:
+    transform 0.28s ease,
+    background-color 0.24s ease,
+    border-color 0.24s ease,
+    box-shadow 0.24s ease;
 }
 
-/* 滚动后的状态：加深背景，增加阴影，增强可读性 */
-.site-header.is-scrolled {
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.site-header.is-scrolled,
+.site-header.is-menu-open {
+  background-color: rgba(var(--ctp-mocha-base-rgb), 0.84);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.18);
+}
+
+.site-header.is-menu-open {
+  z-index: 1004;
+}
+
+.site-header.is-hidden {
+  transform: translateY(-110%);
 }
 
 .header-inner {
-  max-width: 1200px; /* 限制最大宽度，大屏更美观 */
+  position: relative;
+  z-index: 1005;
+  width: min(1180px, calc(100vw - 48px));
+  min-height: 72px;
   margin: 0 auto;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 0.8rem 1.5rem;
+  gap: 1.5rem;
 }
 
-/* =========================================
-   2. Logo 区域的高级感 (Logo Aesthetics)
-   ========================================= */
 .logo-area {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.8rem;
+  min-width: 0;
+  gap: 0.72rem;
+  color: var(--text-color);
   text-decoration: none;
-  group: logo-group; /* 用于 hover 状态管理 */
 }
 
-.logo-wrapper {
+.logo-shell {
   position: relative;
-  display: flex;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+}
+
+.logo-shell::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(116, 199, 236, 0.34), transparent 68%);
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
 .logo {
-  width: 36px; /* 稍微加大一点 */
-  height: 36px;
   position: relative;
-  z-index: 2;
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-}
-
-/* Logo背后的光晕 */
-.logo-glow {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, var(--primary-color) 0%, transparent 70%);
-  opacity: 0;
-  transform: scale(0.5);
-  transition: opacity 0.4s ease, transform 0.4s ease;
   z-index: 1;
-  filter: blur(8px);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .site-name {
-  font-family: 'Inter', system-ui, sans-serif; /* 英文用非衬线体更现代，若必须中文可用原字体 */
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--text-color);
-  letter-spacing: -0.02em;
-  transition: color 0.3s ease;
+  overflow: hidden;
+  color: rgba(245, 246, 255, 0.92);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 1.08rem;
+  font-weight: 760;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.24s ease;
 }
 
-/* Hover Effect: Logo */
-.logo-area:hover .logo {
-  transform: rotate(-10deg) scale(1.1);
-}
-.logo-area:hover .logo-glow {
-  opacity: 0.4;
-  transform: scale(1.5);
-}
-.logo-area:hover .site-name {
-  background: linear-gradient(135deg, #E57219, #47F1E8);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.logo-area:hover .logo,
+.logo-area:focus-visible .logo {
+  transform: rotate(-8deg) scale(1.07);
 }
 
-/* =========================================
-   3. 桌面端导航 (Desktop Navigation)
-   ========================================= */
+.logo-area:hover .logo-shell::before,
+.logo-area:focus-visible .logo-shell::before {
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+.logo-area:hover .site-name,
+.logo-area:focus-visible .site-name {
+  color: #fff;
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+}
+
 .desktop-menu {
-  display: none; /* 移动优先，默认隐藏 */
+  gap: clamp(0.86rem, 2.2vw, 1.55rem);
+  padding: 0 0.12rem;
 }
 
-@media (min-width: 769px) {
-  .desktop-menu {
-    display: flex;
-    gap: 0.5rem; /* 使用 pill 形状时，间距可以小一点，因为有 padding */
-    background: rgba(0, 0, 0, 0.03); /* 极淡的背景槽 */
-    padding: 4px;
-    border-radius: 99px; /* 胶囊形状容器 */
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .desktop-menu a {
-    position: relative;
-    padding: 0.5rem 1.2rem;
-    color: var(--ctp-mocha-subtext0);
-    text-decoration: none;
-    font-size: 1.1rem;
-    font-weight: 500;
-    border-radius: 99px; /* 胶囊按钮 */
-    transition: all 0.3s ease;
-    font-family: "LXGW WenKai", sans-serif;
-  }
-
-  /* 悬浮态：轻微亮起 */
-  .desktop-menu a:hover {
-    color: var(--text-color);
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-
-  /* 激活态：高亮背景 + 阴影 */
-  .desktop-menu a.router-link-active {
-    background-color: var(--primary-color, #47F1E8); /* 确保你有这个变量，或者用具体颜色 */
-    color: #fff; /* 激活时文字反白，显眼 */
-    font-weight: 600;
-    box-shadow: 0 2px 10px rgba(var(--primary-rgb, 71, 241, 232), 0.3);
-  }
+.desktop-menu a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  color: rgba(205, 214, 244, 0.72);
+  font-family: 'LXGW WenKai', 'Inter', system-ui, sans-serif;
+  font-size: 1.03rem;
+  font-weight: 650;
+  line-height: 1;
+  text-decoration: none;
+  transition: color 0.22s ease, text-shadow 0.22s ease;
 }
 
-/* =========================================
-   4. 移动端汉堡按钮 (Hamburger)
-   ========================================= */
+.desktop-menu a::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0.42rem;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #74c7ec, #f5c2e7);
+  opacity: 0;
+  transform: scaleX(0.34);
+  transform-origin: center;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.desktop-menu a:hover,
+.desktop-menu a:focus-visible,
+.desktop-menu a.is-active {
+  color: #fff;
+  text-shadow: 0 0 18px rgba(116, 199, 236, 0.28);
+}
+
+.desktop-menu a:hover::after,
+.desktop-menu a:focus-visible::after,
+.desktop-menu a.is-active::after {
+  opacity: 0.92;
+  transform: scaleX(1);
+}
+
 .mobile-nav-toggle {
-  display: block;
-  background: transparent;
-  border: none;
+  position: relative;
+  z-index: 1003;
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
   cursor: pointer;
-  padding: 10px;
-  z-index: 1002;
+  transition: background-color 0.22s ease, border-color 0.22s ease;
 }
 
-@media (min-width: 769px) {
-  .mobile-nav-toggle {
-    display: none;
-  }
+.mobile-nav-toggle:hover,
+.mobile-nav-toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .hamburger-box {
-  width: 24px;
-  height: 24px;
   position: relative;
   display: block;
+  width: 22px;
+  height: 18px;
 }
 
 .hamburger-inner,
 .hamburger-inner::before,
 .hamburger-inner::after {
-  width: 24px;
-  height: 2px;
-  background-color: var(--text-color);
-  border-radius: 4px;
   position: absolute;
-  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55), background 0.3s ease;
+  left: 0;
+  width: 22px;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 999px;
+  transition:
+    top 0.2s ease,
+    transform 0.24s ease,
+    opacity 0.18s ease;
 }
 
-.hamburger-inner { top: 50%; transform: translateY(-50%); }
-.hamburger-inner::before { content: ''; top: -7px; left: 0; }
-.hamburger-inner::after { content: ''; top: 7px; left: 0; }
+.hamburger-inner {
+  top: 8px;
+}
 
-/* 激活状态动画 */
-.mobile-nav-toggle.is-active .hamburger-inner { background-color: transparent; }
-.mobile-nav-toggle.is-active .hamburger-inner::before { top: 0; transform: rotate(135deg); }
-.mobile-nav-toggle.is-active .hamburger-inner::after { top: 0; transform: rotate(-135deg); }
+.hamburger-inner::before,
+.hamburger-inner::after {
+  content: '';
+}
 
-/* =========================================
-   5. 移动端全屏菜单 (Mobile Overlay)
-   ========================================= */
+.hamburger-inner::before {
+  top: -7px;
+}
+
+.hamburger-inner::after {
+  top: 7px;
+}
+
+.mobile-nav-toggle.is-active .hamburger-inner {
+  transform: rotate(45deg);
+}
+
+.mobile-nav-toggle.is-active .hamburger-inner::before {
+  top: 0;
+  opacity: 0;
+}
+
+.mobile-nav-toggle.is-active .hamburger-inner::after {
+  top: 0;
+  transform: rotate(-90deg);
+}
+
 .mobile-menu-container {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #000000;
-  backdrop-filter: blur(20px);
-  z-index: 1001; /* 比 Header 低一点点，或者同级，但因为是 fixed 所以会覆盖 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mobile-nav-links {
+  inset: 0;
+  z-index: 1003;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
+  justify-content: center;
+  gap: 1.1rem;
+  padding: 6.5rem 2rem 3rem;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(116, 199, 236, 0.12), transparent 34%),
+    rgba(var(--ctp-mocha-base-rgb), 0.94);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
 }
 
-.mobile-nav-links a {
-  font-size: 1.5rem;
-  color: var(--text-color);
+.mobile-menu-container a {
+  color: rgba(245, 246, 255, 0.78);
+  font-family: 'LXGW WenKai', 'Inter', system-ui, sans-serif;
+  font-size: clamp(1.55rem, 9vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1;
   text-decoration: none;
-  font-family: "LXGW WenKai", serif;
-  font-weight: 600;
-  position: relative;
   opacity: 0;
-  transform: translateY(20px);
-  /* 这里的动画是在类名添加时触发 */
-  animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  /* 使用 CSS 变量计算延迟 */
-  animation-delay: calc(var(--i) * 0.08s);
+  transform: translateY(18px);
+  animation: mobileLinkIn 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: calc(var(--i) * 0.045s);
 }
 
-.mobile-nav-links a.router-link-active {
-  color: var(--primary-color);
+.mobile-menu-container a.is-active,
+.mobile-menu-container a:hover,
+.mobile-menu-container a:focus-visible {
+  color: #fff;
 }
-.mobile-nav-links a.router-link-active::after {
+
+.mobile-menu-container a.is-active::after {
   content: '';
   display: block;
-  width: 6px;
-  height: 6px;
-  background: var(--primary-color);
-  border-radius: 50%;
-  margin: 0.5rem auto 0;
+  width: 34px;
+  height: 2px;
+  margin: 0.58rem auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #74c7ec, #f5c2e7);
 }
 
-/* =========================================
-   6. 动画关键帧 (Keyframes)
-   ========================================= */
-@keyframes slideUpFade {
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: opacity 0.24s ease;
+}
+
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  opacity: 0;
+}
+
+@keyframes mobileLinkIn {
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Vue Transition 组件的过渡类 */
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: opacity 0.3s ease;
+@media (max-width: 860px) {
+  .header-inner {
+    width: min(100% - 32px, 1180px);
+    min-height: 68px;
+  }
+
+  .desktop-menu {
+    display: none;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex;
+  }
 }
 
-.fade-slide-enter-from,
-.fade-slide-leave-to {
-  opacity: 0;
+@media (max-width: 420px) {
+  .header-inner {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .logo-shell {
+    width: 34px;
+    height: 34px;
+  }
+
+  .logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .site-name {
+    max-width: calc(100vw - 132px);
+    font-size: 1rem;
+  }
 }
 </style>

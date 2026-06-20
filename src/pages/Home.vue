@@ -18,7 +18,7 @@ const homeSections = [
     image: '/bg/open.jpeg',
     cta: '进入随记',
     to: '/space1',
-    align: 'right'
+    align: 'left'
   },
   {
     id: 'resources',
@@ -28,7 +28,7 @@ const homeSections = [
     image: '/bg/share.jpeg',
     cta: '查看资源链接',
     to: '/rd',
-    align: 'left'
+    align: 'right'
   },
   {
     id: 'projects',
@@ -48,7 +48,7 @@ const homeSections = [
     image: '/bg/skadi.jpeg',
     cta: '进入会客厅',
     to: '/portal',
-    align: 'left'
+    align: 'right'
   },
   {
     id: 'about',
