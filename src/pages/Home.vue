@@ -12,7 +12,7 @@ const homeSections = [
   },
   {
     id: 'notes',
-    eyebrow: 'NOTES',
+    eyebrow: 'JOTTINGS',
     title: '随记',
     description: '一些不完全归档的想法、片段、记录和心情，保留它们正在生长的样子。',
     image: '/bg/open.jpeg',
