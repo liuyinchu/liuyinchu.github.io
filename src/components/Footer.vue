@@ -1,341 +1,360 @@
-<!-- <template>
+<template>
   <footer class="site-footer">
-    <p>
-      <a href="https://github.com/pifuyuini" target="_blank" rel="noopener noreferrer">GitHub</a>
-      |
-      <a href="mailto:mingchupifuyuini@gmail.com">MyEmail</a>
-      |
-      <RouterLink to="/about">About</RouterLink>
-      |
-      <RouterLink to="/credit">Copyright</RouterLink>
-    </p>
-  </footer>
-</template>
+    <div class="footer-shell">
+      <div class="footer-layout">
+        <div class="footer-brand">
+          <RouterLink to="/" class="footer-logo" aria-label="LiuYinChu'Space home">
+            <span class="footer-logo-mark" aria-hidden="true">
+              <img src="/favicon_liuyin.svg" alt="">
+            </span>
+            <span>LiuYinChu'Space</span>
+          </RouterLink>
+          <p class="footer-tagline">
+            探索 · 记录 · 创造<br>
+            Keep thinking, keep building.
+          </p>
+        </div>
 
-<script setup>
-import { RouterLink } from 'vue-router'
-</script>
+        <nav class="footer-directory" aria-label="Footer navigation">
+          <div
+            v-for="(column, columnIndex) in footerColumns"
+            :key="`footer-column-${columnIndex}`"
+            class="footer-column"
+          >
+            <section
+              v-for="group in column.groups"
+              :key="group.title"
+              class="footer-section"
+            >
+              <RouterLink class="footer-column-title" :to="group.to">
+                {{ group.title }}
+              </RouterLink>
+              <ul
+                v-if="group.links.length"
+                class="footer-links"
+              >
+                <li
+                  v-for="link in group.links"
+                  :key="`${group.title}-${link.label}`"
+                >
+                  <RouterLink :to="link.to">
+                    {{ link.label }}
+                  </RouterLink>
+                </li>
+              </ul>
+            </section>
+          </div>
+        </nav>
 
-<style scoped>
-.site-footer {
-  background-color: var(--surface-color);
-  color: var(--text-color);
-  text-align: center;
-  padding: 1.5rem 1rem;
-  font-size: 0.9rem;
-  border-top: 1px solid var(--border-color);
-  margin-top: 0rem;
-}
-
-.site-footer a {
-  color: var(--text-color);
-  text-decoration: none;
-  margin: 0 0.25rem;
-  transition: color 0.3s ease;
-}
-
-.site-footer a:hover {
-  color: var(--primary-color);
-  text-decoration: underline;
-}
-</style> -->
-
-<!-- <template>
-  <footer class="site-footer">
-    <div class="footer-content">
-      <nav class="footer-links">
-        <a href="https://github.com/pifuyuini" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href="mailto:mingchupifuyuini@gmail.com">Email</a>
-        <RouterLink to="/about">About</RouterLink>
-        <RouterLink to="/credit">Copyright</RouterLink>
-      </nav>
-
-      <p class="copyright">
-        &copy; 2024 - {{ new Date().getFullYear() }} LiuYinChu'Space. All Rights Reserved.
-      </p>
+        <div class="footer-bottom">
+          <p>&copy; 2024 - {{ currentYear }} LiuYinChu'Space. All Rights Reserved.</p>
+          <div class="footer-contact" aria-label="Contact links">
+            <a href="https://github.com/pifuyuini" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="mailto:mingchupifuyuini@gmail.com">Email</a>
+          </div>
+        </div>
+      </div>
     </div>
   </footer>
 </template>
 
 <script setup>
 import { RouterLink } from 'vue-router'
+
+const currentYear = new Date().getFullYear()
+
+const footerColumns = [
+  {
+    groups: [
+      {
+        title: '随记',
+        to: '/space1',
+        links: [],
+      },
+      {
+        title: '资源链接',
+        to: '/rd',
+        links: [
+          { label: '文献', to: '/rliterature' },
+          { label: '编程', to: '/rprogramming' },
+          { label: '计算机', to: '/rcomputer' },
+          { label: '资料', to: '/rmaterials' },
+          { label: '工具', to: '/rtools' },
+          { label: '文件', to: '/rfiles' },
+        ],
+      },
+    ],
+  },
+  {
+    groups: [
+      {
+        title: '代码与项目',
+        to: '/code',
+        links: [
+          { label: 'Brisk Nexus', to: '/brisk-nexus' },
+          { label: 'Data Analysis Helper', to: '/ysy-data-analysis-helper' },
+          { label: 'Cyber Match', to: '/cyber-match' },
+        ],
+      },
+    ],
+  },
+  {
+    groups: [
+      {
+        title: '赛博会客厅',
+        to: '/portal',
+        links: [
+          { label: '朋友们', to: '/space2' },
+        ],
+      },
+      {
+        title: '关于',
+        to: '/about',
+        links: [
+          { label: '自我介绍', to: '/about' },
+          { label: '我的学术', to: '/research' },
+          { label: '版权说明', to: '/credit' },
+        ],
+      },
+    ],
+  },
+]
 </script>
 
 <style scoped>
 .site-footer {
-  /* [优化] 调整背景色透明度，与页眉保持一致 */
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  
-  color: var(--ctp-mocha-subtext0); /* [优化] 使用柔和的次要文字颜色 */
-  text-align: center;
-  padding: 2.5rem 1.5rem; /* [优化] 增加垂直内边距 */
-  font-size: 0.9rem;
-  border-top: 1px solid var(--border-color);
-  margin-top: 0.1rem; /* [优化] 与主内容区拉开距离 -- 这是个错误的优化！*/
+  position: relative;
+  margin-top: clamp(3rem, 7vw, 6rem);
+  color: rgba(245, 246, 255, 0.82);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(116, 199, 236, 0.12), transparent 32%),
+    radial-gradient(circle at 85% 8%, rgba(245, 194, 231, 0.09), transparent 30%),
+    rgba(var(--ctp-mocha-base-rgb), 0.96);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: 'Inter', 'LXGW WenKai', system-ui, sans-serif;
 }
 
-.footer-content {
+.site-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(116, 199, 236, 0.62), rgba(245, 194, 231, 0.52), transparent);
+  opacity: 0.9;
+}
+
+.footer-shell {
+  width: min(1220px, calc(100vw - 48px));
+  margin: 0 auto;
+  padding: clamp(4.5rem, 8vw, 7.5rem) 0 clamp(2rem, 4vw, 3rem);
+}
+
+.footer-layout {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.7fr) minmax(0, 2.45fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "brand directory"
+    "meta directory";
+  min-height: clamp(26rem, 44vw, 34rem);
+  column-gap: clamp(3rem, 7vw, 7.5rem);
+  row-gap: 3rem;
+}
+
+.footer-brand {
+  grid-area: brand;
   display: flex;
   flex-direction: column;
+  gap: 1.35rem;
+}
+
+.footer-logo {
+  display: inline-flex;
   align-items: center;
-  gap: 1.25rem; /* [新增] 链接和版权信息之间的间距 */
+  width: fit-content;
+  gap: 0.9rem;
+  color: #fff;
+  text-decoration: none;
+  font-size: clamp(1.35rem, 2.3vw, 2.05rem);
+  font-weight: 780;
+  line-height: 1;
+}
+
+.footer-logo-mark {
+  display: inline-flex;
+  width: 3rem;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(116, 199, 236, 0.18), rgba(245, 194, 231, 0.12));
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22);
+}
+
+.footer-logo-mark img {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+}
+
+.footer-logo:hover,
+.footer-logo:focus-visible {
+  color: #fff;
+}
+
+.footer-logo:hover .footer-logo-mark,
+.footer-logo:focus-visible .footer-logo-mark {
+  border-color: rgba(116, 199, 236, 0.5);
+  box-shadow: 0 0 32px rgba(116, 199, 236, 0.16);
+}
+
+.footer-tagline {
+  max-width: 36rem;
+  margin: 0;
+  color: rgba(205, 214, 244, 0.74);
+  font-size: clamp(1rem, 1.55vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.8;
+}
+
+.footer-directory {
+  grid-area: directory;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(2.6rem, 4.8vw, 5rem);
+  align-items: start;
+}
+
+.footer-column {
+  min-width: 0;
+}
+
+.footer-section + .footer-section {
+  margin-top: clamp(2.5rem, 4vw, 4.2rem);
+}
+
+.footer-column-title {
+  display: inline-flex;
+  margin-bottom: 1.1rem;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.96rem;
+  font-weight: 740;
+  line-height: 1.25;
+}
+
+.footer-column-title:hover,
+.footer-column-title:focus-visible {
+  color: #74c7ec;
 }
 
 .footer-links {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap; /* [新增] 移动端自动换行 */
-  gap: 0.5rem 0; /* 行间距 和 列间距 */
+  flex-direction: column;
+  gap: 0.72rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
 }
 
 .footer-links a {
-  color: var(--ctp-mocha-subtext1); /* [优化] 使用更柔和的链接颜色 */
-  text-decoration: none;
-  padding: 0.25rem 0.5rem;
-  transition: all 0.3s ease; /* [优化] 过渡所有属性 */
-}
-
-/* [核心优化] 使用伪元素创建分隔符，代替 | */
-.footer-links a:not(:last-child)::after {
-  content: '/'; /* 使用斜杠作为分隔符，更具设计感 */
-  margin-left: 1.25rem;
-  color: var(--border-color);
-  font-weight: 300;
-}
-
-/* [核心优化] 更精致的悬浮效果 */
-.footer-links a:hover {
-  color: var(--primary-color-hover);
-  transform: translateY(-2px); /* 轻微上浮 */
-  text-decoration: none; /* 移除默认下划线 */
-}
-
-.copyright {
-  font-size: 0.85rem;
-  color: var(--ctp-mocha-overlay1); /* [优化] 版权信息使用最柔和的颜色 */
-}
-</style> -->
-
-<template>
-  <footer class="site-footer">
-    <div class="footer-gradient-line"></div>
-
-    <div class="footer-container">
-      <div class="footer-brand">
-        <div class="brand-title">
-          <span>LiuYinChu'Space</span>
-        </div>
-        <p class="brand-slogan">
-          探索 · 记录 · 创造<br>
-          Keep thinking, keep building.
-        </p>
-      </div>
-
-      <div class="footer-nav">
-        <h4 class="nav-title">Statement</h4>
-        <div class="nav-links">
-          <RouterLink to="/space2">朋友们 (Friendly Links)</RouterLink>
-          <RouterLink to="/about">关于我 (About)</RouterLink>
-          <RouterLink to="/credit">版权说明 (Copyright)</RouterLink>
-        </div>
-      </div>
-
-      <div class="footer-social">
-        <h4 class="nav-title">Connect</h4>
-        <div class="social-icons">
-          <a href="https://github.com/pifuyuini" target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="social-btn github">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36.5-8 1.5C6.38 4.5 3.61 3.5 1 4c0 0-1 0-3 1.5-.28 1.15-.28 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-          </a>
-          <a href="mailto:mingchupifuyuini@gmail.com" aria-label="Email" class="social-btn email">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="footer-bottom">
-      <p>
-        &copy; 2024 - {{ new Date().getFullYear() }} LiuYinChu'Space. All Rights Reserved.
-      </p>
-    </div>
-  </footer>
-</template>
-
-<script setup>
-import { RouterLink } from 'vue-router'
-</script>
-
-<style scoped>
-/* ===== 容器基础样式 ===== */
-.site-footer {
-  position: relative;
-  /* 增加上外边距，让页脚和正文内容呼吸感更强 */
-  margin-top: 4rem; 
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: var(--ctp-mocha-subtext0);
-  font-family: 'Inter', "LXGW WenKai", sans-serif;
-  overflow: hidden; /* 防止光效溢出 */
-}
-
-/* [核心高级感] 顶部流光线条 */
-.footer-gradient-line {
-  height: 1px;
-  width: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(var(--ctp-mocha-surface2-rgb), 0.5) 20%,
-    var(--primary-color) 50%,
-    rgba(var(--ctp-mocha-surface2-rgb), 0.5) 80%,
-    transparent 100%
-  );
-  opacity: 0.6;
-}
-
-.footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 3rem 2rem;
-  display: grid;
-  /* 桌面端三列布局：左侧品牌(占2份)，中间导航，右侧社交 */
-  grid-template-columns: 1fr 1fr 1fr; 
-  gap: 20rem;
-}
-
-/* ===== 1. 品牌区 ===== */
-.footer-brand {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.brand-title {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: var(--text-color);
-}
-
-.brand-logo {
-  width: 28px;
-  height: 28px;
-  filter: grayscale(0.2);
-  transition: filter 0.3s;
-}
-
-.footer-brand:hover .brand-logo {
-  filter: grayscale(0);
-}
-
-.brand-slogan {
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: var(--ctp-mocha-overlay2);
-  max-width: 300px;
-}
-
-/* ===== 2. 导航与标题通用 ===== */
-.nav-title {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ctp-mocha-overlay2); /* 标题颜色淡一点，不抢戏 */
-  margin-bottom: 1rem;
-  font-weight: 600;
-}
-
-.nav-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.nav-links a {
-  color: var(--ctp-mocha-subtext0);
-  text-decoration: none;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
+  display: inline-flex;
   width: fit-content;
-  position: relative;
+  color: rgba(205, 214, 244, 0.66);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.42;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
-/* 链接 Hover 效果：颜色变亮 + 轻微右移 */
-.nav-links a:hover {
-  color: var(--primary-color);
-  transform: translateX(4px);
+.footer-links a:hover,
+.footer-links a:focus-visible {
+  color: rgba(245, 246, 255, 0.96);
+  transform: translateX(3px);
 }
 
-/* ===== 3. 社交图标区 ===== */
-.social-icons {
+.footer-bottom {
+  grid-area: meta;
+  align-self: end;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 1rem;
+  color: rgba(166, 173, 200, 0.74);
+  font-size: 0.88rem;
 }
 
-.social-btn {
+.footer-bottom p {
+  margin: 0;
+}
+
+.footer-contact {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%; /* 圆形按钮 */
-  background-color: rgba(255, 255, 255, 0.05); /* 极淡的背景 */
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  color: var(--ctp-mocha-subtext0);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 弹性过渡 */
+  gap: 1.1rem;
 }
 
-/* 社交按钮 Hover：背景变色 + 上浮 + 发光 */
-.social-btn:hover {
-  background-color: var(--primary-color);
-  color: #fff; /* 图标变白 */
-  transform: translateY(-4px) scale(1.1);
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4); /* 需要确保你有 RGB 变量，或者用具体的颜色 rgba(71, 241, 232, 0.4) */
-  border-color: transparent;
+.footer-contact a {
+  color: rgba(205, 214, 244, 0.72);
+  text-decoration: none;
+  font-weight: 650;
+  transition: color 0.2s ease;
 }
 
-/* ===== 底部版权栏 ===== */
-.footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 1.5rem 0;
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--ctp-mocha-overlay1);
+.footer-contact a:hover,
+.footer-contact a:focus-visible {
+  color: #fff;
 }
 
-/* ===== 响应式适配 ===== */
-@media (max-width: 768px) {
-  .footer-container {
-    grid-template-columns: 1fr; /* 手机端变为单列 */
-    text-align: center;
-    gap: 2.5rem;
+@media (max-width: 980px) {
+  .footer-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "brand"
+      "directory"
+      "meta";
+    min-height: auto;
+    gap: 3.5rem;
   }
 
-  .footer-brand {
-    align-items: center;
+  .footer-directory {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  
-  .brand-slogan {
-    margin: 0 auto;
+}
+
+@media (max-width: 680px) {
+  .site-footer {
+    margin-top: 3rem;
   }
 
-  .nav-links {
-    align-items: center;
+  .footer-shell {
+    width: min(100% - 32px, 1220px);
+    padding-top: 4rem;
   }
 
-  /* 手机端取消右移 hover 效果，改为颜色变化即可 */
-  .nav-links a:hover {
-    transform: none;
+  .footer-directory {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.3rem 1.4rem;
   }
-  
-  .social-icons {
-    justify-content: center;
+
+  .footer-bottom {
+    padding-bottom: 1.25rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .footer-directory {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-logo {
+    font-size: 1.2rem;
   }
 }
 </style>
