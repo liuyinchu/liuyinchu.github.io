@@ -200,12 +200,27 @@ onMounted(() => {
 
 <style scoped>
 .resource-detail-page {
+  --ctp-base: #1e1e2e;
+  --ctp-mantle: #181825;
+  --ctp-text: #cdd6f4;
+  --ctp-subtext0: #a6adc8;
+  --ctp-subtext1: #bac2de;
+  --ctp-surface0: #313244;
+  --ctp-surface1: #45475a;
+  --ctp-surface2: #585b70;
+  --ctp-blue: #89b4fa;
+  --ctp-sapphire: #74c7ec;
+  --ctp-lavender: #b4befe;
+  --ctp-mauve: #cba6f7;
+  --ctp-pink: #f5c2e7;
+  --ctp-red: #f38ba8;
+
   min-height: 100vh;
   padding: clamp(5.5rem, 9vw, 8rem) 0 clamp(4.5rem, 8vw, 7rem);
-  color: rgba(245, 246, 255, 0.94);
+  color: var(--ctp-text);
   background:
-    radial-gradient(circle at 20% 0%, rgba(116, 199, 236, 0.08), transparent 32rem),
-    #11111b;
+    radial-gradient(circle at 20% 0%, rgba(137, 180, 250, 0.08), transparent 32rem),
+    var(--ctp-mantle);
   font-family: 'Inter', 'LXGW WenKai', system-ui, sans-serif;
 }
 
@@ -221,7 +236,7 @@ onMounted(() => {
   gap: clamp(1.2rem, 4vw, 4rem);
   align-items: end;
   padding-bottom: clamp(2rem, 5vw, 4rem);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(180, 190, 254, 0.12);
 }
 
 .back-link {
@@ -235,7 +250,7 @@ onMounted(() => {
 
 .back-link:hover,
 .back-link:focus-visible {
-  color: #fff;
+  color: var(--ctp-lavender);
 }
 
 .eyebrow {
@@ -249,7 +264,7 @@ onMounted(() => {
 
 .hero-copy h1 {
   margin: 0;
-  color: #fff;
+  color: var(--ctp-text);
   font-size: clamp(2.4rem, 6vw, 5.5rem);
   font-weight: 760;
   line-height: 1.02;
@@ -308,18 +323,18 @@ onMounted(() => {
   width: 100%;
   min-height: 3rem;
   padding: 0 0.95rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(180, 190, 254, 0.16);
   border-radius: 999px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.045);
+  color: var(--ctp-text);
+  background: rgba(30, 30, 46, 0.68);
   outline: 0;
   font: inherit;
   box-sizing: border-box;
 }
 
 .resource-search input:focus {
-  border-color: rgba(116, 199, 236, 0.55);
-  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(137, 180, 250, 0.58);
+  background: rgba(49, 50, 68, 0.72);
 }
 
 .resource-search input::placeholder {
@@ -329,7 +344,7 @@ onMounted(() => {
 .resource-search button {
   width: fit-content;
   border: 0;
-  color: rgba(205, 214, 244, 0.72);
+  color: rgba(180, 190, 254, 0.82);
   background: transparent;
   font: inherit;
   font-size: 0.9rem;
@@ -343,7 +358,7 @@ onMounted(() => {
 
 .category-nav a {
   padding: 0.62rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(180, 190, 254, 0.1);
   color: rgba(205, 214, 244, 0.68);
   text-decoration: none;
   transition: color 0.2s ease, padding-left 0.2s ease;
@@ -353,7 +368,7 @@ onMounted(() => {
 .category-nav a:focus-visible,
 .category-nav a.is-active {
   padding-left: 0.45rem;
-  color: #fff;
+  color: var(--ctp-lavender);
 }
 
 .resource-main {
@@ -369,7 +384,7 @@ onMounted(() => {
   grid-template-columns: 4rem minmax(0, 1fr);
   gap: clamp(1rem, 2vw, 2rem);
   padding: clamp(1.35rem, 2.6vw, 2.25rem) 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(180, 190, 254, 0.12);
 }
 
 .resource-entry:first-child {
@@ -396,7 +411,7 @@ onMounted(() => {
 
 .entry-head h2 {
   margin: 0;
-  color: #fff;
+  color: var(--ctp-text);
   font-size: clamp(1.35rem, 2.1vw, 2rem);
   font-weight: 760;
   line-height: 1.25;
@@ -405,8 +420,8 @@ onMounted(() => {
 
 .entry-link {
   flex: 0 0 auto;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--ctp-text);
+  border: 1px solid rgba(180, 190, 254, 0.22);
   border-radius: 999px;
   padding: 0.42rem 0.85rem;
   font-size: 0.86rem;
@@ -417,8 +432,8 @@ onMounted(() => {
 
 .entry-link:hover,
 .entry-link:focus-visible {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(69, 71, 90, 0.56);
+  border-color: rgba(180, 190, 254, 0.4);
 }
 
 .entry-intro {
@@ -428,9 +443,9 @@ onMounted(() => {
 .entry-note {
   margin-top: 0.95rem;
   padding: 0.8rem 0.95rem;
-  border-left: 2px solid rgba(116, 199, 236, 0.55);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(245, 246, 255, 0.78);
+  border-left: 2px solid rgba(137, 180, 250, 0.62);
+  background: rgba(30, 30, 46, 0.72);
+  color: rgba(205, 214, 244, 0.82);
 }
 
 .markdown-content {
@@ -448,12 +463,12 @@ onMounted(() => {
 }
 
 .markdown-content :deep(strong) {
-  color: rgba(245, 246, 255, 0.94);
+  color: var(--ctp-lavender);
   font-weight: 760;
 }
 
 .markdown-content :deep(a) {
-  color: #89b4fa;
+  color: var(--ctp-blue);
   text-decoration: none;
   border-bottom: 1px solid rgba(137, 180, 250, 0.4);
 }
@@ -465,8 +480,8 @@ onMounted(() => {
 .markdown-content :deep(code) {
   padding: 0.12rem 0.32rem;
   border-radius: 0.35rem;
-  color: #f5c2e7;
-  background: rgba(255, 255, 255, 0.07);
+  color: var(--ctp-pink);
+  background: rgba(49, 50, 68, 0.65);
   font-family: 'Fira Code', monospace;
   font-size: 0.9em;
 }
@@ -478,7 +493,7 @@ onMounted(() => {
 }
 
 .state-block.is-error {
-  color: #f38ba8;
+  color: var(--ctp-red);
 }
 
 @media (max-width: 980px) {
@@ -508,7 +523,7 @@ onMounted(() => {
 
   .category-nav a {
     flex: 0 0 auto;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(180, 190, 254, 0.14);
     border-radius: 999px;
     padding: 0.55rem 0.9rem;
   }
@@ -517,7 +532,7 @@ onMounted(() => {
   .category-nav a:focus-visible,
   .category-nav a.is-active {
     padding-left: 0.9rem;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(49, 50, 68, 0.72);
   }
 }
 

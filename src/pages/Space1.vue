@@ -289,9 +289,22 @@ function toggleDirectory() {
 
 <style scoped>
 .journal-page {
+  --ctp-base: #1e1e2e;
+  --ctp-mantle: #181825;
+  --ctp-text: #cdd6f4;
+  --ctp-subtext0: #a6adc8;
+  --ctp-subtext1: #bac2de;
+  --ctp-surface0: #313244;
+  --ctp-surface1: #45475a;
+  --ctp-surface2: #585b70;
+  --ctp-blue: #89b4fa;
+  --ctp-sapphire: #74c7ec;
+  --ctp-lavender: #b4befe;
+  --ctp-mauve: #cba6f7;
+
   min-height: 100vh;
-  color: rgba(245, 246, 255, 0.94);
-  background: #11111b;
+  color: var(--ctp-text);
+  background: var(--ctp-mantle);
   font-family: 'Inter', 'LXGW WenKai', system-ui, sans-serif;
 }
 
@@ -350,15 +363,15 @@ function toggleDirectory() {
   min-height: 3.65rem;
   gap: 0.85rem;
   padding: 0 1.1rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(180, 190, 254, 0.16);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.045);
+  background: rgba(30, 30, 46, 0.68);
   transition: border-color 0.22s ease, background-color 0.22s ease;
 }
 
 .search-shell:focus-within {
-  border-color: rgba(116, 199, 236, 0.58);
-  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(137, 180, 250, 0.58);
+  background: rgba(49, 50, 68, 0.72);
 }
 
 .search-icon {
@@ -377,7 +390,7 @@ function toggleDirectory() {
 .search-shell input {
   width: 100%;
   min-width: 0;
-  color: #fff;
+  color: var(--ctp-text);
   background: transparent;
   border: 0;
   outline: 0;
@@ -391,7 +404,7 @@ function toggleDirectory() {
 
 .search-clear {
   border: 0;
-  color: rgba(245, 246, 255, 0.74);
+  color: rgba(180, 190, 254, 0.82);
   background: transparent;
   font: inherit;
   font-size: 0.9rem;
@@ -409,10 +422,10 @@ function toggleDirectory() {
   min-height: 3.65rem;
   gap: 0.55rem;
   padding: 0 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(180, 190, 254, 0.18);
   border-radius: 999px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--ctp-text);
+  background: rgba(49, 50, 68, 0.72);
   font: inherit;
   font-weight: 720;
   cursor: pointer;
@@ -421,8 +434,8 @@ function toggleDirectory() {
 
 .directory-button:hover,
 .directory-button:focus-visible {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(69, 71, 90, 0.78);
+  border-color: rgba(180, 190, 254, 0.32);
 }
 
 .directory-button svg {
@@ -438,9 +451,9 @@ function toggleDirectory() {
   max-height: min(28rem, 70vh);
   overflow: auto;
   padding: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(180, 190, 254, 0.16);
   border-radius: 1.1rem;
-  background: rgba(17, 17, 27, 0.96);
+  background: rgba(30, 30, 46, 0.97);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
 }
 
@@ -450,13 +463,13 @@ function toggleDirectory() {
   gap: 1rem;
   padding: 0.8rem 0.85rem;
   border-radius: 0.8rem;
-  color: rgba(245, 246, 255, 0.9);
+  color: rgba(205, 214, 244, 0.9);
   text-decoration: none;
 }
 
 .directory-link:hover,
 .directory-link:focus-visible {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(69, 71, 90, 0.56);
 }
 
 .directory-link span {
@@ -485,7 +498,7 @@ function toggleDirectory() {
 
 .section-heading h2 {
   margin: 0;
-  color: #fff;
+  color: var(--ctp-text);
   font-size: clamp(2rem, 3.5vw, 3.25rem);
   line-height: 1;
   letter-spacing: 0;
@@ -517,7 +530,7 @@ function toggleDirectory() {
   display: block;
   width: 100%;
   object-fit: cover;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(49, 50, 68, 0.55);
 }
 
 .featured-card img {
@@ -531,7 +544,7 @@ function toggleDirectory() {
 
 .featured-copy h3 {
   margin: 0;
-  color: #fff;
+  color: var(--ctp-text);
   font-size: clamp(2.2rem, 5vw, 4.8rem);
   font-weight: 760;
   line-height: 1.05;
@@ -569,7 +582,7 @@ function toggleDirectory() {
 .side-card h3,
 .latest-card h3 {
   margin: 1.05rem 0 0;
-  color: #fff;
+  color: var(--ctp-text);
   font-size: clamp(1.24rem, 1.75vw, 1.55rem);
   line-height: 1.22;
 }
@@ -634,10 +647,10 @@ function toggleDirectory() {
 .pagination button {
   min-height: 2.75rem;
   padding: 0 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(180, 190, 254, 0.16);
   border-radius: 999px;
-  color: rgba(245, 246, 255, 0.88);
-  background: rgba(255, 255, 255, 0.04);
+  color: rgba(205, 214, 244, 0.88);
+  background: rgba(30, 30, 46, 0.6);
   font: inherit;
   font-weight: 680;
   cursor: pointer;
@@ -646,8 +659,8 @@ function toggleDirectory() {
 .pagination button:hover:not(:disabled),
 .pagination button:focus-visible:not(:disabled),
 .page-dots button.is-active {
-  color: #11111b;
-  background: rgba(245, 246, 255, 0.92);
+  color: var(--ctp-base);
+  background: var(--ctp-lavender);
 }
 
 .pagination button:disabled {
