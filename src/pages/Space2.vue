@@ -248,6 +248,11 @@ onMounted(async () => {
   line-height: 1.65;
 }
 
+.format-column {
+  align-self: start;
+  padding-top: clamp(12.2rem, 15.2vw, 14.6rem);
+}
+
 .code-window {
   overflow: hidden;
   border: 1px solid rgba(var(--ctp-mocha-peach-rgb), 0.16);
@@ -310,6 +315,10 @@ onMounted(async () => {
 @media (max-width: 900px) {
   .exchange-panel {
     grid-template-columns: 1fr;
+  }
+
+  .format-column {
+    padding-top: 0;
   }
 }
 
