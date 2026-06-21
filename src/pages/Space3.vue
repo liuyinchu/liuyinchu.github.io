@@ -23,6 +23,7 @@ const loungeLinks = [
       <div class="hero-copy">
         <p class="kicker">CYBER LOUNGE</p>
         <h1 id="lounge-title">赛博会客厅</h1>
+        <p class="hero-text">【待填入文字】</p>
       </div>
 
       <div class="hero-visual" aria-hidden="true">
@@ -120,6 +121,15 @@ const loungeLinks = [
   font-size: clamp(3.4rem, 8vw, 6.8rem);
   font-weight: 800;
   line-height: 1;
+}
+
+.hero-text {
+  max-width: 680px;
+  margin: 0;
+  color: var(--ctp-mocha-subtext0);
+  font-family: 'LXGW WenKai', serif;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.8;
 }
 
 .hero-visual {
