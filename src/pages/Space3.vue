@@ -15,19 +15,14 @@ const loungeLinks = [
     meta: 'PUBLIC NODE 02',
   },
 ]
-
 </script>
 
 <template>
   <main class="lounge-page" aria-labelledby="lounge-title">
     <section class="lounge-hero">
       <div class="hero-copy">
-        <p class="kicker">CYBER LOUNGE / PUBLIC GATEWAY</p>
+        <p class="kicker">CYBER LOUNGE</p>
         <h1 id="lounge-title">赛博会客厅</h1>
-        <p class="hero-text">
-          这里是对访客开放的会客中枢，收纳站点导览、邻居链接和未来会继续生长的开放空间。
-        </p>
-
       </div>
 
       <div class="hero-visual" aria-hidden="true">
@@ -125,15 +120,6 @@ const loungeLinks = [
   font-size: clamp(3.4rem, 8vw, 6.8rem);
   font-weight: 800;
   line-height: 1;
-}
-
-.hero-text {
-  max-width: 680px;
-  margin: 0;
-  color: var(--ctp-mocha-subtext0);
-  font-family: 'LXGW WenKai', serif;
-  font-size: clamp(1.08rem, 2vw, 1.32rem);
-  line-height: 1.85;
 }
 
 .hero-visual {
