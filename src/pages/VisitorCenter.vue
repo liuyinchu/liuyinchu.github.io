@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const today = new Date().toLocaleDateString('zh-CN', {
   year: 'numeric',
@@ -20,42 +20,18 @@ const GLOBE_VIEWBOX = {
   width: 1400,
   height: 1000,
   cx: 700,
-  cy: 540,
-  radius: 392,
+  cy: 500,
+  radius: 560,
 }
 
-const LAND_MASSES = [
-  [
-    [62, -168], [70, -132], [58, -92], [51, -58], [31, -82],
-    [18, -96], [21, -119], [44, -128],
-  ],
-  [
-    [12, -81], [6, -60], [-18, -44], [-54, -68], [-38, -78],
-    [-10, -74],
-  ],
-  [
-    [72, -10], [64, 40], [55, 96], [62, 142], [46, 164],
-    [22, 112], [8, 76], [20, 38], [36, 18],
-  ],
-  [
-    [34, -16], [36, 28], [8, 48], [-34, 22], [-30, -12],
-    [2, -18],
-  ],
-  [
-    [-12, 112], [-10, 154], [-38, 146], [-42, 116],
-  ],
-  [
-    [60, -50], [70, -22], [58, -14], [50, -34],
-  ],
-]
-
-const SIGNAL_LINKS = [
-  { key: 'san-francisco', latitude: 37.77, longitude: -122.42, tone: 'cool' },
-  { key: 'new-york', latitude: 40.71, longitude: -74.01, tone: 'warm' },
-  { key: 'london', latitude: 51.51, longitude: -0.13, tone: 'cool' },
-  { key: 'tokyo', latitude: 35.68, longitude: 139.69, tone: 'green' },
-  { key: 'singapore', latitude: 1.35, longitude: 103.82, tone: 'warm' },
-  { key: 'sydney', latitude: -33.87, longitude: 151.21, tone: 'cool' },
+const DOT_CLUSTERS = [
+  { key: 'north-america', latitude: 40, longitude: -98, latitudeSpread: 24, longitudeSpread: 46, count: 660, tone: 'blue' },
+  { key: 'europe', latitude: 49, longitude: 10, latitudeSpread: 18, longitudeSpread: 34, count: 760, tone: 'blue' },
+  { key: 'east-asia', latitude: 35, longitude: 116, latitudeSpread: 18, longitudeSpread: 34, count: 500, tone: 'blue' },
+  { key: 'south-asia', latitude: 21, longitude: 78, latitudeSpread: 15, longitudeSpread: 28, count: 300, tone: 'muted' },
+  { key: 'south-america', latitude: -18, longitude: -60, latitudeSpread: 28, longitudeSpread: 30, count: 230, tone: 'muted' },
+  { key: 'africa', latitude: 2, longitude: 21, latitudeSpread: 34, longitudeSpread: 32, count: 260, tone: 'muted' },
+  { key: 'oceania', latitude: -27, longitude: 134, latitudeSpread: 16, longitudeSpread: 28, count: 150, tone: 'muted' },
 ]
 
 const visitorInfo = ref({
@@ -72,13 +48,17 @@ const visitorInfo = ref({
 
 const isLoading = ref(true)
 const loadError = ref('')
+const worldFeatures = ref([])
 const globeCenter = ref({
   latitude: DEFAULT_LOCATION.latitude,
   longitude: DEFAULT_LOCATION.longitude,
 })
 const isDragging = ref(false)
+const scrollProgress = ref(0)
+const globeScrollSection = ref(null)
 
 let dragOrigin = null
+let scrollFrame = 0
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
@@ -88,6 +68,45 @@ function normalizeLongitude(value) {
   if (!Number.isFinite(value)) return 0
   return ((((value + 180) % 360) + 360) % 360) - 180
 }
+
+function createSeededRandom(seed) {
+  let value = seed
+  return () => {
+    value = (value * 1664525 + 1013904223) % 4294967296
+    return value / 4294967296
+  }
+}
+
+function createSignalPoints() {
+  const random = createSeededRandom(20260622)
+  const points = []
+
+  DOT_CLUSTERS.forEach((cluster) => {
+    for (let index = 0; index < cluster.count; index += 1) {
+      const angle = random() * Math.PI * 2
+      const distance = Math.sqrt(random())
+      const latitude = clamp(
+        cluster.latitude + Math.sin(angle) * cluster.latitudeSpread * distance,
+        -58,
+        73,
+      )
+      const longitude = normalizeLongitude(
+        cluster.longitude + Math.cos(angle) * cluster.longitudeSpread * distance,
+      )
+
+      points.push({
+        key: `${cluster.key}-${index}`,
+        latitude,
+        longitude,
+        tone: cluster.tone,
+      })
+    }
+  })
+
+  return points
+}
+
+const SIGNAL_POINTS = createSignalPoints()
 
 function parseVisitorDevice() {
   const ua = navigator.userAgent
@@ -157,6 +176,18 @@ async function fetchVisitorInfo() {
   }
 }
 
+async function fetchWorldFeatures() {
+  try {
+    const res = await fetch('/data/ne_110m_admin_0_countries.geojson')
+    if (!res.ok) throw new Error('world map request failed')
+
+    const data = await res.json()
+    worldFeatures.value = Array.isArray(data.features) ? data.features : []
+  } catch (error) {
+    worldFeatures.value = []
+  }
+}
+
 function toRadians(degrees) {
   return degrees * Math.PI / 180
 }
@@ -180,7 +211,7 @@ function projectPoint(latitude, longitude, radius = GLOBE_VIEWBOX.radius) {
   return {
     x: GLOBE_VIEWBOX.cx + x,
     y: GLOBE_VIEWBOX.cy - y,
-    visible: z >= -0.04,
+    visible: z >= -0.01,
     depth: z,
   }
 }
@@ -189,20 +220,24 @@ function buildProjectedPaths(lines) {
   return lines.flatMap((line) => {
     const segments = []
     let current = []
+    let previousLongitude = null
 
     line.forEach(([latitude, longitude]) => {
       const point = projectPoint(latitude, longitude)
+      const longitudeJump = previousLongitude === null
+        ? 0
+        : Math.abs(normalizeLongitude(longitude - previousLongitude))
 
-      if (point.visible) {
+      if (point.visible && longitudeJump < 42) {
         current.push(point)
-        return
+      } else {
+        if (current.length > 1) {
+          segments.push(current)
+        }
+        current = point.visible ? [point] : []
       }
 
-      if (current.length > 1) {
-        segments.push(current)
-      }
-
-      current = []
+      previousLongitude = longitude
     })
 
     if (current.length > 1) {
@@ -218,7 +253,7 @@ function buildProjectedPaths(lines) {
 function createParallels() {
   const lines = []
 
-  for (let latitude = -70; latitude <= 70; latitude += 10) {
+  for (let latitude = -80; latitude <= 80; latitude += 10) {
     const line = []
     for (let longitude = -180; longitude <= 180; longitude += 3) {
       line.push([latitude, longitude])
@@ -234,7 +269,7 @@ function createMeridians() {
 
   for (let longitude = -180; longitude < 180; longitude += 10) {
     const line = []
-    for (let latitude = -80; latitude <= 80; latitude += 3) {
+    for (let latitude = -88; latitude <= 88; latitude += 3) {
       line.push([latitude, longitude])
     }
     lines.push(line)
@@ -243,51 +278,73 @@ function createMeridians() {
   return lines
 }
 
-function interpolateGeoLine(origin, target, steps = 110) {
-  const line = []
-  let longitudeDelta = normalizeLongitude(target.longitude - origin.longitude)
+function featureToLines(feature) {
+  const { geometry } = feature
+  if (!geometry) return []
 
-  if (Math.abs(longitudeDelta) > 180) {
-    longitudeDelta = longitudeDelta > 0 ? longitudeDelta - 360 : longitudeDelta + 360
+  const polygonToLines = (polygon) => polygon.map((ring) => ring
+    .filter((coordinate) => coordinate.length >= 2)
+    .map(([longitude, latitude]) => [Number(latitude), Number(longitude)])
+    .filter(([latitude, longitude]) => Number.isFinite(latitude) && Number.isFinite(longitude)))
+    .filter((line) => line.length > 1)
+
+  if (geometry.type === 'Polygon') {
+    return polygonToLines(geometry.coordinates)
   }
 
-  for (let index = 0; index <= steps; index += 1) {
-    const progress = index / steps
-    const latitude = origin.latitude
-      + (target.latitude - origin.latitude) * progress
-      + Math.sin(progress * Math.PI) * 7
-    const longitude = normalizeLongitude(origin.longitude + longitudeDelta * progress)
+  if (geometry.type === 'MultiPolygon') {
+    return geometry.coordinates.flatMap((polygon) => polygonToLines(polygon))
+  }
 
-    line.push([latitude, longitude])
+  return []
+}
+
+function createVisitorRegionLine() {
+  const latitude = visitorInfo.value.latitude
+  const longitude = visitorInfo.value.longitude
+  const longitudeRadius = 2.2 / Math.max(Math.cos(toRadians(latitude)), 0.22)
+  const line = []
+
+  for (let index = 0; index <= 96; index += 1) {
+    const angle = (index / 96) * Math.PI * 2
+    line.push([
+      latitude + Math.sin(angle) * 1.45,
+      normalizeLongitude(longitude + Math.cos(angle) * longitudeRadius),
+    ])
   }
 
   return line
 }
 
-function buildSignalRoutePaths() {
-  const origin = {
-    latitude: visitorInfo.value.latitude,
-    longitude: visitorInfo.value.longitude,
-  }
-
-  return SIGNAL_LINKS.flatMap((target) => buildProjectedPaths([
-    interpolateGeoLine(origin, target),
-  ]).map((path, index) => ({
-    key: `${target.key}-${index}`,
-    path,
-    tone: target.tone,
-  })))
+function buildPointPath(points) {
+  return points.map((point) => `M${point.x.toFixed(1)} ${point.y.toFixed(1)}h0`).join('')
 }
 
+const worldLines = computed(() => worldFeatures.value.flatMap((feature) => featureToLines(feature)))
 const parallelPaths = computed(() => buildProjectedPaths(createParallels()))
 const meridianPaths = computed(() => buildProjectedPaths(createMeridians()))
-const landPaths = computed(() => buildProjectedPaths(LAND_MASSES))
-const signalRoutePaths = computed(buildSignalRoutePaths)
+const landPaths = computed(() => buildProjectedPaths(worldLines.value))
 
-const signalDots = computed(() => SIGNAL_LINKS.map((point) => ({
-  ...point,
-  ...projectPoint(point.latitude, point.longitude),
-})).filter((point) => point.visible))
+const signalPointPaths = computed(() => {
+  const groups = {
+    blue: [],
+    muted: [],
+  }
+
+  SIGNAL_POINTS.forEach((point) => {
+    const projected = projectPoint(point.latitude, point.longitude)
+    if (!projected.visible) return
+
+    groups[point.tone].push(projected)
+  })
+
+  return {
+    blue: buildPointPath(groups.blue),
+    muted: buildPointPath(groups.muted),
+  }
+})
+
+const visitorRegionPaths = computed(() => buildProjectedPaths([createVisitorRegionLine()]))
 
 const visitorPoint = computed(() => (
   projectPoint(visitorInfo.value.latitude, visitorInfo.value.longitude)
@@ -303,6 +360,12 @@ const coordinateLabel = computed(() => {
   return `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`
 })
 
+const statusText = computed(() => {
+  if (isLoading.value) return 'LOCATING'
+  if (loadError.value) return 'FALLBACK'
+  return 'SIGNAL READY'
+})
+
 const infoRows = computed(() => [
   { label: 'DATE', value: today },
   { label: 'IP', value: visitorInfo.value.ip },
@@ -312,9 +375,16 @@ const infoRows = computed(() => [
   { label: 'TIMEZONE', value: visitorInfo.value.timezone },
 ])
 
+const globeStageStyle = computed(() => ({
+  '--globe-scale': (0.84 + scrollProgress.value * 0.27).toFixed(3),
+  '--globe-y': `${(11 - scrollProgress.value * 11).toFixed(2)}vh`,
+  '--globe-opacity': (0.84 + scrollProgress.value * 0.16).toFixed(3),
+  '--overlay-opacity': (1 - scrollProgress.value * 0.42).toFixed(3),
+}))
+
 function focusVisitorLocation() {
   globeCenter.value = {
-    latitude: clamp(visitorInfo.value.latitude, -75, 75),
+    latitude: clamp(visitorInfo.value.latitude, -72, 72),
     longitude: normalizeLongitude(visitorInfo.value.longitude),
   }
 }
@@ -337,8 +407,8 @@ function onGlobePointerMove(event) {
   const deltaY = event.clientY - dragOrigin.y
 
   globeCenter.value = {
-    latitude: clamp(dragOrigin.latitude + deltaY * 0.22, -75, 75),
-    longitude: normalizeLongitude(dragOrigin.longitude - deltaX * 0.32),
+    latitude: clamp(dragOrigin.latitude + deltaY * 0.2, -72, 72),
+    longitude: normalizeLongitude(dragOrigin.longitude - deltaX * 0.3),
   }
 }
 
@@ -348,36 +418,61 @@ function onGlobePointerUp(event) {
   event.currentTarget.releasePointerCapture?.(event.pointerId)
 }
 
+function updateScrollProgress() {
+  const section = globeScrollSection.value
+  if (!section) return
+
+  const rect = section.getBoundingClientRect()
+  const scrollable = Math.max(section.offsetHeight - window.innerHeight, 1)
+  scrollProgress.value = clamp(-rect.top / scrollable, 0, 1)
+}
+
+function requestScrollProgress() {
+  if (scrollFrame) return
+
+  scrollFrame = window.requestAnimationFrame(() => {
+    scrollFrame = 0
+    updateScrollProgress()
+  })
+}
+
 onMounted(() => {
   parseVisitorDevice()
   fetchVisitorInfo()
+  fetchWorldFeatures()
+  updateScrollProgress()
+  window.addEventListener('scroll', requestScrollProgress, { passive: true })
+  window.addEventListener('resize', requestScrollProgress)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', requestScrollProgress)
+  window.removeEventListener('resize', requestScrollProgress)
+  if (scrollFrame) {
+    window.cancelAnimationFrame(scrollFrame)
+  }
 })
 </script>
 
 <template>
   <main class="visitor-page" aria-labelledby="visitor-title">
-    <section class="visitor-hero">
-      <div class="visitor-copy">
+    <section class="visitor-overview" aria-label="访客中心信息">
+      <div class="visitor-title-panel">
         <p class="kicker">VISITOR CENTER</p>
         <h1 id="visitor-title">访客中心</h1>
-        <p class="intro">
-          这里保存给抵达者的一张入场面板：你的访问痕迹、所在位置和一枚正在对准你的地球信标。
-        </p>
+        <img
+          class="welcome-line"
+          src="/fig/welcome.svg"
+          alt="欢迎你的到来，祝你有晴朗的一天！"
+          loading="eager"
+          decoding="async"
+        />
       </div>
-    </section>
 
-    <section class="visitor-dashboard" aria-label="访客信息面板">
       <article class="info-panel">
-        <div class="blessing-card">
-          <img src="/fig/welcome.svg" alt="Welcome" loading="eager" decoding="async" />
-        </div>
-
         <div class="panel-heading">
           <p class="kicker">VISITOR SIGNAL</p>
           <h2>访客信息</h2>
-          <p>
-            这组信息来自浏览器和公开 IP 定位服务，只用于在这里生成一张短暂的访客面板。
-          </p>
         </div>
 
         <dl class="info-grid">
@@ -395,20 +490,30 @@ onMounted(() => {
           <span id="busuanzi_container_site_pv">
             SITE PV <strong id="busuanzi_value_site_pv"></strong>
           </span>
-          <span>{{ isLoading ? 'LOCATING' : 'SIGNAL READY' }}</span>
+          <span>{{ statusText }}</span>
         </div>
       </article>
+    </section>
 
-      <article class="globe-panel" aria-label="IP 定位地球仪">
-        <div class="globe-copy">
+    <section
+      ref="globeScrollSection"
+      class="globe-scroll-section"
+      aria-label="IP 定位地球仪"
+    >
+      <div
+        class="globe-sticky"
+        :class="{ 'is-dragging': isDragging }"
+        :style="globeStageStyle"
+      >
+        <div class="globe-overlay">
           <p class="kicker">IP ORBIT</p>
           <h2>{{ locationLabel }}</h2>
-          <p>{{ loadError || `根据当前显示的 IP，将地球仪旋转到 ${coordinateLabel}。` }}</p>
+          <p>{{ loadError || `地球仪已对准 ${coordinateLabel}` }}</p>
+          <button type="button" @click="focusVisitorLocation">定位到访客</button>
         </div>
 
         <div
           class="globe-stage"
-          :class="{ 'is-dragging': isDragging }"
           role="img"
           :aria-label="`访客位置地球仪，当前定位 ${locationLabel}`"
           @pointerdown="onGlobePointerDown"
@@ -418,15 +523,10 @@ onMounted(() => {
         >
           <svg class="globe-svg" :viewBox="`0 0 ${GLOBE_VIEWBOX.width} ${GLOBE_VIEWBOX.height}`" aria-hidden="true">
             <defs>
-              <radialGradient id="visitor-globe-fill" cx="38%" cy="30%" r="72%">
-                <stop offset="0%" stop-color="rgba(205, 214, 244, 0.16)" />
-                <stop offset="54%" stop-color="rgba(49, 50, 68, 0.18)" />
-                <stop offset="100%" stop-color="rgba(24, 24, 37, 0.86)" />
-              </radialGradient>
-              <radialGradient id="visitor-globe-wash" cx="46%" cy="42%" r="72%">
-                <stop offset="0%" stop-color="rgba(137, 220, 235, 0.10)" />
-                <stop offset="70%" stop-color="rgba(137, 220, 235, 0.02)" />
-                <stop offset="100%" stop-color="rgba(137, 220, 235, 0)" />
+              <radialGradient id="visitor-globe-fill" cx="48%" cy="42%" r="72%">
+                <stop offset="0%" stop-color="rgba(49, 50, 68, 0.62)" />
+                <stop offset="72%" stop-color="rgba(30, 30, 46, 0.95)" />
+                <stop offset="100%" stop-color="rgba(17, 17, 27, 1)" />
               </radialGradient>
               <clipPath id="visitor-globe-clip">
                 <circle
@@ -438,10 +538,10 @@ onMounted(() => {
             </defs>
 
             <circle
-              class="globe-shadow"
-              :cx="GLOBE_VIEWBOX.cx + 18"
-              :cy="GLOBE_VIEWBOX.cy + 34"
-              :r="GLOBE_VIEWBOX.radius"
+              class="globe-backdrop"
+              :cx="GLOBE_VIEWBOX.cx"
+              :cy="GLOBE_VIEWBOX.cy"
+              :r="GLOBE_VIEWBOX.radius + 11"
             />
             <circle
               class="globe-fill"
@@ -449,14 +549,20 @@ onMounted(() => {
               :cy="GLOBE_VIEWBOX.cy"
               :r="GLOBE_VIEWBOX.radius"
             />
-            <circle
-              class="globe-wash"
-              :cx="GLOBE_VIEWBOX.cx"
-              :cy="GLOBE_VIEWBOX.cy"
-              :r="GLOBE_VIEWBOX.radius"
-            />
 
             <g clip-path="url(#visitor-globe-clip)">
+              <path
+                v-for="(path, index) in parallelPaths"
+                :key="`parallel-${index}`"
+                :d="path"
+                class="globe-grid globe-grid--parallel"
+              />
+              <path
+                v-for="(path, index) in meridianPaths"
+                :key="`meridian-${index}`"
+                :d="path"
+                class="globe-grid"
+              />
               <path
                 v-for="(path, index) in landPaths"
                 :key="`land-${index}`"
@@ -464,46 +570,38 @@ onMounted(() => {
                 class="globe-land"
               />
               <path
-                v-for="(path, index) in parallelPaths"
-                :key="`parallel-${index}`"
+                :d="signalPointPaths.muted"
+                class="globe-point-cloud globe-point-cloud--muted"
+              />
+              <path
+                :d="signalPointPaths.blue"
+                class="globe-point-cloud globe-point-cloud--blue"
+              />
+              <path
+                v-for="(path, index) in visitorRegionPaths"
+                :key="`visitor-region-under-${index}`"
                 :d="path"
-                class="globe-line globe-line--soft"
+                class="visitor-region visitor-region--under"
               />
               <path
-                v-for="(path, index) in meridianPaths"
-                :key="`meridian-${index}`"
+                v-for="(path, index) in visitorRegionPaths"
+                :key="`visitor-region-core-${index}`"
                 :d="path"
-                class="globe-line"
+                class="visitor-region visitor-region--core"
               />
-              <path
-                v-for="route in signalRoutePaths"
-                :key="`route-under-${route.key}`"
-                :d="route.path"
-                class="globe-orbit"
-              />
-              <path
-                v-for="route in signalRoutePaths"
-                :key="`route-core-${route.key}`"
-                :d="route.path"
-                class="globe-orbit-core"
-                :class="`globe-orbit-core--${route.tone}`"
-              />
-              <g
-                v-for="point in signalDots"
-                :key="point.key"
-                class="globe-dot"
-                :class="`globe-dot--${point.tone}`"
-                :transform="`translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})`"
-              >
-                <circle r="4.2" />
-              </g>
             </g>
 
             <circle
-              class="globe-rim"
+              class="globe-rim globe-rim--inner"
               :cx="GLOBE_VIEWBOX.cx"
               :cy="GLOBE_VIEWBOX.cy"
               :r="GLOBE_VIEWBOX.radius"
+            />
+            <circle
+              class="globe-rim globe-rim--outer"
+              :cx="GLOBE_VIEWBOX.cx"
+              :cy="GLOBE_VIEWBOX.cy"
+              :r="GLOBE_VIEWBOX.radius + 8"
             />
 
             <g
@@ -512,17 +610,17 @@ onMounted(() => {
               :transform="`translate(${visitorPoint.x.toFixed(1)} ${visitorPoint.y.toFixed(1)})`"
             >
               <circle class="marker-pulse" r="34" />
-              <circle class="marker-ring" r="12" />
+              <circle class="marker-ring" r="13" />
               <circle class="marker-core" r="5.5" />
             </g>
           </svg>
         </div>
 
-        <div class="globe-toolbar">
-          <button type="button" @click="focusVisitorLocation">定位到访客</button>
+        <div class="globe-footer">
           <span>{{ coordinateLabel }}</span>
+          <span>DRAG TO ROTATE</span>
         </div>
-      </article>
+      </div>
     </section>
   </main>
 </template>
@@ -530,27 +628,36 @@ onMounted(() => {
 <style scoped>
 .visitor-page {
   min-height: calc(100vh - 72px);
-  overflow: hidden;
-  padding: clamp(4.5rem, 8vw, 7rem) clamp(1rem, 4vw, 3rem) 7rem;
+  overflow: clip;
   background:
-    radial-gradient(circle at 78% 22%, rgba(var(--ctp-mocha-sky-rgb), 0.12), transparent 28rem),
-    linear-gradient(rgba(var(--ctp-mocha-overlay0-rgb), 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--ctp-mocha-overlay0-rgb), 0.07) 1px, transparent 1px),
-    linear-gradient(145deg, var(--ctp-mocha-crust), var(--ctp-mocha-base) 52%, var(--ctp-mocha-mantle));
-  background-size: auto, 42px 42px, 42px 42px, auto;
+    linear-gradient(rgba(var(--ctp-mocha-overlay0-rgb), 0.065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--ctp-mocha-overlay0-rgb), 0.065) 1px, transparent 1px),
+    linear-gradient(145deg, var(--ctp-mocha-crust), var(--ctp-mocha-base) 48%, var(--ctp-mocha-mantle));
+  background-size: 44px 44px, 44px 44px, auto;
   color: var(--ctp-mocha-text);
 }
 
-.visitor-hero,
-.visitor-dashboard {
+.visitor-overview {
   position: relative;
-  z-index: 1;
-  width: min(1180px, 100%);
+  z-index: 2;
+  display: grid;
+  width: min(1180px, calc(100% - 2rem));
+  min-height: calc(100vh - 72px);
   margin: 0 auto;
+  padding: 5.5rem 0 4.5rem;
+  grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+  gap: 2rem;
+  align-items: center;
 }
 
-.visitor-hero {
-  margin-bottom: clamp(2rem, 5vw, 4rem);
+.visitor-title-panel,
+.info-panel {
+  min-width: 0;
+}
+
+.visitor-title-panel {
+  display: grid;
+  gap: 1.25rem;
 }
 
 .kicker {
@@ -558,97 +665,59 @@ onMounted(() => {
   color: var(--ctp-mocha-sky);
   font-family: 'Fira Code', monospace;
   font-size: 0.78rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
 h1 {
-  margin: 1rem 0 1.25rem;
+  margin: 0;
   color: var(--ctp-mocha-text);
   font-family: 'LXGW WenKai', serif;
-  font-size: clamp(3.3rem, 8vw, 6.4rem);
+  font-size: 6rem;
   font-weight: 800;
   line-height: 1;
 }
 
-.intro {
-  max-width: 760px;
-  margin: 0;
-  color: var(--ctp-mocha-subtext0);
-  font-family: 'LXGW WenKai', serif;
-  font-size: clamp(1.05rem, 2vw, 1.25rem);
-  line-height: 1.85;
-}
-
-.visitor-dashboard {
-  display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.08fr);
-  gap: clamp(1.2rem, 3vw, 2rem);
-  align-items: stretch;
-}
-
-.info-panel,
-.globe-panel {
-  border: 1px solid rgba(var(--ctp-mocha-lavender-rgb), 0.16);
-  border-radius: 8px;
-  background:
-    linear-gradient(150deg, rgba(var(--ctp-mocha-surface1-rgb), 0.86), rgba(var(--ctp-mocha-base-rgb), 0.9)),
-    var(--ctp-mocha-base);
-  box-shadow:
-    18px 22px 42px rgba(0, 0, 0, 0.34),
-    -14px -14px 30px rgba(255, 255, 255, 0.026),
-    inset 1px 1px 0 rgba(255, 255, 255, 0.06);
+.welcome-line {
+  width: min(360px, 82%);
+  height: auto;
+  margin-top: 0.35rem;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 22px rgba(var(--ctp-mocha-sky-rgb), 0.2))
+    drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28));
 }
 
 .info-panel {
   display: grid;
-  gap: 1.3rem;
-  align-content: start;
-  padding: clamp(1.2rem, 3vw, 2rem);
-}
-
-.blessing-card {
-  display: grid;
-  min-height: 150px;
-  place-items: center;
-  border: 1px solid rgba(var(--ctp-mocha-sky-rgb), 0.16);
+  gap: 1.35rem;
+  padding: 2rem;
+  border: 1px solid rgba(var(--ctp-mocha-lavender-rgb), 0.16);
   border-radius: 8px;
-  padding: 1rem;
   background:
-    linear-gradient(135deg, rgba(var(--ctp-mocha-crust-rgb), 0.72), rgba(var(--ctp-mocha-surface0-rgb), 0.56)),
-    var(--ctp-mocha-crust);
+    linear-gradient(150deg, rgba(var(--ctp-mocha-surface1-rgb), 0.78), rgba(var(--ctp-mocha-base-rgb), 0.92)),
+    var(--ctp-mocha-base);
   box-shadow:
-    inset 8px 8px 18px rgba(0, 0, 0, 0.28),
-    inset -8px -8px 18px rgba(255, 255, 255, 0.025);
-}
-
-.blessing-card img {
-  width: min(340px, 84%);
-  max-height: 110px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 20px rgba(var(--ctp-mocha-sky-rgb), 0.18));
+    18px 22px 42px rgba(0, 0, 0, 0.34),
+    -14px -14px 30px rgba(255, 255, 255, 0.024),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .panel-heading {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.7rem;
 }
 
 .panel-heading h2,
-.globe-copy h2 {
+.globe-overlay h2 {
   margin: 0;
   color: var(--ctp-mocha-text);
   font-family: 'LXGW WenKai', serif;
-  font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.1;
 }
 
-.panel-heading p,
-.globe-copy p {
-  margin: 0;
-  color: var(--ctp-mocha-subtext0);
-  font-family: 'LXGW WenKai', serif;
-  line-height: 1.75;
+.panel-heading h2 {
+  font-size: 3rem;
 }
 
 .info-grid {
@@ -666,7 +735,7 @@ h1 {
   background: rgba(var(--ctp-mocha-base-rgb), 0.58);
   box-shadow:
     inset 4px 4px 10px rgba(0, 0, 0, 0.22),
-    inset -4px -4px 10px rgba(255, 255, 255, 0.025);
+    inset -4px -4px 10px rgba(255, 255, 255, 0.024);
 }
 
 .info-cell dt {
@@ -674,7 +743,7 @@ h1 {
   color: var(--ctp-mocha-teal);
   font-family: 'Fira Code', monospace;
   font-size: 0.72rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
 }
 
 .info-cell dd {
@@ -696,7 +765,7 @@ h1 {
   color: var(--ctp-mocha-overlay2);
   font-family: 'Fira Code', monospace;
   font-size: 0.76rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
 }
 
 .traffic-strip strong {
@@ -704,146 +773,190 @@ h1 {
   font-weight: 700;
 }
 
-.globe-panel {
-  position: relative;
-  display: grid;
-  gap: 1rem;
-  min-height: 640px;
-  padding: clamp(1.1rem, 3vw, 1.6rem);
-  overflow: hidden;
-}
-
-.globe-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, rgba(var(--ctp-mocha-sky-rgb), 0.08), transparent 34%),
-    repeating-linear-gradient(90deg, transparent 0 18px, rgba(255, 255, 255, 0.035) 18px 19px);
-  opacity: 0.5;
-}
-
-.globe-copy,
-.globe-stage,
-.globe-toolbar {
+.globe-scroll-section {
   position: relative;
   z-index: 1;
+  height: 330vh;
+  min-height: 2200px;
+  margin-top: -2rem;
 }
 
-.globe-copy {
-  display: grid;
-  gap: 0.7rem;
-}
-
-.globe-stage {
-  display: grid;
-  height: clamp(440px, 42vw, 560px);
+.globe-sticky {
+  position: sticky;
+  top: 72px;
+  height: calc(100vh - 72px);
+  min-height: 720px;
   overflow: hidden;
-  place-items: center;
-  margin: -0.4rem -1.6rem 0;
-  border-top: 1px solid rgba(var(--ctp-mocha-overlay0-rgb), 0.12);
-  border-bottom: 1px solid rgba(var(--ctp-mocha-overlay0-rgb), 0.12);
   cursor: grab;
   background:
-    radial-gradient(circle at 48% 46%, rgba(var(--ctp-mocha-sky-rgb), 0.08), transparent 18rem),
-    rgba(var(--ctp-mocha-crust-rgb), 0.22);
+    linear-gradient(180deg, rgba(var(--ctp-mocha-base-rgb), 0.02), rgba(var(--ctp-mocha-crust-rgb), 0.58)),
+    linear-gradient(145deg, rgba(var(--ctp-mocha-surface0-rgb), 0.26), rgba(var(--ctp-mocha-crust-rgb), 0.68));
   touch-action: none;
   user-select: none;
 }
 
-.globe-stage.is-dragging {
+.globe-sticky.is-dragging {
   cursor: grabbing;
 }
 
-.globe-svg {
-  width: min(1320px, 220%);
-  max-width: none;
-  transform: translate(-9%, -3%);
-  filter: drop-shadow(0 28px 44px rgba(0, 0, 0, 0.38));
+.globe-stage {
+  position: absolute;
+  inset: 0;
 }
 
-.globe-shadow {
-  fill: rgba(0, 0, 0, 0.22);
+.globe-svg {
+  position: absolute;
+  top: 49%;
+  left: 50%;
+  width: min(1500px, 118vw);
+  max-width: none;
+  height: auto;
+  opacity: var(--globe-opacity);
+  transform: translate(-50%, calc(-50% + var(--globe-y))) scale(var(--globe-scale));
+  transform-origin: center;
+  transition: opacity 0.18s ease;
+  filter: drop-shadow(0 38px 48px rgba(0, 0, 0, 0.32));
+}
+
+.globe-overlay {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: min(860px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding-top: 7rem;
+  gap: 0.9rem;
+  justify-items: center;
+  text-align: center;
+  opacity: var(--overlay-opacity);
+  pointer-events: none;
+}
+
+.globe-overlay h2 {
+  max-width: 780px;
+  font-size: 4rem;
+}
+
+.globe-overlay p {
+  margin: 0;
+  color: var(--ctp-mocha-subtext0);
+  font-family: 'LXGW WenKai', serif;
+  font-size: 1.08rem;
+  line-height: 1.6;
+}
+
+.globe-overlay button {
+  pointer-events: auto;
+  margin-top: 0.3rem;
+  border: 1px solid rgba(var(--ctp-mocha-teal-rgb), 0.25);
+  border-radius: 8px;
+  padding: 0.68rem 1rem;
+  background: rgba(var(--ctp-mocha-crust-rgb), 0.54);
+  color: var(--ctp-mocha-teal);
+  cursor: pointer;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 0.96rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.globe-overlay button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--ctp-mocha-teal-rgb), 0.52);
+  background: rgba(var(--ctp-mocha-surface0-rgb), 0.74);
+}
+
+.globe-footer {
+  position: absolute;
+  z-index: 2;
+  right: 2.5rem;
+  bottom: 2rem;
+  left: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--ctp-mocha-overlay2);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0;
+  pointer-events: none;
+}
+
+.globe-backdrop {
+  fill: rgba(0, 0, 0, 0.32);
 }
 
 .globe-fill {
   fill: url(#visitor-globe-fill);
 }
 
-.globe-wash {
-  fill: url(#visitor-globe-wash);
+.globe-grid {
+  fill: none;
+  stroke: rgba(166, 173, 200, 0.18);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 0.45;
+  vector-effect: non-scaling-stroke;
+}
+
+.globe-grid--parallel {
+  stroke: rgba(166, 173, 200, 0.14);
 }
 
 .globe-land {
   fill: none;
-  stroke: rgba(147, 153, 178, 0.32);
+  stroke: rgba(205, 214, 244, 0.34);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.35;
+  stroke-width: 0.52;
   vector-effect: non-scaling-stroke;
 }
 
-.globe-line {
+.globe-point-cloud {
   fill: none;
-  stroke: rgba(147, 153, 178, 0.18);
-  stroke-width: 0.58;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.15;
   vector-effect: non-scaling-stroke;
 }
 
-.globe-line--soft {
-  stroke: rgba(var(--ctp-mocha-lavender-rgb), 0.11);
+.globe-point-cloud--muted {
+  stroke: rgba(186, 194, 222, 0.44);
 }
 
-.globe-orbit {
+.globe-point-cloud--blue {
+  stroke: rgba(var(--ctp-mocha-sapphire-rgb), 0.82);
+}
+
+.visitor-region {
   fill: none;
-  stroke: rgba(var(--ctp-mocha-peach-rgb), 0.24);
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.visitor-region--under {
+  stroke: rgba(var(--ctp-mocha-peach-rgb), 0.28);
   stroke-width: 18;
 }
 
-.globe-orbit-core {
-  fill: none;
+.visitor-region--core {
   stroke: var(--ctp-mocha-peach);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.25;
+  stroke-width: 0.72;
   vector-effect: non-scaling-stroke;
-}
-
-.globe-orbit-core--cool {
-  stroke: var(--ctp-mocha-sapphire);
-}
-
-.globe-orbit-core--green {
-  stroke: var(--ctp-mocha-green);
-}
-
-.globe-dot circle {
-  fill: none;
-  stroke: var(--ctp-mocha-overlay2);
-  stroke-width: 2.2;
-  vector-effect: non-scaling-stroke;
-}
-
-.globe-dot--warm circle {
-  stroke: var(--ctp-mocha-peach);
-}
-
-.globe-dot--cool circle {
-  stroke: var(--ctp-mocha-sapphire);
-}
-
-.globe-dot--green circle {
-  stroke: var(--ctp-mocha-green);
 }
 
 .globe-rim {
   fill: none;
-  stroke: rgba(147, 153, 178, 0.38);
-  stroke-width: 0.9;
   vector-effect: non-scaling-stroke;
+}
+
+.globe-rim--inner {
+  stroke: rgba(205, 214, 244, 0.35);
+  stroke-width: 0.75;
+}
+
+.globe-rim--outer {
+  stroke: rgba(205, 214, 244, 0.22);
+  stroke-width: 0.52;
 }
 
 .marker-pulse,
@@ -854,13 +967,13 @@ h1 {
 
 .marker-pulse {
   animation: markerPulse 1.9s ease-out infinite;
-  opacity: 0.26;
+  opacity: 0.24;
 }
 
 .marker-ring {
   fill: none;
   stroke: var(--ctp-mocha-peach);
-  stroke-width: 2.5;
+  stroke-width: 2.6;
   vector-effect: non-scaling-stroke;
 }
 
@@ -870,82 +983,82 @@ h1 {
   vector-effect: non-scaling-stroke;
 }
 
-.globe-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-top: 1px solid rgba(var(--ctp-mocha-overlay0-rgb), 0.16);
-  padding-top: 1rem;
-}
-
-.globe-toolbar button {
-  border: 1px solid rgba(var(--ctp-mocha-teal-rgb), 0.26);
-  border-radius: 999px;
-  padding: 0.65rem 1rem;
-  background: rgba(var(--ctp-mocha-crust-rgb), 0.5);
-  color: var(--ctp-mocha-teal);
-  cursor: pointer;
-  font-family: 'LXGW WenKai', serif;
-  font-size: 0.95rem;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-}
-
-.globe-toolbar button:hover {
-  transform: translateY(-2px);
-  border-color: rgba(var(--ctp-mocha-teal-rgb), 0.5);
-  background: rgba(var(--ctp-mocha-surface0-rgb), 0.7);
-}
-
-.globe-toolbar span {
-  color: var(--ctp-mocha-overlay2);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-}
-
 @keyframes markerPulse {
   0% {
-    r: 8;
-    opacity: 0.36;
+    r: 9;
+    opacity: 0.34;
   }
   100% {
-    r: 44;
+    r: 46;
     opacity: 0;
   }
 }
 
 @media (max-width: 980px) {
-  .visitor-dashboard {
+  .visitor-overview {
     grid-template-columns: 1fr;
+    align-content: center;
   }
 
-  .globe-panel {
-    min-height: auto;
+  h1 {
+    font-size: 4.8rem;
+  }
+
+  .panel-heading h2 {
+    font-size: 2.5rem;
+  }
+
+  .globe-overlay h2 {
+    font-size: 3rem;
   }
 }
 
-@media (max-width: 560px) {
-  .visitor-page {
-    padding-inline: 1rem;
+@media (max-width: 640px) {
+  .visitor-overview {
+    width: min(100% - 2rem, 1180px);
+    padding: 4.5rem 0 3rem;
+  }
+
+  h1 {
+    font-size: 3.5rem;
+  }
+
+  .welcome-line {
+    width: min(300px, 88%);
+  }
+
+  .info-panel {
+    padding: 1.2rem;
   }
 
   .info-grid {
     grid-template-columns: 1fr;
   }
 
-  .globe-stage {
-    height: 360px;
-    margin-inline: -1rem;
+  .globe-scroll-section {
+    min-height: 1900px;
+  }
+
+  .globe-sticky {
+    min-height: 640px;
   }
 
   .globe-svg {
-    width: min(840px, 220%);
-    transform: translate(-13%, -4%);
+    width: 1320px;
   }
 
-  .globe-toolbar {
-    align-items: flex-start;
+  .globe-overlay {
+    padding-top: 5.2rem;
+  }
+
+  .globe-overlay h2 {
+    font-size: 2.35rem;
+  }
+
+  .globe-footer {
+    right: 1rem;
+    bottom: 1.2rem;
+    left: 1rem;
     flex-direction: column;
   }
 }
