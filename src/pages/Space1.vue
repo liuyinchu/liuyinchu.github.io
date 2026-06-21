@@ -545,7 +545,7 @@ function toggleDirectory() {
 .featured-copy h3 {
   margin: 0;
   color: var(--ctp-text);
-  font-size: clamp(2.2rem, 5vw, 4.8rem);
+  font-size: clamp(2.05rem, 4.65vw, 4.45rem);
   font-weight: 760;
   line-height: 1.05;
   letter-spacing: 0;

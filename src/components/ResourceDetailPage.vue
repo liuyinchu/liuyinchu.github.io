@@ -265,7 +265,7 @@ onMounted(() => {
 .hero-copy h1 {
   margin: 0;
   color: var(--ctp-text);
-  font-size: clamp(2.4rem, 6vw, 5.5rem);
+  font-size: clamp(2.35rem, 5.05vw, 4.55rem);
   font-weight: 760;
   line-height: 1.02;
   letter-spacing: 0;
