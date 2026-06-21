@@ -24,16 +24,6 @@ const GLOBE_VIEWBOX = {
   radius: 560,
 }
 
-const DOT_CLUSTERS = [
-  { key: 'north-america', latitude: 40, longitude: -98, latitudeSpread: 24, longitudeSpread: 46, count: 660, tone: 'blue' },
-  { key: 'europe', latitude: 49, longitude: 10, latitudeSpread: 18, longitudeSpread: 34, count: 760, tone: 'blue' },
-  { key: 'east-asia', latitude: 35, longitude: 116, latitudeSpread: 18, longitudeSpread: 34, count: 500, tone: 'blue' },
-  { key: 'south-asia', latitude: 21, longitude: 78, latitudeSpread: 15, longitudeSpread: 28, count: 300, tone: 'muted' },
-  { key: 'south-america', latitude: -18, longitude: -60, latitudeSpread: 28, longitudeSpread: 30, count: 230, tone: 'muted' },
-  { key: 'africa', latitude: 2, longitude: 21, latitudeSpread: 34, longitudeSpread: 32, count: 260, tone: 'muted' },
-  { key: 'oceania', latitude: -27, longitude: 134, latitudeSpread: 16, longitudeSpread: 28, count: 150, tone: 'muted' },
-]
-
 const visitorInfo = ref({
   ip: 'Loading...',
   country: '未知',
@@ -68,45 +58,6 @@ function normalizeLongitude(value) {
   if (!Number.isFinite(value)) return 0
   return ((((value + 180) % 360) + 360) % 360) - 180
 }
-
-function createSeededRandom(seed) {
-  let value = seed
-  return () => {
-    value = (value * 1664525 + 1013904223) % 4294967296
-    return value / 4294967296
-  }
-}
-
-function createSignalPoints() {
-  const random = createSeededRandom(20260622)
-  const points = []
-
-  DOT_CLUSTERS.forEach((cluster) => {
-    for (let index = 0; index < cluster.count; index += 1) {
-      const angle = random() * Math.PI * 2
-      const distance = Math.sqrt(random())
-      const latitude = clamp(
-        cluster.latitude + Math.sin(angle) * cluster.latitudeSpread * distance,
-        -58,
-        73,
-      )
-      const longitude = normalizeLongitude(
-        cluster.longitude + Math.cos(angle) * cluster.longitudeSpread * distance,
-      )
-
-      points.push({
-        key: `${cluster.key}-${index}`,
-        latitude,
-        longitude,
-        tone: cluster.tone,
-      })
-    }
-  })
-
-  return points
-}
-
-const SIGNAL_POINTS = createSignalPoints()
 
 function parseVisitorDevice() {
   const ua = navigator.userAgent
@@ -316,34 +267,10 @@ function createVisitorRegionLine() {
   return line
 }
 
-function buildPointPath(points) {
-  return points.map((point) => `M${point.x.toFixed(1)} ${point.y.toFixed(1)}h0`).join('')
-}
-
 const worldLines = computed(() => worldFeatures.value.flatMap((feature) => featureToLines(feature)))
 const parallelPaths = computed(() => buildProjectedPaths(createParallels()))
 const meridianPaths = computed(() => buildProjectedPaths(createMeridians()))
 const landPaths = computed(() => buildProjectedPaths(worldLines.value))
-
-const signalPointPaths = computed(() => {
-  const groups = {
-    blue: [],
-    muted: [],
-  }
-
-  SIGNAL_POINTS.forEach((point) => {
-    const projected = projectPoint(point.latitude, point.longitude)
-    if (!projected.visible) return
-
-    groups[point.tone].push(projected)
-  })
-
-  return {
-    blue: buildPointPath(groups.blue),
-    muted: buildPointPath(groups.muted),
-  }
-})
-
 const visitorRegionPaths = computed(() => buildProjectedPaths([createVisitorRegionLine()]))
 
 const visitorPoint = computed(() => (
@@ -506,9 +433,8 @@ onBeforeUnmount(() => {
         :style="globeStageStyle"
       >
         <div class="globe-overlay">
-          <p class="kicker">IP ORBIT</p>
           <h2>{{ locationLabel }}</h2>
-          <p>{{ loadError || `地球仪已对准 ${coordinateLabel}` }}</p>
+          <p>{{ loadError || coordinateLabel }}</p>
           <button type="button" @click="focusVisitorLocation">定位到访客</button>
         </div>
 
@@ -570,14 +496,6 @@ onBeforeUnmount(() => {
                 class="globe-land"
               />
               <path
-                :d="signalPointPaths.muted"
-                class="globe-point-cloud globe-point-cloud--muted"
-              />
-              <path
-                :d="signalPointPaths.blue"
-                class="globe-point-cloud globe-point-cloud--blue"
-              />
-              <path
                 v-for="(path, index) in visitorRegionPaths"
                 :key="`visitor-region-under-${index}`"
                 :d="path"
@@ -614,11 +532,6 @@ onBeforeUnmount(() => {
               <circle class="marker-core" r="5.5" />
             </g>
           </svg>
-        </div>
-
-        <div class="globe-footer">
-          <span>{{ coordinateLabel }}</span>
-          <span>DRAG TO ROTATE</span>
         </div>
       </div>
     </section>
@@ -865,22 +778,6 @@ h1 {
   background: rgba(var(--ctp-mocha-surface0-rgb), 0.74);
 }
 
-.globe-footer {
-  position: absolute;
-  z-index: 2;
-  right: 2.5rem;
-  bottom: 2rem;
-  left: 2.5rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  color: var(--ctp-mocha-overlay2);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.76rem;
-  letter-spacing: 0;
-  pointer-events: none;
-}
-
 .globe-backdrop {
   fill: rgba(0, 0, 0, 0.32);
 }
@@ -909,22 +806,6 @@ h1 {
   stroke-linejoin: round;
   stroke-width: 0.52;
   vector-effect: non-scaling-stroke;
-}
-
-.globe-point-cloud {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2.15;
-  vector-effect: non-scaling-stroke;
-}
-
-.globe-point-cloud--muted {
-  stroke: rgba(186, 194, 222, 0.44);
-}
-
-.globe-point-cloud--blue {
-  stroke: rgba(var(--ctp-mocha-sapphire-rgb), 0.82);
 }
 
 .visitor-region {
@@ -1055,11 +936,5 @@ h1 {
     font-size: 2.35rem;
   }
 
-  .globe-footer {
-    right: 1rem;
-    bottom: 1.2rem;
-    left: 1rem;
-    flex-direction: column;
-  }
 }
 </style>
