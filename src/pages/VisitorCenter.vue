@@ -16,6 +16,14 @@ const DEFAULT_LOCATION = {
   longitude: 113.57,
 }
 
+const GLOBE_VIEWBOX = {
+  width: 1400,
+  height: 1000,
+  cx: 700,
+  cy: 540,
+  radius: 392,
+}
+
 const LAND_MASSES = [
   [
     [62, -168], [70, -132], [58, -92], [51, -58], [31, -82],
@@ -39,6 +47,15 @@ const LAND_MASSES = [
   [
     [60, -50], [70, -22], [58, -14], [50, -34],
   ],
+]
+
+const SIGNAL_LINKS = [
+  { key: 'san-francisco', latitude: 37.77, longitude: -122.42, tone: 'cool' },
+  { key: 'new-york', latitude: 40.71, longitude: -74.01, tone: 'warm' },
+  { key: 'london', latitude: 51.51, longitude: -0.13, tone: 'cool' },
+  { key: 'tokyo', latitude: 35.68, longitude: 139.69, tone: 'green' },
+  { key: 'singapore', latitude: 1.35, longitude: 103.82, tone: 'warm' },
+  { key: 'sydney', latitude: -33.87, longitude: 151.21, tone: 'cool' },
 ]
 
 const visitorInfo = ref({
@@ -144,7 +161,7 @@ function toRadians(degrees) {
   return degrees * Math.PI / 180
 }
 
-function projectPoint(latitude, longitude, radius = 176) {
+function projectPoint(latitude, longitude, radius = GLOBE_VIEWBOX.radius) {
   const lat = toRadians(latitude)
   const lon = toRadians(longitude)
   const centerLat = toRadians(globeCenter.value.latitude)
@@ -161,9 +178,9 @@ function projectPoint(latitude, longitude, radius = 176) {
   const z = sinCenterLat * sinLat + cosCenterLat * cosLat * cosDeltaLon
 
   return {
-    x: 210 + x,
-    y: 210 - y,
-    visible: z >= -0.02,
+    x: GLOBE_VIEWBOX.cx + x,
+    y: GLOBE_VIEWBOX.cy - y,
+    visible: z >= -0.04,
     depth: z,
   }
 }
@@ -201,9 +218,9 @@ function buildProjectedPaths(lines) {
 function createParallels() {
   const lines = []
 
-  for (let latitude = -60; latitude <= 60; latitude += 20) {
+  for (let latitude = -70; latitude <= 70; latitude += 10) {
     const line = []
-    for (let longitude = -180; longitude <= 180; longitude += 4) {
+    for (let longitude = -180; longitude <= 180; longitude += 3) {
       line.push([latitude, longitude])
     }
     lines.push(line)
@@ -215,9 +232,9 @@ function createParallels() {
 function createMeridians() {
   const lines = []
 
-  for (let longitude = -180; longitude < 180; longitude += 20) {
+  for (let longitude = -180; longitude < 180; longitude += 10) {
     const line = []
-    for (let latitude = -80; latitude <= 80; latitude += 4) {
+    for (let latitude = -80; latitude <= 80; latitude += 3) {
       line.push([latitude, longitude])
     }
     lines.push(line)
@@ -226,9 +243,51 @@ function createMeridians() {
   return lines
 }
 
+function interpolateGeoLine(origin, target, steps = 110) {
+  const line = []
+  let longitudeDelta = normalizeLongitude(target.longitude - origin.longitude)
+
+  if (Math.abs(longitudeDelta) > 180) {
+    longitudeDelta = longitudeDelta > 0 ? longitudeDelta - 360 : longitudeDelta + 360
+  }
+
+  for (let index = 0; index <= steps; index += 1) {
+    const progress = index / steps
+    const latitude = origin.latitude
+      + (target.latitude - origin.latitude) * progress
+      + Math.sin(progress * Math.PI) * 7
+    const longitude = normalizeLongitude(origin.longitude + longitudeDelta * progress)
+
+    line.push([latitude, longitude])
+  }
+
+  return line
+}
+
+function buildSignalRoutePaths() {
+  const origin = {
+    latitude: visitorInfo.value.latitude,
+    longitude: visitorInfo.value.longitude,
+  }
+
+  return SIGNAL_LINKS.flatMap((target) => buildProjectedPaths([
+    interpolateGeoLine(origin, target),
+  ]).map((path, index) => ({
+    key: `${target.key}-${index}`,
+    path,
+    tone: target.tone,
+  })))
+}
+
 const parallelPaths = computed(() => buildProjectedPaths(createParallels()))
 const meridianPaths = computed(() => buildProjectedPaths(createMeridians()))
 const landPaths = computed(() => buildProjectedPaths(LAND_MASSES))
+const signalRoutePaths = computed(buildSignalRoutePaths)
+
+const signalDots = computed(() => SIGNAL_LINKS.map((point) => ({
+  ...point,
+  ...projectPoint(point.latitude, point.longitude),
+})).filter((point) => point.visible))
 
 const visitorPoint = computed(() => (
   projectPoint(visitorInfo.value.latitude, visitorInfo.value.longitude)
@@ -357,26 +416,45 @@ onMounted(() => {
           @pointerup="onGlobePointerUp"
           @pointercancel="onGlobePointerUp"
         >
-          <svg class="globe-svg" viewBox="0 0 420 420" aria-hidden="true">
+          <svg class="globe-svg" :viewBox="`0 0 ${GLOBE_VIEWBOX.width} ${GLOBE_VIEWBOX.height}`" aria-hidden="true">
             <defs>
-              <radialGradient id="visitor-globe-fill" cx="34%" cy="28%" r="72%">
-                <stop offset="0%" stop-color="rgba(180, 190, 254, 0.34)" />
-                <stop offset="48%" stop-color="rgba(49, 50, 68, 0.94)" />
-                <stop offset="100%" stop-color="rgba(17, 17, 27, 1)" />
+              <radialGradient id="visitor-globe-fill" cx="38%" cy="30%" r="72%">
+                <stop offset="0%" stop-color="rgba(205, 214, 244, 0.16)" />
+                <stop offset="54%" stop-color="rgba(49, 50, 68, 0.18)" />
+                <stop offset="100%" stop-color="rgba(24, 24, 37, 0.86)" />
               </radialGradient>
-              <radialGradient id="visitor-globe-light" cx="38%" cy="30%" r="64%">
-                <stop offset="0%" stop-color="rgba(137, 220, 235, 0.34)" />
-                <stop offset="62%" stop-color="rgba(137, 220, 235, 0.04)" />
+              <radialGradient id="visitor-globe-wash" cx="46%" cy="42%" r="72%">
+                <stop offset="0%" stop-color="rgba(137, 220, 235, 0.10)" />
+                <stop offset="70%" stop-color="rgba(137, 220, 235, 0.02)" />
                 <stop offset="100%" stop-color="rgba(137, 220, 235, 0)" />
               </radialGradient>
               <clipPath id="visitor-globe-clip">
-                <circle cx="210" cy="210" r="176" />
+                <circle
+                  :cx="GLOBE_VIEWBOX.cx"
+                  :cy="GLOBE_VIEWBOX.cy"
+                  :r="GLOBE_VIEWBOX.radius"
+                />
               </clipPath>
             </defs>
 
-            <circle class="globe-shadow" cx="210" cy="222" r="178" />
-            <circle class="globe-fill" cx="210" cy="210" r="176" />
-            <circle class="globe-light" cx="210" cy="210" r="176" />
+            <circle
+              class="globe-shadow"
+              :cx="GLOBE_VIEWBOX.cx + 18"
+              :cy="GLOBE_VIEWBOX.cy + 34"
+              :r="GLOBE_VIEWBOX.radius"
+            />
+            <circle
+              class="globe-fill"
+              :cx="GLOBE_VIEWBOX.cx"
+              :cy="GLOBE_VIEWBOX.cy"
+              :r="GLOBE_VIEWBOX.radius"
+            />
+            <circle
+              class="globe-wash"
+              :cx="GLOBE_VIEWBOX.cx"
+              :cy="GLOBE_VIEWBOX.cy"
+              :r="GLOBE_VIEWBOX.radius"
+            />
 
             <g clip-path="url(#visitor-globe-clip)">
               <path
@@ -398,24 +476,44 @@ onMounted(() => {
                 class="globe-line"
               />
               <path
-                d="M 66 250 C 132 126, 272 96, 355 182"
+                v-for="route in signalRoutePaths"
+                :key="`route-under-${route.key}`"
+                :d="route.path"
                 class="globe-orbit"
               />
               <path
-                d="M 84 164 C 154 304, 278 330, 346 224"
-                class="globe-orbit globe-orbit--dim"
+                v-for="route in signalRoutePaths"
+                :key="`route-core-${route.key}`"
+                :d="route.path"
+                class="globe-orbit-core"
+                :class="`globe-orbit-core--${route.tone}`"
               />
+              <g
+                v-for="point in signalDots"
+                :key="point.key"
+                class="globe-dot"
+                :class="`globe-dot--${point.tone}`"
+                :transform="`translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})`"
+              >
+                <circle r="4.2" />
+              </g>
             </g>
 
-            <circle class="globe-rim" cx="210" cy="210" r="176" />
+            <circle
+              class="globe-rim"
+              :cx="GLOBE_VIEWBOX.cx"
+              :cy="GLOBE_VIEWBOX.cy"
+              :r="GLOBE_VIEWBOX.radius"
+            />
 
             <g
               v-if="visitorPoint.visible"
               class="visitor-marker"
               :transform="`translate(${visitorPoint.x.toFixed(1)} ${visitorPoint.y.toFixed(1)})`"
             >
-              <circle class="marker-pulse" r="22" />
-              <circle class="marker-core" r="6" />
+              <circle class="marker-pulse" r="34" />
+              <circle class="marker-ring" r="12" />
+              <circle class="marker-core" r="5.5" />
             </g>
           </svg>
         </div>
@@ -640,9 +738,16 @@ h1 {
 
 .globe-stage {
   display: grid;
-  min-height: 440px;
+  height: clamp(440px, 42vw, 560px);
+  overflow: hidden;
   place-items: center;
+  margin: -0.4rem -1.6rem 0;
+  border-top: 1px solid rgba(var(--ctp-mocha-overlay0-rgb), 0.12);
+  border-bottom: 1px solid rgba(var(--ctp-mocha-overlay0-rgb), 0.12);
   cursor: grab;
+  background:
+    radial-gradient(circle at 48% 46%, rgba(var(--ctp-mocha-sky-rgb), 0.08), transparent 18rem),
+    rgba(var(--ctp-mocha-crust-rgb), 0.22);
   touch-action: none;
   user-select: none;
 }
@@ -652,71 +757,117 @@ h1 {
 }
 
 .globe-svg {
-  width: min(560px, 118%);
+  width: min(1320px, 220%);
   max-width: none;
-  filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.42));
+  transform: translate(-9%, -3%);
+  filter: drop-shadow(0 28px 44px rgba(0, 0, 0, 0.38));
 }
 
 .globe-shadow {
-  fill: rgba(0, 0, 0, 0.3);
+  fill: rgba(0, 0, 0, 0.22);
 }
 
 .globe-fill {
   fill: url(#visitor-globe-fill);
 }
 
-.globe-light {
-  fill: url(#visitor-globe-light);
+.globe-wash {
+  fill: url(#visitor-globe-wash);
 }
 
 .globe-land {
-  fill: rgba(var(--ctp-mocha-teal-rgb), 0.16);
-  stroke: rgba(var(--ctp-mocha-teal-rgb), 0.32);
-  stroke-width: 1.1;
+  fill: none;
+  stroke: rgba(147, 153, 178, 0.32);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.35;
+  vector-effect: non-scaling-stroke;
 }
 
 .globe-line {
   fill: none;
-  stroke: rgba(var(--ctp-mocha-sky-rgb), 0.24);
-  stroke-width: 0.75;
+  stroke: rgba(147, 153, 178, 0.18);
+  stroke-width: 0.58;
+  vector-effect: non-scaling-stroke;
 }
 
 .globe-line--soft {
-  stroke: rgba(var(--ctp-mocha-lavender-rgb), 0.18);
+  stroke: rgba(var(--ctp-mocha-lavender-rgb), 0.11);
 }
 
 .globe-orbit {
   fill: none;
-  stroke: rgba(var(--ctp-mocha-peach-rgb), 0.42);
-  stroke-dasharray: 7 12;
+  stroke: rgba(var(--ctp-mocha-peach-rgb), 0.24);
   stroke-linecap: round;
-  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-width: 18;
 }
 
-.globe-orbit--dim {
-  stroke: rgba(var(--ctp-mocha-sapphire-rgb), 0.28);
-  stroke-dasharray: 3 10;
+.globe-orbit-core {
+  fill: none;
+  stroke: var(--ctp-mocha-peach);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+
+.globe-orbit-core--cool {
+  stroke: var(--ctp-mocha-sapphire);
+}
+
+.globe-orbit-core--green {
+  stroke: var(--ctp-mocha-green);
+}
+
+.globe-dot circle {
+  fill: none;
+  stroke: var(--ctp-mocha-overlay2);
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.globe-dot--warm circle {
+  stroke: var(--ctp-mocha-peach);
+}
+
+.globe-dot--cool circle {
+  stroke: var(--ctp-mocha-sapphire);
+}
+
+.globe-dot--green circle {
+  stroke: var(--ctp-mocha-green);
 }
 
 .globe-rim {
   fill: none;
-  stroke: rgba(var(--ctp-mocha-sky-rgb), 0.38);
-  stroke-width: 1.4;
+  stroke: rgba(147, 153, 178, 0.38);
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
 }
 
 .marker-pulse,
+.marker-ring,
 .marker-core {
   fill: var(--ctp-mocha-peach);
 }
 
 .marker-pulse {
-  animation: markerPulse 1.8s ease-out infinite;
-  opacity: 0.35;
+  animation: markerPulse 1.9s ease-out infinite;
+  opacity: 0.26;
+}
+
+.marker-ring {
+  fill: none;
+  stroke: var(--ctp-mocha-peach);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
 }
 
 .marker-core {
   stroke: var(--ctp-mocha-crust);
-  stroke-width: 2;
+  stroke-width: 2.4;
+  vector-effect: non-scaling-stroke;
 }
 
 .globe-toolbar {
@@ -755,11 +906,11 @@ h1 {
 
 @keyframes markerPulse {
   0% {
-    r: 6;
-    opacity: 0.52;
+    r: 8;
+    opacity: 0.36;
   }
   100% {
-    r: 28;
+    r: 44;
     opacity: 0;
   }
 }
@@ -784,11 +935,13 @@ h1 {
   }
 
   .globe-stage {
-    min-height: 330px;
+    height: 360px;
+    margin-inline: -1rem;
   }
 
   .globe-svg {
-    width: min(430px, 118%);
+    width: min(840px, 220%);
+    transform: translate(-13%, -4%);
   }
 
   .globe-toolbar {
