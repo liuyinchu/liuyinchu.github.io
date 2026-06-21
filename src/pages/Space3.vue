@@ -16,7 +16,6 @@ const loungeLinks = [
   },
 ]
 
-const signals = ['Catppuccin Mocha', 'Retro Futures', 'Soft Interface']
 </script>
 
 <template>
@@ -29,9 +28,6 @@ const signals = ['Catppuccin Mocha', 'Retro Futures', 'Soft Interface']
           这里是对访客开放的会客中枢，收纳站点导览、邻居链接和未来会继续生长的开放空间。
         </p>
 
-        <div class="signal-row" aria-label="Design signals">
-          <span v-for="signal in signals" :key="signal">{{ signal }}</span>
-        </div>
       </div>
 
       <div class="hero-visual" aria-hidden="true">
@@ -138,28 +134,6 @@ const signals = ['Catppuccin Mocha', 'Retro Futures', 'Soft Interface']
   font-family: 'LXGW WenKai', serif;
   font-size: clamp(1.08rem, 2vw, 1.32rem);
   line-height: 1.85;
-}
-
-.signal-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-top: 2rem;
-}
-
-.signal-row span {
-  display: inline-flex;
-  min-height: 36px;
-  align-items: center;
-  border: 1px solid rgba(var(--ctp-mocha-sky-rgb), 0.18);
-  border-radius: 999px;
-  padding: 0 1rem;
-  background: rgba(var(--ctp-mocha-surface0-rgb), 0.72);
-  box-shadow:
-    8px 8px 18px rgba(0, 0, 0, 0.28),
-    -8px -8px 18px rgba(255, 255, 255, 0.025);
-  color: var(--ctp-mocha-subtext1);
-  font-size: 0.88rem;
 }
 
 .hero-visual {
