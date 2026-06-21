@@ -44,7 +44,7 @@ const homeSections = [
     id: 'lounge',
     eyebrow: 'LOUNGE',
     title: '赛博会客厅',
-    description: '访客中心、网络邻居与未来开放空间的中枢，从这里进入公开会客区。',
+    description: '从这里进入会客厅：朋友如大地的节日，来处、去往与足迹都在此相遇。',
     image: '/bg/skadi.jpeg',
     cta: '进入会客厅',
     to: '/space3',
