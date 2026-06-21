@@ -360,31 +360,54 @@ onBeforeUnmount(() => {
 
 .matrix-link {
   position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: 3rem minmax(12rem, 0.66fr) minmax(5rem, 0.22fr) 2rem;
   gap: clamp(1rem, 3vw, 2rem);
   align-items: center;
   min-height: clamp(7.4rem, 18vh, 9rem);
   border-bottom: 1px solid var(--about-line);
+  border-radius: 8px;
   color: inherit;
   text-decoration: none;
   transition:
     border-color 0.2s ease,
-    transform 0.2s ease,
-    background 0.2s ease;
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .matrix-link::before {
   content: '';
   position: absolute;
-  inset: 0.7rem -0.8rem;
+  inset: 0.5rem -0.9rem;
   z-index: -1;
   border-radius: 8px;
   opacity: 0;
   background:
-    linear-gradient(90deg, rgba(var(--ctp-mocha-sky-rgb), 0.14), transparent 56%),
-    rgba(var(--ctp-mocha-surface0-rgb), 0.26);
-  transform: translateX(-0.34rem) scaleX(0.98);
+    linear-gradient(90deg, rgba(var(--ctp-mocha-sky-rgb), 0.24), rgba(var(--ctp-mocha-mauve-rgb), 0.08) 48%, transparent 78%),
+    linear-gradient(180deg, rgba(var(--ctp-mocha-surface1-rgb), 0.56), rgba(var(--ctp-mocha-base-rgb), 0.18));
+  box-shadow:
+    0 22px 64px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transform: translateX(-0.55rem) scaleX(0.965);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.matrix-link::after {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  bottom: 1rem;
+  left: -0.9rem;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--ctp-mocha-sky), var(--ctp-mocha-green));
+  box-shadow: 0 0 18px rgba(var(--ctp-mocha-sky-rgb), 0.52);
+  opacity: 0;
+  transform: scaleY(0.35);
+  transform-origin: center;
   transition:
     opacity 0.2s ease,
     transform 0.2s ease;
@@ -393,13 +416,20 @@ onBeforeUnmount(() => {
 .matrix-link:hover,
 .matrix-link:focus-visible {
   border-color: var(--about-line-strong);
-  transform: translateX(0.3rem);
+  box-shadow: 0 0 0 1px rgba(var(--ctp-mocha-sky-rgb), 0.22);
+  transform: translateX(0.45rem) scale(1.012);
 }
 
 .matrix-link:hover::before,
 .matrix-link:focus-visible::before {
   opacity: 1;
   transform: translateX(0) scaleX(1);
+}
+
+.matrix-link:hover::after,
+.matrix-link:focus-visible::after {
+  opacity: 1;
+  transform: scaleY(1);
 }
 
 .matrix-link:focus-visible {
@@ -410,6 +440,7 @@ onBeforeUnmount(() => {
 .matrix-index {
   color: var(--ctp-mocha-overlay2);
   font-size: 0.74rem;
+  transition: color 0.2s ease;
 }
 
 .matrix-main {
@@ -420,6 +451,7 @@ onBeforeUnmount(() => {
 .matrix-eyebrow {
   color: var(--ctp-mocha-sky);
   font-size: 0.70rem;
+  transition: color 0.2s ease;
 }
 
 .matrix-title {
@@ -428,6 +460,9 @@ onBeforeUnmount(() => {
   font-size: clamp(1.72rem, 3.2vw, 2.8rem);
   font-weight: 800;
   line-height: 1;
+  transition:
+    color 0.2s ease,
+    text-shadow 0.2s ease;
 }
 
 .matrix-desc {
@@ -436,24 +471,59 @@ onBeforeUnmount(() => {
   font-family: 'LXGW WenKai', serif;
   font-size: 0.94rem;
   line-height: 1.68;
+  transition: color 0.2s ease;
 }
 
 .matrix-detail {
   justify-self: end;
   color: var(--ctp-mocha-overlay2);
   font-size: 0.74rem;
+  transition: color 0.2s ease;
 }
 
 .matrix-arrow {
+  display: inline-grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
   justify-self: end;
+  border: 1px solid transparent;
+  border-radius: 999px;
   color: var(--ctp-mocha-green);
   font-size: 1.12rem;
-  transition: transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.matrix-link:hover .matrix-index,
+.matrix-link:focus-visible .matrix-index,
+.matrix-link:hover .matrix-detail,
+.matrix-link:focus-visible .matrix-detail {
+  color: var(--ctp-mocha-green);
+}
+
+.matrix-link:hover .matrix-title,
+.matrix-link:focus-visible .matrix-title {
+  color: var(--ctp-mocha-lavender);
+  text-shadow: 0 0 24px rgba(var(--ctp-mocha-sky-rgb), 0.26);
+}
+
+.matrix-link:hover .matrix-desc,
+.matrix-link:focus-visible .matrix-desc {
+  color: var(--ctp-mocha-text);
 }
 
 .matrix-link:hover .matrix-arrow,
 .matrix-link:focus-visible .matrix-arrow {
-  transform: translateX(0.3rem);
+  border-color: rgba(var(--ctp-mocha-green-rgb), 0.42);
+  background: rgba(var(--ctp-mocha-green-rgb), 0.12);
+  box-shadow: 0 0 22px rgba(var(--ctp-mocha-green-rgb), 0.24);
+  color: var(--ctp-mocha-text);
+  transform: translateX(0.55rem);
 }
 
 .page-up-elastic-enter-from {
