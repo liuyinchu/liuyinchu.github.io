@@ -25,11 +25,6 @@ onMounted(async () => {
         <p class="intro">
           去朋友们的个人站点坐坐。这里保留旧互联网的友链传统，也把它整理成更稳定的数字街区。
         </p>
-        <div class="status-strip" aria-label="网络邻居状态">
-          <span>{{ friends.length || '--' }} NODES</span>
-          <span>FRIEND LINKS</span>
-          <span>PUBLIC WEB</span>
-        </div>
       </div>
 
       <div class="hero-graphic" aria-hidden="true">
@@ -170,29 +165,6 @@ onMounted(async () => {
   font-family: 'LXGW WenKai', serif;
   font-size: clamp(1.05rem, 2vw, 1.25rem);
   line-height: 1.85;
-}
-
-.status-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-top: 2rem;
-}
-
-.status-strip span {
-  display: inline-flex;
-  min-height: 34px;
-  align-items: center;
-  border: 1px solid rgba(var(--ctp-mocha-teal-rgb), 0.2);
-  border-radius: 999px;
-  padding: 0 0.95rem;
-  background: rgba(var(--ctp-mocha-surface0-rgb), 0.84);
-  box-shadow:
-    8px 8px 18px rgba(0, 0, 0, 0.28),
-    -8px -8px 18px rgba(255, 255, 255, 0.025);
-  color: var(--ctp-mocha-subtext1);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.76rem;
 }
 
 .hero-graphic {
@@ -399,8 +371,7 @@ onMounted(async () => {
     padding-inline: 1rem;
   }
 
-  .panel-caption,
-  .status-strip {
+  .panel-caption {
     align-items: flex-start;
     flex-direction: column;
   }
