@@ -4,7 +4,7 @@ const loungeLinks = [
     label: '访客中心',
     eyebrow: 'Visitor Center',
     to: '/visitor-center',
-    desc: '给初次抵达的人：这里整理站点入口、联系信息和一份简短的空间说明。',
+    desc: '来自哪，将去往哪，又在何处留下足迹 ...',
     meta: 'PUBLIC NODE 01',
   },
   {
@@ -23,7 +23,12 @@ const loungeLinks = [
       <div class="hero-copy">
         <p class="kicker">CYBER LOUNGE</p>
         <h1 id="lounge-title">赛博会客厅</h1>
-        <p class="hero-text">【待填入文字】</p>
+        <p class="hero-text">
+          自星海来，向灯火去。<br />
+          临窗小坐，听旧网新声。<br />
+          若问足迹落何处，<br />
+          便在此间，和邻人共明。
+        </p>
       </div>
 
       <div class="hero-visual" aria-hidden="true">
