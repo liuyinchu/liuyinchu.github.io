@@ -44,10 +44,10 @@ const homeSections = [
     id: 'lounge',
     eyebrow: 'LOUNGE',
     title: '赛博会客厅',
-    description: '预留给访客信息、朋友们和未来互动入口的中枢，先从这里进入开放空间。',
+    description: '访客中心、网络邻居与未来开放空间的中枢，从这里进入公开会客区。',
     image: '/bg/skadi.jpeg',
     cta: '进入会客厅',
-    to: '/portal',
+    to: '/space3',
     align: 'right'
   },
   {

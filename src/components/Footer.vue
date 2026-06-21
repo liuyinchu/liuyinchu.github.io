@@ -102,9 +102,10 @@ const footerColumns = [
     groups: [
       {
         title: '赛博会客厅',
-        to: '/portal',
+        to: '/space3',
         links: [
-          { label: '朋友们', to: '/space2' },
+          { label: '访客中心', to: '/visitor-center' },
+          { label: '网络邻居', to: '/space2' },
         ],
       },
       {

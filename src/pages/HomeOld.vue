@@ -115,9 +115,6 @@ onMounted(async () => {
         <span>系统：<b>{{ visitorInfo.os }}</b></span></p>
 
         <p>
-          <!-- <a href="/portal" target="_blank">
-            欢迎你的到来，祝你有晴朗的一天！
-          </a> -->
           <img src="/fig/welcome.svg" alt="Welcome" width="50%">
         </p>
       </div>

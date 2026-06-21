@@ -103,8 +103,8 @@ const navItems = [
   },
   {
     label: '赛博会客厅',
-    to: '/portal',
-    match: ['/portal', '/space2', '/space3'],
+    to: '/space3',
+    match: ['/space2', '/space3', '/visitor-center'],
   },
   {
     label: '关于',
