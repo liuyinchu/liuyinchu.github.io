@@ -22,14 +22,7 @@ onMounted(async () => {
       <div class="hero-copy">
         <p class="kicker">CYBER NEIGHBORHOOD</p>
         <h1 id="neighbors-title">网络邻居</h1>
-      </div>
-
-      <div class="hero-graphic" aria-hidden="true">
-        <img src="/fig/friends.svg" alt="" loading="eager" decoding="async" />
-        <div class="panel-caption">
-          <span>NEIGHBOR MAP</span>
-          <span>OPEN SIGNAL</span>
-        </div>
+        <p class="hero-quote">相知无远近，万里尚为邻。</p>
       </div>
     </section>
 
@@ -131,10 +124,7 @@ onMounted(async () => {
 }
 
 .neighbors-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
-  gap: clamp(2rem, 5vw, 4.5rem);
-  align-items: center;
+  display: block;
 }
 
 .kicker {
@@ -155,48 +145,22 @@ onMounted(async () => {
   line-height: 1;
 }
 
-.hero-graphic {
-  position: relative;
-  display: grid;
-  min-height: 360px;
-  place-items: center;
-  border: 1px solid rgba(var(--ctp-mocha-sapphire-rgb), 0.22);
-  border-radius: 8px;
-  padding: clamp(1.2rem, 3vw, 2rem);
-  background: rgba(var(--ctp-mocha-surface0-rgb), 0.86);
-  box-shadow:
-    18px 22px 42px rgba(0, 0, 0, 0.38),
-    -14px -14px 30px rgba(255, 255, 255, 0.026),
-    inset 1px 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.hero-graphic img {
-  width: min(100%, 330px);
-  height: auto;
-  filter: saturate(0.88) drop-shadow(0 20px 32px rgba(0, 0, 0, 0.28));
-}
-
-.panel-caption {
-  position: absolute;
-  right: 1rem;
-  bottom: 1rem;
-  left: 1rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  border-top: 1px solid rgba(var(--ctp-mocha-sky-rgb), 0.18);
-  padding-top: 0.9rem;
-  color: var(--ctp-mocha-overlay2);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
+.hero-quote {
+  max-width: 720px;
+  margin: 0;
+  color: var(--ctp-mocha-sky);
+  font-family: 'LXGW WenKai', serif;
+  font-size: clamp(1.45rem, 3vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.6;
+  text-shadow: 0 0 24px rgba(var(--ctp-mocha-sky-rgb), 0.18);
 }
 
 .friends-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
-  margin-top: clamp(3rem, 6vw, 5rem);
+  margin-top: clamp(2.6rem, 5vw, 4.2rem);
 }
 
 .friends-grid :deep(.friend-card) {
@@ -344,24 +308,14 @@ onMounted(async () => {
 .token.str { color: var(--ctp-mocha-green); }
 
 @media (max-width: 900px) {
-  .neighbors-hero,
   .exchange-panel {
     grid-template-columns: 1fr;
-  }
-
-  .hero-graphic {
-    min-height: 300px;
   }
 }
 
 @media (max-width: 560px) {
   .neighbors-page {
     padding-inline: 1rem;
-  }
-
-  .panel-caption {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .rules-list li {
