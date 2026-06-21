@@ -336,7 +336,7 @@ function toggleDirectory() {
 .poem-line {
   margin: 0 0 1.35rem;
   color: #f5f6ff;
-  font-size: clamp(1.7rem, 4.1vw, 4.3rem);
+  font-size: clamp(1.6rem, 3.85vw, 4.05rem);
   font-weight: 760;
   line-height: 1.24;
   letter-spacing: 0;
