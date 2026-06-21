@@ -6,7 +6,6 @@ import ToDoList from '../components/ToDoList.vue'
 import Weather from '../components/Weather.vue'
 
 const wallpaper = '/bg/Firefly_Paper_Airplane.png'
-const bootMessage = 'Wishing your day stays bright —— like sunshine that chose to stay just for you.'
 
 const topApps = [
   {
@@ -47,7 +46,7 @@ const bottomApps = [
   {
     id: 'map',
     label: 'Map',
-    title: 'Site Map',
+    title: 'Spotlight',
     icon: '/favicon_liuyin.svg',
     windowClass: 'window-map',
   },
@@ -55,60 +54,146 @@ const bottomApps = [
     id: 'dock',
     label: 'Dock',
     title: 'Dock',
-    icon: 'https://www.google.com/s2/favicons?sz=128&domain_url=https://github.com/',
+    icon: '/icons/portal-launchpad.png',
     windowClass: 'window-dock',
   },
 ]
 
 const quickLinks = [
-  { name: 'ChatGPT', url: 'https://chat.openai.com/' },
-  { name: 'Claude', url: 'https://claude.ai/' },
-  { name: 'GitHub', url: 'https://github.com/' },
-  { name: 'Google', url: 'https://www.google.com/' },
+  { name: 'ChatGPT', url: 'https://chat.openai.com/', compact: true },
+  { name: 'Claude', url: 'https://claude.ai/', compact: true },
+  { name: 'Gemini', url: 'https://gemini.google.com/', compact: true },
+  { name: 'GitHub', url: 'https://github.com/', compact: true },
+  { name: 'Google', url: 'https://www.google.com/', compact: true },
   { name: 'Translate', url: 'https://translate.google.com/' },
   { name: 'Gmail', url: 'https://mail.google.com/' },
   { name: 'Drive', url: 'https://drive.google.com/drive/home' },
+  { name: 'ipinfo', url: 'https://ipinfo.io/what-is-my-ip' },
 ]
 
-const siteMapSections = [
+const defaultSpotlightLinks = [
   {
-    title: 'Jottings',
-    description: '随记、开放空间与日常记录。',
-    links: [
-      { name: '随记', path: '/space1' },
-      { name: '网络邻居', path: '/space2' },
-    ],
+    name: '首页',
+    path: '/',
+    hint: '返回滚动叙事首页',
+    category: '核心入口',
+    keywords: ['home', 'welcome', 'index'],
   },
   {
-    title: 'Resources',
-    description: '文献、编程、计算机、资料、工具与文件。',
-    links: [
-      { name: '资源链接', path: '/rd' },
-      { name: '文献', path: '/rliterature' },
-      { name: '编程', path: '/rprogramming' },
-      { name: '计算机', path: '/rcs' },
-      { name: '资料', path: '/rmaterials' },
-      { name: '工具', path: '/rtools' },
-      { name: '文件', path: '/rfiles' },
-    ],
+    name: '随记',
+    path: '/space1',
+    hint: '片刻、问题、读到的东西',
+    category: '核心入口',
+    keywords: ['jottings', 'notes', 'space1', 'blog'],
   },
   {
-    title: 'Code',
-    description: '代码、项目与实验报告入口。',
-    links: [
-      { name: '代码与项目', path: '/code' },
-      { name: '实验报告', path: '/labreport' },
-    ],
+    name: '资源链接',
+    path: '/rd',
+    hint: '文献、工具、资料与文件',
+    category: '核心入口',
+    keywords: ['resources', 'links', 'rd'],
   },
   {
-    title: 'About',
-    description: '自我介绍、学术主页、版权与说明。',
-    links: [
-      { name: '关于', path: '/about' },
-      { name: '我的学术', path: '/research' },
-      { name: '个人学术简历', path: '/academic' },
-      { name: '版权说明', path: '/credit' },
-    ],
+    name: '代码与项目',
+    path: '/code',
+    hint: '项目、实验与代码记录',
+    category: '核心入口',
+    keywords: ['code', 'projects', 'programming'],
+  },
+  {
+    name: '赛博会客厅',
+    path: '/space2',
+    hint: '朋友们与访客空间',
+    category: '核心入口',
+    keywords: ['friends', 'guest', 'space2'],
+  },
+  {
+    name: '关于',
+    path: '/about',
+    hint: '自我介绍、学术与说明',
+    category: '核心入口',
+    keywords: ['about', 'profile', 'statement'],
+  },
+]
+
+const fallbackSearchItems = [
+  ...defaultSpotlightLinks,
+  {
+    name: '我的学术',
+    path: '/research',
+    hint: '学术主页、研究方向与相关链接',
+    category: '关于',
+    keywords: ['research', 'academic', 'scholar'],
+  },
+  {
+    name: '个人学术简历',
+    path: '/academic',
+    hint: '个人学术经历与简历入口',
+    category: '关于',
+    keywords: ['cv', 'resume', 'academic'],
+  },
+  {
+    name: '版权说明',
+    path: '/credit',
+    hint: '网站内容、素材与版权说明',
+    category: '关于',
+    keywords: ['copyright', 'credit', 'license'],
+  },
+  {
+    name: '文献',
+    path: '/rliterature',
+    hint: '论文、文献与阅读资料',
+    category: '资源链接',
+    keywords: ['literature', 'paper', 'reference'],
+  },
+  {
+    name: '编程',
+    path: '/rprogramming',
+    hint: '编程语言、开发资料与实践链接',
+    category: '资源链接',
+    keywords: ['programming', 'coding', 'developer'],
+  },
+  {
+    name: '计算机',
+    path: '/rcs',
+    hint: '计算机科学与相关学习资源',
+    category: '资源链接',
+    keywords: ['computer science', 'cs', 'algorithm'],
+  },
+  {
+    name: '资料',
+    path: '/rmaterials',
+    hint: '常用材料、文档与学习资料',
+    category: '资源链接',
+    keywords: ['materials', 'docs', 'data'],
+  },
+  {
+    name: '工具',
+    path: '/rtools',
+    hint: '在线工具与效率工具集合',
+    category: '资源链接',
+    keywords: ['tools', 'utilities'],
+  },
+  {
+    name: '文件',
+    path: '/rfiles',
+    hint: '文件资源与可下载内容入口',
+    category: '资源链接',
+    keywords: ['files', 'download'],
+  },
+  {
+    name: '实验报告',
+    path: '/labreport',
+    hint: '实验报告与课程实践记录',
+    category: '代码与项目',
+    keywords: ['lab', 'report', 'experiment'],
+  },
+  {
+    name: 'Portal',
+    path: '/portal',
+    hint: 'macOS 风格桌面入口与常用工具',
+    category: '功能页',
+    keywords: ['portal', 'desktop', 'dock', 'music', 'weather', 'todo', 'calendar'],
   },
 ]
 
@@ -117,17 +202,30 @@ const now = ref(new Date())
 const dockGroups = ref([])
 const musicTracks = ref([])
 const aplayerContainer = ref(null)
+const spotlightQuery = ref('')
+const searchItems = ref([])
 const loadingData = ref(true)
 const dataError = ref('')
-const isBooting = ref(true)
 let clockTimer
-let bootTimer
 let player
 
 const allWindowApps = computed(() => [...topApps, ...bottomApps])
 const activeApp = computed(() => allWindowApps.value.find((app) => app.id === activeWindow.value))
 const rightTopApps = computed(() => topApps.filter((app) => app.align === 'right'))
 const todoApp = computed(() => topApps.find((app) => app.id === 'todo'))
+const normalizedSearchItems = computed(() => {
+  const source = searchItems.value.length ? searchItems.value : fallbackSearchItems
+  return source.map(normalizeSearchItem).filter((item) => item.name && item.path)
+})
+const filteredSpotlightLinks = computed(() => {
+  const terms = normalizeText(spotlightQuery.value).split(/\s+/).filter(Boolean)
+
+  if (!terms.length) return defaultSpotlightLinks
+
+  return normalizedSearchItems.value
+    .filter((item) => terms.every((term) => item.searchText.includes(term)))
+    .slice(0, 12)
+})
 
 const menuTime = computed(() => (
   now.value.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -137,6 +235,33 @@ const menuTime = computed(() => (
 
 function iconForUrl(url, size = 96) {
   return `https://www.google.com/s2/favicons?sz=${size}&domain_url=${encodeURIComponent(url)}`
+}
+
+function normalizeText(value) {
+  return String(value ?? '').toLowerCase().trim()
+}
+
+function normalizeSearchItem(item) {
+  const name = item.name || item.title || ''
+  const hint = item.hint || item.description || ''
+  const category = item.category || '站内页面'
+  const keywords = Array.isArray(item.keywords) ? item.keywords : []
+  const searchText = normalizeText([
+    name,
+    hint,
+    category,
+    item.path,
+    ...keywords,
+  ].join(' '))
+
+  return {
+    name,
+    path: item.path || '/',
+    hint,
+    category,
+    keywords,
+    searchText,
+  }
 }
 
 function openWindow(id) {
@@ -162,6 +287,16 @@ async function loadPortalData() {
 
     musicTracks.value = await musicRes.json()
     dockGroups.value = await dockRes.json()
+
+    try {
+      const searchRes = await fetch('/data/search-index.json')
+      if (searchRes.ok) {
+        const loadedSearchItems = await searchRes.json()
+        searchItems.value = Array.isArray(loadedSearchItems) ? loadedSearchItems : []
+      }
+    } catch {
+      searchItems.value = []
+    }
   } catch (error) {
     dataError.value = `Portal data failed: ${error.message}`
   } finally {
@@ -204,17 +339,11 @@ onMounted(() => {
   clockTimer = window.setInterval(() => {
     now.value = new Date()
   }, 30000)
-
-  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  bootTimer = window.setTimeout(() => {
-    isBooting.value = false
-  }, reduceMotion ? 250 : 3200)
 })
 
 onBeforeUnmount(() => {
   destroyPlayer()
   window.clearInterval(clockTimer)
-  window.clearTimeout(bootTimer)
 })
 </script>
 
@@ -223,14 +352,11 @@ onBeforeUnmount(() => {
     <div class="wallpaper" aria-hidden="true"></div>
     <div class="desktop-vignette" aria-hidden="true"></div>
 
-    <Transition name="boot">
-      <section v-if="isBooting" class="boot-screen" aria-label="Portal loading">
-        <p class="boot-handwriting">{{ bootMessage }}</p>
-      </section>
-    </Transition>
-
     <header class="portal-menu-bar" aria-label="Portal menu bar">
       <div class="menu-left">
+        <RouterLink to="/" class="menu-home-link" aria-label="Back to home">
+          <img src="/favicon_liuyin.svg" alt="" class="menu-brand-icon">
+        </RouterLink>
         <button
           v-if="todoApp"
           class="menu-app-button todo-menu-button"
@@ -239,14 +365,9 @@ onBeforeUnmount(() => {
           aria-label="Open TODO List"
           @click="openWindow(todoApp.id)"
         >
-          <span class="app-light"></span>
+          <span class="todo-menu-icon" aria-hidden="true">☑</span>
           <span>{{ todoApp.label }}</span>
         </button>
-      </div>
-
-      <div class="menu-center">
-        <span class="menu-title">LiuYinChu Portal</span>
-        <span class="menu-status">{{ loadingData ? 'Syncing' : 'Ready' }}</span>
       </div>
 
       <div class="menu-right">
@@ -321,25 +442,32 @@ onBeforeUnmount(() => {
         </section>
 
         <section v-else-if="activeWindow === 'map'" class="mac-app-content map-window-content">
-          <div class="app-panel-heading">
-            <p>Website map</p>
-            <h1>LiuYinChu'Space</h1>
-          </div>
-          <div class="site-map-grid">
-            <article v-for="section in siteMapSections" :key="section.title" class="site-map-card">
-              <h2>{{ section.title }}</h2>
-              <p>{{ section.description }}</p>
-              <div class="site-map-links">
-                <RouterLink
-                  v-for="link in section.links"
-                  :key="link.path"
-                  :to="link.path"
-                  class="site-map-link"
-                >
-                  {{ link.name }}
-                </RouterLink>
-              </div>
-            </article>
+          <label class="spotlight-search">
+            <span class="spotlight-magnifier" aria-hidden="true"></span>
+            <input
+              v-model="spotlightQuery"
+              class="spotlight-input"
+              type="search"
+              autocomplete="off"
+              placeholder="搜索 LiuYinChu'Space"
+              aria-label="Search site links"
+            >
+          </label>
+
+          <div class="spotlight-results" aria-label="Site search results">
+            <RouterLink
+              v-for="link in filteredSpotlightLinks"
+              :key="link.path"
+              :to="link.path"
+              class="spotlight-result"
+            >
+              <span class="spotlight-result-copy">
+                <strong>{{ link.name }}</strong>
+                <small>{{ link.category }} · {{ link.hint }}</small>
+              </span>
+              <span class="spotlight-result-action">打开</span>
+            </RouterLink>
+            <p v-if="!filteredSpotlightLinks.length" class="spotlight-empty">没有找到对应入口</p>
           </div>
         </section>
 
@@ -355,12 +483,12 @@ onBeforeUnmount(() => {
             :style="{ '--group-accent': group.color }"
           >
             <h2>{{ group.name }}</h2>
-            <div class="link-grid">
+            <div class="launchpad-grid">
               <a
                 v-for="site in group.links"
                 :key="site.url"
                 :href="site.url"
-                class="link-tile"
+                class="launchpad-tile"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -375,7 +503,7 @@ onBeforeUnmount(() => {
 
     <nav class="bottom-launcher" aria-label="Portal launcher">
       <button
-        class="launcher-end-button"
+        class="launcher-item"
         type="button"
         :class="{ 'is-active': activeWindow === 'map' }"
         aria-label="Open website map"
@@ -385,23 +513,26 @@ onBeforeUnmount(() => {
         <span>Map</span>
       </button>
 
-      <div class="quick-launcher" aria-label="Common links">
-        <a
-          v-for="site in quickLinks"
-          :key="site.url"
-          :href="site.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="quick-launcher-link"
-          :aria-label="site.name"
-        >
-          <img :src="iconForUrl(site.url, 128)" alt="">
-          <span>{{ site.name }}</span>
-        </a>
-      </div>
+      <span class="launcher-divider" aria-hidden="true"></span>
+
+      <a
+        v-for="site in quickLinks"
+        :key="site.url"
+        :href="site.url"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="launcher-item"
+        :class="{ 'hide-on-compact': !site.compact }"
+        :aria-label="site.name"
+      >
+        <img :src="iconForUrl(site.url, 128)" alt="">
+        <span>{{ site.name }}</span>
+      </a>
+
+      <span class="launcher-divider" aria-hidden="true"></span>
 
       <button
-        class="launcher-end-button"
+        class="launcher-item"
         type="button"
         :class="{ 'is-active': activeWindow === 'dock' }"
         aria-label="Open Dock"
@@ -421,6 +552,21 @@ onBeforeUnmount(() => {
   --portal-border: rgba(255, 255, 255, 0.16);
   --portal-window: rgba(24, 24, 37, 0.72);
   --portal-toolbar: rgba(30, 30, 46, 0.74);
+  --neo-surface: rgba(55, 67, 94, 0.62);
+  --neo-surface-soft: rgba(70, 84, 113, 0.5);
+  --neo-surface-deep: rgba(24, 31, 49, 0.54);
+  --neo-surface-inset: rgba(14, 20, 34, 0.34);
+  --neo-border: rgba(255, 255, 255, 0.13);
+  --neo-highlight: rgba(255, 255, 255, 0.15);
+  --neo-shadow-dark: rgba(3, 8, 20, 0.34);
+  --neo-shadow-light: rgba(255, 255, 255, 0.1);
+  --neo-raised:
+    12px 12px 28px var(--neo-shadow-dark),
+    -10px -10px 24px var(--neo-shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  --neo-inset:
+    inset 8px 8px 18px rgba(3, 8, 20, 0.34),
+    inset -8px -8px 18px rgba(255, 255, 255, 0.07);
 
   position: relative;
   width: 100vw;
@@ -428,7 +574,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   color: var(--portal-text);
   background: #181825;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'LXGW WenKai', system-ui, sans-serif;
+  font-family: 'SF Pro Text', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Inter', system-ui, sans-serif;
 }
 
 .wallpaper,
@@ -447,84 +593,31 @@ onBeforeUnmount(() => {
 
 .desktop-vignette {
   background:
-    linear-gradient(180deg, rgba(17, 17, 27, 0.62), rgba(17, 17, 27, 0.16) 38%, rgba(17, 17, 27, 0.56)),
-    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.07), transparent 34rem);
-}
-
-.boot-screen {
-  position: absolute;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background:
-    radial-gradient(circle at 50% 45%, rgba(180, 190, 254, 0.14), transparent 28rem),
-    rgba(17, 17, 27, 0.82);
-  backdrop-filter: blur(18px);
-}
-
-.boot-handwriting {
-  position: relative;
-  max-width: min(78vw, 860px);
-  margin: 0;
-  overflow: hidden;
-  color: rgba(245, 246, 255, 0.92);
-  font-family: 'LXGW WenKai', 'Bradley Hand', 'Segoe Print', cursive;
-  font-size: clamp(1.35rem, 3vw, 2.6rem);
-  font-weight: 600;
-  line-height: 1.55;
-  text-align: center;
-  text-shadow: 0 0 24px rgba(137, 180, 250, 0.36);
-  white-space: nowrap;
-  animation: handwriting-reveal 2.45s cubic-bezier(0.2, 0.82, 0.18, 1) both;
-}
-
-.boot-handwriting::after {
-  content: '';
-  position: absolute;
-  top: 13%;
-  bottom: 13%;
-  width: 2px;
-  background: rgba(245, 246, 255, 0.7);
-  box-shadow: 0 0 18px rgba(245, 246, 255, 0.62);
-  animation: handwriting-caret 2.45s cubic-bezier(0.2, 0.82, 0.18, 1) both;
-}
-
-.boot-leave-active {
-  transition: opacity 0.56s ease, filter 0.56s ease;
-}
-
-.boot-leave-to {
-  opacity: 0;
-  filter: blur(8px);
+    linear-gradient(180deg, rgba(17, 17, 27, 0.38), rgba(17, 17, 27, 0.06) 42%, rgba(17, 17, 27, 0.46)),
+    radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.08), transparent 34rem);
 }
 
 .portal-menu-bar {
   position: absolute;
-  top: max(0.65rem, env(safe-area-inset-top));
-  right: clamp(0.7rem, 2.4vw, 1.8rem);
-  left: clamp(0.7rem, 2.4vw, 1.8rem);
+  top: 0;
+  right: 0;
+  left: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: minmax(7rem, 1fr) auto minmax(18rem, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  height: clamp(2.25rem, 4vw, 2.8rem);
-  padding: 0 clamp(0.45rem, 1.3vw, 0.7rem);
-  color: rgba(245, 246, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  background: rgba(24, 24, 37, 0.36);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 20px 70px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(26px) saturate(155%);
+  height: 1.65rem;
+  padding: 0 0.72rem;
+  color: rgba(18, 20, 30, 0.9);
+  border: 0;
+  border-radius: 0;
+  background: rgba(216, 224, 255, 0.72);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.32), 0 10px 28px rgba(17, 17, 27, 0.12);
+  backdrop-filter: blur(18px) saturate(170%);
   box-sizing: border-box;
 }
 
 .menu-left,
-.menu-center,
 .menu-right {
   display: flex;
   align-items: center;
@@ -533,31 +626,41 @@ onBeforeUnmount(() => {
 
 .menu-left {
   justify-content: flex-start;
-}
-
-.menu-center {
-  justify-content: center;
-  gap: 0.72rem;
+  gap: 0.42rem;
 }
 
 .menu-right {
   justify-content: flex-end;
-  gap: 0.45rem;
+  gap: 0.26rem;
 }
 
-.menu-title {
-  font-size: 0.88rem;
-  font-weight: 780;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-
-.menu-status,
 .menu-clock {
-  color: rgba(205, 214, 244, 0.72);
-  font-size: 0.75rem;
-  font-weight: 620;
+  color: rgba(18, 20, 30, 0.82);
+  font-size: 0.76rem;
+  font-weight: 650;
   white-space: nowrap;
+}
+
+.menu-brand-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 0.24rem;
+}
+
+.menu-home-link {
+  display: inline-flex;
+  width: 1.24rem;
+  height: 1.24rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.32rem;
+  transition: background-color 0.16s ease;
+}
+
+.menu-home-link:hover,
+.menu-home-link:focus-visible {
+  background: rgba(255, 255, 255, 0.42);
+  outline: none;
 }
 
 .menu-app-button {
@@ -565,17 +668,17 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.42rem;
-  min-width: 2.25rem;
-  height: 1.45rem;
-  padding: 0 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 0.48rem;
-  color: rgba(245, 246, 255, 0.84);
-  background: rgba(255, 255, 255, 0.1);
+  gap: 0;
+  min-width: 1.25rem;
+  height: 1.24rem;
+  padding: 0 0.3rem;
+  border: 0;
+  border-radius: 0.32rem;
+  color: rgba(18, 20, 30, 0.9);
+  background: transparent;
   font: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 720;
   cursor: pointer;
   transition: transform 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
 }
@@ -583,28 +686,44 @@ onBeforeUnmount(() => {
 .menu-app-button:hover,
 .menu-app-button:focus-visible,
 .menu-app-button.is-active {
-  border-color: rgba(180, 190, 254, 0.42);
-  background: rgba(180, 190, 254, 0.2);
+  background: rgba(255, 255, 255, 0.42);
   outline: none;
-  transform: translateY(-1px);
 }
 
 .todo-menu-button {
-  min-width: 3.15rem;
+  min-width: 1.24rem;
+  padding: 0;
 }
 
-.app-light {
-  width: 0.48rem;
-  height: 0.48rem;
-  border-radius: 50%;
-  background: #f38ba8;
-  box-shadow: 0 0 14px rgba(243, 139, 168, 0.7);
+.todo-menu-icon {
+  color: rgba(18, 20, 30, 0.9);
+  font-size: 0.92rem;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.todo-menu-button span:last-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .icon-menu-button img {
-  width: 0.95rem;
-  height: 0.95rem;
-  border-radius: 0.24rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 0.22rem;
+}
+
+.icon-menu-button span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .mac-window {
@@ -618,29 +737,37 @@ onBeforeUnmount(() => {
   min-height: 24rem;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 1.05rem;
-  background: var(--portal-window);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 0.82rem;
+  background: rgba(32, 34, 48, 0.76);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 34px 90px rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 38px 110px rgba(0, 0, 0, 0.5);
   transform: translate(-50%, -50%);
-  backdrop-filter: blur(30px) saturate(155%);
+  backdrop-filter: blur(34px) saturate(160%);
 }
 
-.window-music { width: min(780px, calc(100vw - 3rem)); }
-.window-weather { width: min(520px, calc(100vw - 3rem)); }
+.window-music {
+  width: min(780px, calc(100vw - 3rem));
+  min-height: auto;
+}
+.window-weather { width: min(560px, calc(100vw - 3rem)); }
 .window-calendar { width: min(600px, calc(100vw - 3rem)); }
 .window-todo { width: min(690px, calc(100vw - 3rem)); }
-.window-map { width: min(860px, calc(100vw - 3rem)); }
+.window-map { width: min(720px, calc(100vw - 3rem)); }
+.window-dock {
+  width: min(1080px, calc(100vw - 3rem));
+  max-height: min(560px, calc(100dvh - 10.6rem));
+  min-height: 21rem;
+}
 
 .window-titlebar {
   display: grid;
   grid-template-columns: 5rem minmax(0, 1fr) 5rem;
   align-items: center;
-  min-height: 2.65rem;
+  min-height: 2.4rem;
   padding: 0 0.9rem;
-  background: var(--portal-toolbar);
+  background: rgba(27, 28, 40, 0.84);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-sizing: border-box;
 }
@@ -700,6 +827,18 @@ onBeforeUnmount(() => {
   padding: clamp(1rem, 2vw, 1.35rem);
 }
 
+.window-music .window-body {
+  padding-bottom: 1.1rem;
+}
+
+.window-music .window-body,
+.window-map .window-body {
+  background:
+    radial-gradient(circle at 18% 10%, rgba(137, 180, 250, 0.12), transparent 17rem),
+    radial-gradient(circle at 88% 94%, rgba(245, 194, 231, 0.08), transparent 16rem),
+    linear-gradient(145deg, rgba(57, 68, 96, 0.32), rgba(18, 24, 39, 0.22));
+}
+
 .portal-loading,
 .portal-error {
   padding: 2rem;
@@ -717,9 +856,23 @@ onBeforeUnmount(() => {
   min-height: 100%;
 }
 
+.music-app {
+  gap: 1.15rem;
+  min-height: auto;
+}
+
 .app-panel-heading {
   display: grid;
   gap: 0.18rem;
+}
+
+.music-app .app-panel-heading {
+  gap: 0.22rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--neo-border);
+  border-radius: 1.05rem;
+  background: linear-gradient(145deg, var(--neo-surface-soft), var(--neo-surface-deep));
+  box-shadow: var(--neo-raised);
 }
 
 .app-panel-heading p,
@@ -742,42 +895,59 @@ onBeforeUnmount(() => {
 }
 
 .aplayer-mount {
-  min-height: 24rem;
+  min-height: 0;
 }
 
 :deep(.aplayer) {
   margin: 0;
-  border-radius: 1rem;
+  border: 1px solid var(--neo-border);
+  border-radius: 1.2rem;
   color: #cdd6f4;
-  background: rgba(30, 30, 46, 0.64);
-  box-shadow: none;
+  background: linear-gradient(145deg, rgba(62, 74, 103, 0.66), rgba(23, 30, 48, 0.58));
+  box-shadow: var(--neo-raised);
   overflow: hidden;
+}
+
+:deep(.aplayer-list) {
+  max-height: 246px;
+  background: rgba(16, 22, 36, 0.2);
 }
 
 :deep(.aplayer-pic) {
   border-radius: 0 0.9rem 0.9rem 0;
+  box-shadow:
+    10px 0 24px rgba(3, 8, 20, 0.28),
+    inset -1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
 :deep(.aplayer-list ol li) {
   border-top-color: rgba(180, 190, 254, 0.1);
   color: #cdd6f4;
   background: transparent;
+  transition: background-color 0.16s ease, color 0.16s ease;
 }
 
 :deep(.aplayer-list ol li:hover),
 :deep(.aplayer-list-light) {
-  color: #11111b !important;
-  background: rgba(180, 190, 254, 0.9) !important;
+  color: rgba(245, 246, 255, 0.96) !important;
+  background: rgba(137, 180, 250, 0.22) !important;
+  box-shadow: var(--neo-inset);
 }
 
 :deep(.aplayer-list-light .aplayer-list-title),
 :deep(.aplayer-list-light .aplayer-list-author) {
-  color: #11111b !important;
+  color: rgba(245, 246, 255, 0.96) !important;
 }
 
 :deep(.aplayer-info),
 :deep(.aplayer-list) {
   border-color: rgba(180, 190, 254, 0.1);
+}
+
+:deep(.aplayer .aplayer-controller .aplayer-bar-wrap .aplayer-bar),
+:deep(.aplayer .aplayer-volume-bar-wrap .aplayer-volume-bar) {
+  background: rgba(14, 20, 34, 0.42);
+  box-shadow: var(--neo-inset);
 }
 
 .widget-shell :deep(.weather-container),
@@ -791,72 +961,148 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 
-.map-window-content,
+.map-window-content {
+  gap: 0.65rem;
+  min-height: auto;
+  padding: 0.1rem 0.05rem 0.35rem;
+}
+
+.spotlight-search {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 3.2rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.05rem;
+  color: rgba(245, 246, 255, 0.92);
+  background: rgba(17, 24, 38, 0.34);
+  box-shadow: var(--neo-inset);
+  cursor: text;
+}
+
+.spotlight-magnifier {
+  position: relative;
+  display: inline-flex;
+  width: 1.32rem;
+  height: 1.32rem;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.spotlight-magnifier::before {
+  content: '';
+  width: 0.82rem;
+  height: 0.82rem;
+  border: 2px solid rgba(245, 246, 255, 0.72);
+  border-radius: 50%;
+}
+
+.spotlight-magnifier::after {
+  content: '';
+  position: absolute;
+  right: 0.18rem;
+  bottom: 0.18rem;
+  width: 0.48rem;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(245, 246, 255, 0.72);
+  transform: rotate(45deg);
+}
+
+.spotlight-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: rgba(245, 246, 255, 0.94);
+  background: transparent;
+  font: inherit;
+  font-size: clamp(1.1rem, 2vw, 1.42rem);
+  font-weight: 650;
+  outline: none;
+}
+
+.spotlight-input::placeholder {
+  color: rgba(245, 246, 255, 0.56);
+}
+
+.spotlight-results {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--neo-border);
+  border-radius: 1.08rem;
+  background: linear-gradient(145deg, var(--neo-surface), var(--neo-surface-deep));
+  box-shadow: var(--neo-raised);
+}
+
+.spotlight-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 3.45rem;
+  padding: 0 1rem;
+  color: rgba(245, 246, 255, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+  transition: background-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.spotlight-result:last-child {
+  border-bottom: 0;
+}
+
+.spotlight-result:hover,
+.spotlight-result:focus-visible {
+  background: rgba(137, 180, 250, 0.18);
+  box-shadow: var(--neo-inset);
+  outline: none;
+}
+
+.spotlight-result-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.18rem;
+}
+
+.spotlight-result-copy strong {
+  color: rgba(245, 246, 255, 0.95);
+  font-size: 0.96rem;
+}
+
+.spotlight-result-copy small {
+  overflow: hidden;
+  color: rgba(205, 214, 244, 0.64);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spotlight-result-action {
+  color: rgba(205, 214, 244, 0.58);
+  font-size: 0.76rem;
+  font-weight: 620;
+}
+
+.spotlight-empty {
+  margin: 0;
+  padding: 1.2rem 1rem;
+  color: rgba(205, 214, 244, 0.62);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
 .dock-window-content {
   gap: 1.25rem;
-}
-
-.site-map-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
-}
-
-.site-map-card {
-  display: grid;
-  gap: 0.7rem;
-  padding: 1rem;
-  border: 1px solid rgba(180, 190, 254, 0.13);
-  border-radius: 1rem;
-  background: rgba(30, 30, 46, 0.54);
-}
-
-.site-map-card h2,
-.site-map-card p {
-  margin: 0;
-}
-
-.site-map-card h2 {
-  color: #cba6f7;
-  font-size: 0.96rem;
-  letter-spacing: 0.03em;
-}
-
-.site-map-card p {
-  color: var(--portal-muted);
-  font-size: 0.86rem;
-  line-height: 1.55;
-}
-
-.site-map-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.48rem;
-}
-
-.site-map-link {
-  padding: 0.42rem 0.6rem;
-  border: 1px solid rgba(180, 190, 254, 0.16);
-  border-radius: 999px;
-  color: rgba(245, 246, 255, 0.88);
-  background: rgba(69, 71, 90, 0.42);
-  font-size: 0.82rem;
-  font-weight: 650;
-  text-decoration: none;
-  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-}
-
-.site-map-link:hover,
-.site-map-link:focus-visible {
-  border-color: rgba(203, 166, 247, 0.42);
-  background: rgba(203, 166, 247, 0.16);
-  outline: none;
-  transform: translateY(-1px);
+  min-height: auto;
 }
 
 .link-group {
   display: grid;
-  gap: 0.8rem;
+  gap: 1rem;
 }
 
 .link-group h2 {
@@ -868,47 +1114,52 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
 }
 
-.link-grid {
+.launchpad-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(5.9rem, 1fr));
-  gap: 0.82rem;
+  grid-template-columns: repeat(auto-fill, minmax(5.6rem, 1fr));
+  gap: 1.25rem 1rem;
 }
 
-.link-tile {
+.launchpad-tile {
   display: grid;
   justify-items: center;
-  gap: 0.55rem;
-  min-height: 5.5rem;
-  padding: 0.82rem 0.45rem;
-  border: 1px solid rgba(180, 190, 254, 0.12);
-  border-radius: 0.95rem;
+  gap: 0.52rem;
+  min-height: 5.9rem;
+  padding: 0.35rem 0.2rem;
+  border: 0;
+  border-radius: 0.8rem;
   color: rgba(245, 246, 255, 0.9);
-  background: rgba(49, 50, 68, 0.52);
+  background: transparent;
   text-align: center;
   text-decoration: none;
   transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
 }
 
-.link-tile:hover,
-.link-tile:focus-visible {
-  border-color: rgba(180, 190, 254, 0.35);
-  background: rgba(69, 71, 90, 0.74);
+.launchpad-tile:hover,
+.launchpad-tile:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
   outline: none;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
-.link-tile img {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.45rem;
+.launchpad-tile img {
+  width: 3.8rem;
+  height: 3.8rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 12px 24px rgba(0, 0, 0, 0.24);
 }
 
-.link-tile span {
+.launchpad-tile span {
   max-width: 100%;
   overflow-wrap: anywhere;
-  font-size: 0.83rem;
-  font-weight: 650;
+  color: rgba(245, 246, 255, 0.9);
+  font-size: 0.76rem;
+  font-weight: 620;
   line-height: 1.25;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
 }
 
 .bottom-launcher {
@@ -916,205 +1167,122 @@ onBeforeUnmount(() => {
   right: 50%;
   bottom: max(1.15rem, env(safe-area-inset-bottom));
   z-index: 18;
-  display: grid;
-  grid-template-columns: auto minmax(21rem, 34rem) auto;
-  align-items: center;
-  width: min(72rem, calc(100vw - 3rem));
-  min-height: clamp(4.1rem, 8vw, 5rem);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 1.25rem;
-  background: rgba(24, 24, 37, 0.4);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 26px 72px rgba(0, 0, 0, 0.34);
-  transform: translateX(50%);
-  backdrop-filter: blur(26px) saturate(165%);
-}
-
-.launcher-end-button {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 0.55rem;
-  height: 100%;
-  min-width: clamp(6.4rem, 12vw, 9.2rem);
-  padding: 0 0.9rem;
-  border: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.18);
-  color: rgba(245, 246, 255, 0.88);
-  background: transparent;
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 760;
-  cursor: pointer;
-  text-align: left;
-}
-
-.launcher-end-button:last-child {
-  border-right: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.launcher-end-button:hover,
-.launcher-end-button:focus-visible,
-.launcher-end-button.is-active {
-  background: rgba(180, 190, 254, 0.14);
-  outline: none;
-}
-
-.launcher-end-button:first-child {
-  border-radius: 1.2rem 0 0 1.2rem;
-}
-
-.launcher-end-button:last-child {
-  border-radius: 0 1.2rem 1.2rem 0;
-}
-
-.launcher-end-button img {
-  width: 2.3rem;
-  height: 2.3rem;
-  border-radius: 0.7rem;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
-}
-
-.quick-launcher {
   display: flex;
-  align-items: center;
+  align-items: end;
   justify-content: center;
-  gap: clamp(0.35rem, 1vw, 0.65rem);
-  min-width: 0;
-  padding: 0 0.75rem;
+  gap: clamp(0.34rem, 0.85vw, 0.66rem);
+  width: auto;
+  max-width: calc(100vw - 2rem);
+  min-height: 4.7rem;
+  padding: 0.48rem 0.7rem 0.42rem;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.35rem;
+  background: rgba(26, 28, 40, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 24px 72px rgba(0, 0, 0, 0.36);
+  transform: translateX(50%);
+  backdrop-filter: blur(30px) saturate(170%);
+  scrollbar-width: none;
 }
 
-.quick-launcher-link {
+.bottom-launcher::-webkit-scrollbar {
+  display: none;
+}
+
+.launcher-item {
   position: relative;
   display: grid;
   justify-items: center;
   gap: 0.2rem;
-  width: clamp(2.6rem, 4.6vw, 3.35rem);
-  color: rgba(245, 246, 255, 0.86);
+  width: clamp(3rem, 4.3vw, 3.65rem);
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  color: rgba(245, 246, 255, 0.88);
+  background: transparent;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-align: center;
   text-decoration: none;
   transition: transform 0.18s ease;
 }
 
-.quick-launcher-link:hover,
-.quick-launcher-link:focus-visible {
+.launcher-item:hover,
+.launcher-item:focus-visible {
   outline: none;
-  transform: translateY(-0.45rem) scale(1.06);
+  transform: translateY(-0.48rem) scale(1.06);
 }
 
-.quick-launcher-link img {
-  width: clamp(2.1rem, 4vw, 2.8rem);
-  height: clamp(2.1rem, 4vw, 2.8rem);
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.13);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
+.launcher-item.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: -0.1rem;
+  width: 0.26rem;
+  height: 0.26rem;
+  border-radius: 50%;
+  background: rgba(245, 246, 255, 0.88);
 }
 
-.quick-launcher-link span {
-  max-width: 4.5rem;
+.launcher-item img {
+  width: clamp(2.45rem, 4vw, 3rem);
+  height: clamp(2.45rem, 4vw, 3rem);
+  border-radius: 0.82rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 12px 26px rgba(0, 0, 0, 0.32);
+}
+
+.launcher-item span {
+  max-width: 4rem;
   overflow: hidden;
-  font-size: 0.64rem;
-  font-weight: 650;
   line-height: 1.15;
-  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
 }
 
-@keyframes handwriting-reveal {
-  0% {
-    clip-path: inset(0 100% 0 0);
-  }
-  100% {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes handwriting-caret {
-  0% {
-    left: 0;
-    opacity: 0;
-  }
-  8%,
-  84% {
-    opacity: 1;
-  }
-  100% {
-    left: 100%;
-    opacity: 0;
-  }
+.launcher-divider {
+  width: 1px;
+  height: 3.35rem;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 @media (max-width: 900px) {
   .portal-menu-bar {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .menu-title,
-  .menu-status,
   .menu-clock,
   .icon-menu-button span {
     display: none;
   }
 
-  .menu-center {
-    min-width: 1rem;
-  }
-
-  .site-map-grid {
-    grid-template-columns: 1fr;
-  }
-
   .bottom-launcher {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    width: calc(100vw - 1rem);
-  }
-
-  .launcher-end-button {
-    min-width: 4.8rem;
-    grid-template-columns: 1fr;
-    justify-items: center;
-    gap: 0.25rem;
-    padding: 0 0.48rem;
-    text-align: center;
-  }
-
-  .launcher-end-button img {
-    width: 2rem;
-    height: 2rem;
-  }
-
-  .quick-launcher {
-    overflow-x: auto;
     justify-content: flex-start;
-    scrollbar-width: none;
-  }
-
-  .quick-launcher::-webkit-scrollbar {
-    display: none;
-  }
-
-  .quick-launcher-link {
-    flex: 0 0 auto;
+    width: auto;
   }
 }
 
 @media (max-width: 700px) {
-  .boot-handwriting {
-    white-space: normal;
-  }
-
   .portal-menu-bar {
-    right: 0.55rem;
-    left: 0.55rem;
-    height: 2.45rem;
+    height: 1.95rem;
+    padding: 0 0.45rem;
   }
 
   .menu-app-button {
-    height: 1.55rem;
-    padding: 0 0.44rem;
+    height: 1.35rem;
+    padding: 0 0.4rem;
+  }
+
+  .icon-menu-button img {
+    width: 1rem;
+    height: 1rem;
   }
 
   .mac-window {
@@ -1136,38 +1304,49 @@ onBeforeUnmount(() => {
     font-size: 1.35rem;
   }
 
-  .link-grid {
+  .launchpad-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .bottom-launcher {
-    min-height: 4.45rem;
+    align-items: center;
+    min-height: 0;
     bottom: max(0.55rem, env(safe-area-inset-bottom));
+    max-width: calc(100vw - 1rem);
+    padding: 0.46rem 0.62rem;
+    justify-content: center;
   }
 
-  .launcher-end-button span,
-  .quick-launcher-link span {
+  .launcher-item span {
     display: none;
   }
 
-  .launcher-end-button {
-    min-width: 3.6rem;
+  .launcher-item {
+    width: 2.65rem;
+  }
+
+  .launcher-item.hide-on-compact {
+    display: none;
+  }
+
+  .launcher-item img {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.68rem;
+  }
+
+  .launcher-divider {
+    height: 2.45rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .boot-handwriting,
-  .boot-handwriting::after,
-  .quick-launcher-link,
+  .launcher-item,
   .menu-app-button,
-  .site-map-link,
-  .link-tile {
+  .spotlight-result,
+  .launchpad-tile {
     animation: none;
     transition: none;
-  }
-
-  .boot-handwriting {
-    clip-path: none;
   }
 }
 </style>

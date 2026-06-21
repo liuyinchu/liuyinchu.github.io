@@ -1,0 +1,121 @@
+[
+  {
+    "name": "首页",
+    "path": "/",
+    "category": "核心入口",
+    "hint": "滚动叙事首页与主要入口",
+    "keywords": ["home", "index", "welcome", "jottings", "resources", "code", "about"]
+  },
+  {
+    "name": "随记",
+    "path": "/space1",
+    "category": "核心入口",
+    "hint": "片刻、问题、读到的东西、开放写作",
+    "keywords": ["jottings", "notes", "blog", "space1", "writing"]
+  },
+  {
+    "name": "资源链接",
+    "path": "/rd",
+    "category": "核心入口",
+    "hint": "文献、编程、计算机、资料、工具、文件",
+    "keywords": ["resources", "links", "rd", "reference", "tool"]
+  },
+  {
+    "name": "代码与项目",
+    "path": "/code",
+    "category": "核心入口",
+    "hint": "项目、实验、代码与开发记录",
+    "keywords": ["code", "project", "programming", "github", "experiment"]
+  },
+  {
+    "name": "赛博会客厅",
+    "path": "/space2",
+    "category": "核心入口",
+    "hint": "朋友们、网络邻居与访客空间",
+    "keywords": ["friends", "guest", "neighbor", "space2", "links"]
+  },
+  {
+    "name": "关于",
+    "path": "/about",
+    "category": "核心入口",
+    "hint": "自我介绍、学术入口、版权说明",
+    "keywords": ["about", "profile", "intro", "statement"]
+  },
+  {
+    "name": "文献",
+    "path": "/rliterature",
+    "category": "资源链接",
+    "hint": "论文、文献、阅读资料与参考链接",
+    "keywords": ["literature", "paper", "reference", "reading"]
+  },
+  {
+    "name": "编程",
+    "path": "/rprogramming",
+    "category": "资源链接",
+    "hint": "编程语言、开发资料、工程实践资源",
+    "keywords": ["programming", "coding", "developer", "software"]
+  },
+  {
+    "name": "计算机",
+    "path": "/rcs",
+    "category": "资源链接",
+    "hint": "计算机科学、算法、系统与学习资源",
+    "keywords": ["computer science", "cs", "algorithm", "system"]
+  },
+  {
+    "name": "资料",
+    "path": "/rmaterials",
+    "category": "资源链接",
+    "hint": "常用材料、文档、数据与学习资料",
+    "keywords": ["materials", "docs", "data", "document"]
+  },
+  {
+    "name": "工具",
+    "path": "/rtools",
+    "category": "资源链接",
+    "hint": "在线工具、效率工具与实用服务",
+    "keywords": ["tools", "utility", "service", "productivity"]
+  },
+  {
+    "name": "文件",
+    "path": "/rfiles",
+    "category": "资源链接",
+    "hint": "文件资源、下载内容与材料入口",
+    "keywords": ["files", "download", "archive"]
+  },
+  {
+    "name": "实验报告",
+    "path": "/labreport",
+    "category": "代码与项目",
+    "hint": "实验报告、课程实践与项目记录",
+    "keywords": ["lab", "report", "experiment", "course"]
+  },
+  {
+    "name": "Portal",
+    "path": "/portal",
+    "category": "功能页",
+    "hint": "macOS 风格桌面入口、常用链接和小工具",
+    "keywords": ["portal", "desktop", "dock", "spotlight", "music", "weather", "todo", "calendar"]
+  },
+  {
+    "name": "我的学术",
+    "path": "/research",
+    "category": "关于",
+    "hint": "学术主页、研究方向与相关资料",
+    "keywords": ["research", "academic", "scholar", "paper"]
+  },
+  {
+    "name": "个人学术简历",
+    "path": "/academic",
+    "category": "关于",
+    "hint": "个人学术经历、简历与履历信息",
+    "keywords": ["academic", "cv", "resume", "experience"]
+  },
+  {
+    "name": "版权说明",
+    "path": "/credit",
+    "category": "关于",
+    "hint": "网站素材、内容来源、版权与声明",
+    "keywords": ["credit", "copyright", "license", "statement"]
+  }
+]
