@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const homeSections = [
   {
@@ -54,7 +54,7 @@ const homeSections = [
     id: 'about',
     eyebrow: 'ABOUT',
     title: '关于',
-    description: '从这里进入自我介绍、版权说明、我的学术，以及更多关于我的页面。',
+    description: '从这里进入自我介绍、我的学术和版权说明。',
     image: '/bg/IMG_FireFly.png',
     cta: '了解关于',
     to: '/about',
@@ -62,43 +62,8 @@ const homeSections = [
   }
 ]
 
-const INTRO_DURATION = 3600
-const INTRO_SETTLE_DELAY = 420
-
-const introWords = [
-  'Hi',
-  'Space',
-  'Journey',
-  'Explore',
-  'Record',
-  'Create',
-  'Code',
-  'Project',
-  'Resource',
-  'Research',
-  'Academic',
-  'Welcome'
-]
-
-function shouldShowIntroOnFirstPaint() {
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const routerHistoryState = window.history.state
-  const hasRouterBackEntry = routerHistoryState?.back != null
-  const isFreshBrowserEntry = window.history.length <= 1
-
-  return !reduceMotion && (!hasRouterBackEntry || isFreshBrowserEntry)
-}
-
-const showIntro = ref(shouldShowIntroOnFirstPaint())
-const introProgress = ref(0)
-const introOffset = ref(0)
-const introWordStage = ref(null)
-const introWordTrack = ref(null)
 const headerOffset = ref(0)
 
-let introFrameId = 0
-let introFinishTimer = 0
-let originalBodyOverflow = ''
 let headerResizeObserver = null
 
 function updateHeaderOffset() {
@@ -118,137 +83,18 @@ function observeHeaderOffset() {
   document.fonts?.ready.then(updateHeaderOffset)
 }
 
-function easeIntro(t) {
-  return t < 0.5
-    ? 4 * t * t * t
-    : 1 - Math.pow(-2 * t + 2, 3) / 2
-}
-
-function getIntroWordMetrics() {
-  const firstWord = introWordTrack.value?.firstElementChild
-  const wordHeight = firstWord?.getBoundingClientRect().height || 96
-  const stageHeight = introWordStage.value?.getBoundingClientRect().height || wordHeight
-
-  return {
-    wordHeight,
-    centerOffset: (stageHeight - wordHeight) / 2
-  }
-}
-
-function finishIntro() {
-  if (introFrameId) {
-    window.cancelAnimationFrame(introFrameId)
-    introFrameId = 0
-  }
-
-  if (introFinishTimer) {
-    window.clearTimeout(introFinishTimer)
-    introFinishTimer = 0
-  }
-
-  if (showIntro.value) {
-    document.body.style.overflow = originalBodyOverflow
-  }
-
-  showIntro.value = false
-  introProgress.value = 100
-}
-
-async function startIntro() {
-  showIntro.value = true
-  introProgress.value = 0
-  introOffset.value = 0
-  originalBodyOverflow = document.body.style.overflow
-  document.body.style.overflow = 'hidden'
-
-  await nextTick()
-
-  introOffset.value = getIntroWordMetrics().centerOffset
-
-  const startedAt = window.performance.now()
-  const lastWordIndex = introWords.length - 1
-
-  function animate(now) {
-    const rawProgress = Math.min((now - startedAt) / INTRO_DURATION, 1)
-    const easedProgress = easeIntro(rawProgress)
-    const { wordHeight, centerOffset } = getIntroWordMetrics()
-
-    introProgress.value = easedProgress * 100
-    introOffset.value = centerOffset - lastWordIndex * wordHeight * easedProgress
-
-    if (rawProgress < 1) {
-      introFrameId = window.requestAnimationFrame(animate)
-      return
-    }
-
-    introProgress.value = 100
-    introOffset.value = centerOffset - lastWordIndex * wordHeight
-    introFinishTimer = window.setTimeout(() => finishIntro(), INTRO_SETTLE_DELAY)
-  }
-
-  introFrameId = window.requestAnimationFrame(animate)
-}
-
-function startIntroIfNeeded() {
-  if (!shouldShowIntroOnFirstPaint()) {
-    showIntro.value = false
-    return
-  }
-
-  startIntro()
-}
-
 onMounted(() => {
   observeHeaderOffset()
   window.addEventListener('resize', updateHeaderOffset)
-  startIntroIfNeeded()
 })
 
 onBeforeUnmount(() => {
   headerResizeObserver?.disconnect()
   window.removeEventListener('resize', updateHeaderOffset)
-  finishIntro()
 })
 </script>
 
 <template>
-  <Transition name="entry-intro">
-    <div
-      v-if="showIntro"
-      class="entry-intro"
-      role="status"
-      aria-live="polite"
-      aria-label="Welcome to LiuYinChu'Space"
-    >
-      <div class="entry-progress" aria-hidden="true">
-        <div
-          class="entry-progress__bar"
-          :style="{ width: `${introProgress}%` }"
-        ></div>
-      </div>
-
-      <div
-        ref="introWordStage"
-        class="entry-word-stage"
-        aria-hidden="true"
-      >
-        <div
-          ref="introWordTrack"
-          class="entry-word-track"
-          :style="{ transform: `translate3d(0, ${introOffset}px, 0)` }"
-        >
-          <div
-            v-for="word in introWords"
-            :key="word"
-            class="entry-word"
-          >
-            {{ word }}
-          </div>
-        </div>
-      </div>
-    </div>
-  </Transition>
-
   <main
     class="home-scroll"
     aria-label="LiuYinChu homepage"
@@ -308,39 +154,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.entry-intro {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  color: #cdd6f4;
-  background:
-    linear-gradient(180deg, rgba(17, 17, 27, 0.96), rgba(30, 30, 46, 0.98)),
-    #1e1e2e;
-}
-
-.entry-progress {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 10px;
-  overflow: visible;
-  background: rgba(205, 214, 244, 0.22);
-  box-shadow: 0 1px 18px rgba(137, 180, 250, 0.22);
-}
-
-.entry-progress__bar {
-  height: 100%;
-  background: linear-gradient(90deg, #74c7ec, #cba6f7, #f5c2e7);
-  box-shadow:
-    0 0 18px rgba(137, 180, 250, 0.72),
-    0 0 34px rgba(203, 166, 247, 0.52);
-  transition: width 80ms linear;
-}
-
 .entry-word-stage {
   position: relative;
   width: min(86vw, 920px);
@@ -362,36 +175,6 @@ onBeforeUnmount(() => {
   );
 }
 
-.entry-intro .entry-word-stage {
-  height: clamp(14rem, 29vw, 22rem);
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(0, 0, 0, 0.04) 12%,
-    rgba(0, 0, 0, 0.10) 29%,
-    #000 46%,
-    #000 54%,
-    rgba(0, 0, 0, 0.10) 71%,
-    rgba(0, 0, 0, 0.04) 88%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(0, 0, 0, 0.04) 12%,
-    rgba(0, 0, 0, 0.10) 29%,
-    #000 46%,
-    #000 54%,
-    rgba(0, 0, 0, 0.10) 71%,
-    rgba(0, 0, 0, 0.04) 88%,
-    transparent 100%
-  );
-}
-
-.entry-word-track {
-  will-change: transform;
-}
-
 .entry-word {
   display: flex;
   align-items: center;
@@ -405,16 +188,6 @@ onBeforeUnmount(() => {
   text-align: center;
   color: #f5f6ff;
   text-shadow: 0 16px 52px rgba(137, 180, 250, 0.28);
-}
-
-.entry-intro-enter-active,
-.entry-intro-leave-active {
-  transition: opacity 0.45s ease;
-}
-
-.entry-intro-enter-from,
-.entry-intro-leave-to {
-  opacity: 0;
 }
 
 .home-scroll {
@@ -604,17 +377,9 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
-  .entry-progress {
-    height: 7px;
-  }
-
   .entry-word-stage,
   .entry-word {
     height: clamp(3.15rem, 14vw, 4.6rem);
-  }
-
-  .entry-intro .entry-word-stage {
-    height: clamp(11rem, 47vw, 16rem);
   }
 
   .entry-word {
@@ -646,9 +411,6 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .entry-intro-enter-active,
-  .entry-intro-leave-active,
-  .entry-progress__bar,
   .home-panel__button,
   .home-panel__scroll-cue span {
     transition: none;

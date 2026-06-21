@@ -10,6 +10,7 @@ import Space3 from '../pages/Space3.vue'
 import VisitorCenter from '../pages/VisitorCenter.vue'
 import ArticleView from '../pages/ArticleView.vue' 
 import About from '../pages/About.vue'
+import AboutIntro from '../pages/AboutIntro.vue'
 import Credit from '../pages/Credit.vue'
 import Portal from '../pages/Portal.vue'
 import LabReport from '../pages/LabReport.vue'
@@ -43,6 +44,7 @@ const routes = [
   { path: '/visitor-center', component: VisitorCenter },
   { path: '/space1/:id', component: ArticleView },
   { path: '/about', component: About },
+  { path: '/about/self', component: AboutIntro },
   { path: '/credit', component: Credit },
   { path: '/portal', component: Portal },
   { path: '/labreport', component: LabReport },
