@@ -22,9 +22,6 @@ onMounted(async () => {
       <div class="hero-copy">
         <p class="kicker">CYBER NEIGHBORHOOD</p>
         <h1 id="neighbors-title">网络邻居</h1>
-        <p class="intro">
-          去朋友们的个人站点坐坐。这里保留旧互联网的友链传统，也把它整理成更稳定的数字街区。
-        </p>
       </div>
 
       <div class="hero-graphic" aria-hidden="true">
@@ -156,15 +153,6 @@ onMounted(async () => {
   font-size: clamp(3.3rem, 8vw, 6.4rem);
   font-weight: 800;
   line-height: 1;
-}
-
-.intro {
-  max-width: 660px;
-  margin: 0;
-  color: var(--ctp-mocha-subtext0);
-  font-family: 'LXGW WenKai', serif;
-  font-size: clamp(1.05rem, 2vw, 1.25rem);
-  line-height: 1.85;
 }
 
 .hero-graphic {
