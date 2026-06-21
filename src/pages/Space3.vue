@@ -24,10 +24,8 @@ const loungeLinks = [
         <p class="kicker">CYBER LOUNGE</p>
         <h1 id="lounge-title">赛博会客厅</h1>
         <p class="hero-text">
-          自星海来，向灯火去。<br />
-          临窗小坐，听旧网新声。<br />
-          若问足迹落何处，<br />
-          便在此间，和邻人共明。
+          人生如逆旅，<br />
+          我亦是行人。
         </p>
       </div>
 
