@@ -665,7 +665,7 @@ onBeforeUnmount(() => {
 .markdown-body :deep(th),
 .markdown-body :deep(td) {
   padding: 0.62rem 0.82rem;
-  border: 1px solid rgba(180, 190, 254, 0.18);
+  border: 2px solid rgba(180, 190, 254, 0.16);
   vertical-align: top;
 }
 
