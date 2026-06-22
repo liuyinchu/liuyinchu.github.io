@@ -436,7 +436,7 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(strong) {
-  color: #b4befe;
+  color: #89dceb;
   font-weight: 780;
 }
 
@@ -562,7 +562,7 @@ onBeforeUnmount(() => {
   padding: 0.16em 0.42em;
   border: 1px solid rgba(180, 190, 254, 0.16);
   border-radius: 0.45rem;
-  color: #89dceb;
+  color: #b4befe;
   background:
     linear-gradient(145deg, rgba(69, 71, 90, 0.62), rgba(24, 24, 37, 0.74));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
