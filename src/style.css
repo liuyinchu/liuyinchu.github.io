@@ -42,6 +42,41 @@ body {
   padding: 0;
 }
 
+html {
+  color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(137, 180, 250, 0.52) rgba(30, 30, 46, 0.88);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(137, 180, 250, 0.52) rgba(30, 30, 46, 0.88);
+}
+
+*::-webkit-scrollbar {
+  width: 0.68rem;
+  height: 0.68rem;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(30, 30, 46, 0.88);
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(30, 30, 46, 0.88);
+  border-radius: 999px;
+  background-color: rgba(137, 180, 250, 0.52);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(116, 199, 236, 0.72);
+}
+
+*::-webkit-scrollbar-corner {
+  background: rgba(30, 30, 46, 0.88);
+}
+
 /* 通用链接样式 */
 a {
   color: var(--link-color);

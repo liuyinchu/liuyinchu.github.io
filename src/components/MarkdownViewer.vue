@@ -480,16 +480,16 @@ onBeforeUnmount(() => {
 
 .markdown-body :deep(.header-anchor) {
   margin-right: 0.45rem;
-  color: rgba(137, 180, 250, 0.55);
+  color: rgba(137, 180, 250, 0.72);
   text-decoration: none;
-  opacity: 0;
-  transition: opacity 0.2s ease, color 0.2s ease;
+  opacity: 1;
+  transition: color 0.2s ease;
 }
 
 .markdown-body :deep(h1:hover .header-anchor),
 .markdown-body :deep(h2:hover .header-anchor),
 .markdown-body :deep(h3:hover .header-anchor) {
-  opacity: 1;
+  color: #89dceb;
 }
 
 .markdown-body :deep(a) {
@@ -596,8 +596,8 @@ onBeforeUnmount(() => {
   width: 0.72rem;
   height: 0.72rem;
   border-radius: 50%;
-  background: #94e2d5;
-  box-shadow: 1.05rem 0 0 #89dceb, 2.1rem 0 0 #89b4fa;
+  background: #ff5f57;
+  box-shadow: 1.05rem 0 0 #febc2e, 2.1rem 0 0 #28c840;
   flex: 0 0 auto;
 }
 

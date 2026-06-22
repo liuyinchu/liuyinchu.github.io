@@ -37,7 +37,30 @@ defineProps({
   padding: 0.5rem;
   padding-right: 1rem;
   font-family: "LXGW WenKai";
+  scrollbar-width: thin;
+  scrollbar-color: rgba(137, 180, 250, 0.54) rgba(30, 30, 46, 0.88);
 }
+
+.toc-sticky-container::-webkit-scrollbar {
+  width: 0.62rem;
+}
+
+.toc-sticky-container::-webkit-scrollbar-track {
+  background: rgba(30, 30, 46, 0.88);
+  border-radius: 999px;
+}
+
+.toc-sticky-container::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(30, 30, 46, 0.88);
+  border-radius: 999px;
+  background-color: rgba(137, 180, 250, 0.54);
+  background-clip: padding-box;
+}
+
+.toc-sticky-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(116, 199, 236, 0.74);
+}
+
 h4 {
   font-weight: 800;
   color: var(--text-color);
