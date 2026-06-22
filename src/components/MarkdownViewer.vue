@@ -377,11 +377,12 @@ onBeforeUnmount(() => {
   --md-text: #d8def8;
   --md-muted: #aeb7d7;
   --md-soft: rgba(205, 214, 244, 0.72);
-  --md-heading: #f3e9c6;
+  --md-heading: #89b4fa;
   --md-link: #89b4fa;
   --md-link-strong: #b4befe;
   --md-accent: #74c7ec;
-  --md-accent-2: #cba6f7;
+  --md-accent-2: #b4befe;
+  --md-accent-3: #89dceb;
   --md-panel: rgba(30, 30, 46, 0.76);
   --md-panel-strong: rgba(24, 24, 37, 0.94);
   --md-border: rgba(180, 190, 254, 0.16);
@@ -435,7 +436,7 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(strong) {
-  color: #cba6f7;
+  color: #b4befe;
   font-weight: 780;
 }
 
@@ -462,7 +463,7 @@ onBeforeUnmount(() => {
   font-family: "Cinzel", "LXGW WenKai", serif;
   font-size: clamp(2.25rem, 3.2vw, 2.75rem);
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(243, 233, 198, 0.22);
+  border-bottom: 1px solid rgba(137, 180, 250, 0.26);
 }
 
 .markdown-body :deep(h2) {
@@ -551,24 +552,17 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(hr) {
-  width: min(100%, 34rem);
-  height: 0.72rem;
-  margin: 3rem auto;
+  height: 0.25em;
+  margin: 2.25rem 0;
   border: 0;
-  border-radius: 999px;
-  background:
-    linear-gradient(90deg, transparent, rgba(137, 180, 250, 0.38), rgba(203, 166, 247, 0.34), transparent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
-    0 12px 26px rgba(0, 0, 0, 0.18);
+  background: rgba(180, 190, 254, 0.22);
 }
 
 .markdown-body :deep(:not(pre) > code) {
   padding: 0.16em 0.42em;
   border: 1px solid rgba(180, 190, 254, 0.16);
   border-radius: 0.45rem;
-  color: #f5c2e7;
+  color: #89dceb;
   background:
     linear-gradient(145deg, rgba(69, 71, 90, 0.62), rgba(24, 24, 37, 0.74));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -602,8 +596,8 @@ onBeforeUnmount(() => {
   width: 0.72rem;
   height: 0.72rem;
   border-radius: 50%;
-  background: #f38ba8;
-  box-shadow: 1.05rem 0 0 #f9e2af, 2.1rem 0 0 #a6e3a1;
+  background: #94e2d5;
+  box-shadow: 1.05rem 0 0 #89dceb, 2.1rem 0 0 #89b4fa;
   flex: 0 0 auto;
 }
 
@@ -642,8 +636,8 @@ onBeforeUnmount(() => {
 
 .markdown-body :deep(.copy-button.copied) {
   color: #11111b;
-  border-color: #a6e3a1;
-  background: #a6e3a1;
+  border-color: #94e2d5;
+  background: #94e2d5;
 }
 
 .markdown-body :deep(pre code) {
@@ -660,36 +654,29 @@ onBeforeUnmount(() => {
 .markdown-body :deep(table) {
   display: block;
   width: 100%;
-  margin: 2rem 0;
+  max-width: 100%;
+  margin: 1.65rem 0;
   overflow-x: auto;
-  border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid rgba(180, 190, 254, 0.14);
-  border-radius: 0.9rem;
-  background: rgba(24, 24, 37, 0.44);
+  border-collapse: collapse;
+  background: transparent;
 }
 
 .markdown-body :deep(th),
 .markdown-body :deep(td) {
-  padding: 0.82rem 0.95rem;
-  border-bottom: 1px solid rgba(180, 190, 254, 0.1);
-  border-right: 1px solid rgba(180, 190, 254, 0.08);
+  padding: 0.62rem 0.82rem;
+  border: 1px solid rgba(180, 190, 254, 0.18);
   vertical-align: top;
 }
 
 .markdown-body :deep(th) {
-  color: #f3e9c6;
-  background: rgba(69, 71, 90, 0.46);
+  color: #cdd6f4;
+  background: rgba(49, 50, 68, 0.62);
   font-weight: 760;
 }
 
-.markdown-body :deep(tr:last-child td) {
-  border-bottom: 0;
-}
-
-.markdown-body :deep(th:last-child),
-.markdown-body :deep(td:last-child) {
-  border-right: 0;
+.markdown-body :deep(tr:nth-child(2n) td) {
+  background: rgba(49, 50, 68, 0.22);
 }
 
 .markdown-body :deep(.md-figure) {
@@ -710,6 +697,18 @@ onBeforeUnmount(() => {
 
 .markdown-body :deep(.figure-wide img) {
   width: min(100%, 780px);
+}
+
+.markdown-body :deep(.figure-medium img) {
+  width: min(100%, 520px);
+}
+
+.markdown-body :deep(.name-logo img) {
+  width: min(100%, 680px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .markdown-body :deep(figcaption) {
@@ -735,7 +734,7 @@ onBeforeUnmount(() => {
   border: 1px solid rgba(137, 180, 250, 0.22);
   border-radius: 999px;
   color: #11111b;
-  background: linear-gradient(135deg, #89b4fa, #cba6f7);
+  background: linear-gradient(135deg, #89b4fa, #b4befe);
   box-shadow: 0 12px 30px rgba(137, 180, 250, 0.16);
   font-family: "Inter", "LXGW WenKai", sans-serif;
   font-size: 0.95rem;
@@ -747,7 +746,7 @@ onBeforeUnmount(() => {
 .markdown-body :deep(.md-button:hover),
 .markdown-body :deep(.md-button:focus-visible) {
   color: #11111b;
-  border-color: rgba(203, 166, 247, 0.68);
+  border-color: rgba(180, 190, 254, 0.72);
   transform: translateY(-1px);
 }
 
@@ -770,7 +769,7 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(.md-callout--warning .md-callout-label) {
-  color: #fab387;
+  color: #b4befe;
 }
 
 .markdown-body :deep(.markdown-mermaid) {
@@ -797,7 +796,9 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(.ascii-title) {
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   margin: 0 0 2rem;
   color: rgba(137, 180, 250, 0.78);
   background: transparent;
@@ -807,6 +808,53 @@ onBeforeUnmount(() => {
   font-size: clamp(0.48rem, 1.02vw, 0.78rem);
   line-height: 1.1;
   text-align: center;
+}
+
+.markdown-body :deep(.md-mini-toc) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.55rem 0.85rem;
+  margin: 1.25rem 0 2rem;
+  padding: 1rem;
+  border: 1px solid rgba(180, 190, 254, 0.16);
+  border-radius: 0.75rem;
+  background: rgba(30, 30, 46, 0.52);
+}
+
+.markdown-body :deep(.md-mini-toc strong) {
+  grid-column: 1 / -1;
+  color: #89dceb;
+  font-size: 0.92rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.markdown-body :deep(.md-mini-toc a) {
+  width: fit-content;
+  font-size: 0.98rem;
+}
+
+.markdown-body :deep(h2.sec) {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.markdown-body :deep(a.back-top) {
+  margin-left: auto;
+  padding: 0.08rem 0.4rem;
+  border: 1px solid rgba(180, 190, 254, 0.2);
+  border-radius: 0.35rem;
+  color: rgba(180, 190, 254, 0.82);
+  font-family: "Fira Code", monospace;
+  font-size: 0.72em;
+  text-decoration: none;
+}
+
+.markdown-body :deep(a.back-top:hover),
+.markdown-body :deep(a.back-top:focus-visible) {
+  color: #89dceb;
+  border-color: rgba(137, 220, 235, 0.44);
 }
 
 .markdown-body :deep(.markdown-error) {
@@ -820,6 +868,41 @@ onBeforeUnmount(() => {
   color: var(--md-text);
   font-size: 1.06em;
   line-height: 1.9;
+}
+
+.markdown-body :deep(pre code),
+.markdown-body :deep(table),
+.markdown-body :deep(.markdown-mermaid),
+.markdown-body :deep(.ascii-title),
+.markdown-body :deep(mjx-container) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(137, 180, 250, 0.48) rgba(30, 30, 46, 0.78);
+}
+
+.markdown-body :deep(pre code::-webkit-scrollbar),
+.markdown-body :deep(table::-webkit-scrollbar),
+.markdown-body :deep(.markdown-mermaid::-webkit-scrollbar),
+.markdown-body :deep(.ascii-title::-webkit-scrollbar),
+.markdown-body :deep(mjx-container::-webkit-scrollbar) {
+  width: 0.62rem;
+  height: 0.62rem;
+}
+
+.markdown-body :deep(pre code::-webkit-scrollbar-track),
+.markdown-body :deep(table::-webkit-scrollbar-track),
+.markdown-body :deep(.markdown-mermaid::-webkit-scrollbar-track),
+.markdown-body :deep(.ascii-title::-webkit-scrollbar-track),
+.markdown-body :deep(mjx-container::-webkit-scrollbar-track) {
+  background: rgba(30, 30, 46, 0.78);
+}
+
+.markdown-body :deep(pre code::-webkit-scrollbar-thumb),
+.markdown-body :deep(table::-webkit-scrollbar-thumb),
+.markdown-body :deep(.markdown-mermaid::-webkit-scrollbar-thumb),
+.markdown-body :deep(.ascii-title::-webkit-scrollbar-thumb),
+.markdown-body :deep(mjx-container::-webkit-scrollbar-thumb) {
+  border-radius: 999px;
+  background: rgba(137, 180, 250, 0.48);
 }
 
 @media (max-width: 768px) {

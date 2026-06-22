@@ -1,40 +1,25 @@
-<template>
-  <PageWrapper>
-    <pre class="ascii_text"> 
-      ██╗   ██╗███████╗██╗   ██╗    ██╗      █████╗ ████████╗███████╗██╗  ██╗
-      ╚██╗ ██╔╝██╔════╝╚██╗ ██╔╝    ██║     ██╔══██╗╚══██╔══╝██╔════╝╚██╗██╔╝
-       ╚████╔╝ ███████╗ ╚████╔╝     ██║     ███████║   ██║   █████╗   ╚███╔╝ 
-        ╚██╔╝  ╚════██║  ╚██╔╝      ██║     ██╔══██║   ██║   ██╔══╝   ██╔██╗ 
-         ██║   ███████║   ██║       ███████╗██║  ██║   ██║   ███████╗██╔╝ ██╗
-         ╚═╝   ╚══════╝   ╚═╝       ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
-    </pre> 
-
-    <BlockMarkdown :content="introText" :useCJK="true" />
-
-  </PageWrapper>
-</template>
-
 <script setup>
-import PageWrapper from '../components/common/PageWrapper.vue'
-import BlockMarkdown from '../components/common/BlockMarkdown.vue'
-import LinkButtons from '../components/common/LinkButtons.vue'
-import ImageBlock from '../components/common/ImageBlock.vue'
-
-const introText = `
-
----
-
-# 个人模板 Ysy LaTeX
-
-喂喂喂！
-`
+import MarkdownViewer from '../components/MarkdownViewer.vue'
 </script>
 
+<template>
+  <main class="markdown-project-page">
+    <MarkdownViewer
+      src="/markdown/pages/ysy-latex.md"
+      variant="page"
+      use-c-j-k
+    />
+  </main>
+</template>
+
 <style scoped>
-.ascii_text {
-  font-family: "Fira Code", monospace; /* 指定 Fira Code */
-  text-align: center;                  /* 居中 */
-  white-space: pre;                    /* 保留空格和换行，适合 ASCII 艺术 */
-  font-size: 12.5px;
+.markdown-project-page {
+  min-height: 100vh;
+  padding: clamp(4.8rem, 8vw, 7rem) 0 clamp(4rem, 8vw, 6rem);
+  color: var(--text-color);
+  background:
+    radial-gradient(circle at 14% 0%, rgba(137, 180, 250, 0.1), transparent 30rem),
+    radial-gradient(circle at 88% 8%, rgba(180, 190, 254, 0.08), transparent 28rem),
+    var(--background-color);
 }
 </style>

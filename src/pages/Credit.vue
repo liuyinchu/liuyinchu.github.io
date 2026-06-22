@@ -1,70 +1,25 @@
+<script setup>
+import MarkdownViewer from '../components/MarkdownViewer.vue'
+</script>
+
 <template>
-  <PageWrapper>
-    <BlockMarkdown :content="creditText" :useCJK="true" />
-  </PageWrapper>
+  <main class="markdown-project-page">
+    <MarkdownViewer
+      src="/markdown/pages/credit.md"
+      variant="page"
+      use-c-j-k
+    />
+  </main>
 </template>
 
-<script setup>
-import PageWrapper from '../components/common/PageWrapper.vue'
-import BlockMarkdown from '../components/common/BlockMarkdown.vue'
-import ImageBlock from '../components/common/ImageBlock.vue'
-import LinkButtons from '../components/common/LinkButtons.vue'
-
-const creditText = `
-# 致谢 & 版权
-
-本站是非盈利非商业的开源个人博客，网站的样式、设计和绝大部分功能都由我自己实现。
-
-*感谢以下项目、资源与灵感给予本站建设的重要支持！*
-
----
-
-## 技术支持
-
-- 核心框架：高效现代的前端开发框架 [Vue 3](https://vuejs.org/) + [Vite](https://vite.dev/)
-- Markdown ：渲染 [markdown-it](https://markdown-it.docschina.org/) + 公式支持 [MathJax](https://www.mathjax.org/)
-- 网站托管：本网站部署于 GitHub Pages
-- 颜色主题：[Catppuccin Mocha](https://catppuccin.com/)
-- 字体支持：[Google Fonts](https://fonts.google.com/) 和[霞鹜文楷](https://github.com/lxgw/LxgwWenKai)及其 [CDN](https://github.com/chawyehsu/lxgw-wenkai-webfont)
-
-**真的真的十分感谢以上的各个开源项目的支持！**
-
----
-
-## 灵感素材
-
-首先，感谢[网络邻居](/space2)中的各位提供网站构思与设计灵感上的支持。
-
-同时，本网站的构思与设计也参考了这些网站：
-- [CXPLAY World](https://blog.cxplay.org/)
-- [AirTouch](https://xsl.im/)
-- [柳下川](https://kawayww.com/)
-- [lhasa's Blog](https://lhasa.icu/)
-
-本网站采用了大量图片素材，其中有部分来自 PIXIV 和 BiliBili 的各位画师，他们是：
-- Osot-酒保（BiliBili）
-- Harukix（PIXIV）
-- Rafa（PIXIV）：[流萤的小裙子～](https://www.pixiv.net/artworks/118143641)、[午夜前的一刻](https://www.pixiv.net/artworks/115952605)
-- TID（PIXIV）：[在逃春天](https://www.pixiv.net/artworks/124928964)
-- Ekita玄（PIXIV）：[流萤](https://www.pixiv.net/artworks/119791514)
-- コーラ（PIXIV）：[蒼い星の夜明け](https://www.pixiv.net/artworks/48319254)
-
-以上，暂时未列出的各位我会**及时**补上。
-
-总之，我也非常感谢灵感和素材的提供者们！
-
----
-
-
-## 版权说明
-
-**首先，对于我使用的各种素材，如果您认为侵犯了您的版权，我诚恳地表达我所有的歉意，您可以通过页脚的联系方式告知我，我会第一时间删除相关资源并与您沟通后续处理事项。**
-
-接下来，关于这个网站的版权，基本按照 [MIT LICENSE](https://opensource.org/license/mit) 发布：
-- 前端代码：“Copyright (c) 2024 - 2025 LiuYinChu'Space 本软件可自由使用、复制、修改、分发，前提是保留原始版权声明。
-软件按‘原样’提供，不附带任何明示或暗示的担保。”
-- 原创图片：允许所有人以任意形式使用。
-- 原创文章与日志：“[CC BY-NC-ND 4.0 国际许可协议](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh-hans)，转载请务必注明出处，禁止商用及修改。”
-
-`
-</script>
+<style scoped>
+.markdown-project-page {
+  min-height: 100vh;
+  padding: clamp(4.8rem, 8vw, 7rem) 0 clamp(4rem, 8vw, 6rem);
+  color: var(--text-color);
+  background:
+    radial-gradient(circle at 14% 0%, rgba(137, 180, 250, 0.1), transparent 30rem),
+    radial-gradient(circle at 88% 8%, rgba(180, 190, 254, 0.08), transparent 28rem),
+    var(--background-color);
+}
+</style>
