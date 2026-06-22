@@ -12,11 +12,11 @@ const aboutLinks = [
     detail: 'Identity',
   },
   {
-    title: '我的学术',
+    title: '学术主页',
     eyebrow: 'Academic Work',
     index: '02',
-    to: '/academic',
-    desc: '进入学术记录、科研工具和后续继续整理的学习材料。',
+    to: '/research',
+    desc: '进入研究综述、学术脉络和通往学术名片页的入口。',
     detail: 'Research',
   },
   {
@@ -154,7 +154,7 @@ onBeforeUnmount(() => {
               <p class="eyebrow">ABOUT HUB</p>
               <h1 id="about-title">关于</h1>
               <p class="hero-lead">
-                这里是站主相关内容的入口页：自我介绍、学术内容和版权说明会在这里分流。
+                这里是站主相关内容的入口页：自我介绍、学术主页和版权说明会在这里分流。
               </p>
             </div>
 

@@ -41,6 +41,16 @@ const homeSections = [
     align: 'left'
   },
   {
+    id: 'research',
+    eyebrow: 'RESEARCH',
+    title: '学术主页',
+    description: '这里整理我的研究方向、学习脉络和学术工作的阶段性说明。',
+    image: '/bg/research.png',
+    cta: '进入学术主页',
+    to: '/research',
+    align: 'right'
+  },
+  {
     id: 'lounge',
     eyebrow: 'LOUNGE',
     title: '赛博会客厅',
@@ -48,17 +58,17 @@ const homeSections = [
     image: '/bg/skadi.jpeg',
     cta: '进入会客厅',
     to: '/space3',
-    align: 'right'
+    align: 'left'
   },
   {
     id: 'about',
     eyebrow: 'ABOUT',
     title: '关于',
-    description: '从这里进入自我介绍、我的学术和版权说明。',
+    description: '从这里进入自我介绍、学术主页和版权说明。',
     image: '/bg/IMG_FireFly.png',
     cta: '了解关于',
     to: '/about',
-    align: 'left'
+    align: 'right'
   }
 ]
 

@@ -112,8 +112,8 @@ const footerColumns = [
         title: '关于',
         to: '/about',
         links: [
-          { label: '自我介绍', to: '/about' },
-          { label: '我的学术', to: '/research' },
+          { label: '自我介绍', to: '/about/self' },
+          { label: '学术主页', to: '/research' },
           { label: '版权说明', to: '/credit' },
         ],
       },

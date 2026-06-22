@@ -1,38 +1,57 @@
-![name](/fig/name.svg){.name-logo}
+[![Shuyun Yang](/fig/name.svg){.name-logo}](/academic)
 
-### Welcome to my academic homepage !
+> 点击上方签名进入「我的学术」名片页。这里是更完整的学术主页，用来说明我的研究方向、学习脉络和当前关注的问题。
 
-I am Shuyun Yang, an undergraduate student majoring in physics. My research focuses on intelligent dynamical control. Currently, I am undertaking an internship in a laboratory specializing in ground-based simulation and dynamical control, where I am also completing my bachelor’s thesis.
+# 学术主页
 
-The "[My Academia](/academic)" page of this site summarizes my academic resume, research interests, and achievements. The "[Code](/code)" page shares my open-source projects, while "[Jottings](/space1)" contains my study notes and thoughts. Additionally, you can find other interesting content on the [homepage](https://liuyinchu.github.io/). Here, I hope to share more about the process of learning and research, rather than just showcasing the results (**of course, for confidentiality reasons, some content will not be made public, and I am very cautious about this**).
+我目前的学术兴趣主要集中在 **动力学控制、主动隔振、强化学习** 以及它们在高精度物理实验与空间引力波探测中的交叉应用。相比把学术主页做成一份简历，我更希望这里像一篇仍在持续更新的研究综述：既说明我正在学习和研究什么，也说明这些问题为什么值得投入。
 
-Overall, I am dedicated to a vibrant and passionate research field, focusing on **applying advanced intelligent technologies to dynamical control**, and promoting the development of data-driven methods. I hope to contribute to the field of **space-based gravitational wave detection**.
+## 研究主线
 
-## Learning
+我的核心关注可以概括为一句话：如何把更智能、更自适应的算法引入复杂动力学系统的控制问题中，同时保持对物理机制、系统结构和工程约束的尊重。
 
-My recent studies have primarily focused on building my knowledge base in two major areas: control theory and artificial intelligence.
+具体来说，我关注以下几类问题：
 
-In my studies in the field of control, I have completed a quick start, from signals and systems to automatic control principles and then to modern control theory.
+- **主动隔振与精密控制**：外界扰动无法完全消失，关键在于如何建模、测量并抑制它，让真正重要的信号尽可能稳定地显现出来。
+- **数据驱动动力学控制**：当系统模型并不完美、扰动来源复杂、目标指标彼此牵制时，数据驱动方法可以为传统控制设计提供新的补充。
+- **强化学习与控制理论结合**：我并不认为智能算法应当简单替代经典控制，而更希望探索它如何参与参数整定、策略搜索、多目标优化和复杂系统适应。
+- **空间引力波探测相关控制问题**：围绕天琴等空间科学任务，拖曳控制、地面模拟和低频扰动抑制都提出了非常严苛也很有挑战性的控制需求。
 
-I have currently learned and put the following into practice:
-- Basic feedback loop analysis
-- Classical PID controllers & time lag compensators and notch filters
-- Classical open-loop shaping methods
-- Optimal control, LQR, Kalman filtering & LQG
-- More advanced loop shaping techniques
+## 为什么是主动隔振
 
-In artificial intelligence, my current focus is on deep reinforcement learning.
+主动隔振可以用一个不太严格但直观的类比来理解：它有点像“降噪耳机”。外界始终存在扰动，系统也总会被环境影响，而控制的目标不是让世界安静下来，而是在一个并不安静的世界里，尽可能让目标对象保持稳定。
 
-I am also paying attention to the following advanced deep learning technologies:
+这类问题吸引我的地方在于，它同时具有理论性和工程性。它需要信号与系统、自动控制、现代控制、优化方法和数值仿真，也需要面对传感器噪声、执行器限制、模型误差、延迟、耦合和实际装置中的不完美。一个方案如果只在纸面上成立，往往还不够；它还要能在真实约束下工作。
 
-- Transformer
-- Diffusion Model
-- Flow Matching
+## 我正在补齐的知识结构
 
-You can find many of my insights on them on [this page](/space1).
+在控制方向上，我目前已经围绕以下内容建立基础，并在学习过程中做了若干笔记和推导：
 
-## Focusing
+- 信号与系统、反馈环路与频域分析
+- PID、超前滞后补偿、陷波滤波和经典开环整形
+- 状态空间、LQR、Kalman Filter 与 LQG
+- 输入输出增益、鲁棒性指标和更系统的 loop shaping 方法
+- 面向扰动抑制和主动隔振的建模、仿真与控制器设计
 
-My current research interests lie in applying advanced intelligent technologies to precision control, particularly ground-based ultra-low frequency active vibration isolation and drag-free space control technologies.
+在人工智能方向上，我当前尤其关注深度强化学习及其与控制问题的结合，同时也会持续观察 Transformer、Diffusion Model、Flow Matching 等模型范式对科学计算和工程工具链的潜在影响。
 
-Recently, I have been working on the Deep Loop Shaping technology proposed by LIGO in 2025.
+## 当前关注的问题
+
+近期我比较关注 Deep Loop Shaping 一类方法。它让我感兴趣的地方在于，它不是把控制系统完全交给一个黑箱，而是试图把传统 loop shaping 中对频域性能和结构的理解，与更强的优化和表示能力结合起来。
+
+对我来说，这一方向的关键问题包括：
+
+1. 如何让学习算法理解控制系统中的稳定性、鲁棒性和频域约束。
+2. 如何在性能提升与可解释性、可验证性之间取得平衡。
+3. 如何避免智能算法只在仿真中表现良好，却难以进入真实系统。
+4. 如何把传统控制设计中的经验，转化为可被算法利用的结构化先验。
+
+## 学术页面的分工
+
+这个页面会承担“详细说明”的功能：之后我会继续把研究问题、阅读笔记、方法综述和阶段性理解放在这里。
+
+而「[我的学术](/academic)」页面更像一张学术名片：它会以更概括、更展示性的方式呈现我的研究方向、当前身份、联系方式、经历和阶段性成果。你也可以点击页面最上方的签名进入那里。
+
+## 暂时的状态
+
+我仍处在持续学习和建立问题意识的阶段。这里的文字之后还会被重写、扩展和修正。当前版本只是一个结构化草稿，用来先把学术主页的定位、入口关系和内容层级搭起来。
