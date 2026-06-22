@@ -1,354 +1,838 @@
-<template>
-  <div class="about-page-wrapper">
-    <div class="ambient-background">
-      <div class="orb orb-1"></div>
-      <div class="orb orb-2"></div>
-      <div class="orb orb-3"></div>
-    </div>
-
-    <div class="content-container">
-      <section class="hero-section">
-        <h1 class="hero-title">
-          <span class="greeting">Hello, I'm LiuYinChu.</span>
-          <span class="highlight">Builder & Thinker.</span>
-        </h1>
-        <p class="hero-quote">
-          “技术不是工具箱，而是一种思考世界的方式。”
-        </p>
-      </section>
-
-      <section class="bento-grid">
-        
-        <div class="bento-card card-origin">
-          <h3>执拗的好奇心</h3>
-          <div class="card-text">
-            <p>
-              我对技术的兴趣并不来自某一次“入门”，而是<strong>长期、稳定、甚至有点执拗的好奇心</strong>。
-            </p>
-            <p>
-              我喜欢折腾计算机，喜欢写代码，喜欢把抽象的想法变成可以运行、可以交互、可以反复打磨的东西。对我来说，代码是逻辑的诗歌，是连接现实与想象的桥梁。
-            </p>
-          </div>
-        </div>
-
-        <div class="bento-card card-explorer">
-          <h3>拆解与重组</h3>
-          <div class="card-text">
-            <p>
-              我对 AI 工具、新技术和开放生态保持<strong>高度敏感</strong>。
-            </p>
-            <p>
-              我不满足于“会用”，我更想知道它为什么这样设计？还能不能更优雅？在不同场景下会发生什么偏差？我享受这种不断逼近本质、同时又保留实验空间的过程。
-            </p>
-          </div>
-        </div>
-
-        <div class="bento-card card-engineer">
-          <h3>工程实用主义</h3>
-          <div class="card-text">
-            <p>
-              相比宏大叙事，我更在意<strong>具体问题是否被真正解决</strong>。
-            </p>
-            <p>
-              相比“正确答案”，我更相信可验证、可迭代的方案。让复杂系统保持可控，本身就是一件值得投入的事情。
-            </p>
-          </div>
-        </div>
-
-        <div class="bento-card card-garden">
-          <div class="garden-content">
-            <h3>正在生长中...</h3>
-            <p>
-              这个网站是我的个人空间，用来记录想法、项目、实验和偶尔成型的结论。如果你在这里看到某些尚未完成、甚至有点粗糙的内容，<strong>那通常不是疏忽，而是它们正处在生长中。</strong>
-            </p>
-          </div>
-          <div class="growth-indicator">
-            <div class="bar"></div>
-          </div>
-        </div>
-
-      </section>
-    </div>
-  </div>
-</template>
-
 <script setup>
-// 无需额外逻辑，纯粹的展示组件
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+
+const chapters = [
+  {
+    index: '壹',
+    eyebrow: 'Identity Without Label',
+    title: '不必急着定义',
+    seal: '关于我',
+    image: '/bg/liuyin.jpg',
+    imageAlt: '个人空间背景图',
+    accent: 'jade',
+    paragraphs: [
+      '我不太喜欢用一个固定标签来概括自己。',
+      '如果一定要说，我大概是一个喜欢探索复杂问题的人。有时通过科研，有时通过编程，有时通过数据分析，有时通过写作、开源和工具折腾。对我来说，这些不是彼此分开的身份，而是几种不同的方式：用来理解世界，整理问题，创造工具，也记录自己正在经历的思考。',
+    ],
+  },
+  {
+    index: '贰',
+    eyebrow: 'Between Theory And Reality',
+    title: '在张力中工作',
+    seal: '结构',
+    image: '/bg/thinking_and_writing.png',
+    imageAlt: '思考与写作视觉图',
+    accent: 'porcelain',
+    paragraphs: [
+      '我喜欢有挑战、有意思、不太枯燥的事情。一个问题如果太简单，往往少了些张力；如果完全没有落地的可能，又容易变得悬浮。',
+      '我比较享受的是那种介于理论、工程和现实之间的工作：既要想得清楚，也要做得出来；既要有结构，也要能接受真实世界的复杂和不完美。',
+    ],
+  },
+  {
+    index: '叁',
+    eyebrow: 'Control, Isolation, Learning',
+    title: '让重要信号被听见',
+    seal: '控制',
+    image: '/bg/research.png',
+    imageAlt: '研究主题视觉图',
+    accent: 'ink',
+    paragraphs: [
+      '我的研究兴趣主要在动力学控制、主动隔振和强化学习一带。用不太专业的话说，主动隔振有点像“降噪耳机”的原理：外界总有扰动，系统总会被影响，而我们希望通过建模、测量和控制，让真正重要的信号尽可能被听见。',
+      '更具体的研究经历，我可能会放在专门的学术页面里；而在这里，我更想谈谈这些事情如何影响我理解问题的方式。',
+    ],
+  },
+  {
+    index: '肆',
+    eyebrow: 'Code, Open Source, Data',
+    title: '把经验做成工具',
+    seal: '工具',
+    image: '/bg/open.jpeg',
+    imageAlt: '开放空间视觉图',
+    accent: 'cinnabar',
+    paragraphs: [
+      '研究之外，我也热爱编程、开源和数据分析。写代码对我来说不只是实现功能，也是一种整理思路的方式。',
+      '一个好的工具，应该让人少做重复劳动；一个好的分析，应该让混杂的信息露出结构；一个好的开源项目，应该让个人经验变成可以被他人复用和改进的公共材料。相比只把事情做完，我更在意它是否优雅、有用、有趣、可复用。',
+    ],
+  },
+  {
+    index: '伍',
+    eyebrow: 'Aesthetics And Philosophy',
+    title: '好看也是一种秩序',
+    seal: '审美',
+    image: '/bg/philosophy_and_writing.png',
+    imageAlt: '哲学与写作视觉图',
+    accent: 'gold',
+    paragraphs: [
+      '我也逐渐发现，自己对“好看”这件事很认真。这里的好看不只是装饰意义上的漂亮，而是包括排版、界面、颜色、结构、节奏、材质、交互和整体气质。',
+      '无论是搭建博客、整理笔记、设计页面、调试工具链，还是折腾电子产品和工作流，我都会忍不住想：它能不能更清楚一点，更顺手一点，更耐看一点？',
+      '我把哲学理解成一种姿态，而不只是某个学科名称。它意味着保留追问的能力，也意味着不急着把自己封闭成一个确定答案。',
+    ],
+  },
+  {
+    index: '陆',
+    eyebrow: 'A Growing Place',
+    title: '长期生长的地方',
+    seal: '日常',
+    image: '/bg/visitor.jpeg',
+    imageAlt: '访客空间视觉图',
+    accent: 'bamboo',
+    paragraphs: [
+      '这个博客大概也是这种状态的延伸。',
+      '这里可能会有科研与技术笔记，也可能有编程、开源、数据分析、工具效率、设计审美、电子产品、生活观察和哲学思考。有些内容会比较系统，有些内容可能只是我在某个阶段刚好觉得有意思、值得记录、想分享出来。',
+      '我欣赏“庸德之行，庸言之谨”这样的态度。把日常之事认真做好，说话有分寸，做事尽量可靠，情绪尽量稳定；不把自己说得太满，也不把普通生活看得太轻。',
+      '如果你在这里看到某些内容，刚好觉得有意思、聊得来，或者觉得我们也许可以一起做点什么，那可能就是一种缘分。欢迎随意看看，也欢迎在合适的时候来交流。',
+    ],
+  },
+]
+
+const pageIdx = ref(0)
+const direction = ref('down')
+const transitioning = ref(false)
+const selfRef = ref(null)
+const transitionName = computed(() => (direction.value === 'down' ? 'scroll-leaf-up' : 'scroll-leaf-down'))
+const currentChapter = computed(() => chapters[pageIdx.value])
+const pageNumber = computed(() => String(pageIdx.value + 1).padStart(2, '0'))
+const totalPages = String(chapters.length).padStart(2, '0')
+
+let touchX = 0
+let touchY = 0
+let originalHtmlOverflow = ''
+let originalBodyOverflow = ''
+
+function step(delta) {
+  if (transitioning.value) return
+
+  const next = pageIdx.value + delta
+  if (next < 0 || next >= chapters.length) return
+
+  direction.value = delta > 0 ? 'down' : 'up'
+  transitioning.value = true
+  pageIdx.value = next
+  window.setTimeout(() => {
+    transitioning.value = false
+  }, 560)
+}
+
+function goTo(idx) {
+  if (idx === pageIdx.value || transitioning.value) return
+  direction.value = idx > pageIdx.value ? 'down' : 'up'
+  transitioning.value = true
+  pageIdx.value = idx
+  window.setTimeout(() => {
+    transitioning.value = false
+  }, 560)
+}
+
+function onWheel(event) {
+  if (Math.abs(event.deltaY) < 12) return
+  event.preventDefault()
+  step(event.deltaY > 0 ? 1 : -1)
+}
+
+function onKey(event) {
+  if (['ArrowDown', 'PageDown', ' '].includes(event.key)) {
+    event.preventDefault()
+    step(1)
+  }
+
+  if (['ArrowUp', 'PageUp'].includes(event.key)) {
+    event.preventDefault()
+    step(-1)
+  }
+}
+
+function onTouchStart(event) {
+  const touch = event.changedTouches[0]
+  touchX = touch.clientX
+  touchY = touch.clientY
+}
+
+function onTouchEnd(event) {
+  const touch = event.changedTouches[0]
+  const dx = touch.clientX - touchX
+  const dy = touch.clientY - touchY
+
+  if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 34) {
+    step(dy < 0 ? 1 : -1)
+  }
+}
+
+onMounted(() => {
+  originalHtmlOverflow = document.documentElement.style.overflow
+  originalBodyOverflow = document.body.style.overflow
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
+  window.requestAnimationFrame(() => selfRef.value?.focus())
+})
+
+onBeforeUnmount(() => {
+  document.documentElement.style.overflow = originalHtmlOverflow
+  document.body.style.overflow = originalBodyOverflow
+})
 </script>
 
+<template>
+  <main
+    ref="selfRef"
+    class="self-page"
+    aria-labelledby="self-title"
+    tabindex="0"
+    @wheel="onWheel"
+    @keydown="onKey"
+    @touchstart.passive="onTouchStart"
+    @touchend.passive="onTouchEnd"
+  >
+    <div class="paper-grain" aria-hidden="true"></div>
+    <div class="silk-grid" aria-hidden="true"></div>
+
+    <RouterLink class="back-link" to="/about">关于</RouterLink>
+
+    <div class="chapter-stage">
+      <Transition :name="transitionName" mode="out-in">
+        <section
+          :key="currentChapter.index"
+          class="chapter-panel"
+          :class="`chapter-panel--${currentChapter.accent}`"
+          :aria-label="currentChapter.title"
+        >
+          <div class="chapter-copy">
+            <p class="chapter-eyebrow">{{ currentChapter.eyebrow }}</p>
+            <div class="title-row">
+              <span class="chapter-index">{{ currentChapter.index }}</span>
+              <h1 id="self-title">{{ currentChapter.title }}</h1>
+            </div>
+            <div class="chapter-text">
+              <p
+                v-for="paragraph in currentChapter.paragraphs"
+                :key="paragraph"
+              >
+                {{ paragraph }}
+              </p>
+            </div>
+          </div>
+
+          <aside class="artifact-field" aria-label="页面视觉材料">
+            <figure class="image-slab">
+              <img
+                :src="currentChapter.image"
+                :alt="currentChapter.imageAlt"
+                loading="eager"
+              >
+            </figure>
+            <div class="material-plate">
+              <span class="seal-mark">{{ currentChapter.seal }}</span>
+              <span class="plate-line"></span>
+              <span class="plate-copy">LiuYinChu'Space</span>
+            </div>
+            <div class="chapter-stone" aria-hidden="true">
+              <span>{{ pageNumber }}</span>
+            </div>
+          </aside>
+        </section>
+      </Transition>
+    </div>
+
+    <nav class="chapter-controls" aria-label="自我介绍分页">
+      <button
+        class="page-arrow"
+        type="button"
+        :disabled="pageIdx === 0"
+        aria-label="上一页"
+        @click="step(-1)"
+      >
+        ↑
+      </button>
+      <div class="page-track">
+        <button
+          v-for="(chapter, idx) in chapters"
+          :key="chapter.index"
+          class="track-node"
+          :class="{ active: idx === pageIdx }"
+          type="button"
+          :aria-label="`前往第 ${idx + 1} 页`"
+          @click="goTo(idx)"
+        >
+          <span>{{ chapter.index }}</span>
+        </button>
+      </div>
+      <button
+        class="page-arrow"
+        type="button"
+        :disabled="pageIdx === chapters.length - 1"
+        aria-label="下一页"
+        @click="step(1)"
+      >
+        ↓
+      </button>
+      <span class="page-count">{{ pageNumber }} / {{ totalPages }}</span>
+    </nav>
+  </main>
+</template>
+
 <style scoped>
-/* =========================================
-   0. 容器与重置 (Scope Isolation)
-   ========================================= */
-.about-page-wrapper {
+.self-page {
+  --ink: #11111b;
+  --paper: #f2ead8;
+  --paper-soft: rgba(242, 234, 216, 0.08);
+  --jade: #94e2d5;
+  --porcelain: #89dceb;
+  --cinnabar: #f38ba8;
+  --bamboo: #a6e3a1;
+  --gold: #f9e2af;
+  --line: rgba(242, 234, 216, 0.14);
   position: relative;
-  min-height: 100vh;
-  width: 100%;
-  overflow-x: hidden;
-  padding: 6rem 2rem 4rem; /* 避开 Fixed Header */
-  color: var(--text-color);
-  font-family: 'Inter', "LXGW WenKai", sans-serif;
-  box-sizing: border-box;
-}
-
-.content-container {
-  position: relative;
-  max-width: 1000px;
-  margin: 0 auto;
-  z-index: 2; /* 确保在背景之上 */
-}
-
-/* =========================================
-   1. 动态背景 (Ambient Orbs)
-   ========================================= */
-.ambient-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
+  height: calc(100svh - 72px);
   overflow: hidden;
+  isolation: isolate;
+  color: var(--ctp-mocha-text);
+  outline: none;
+  background:
+    linear-gradient(120deg, rgba(242, 234, 216, 0.05), transparent 28%),
+    linear-gradient(180deg, #0d0e18 0%, var(--ctp-mocha-crust) 44%, #151320 100%);
+  font-family: 'Inter', 'LXGW WenKai', sans-serif;
 }
 
-.orb {
+.paper-grain,
+.silk-grid {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.4;
-  animation: floatOrb 20s infinite ease-in-out;
+  inset: 0;
+  pointer-events: none;
 }
 
-/* 即使在暗色模式下也通透的配色 */
-.orb-1 {
-  width: 400px;
-  height: 400px;
-  background: var(--primary-color);
-  top: -10%;
-  left: -10%;
-  animation-delay: 0s;
+.paper-grain {
+  z-index: -3;
+  opacity: 0.34;
+  background:
+    repeating-linear-gradient(100deg, rgba(242, 234, 216, 0.035) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(12deg, transparent 0 9px, rgba(137, 180, 250, 0.025) 9px 10px);
 }
 
-.orb-2 {
-  width: 300px;
-  height: 300px;
-  background: #9d7cd8; /* Catppuccin Mauve 近似色 */
-  bottom: 10%;
-  right: -5%;
-  animation-delay: -5s;
+.silk-grid {
+  z-index: -2;
+  background:
+    linear-gradient(rgba(242, 234, 216, 0.052) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242, 234, 216, 0.045) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.68), transparent 78%);
 }
 
-.orb-3 {
-  width: 250px;
-  height: 250px;
-  background: #f5a97f; /* Catppuccin Peach 近似色 */
-  top: 40%;
-  left: 30%;
-  opacity: 0.2;
-  animation-delay: -10s;
-}
-
-@keyframes floatOrb {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-}
-
-/* =========================================
-   2. Hero 区域
-   ========================================= */
-.hero-section {
-  text-align: left;
-  margin-bottom: 4rem;
-  animation: fadeInUp 0.8s ease-out;
-}
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.hero-title .greeting {
-  color: var(--ctp-mocha-subtext1, #bacad9);
-  font-size: 2rem;
-  font-weight: 500;
-}
-
-.hero-title .highlight {
-  background: linear-gradient(135deg, var(--text-color) 30%, var(--primary-color));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.hero-quote {
-  font-size: 1.25rem;
-  color: var(--ctp-mocha-overlay2, #9399b2);
-  font-style: italic;
-  padding-left: 1rem;
-  border-left: 4px solid var(--primary-color);
-  max-width: 600px;
-}
-
-/* =========================================
-   3. Bento Grid 布局系统
-   ========================================= */
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: auto auto; /* 让高度自适应 */
-  gap: 1.5rem;
-}
-
-/* 通用卡片样式 */
-.bento-card {
-  background: rgba(var(--ctp-mocha-base-rgb), 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  padding: 2rem;
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-/* Hover 效果 */
-.bento-card:hover {
-  transform: translateY(-5px);
-  background: rgba(var(--ctp-mocha-base-rgb), 0.6);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* 卡片内部排版 */
-.card-icon {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.bento-card h3 {
-  font-size: 1.4rem;
+.back-link {
+  position: absolute;
+  top: clamp(1.1rem, 3vw, 2rem);
+  left: clamp(1rem, 4vw, 3rem);
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0 0.9rem;
+  border: 1px solid rgba(242, 234, 216, 0.16);
+  border-radius: 999px;
+  color: rgba(242, 234, 216, 0.78);
+  background: rgba(17, 17, 27, 0.48);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.78rem;
   font-weight: 700;
-  margin-bottom: 1rem;
-  color: var(--text-color);
+  letter-spacing: 0.12em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 
-.card-text {
-  font-size: 1rem;
-  line-height: 1.7;
-  color: var(--ctp-mocha-subtext0);
+.back-link:hover,
+.back-link:focus-visible {
+  border-color: rgba(148, 226, 213, 0.44);
+  color: var(--jade);
+  background: rgba(49, 50, 68, 0.58);
+  outline: none;
+  transform: translateY(-2px);
 }
 
-.card-text p {
-  margin-bottom: 1rem;
-}
-
-.card-text strong {
-  color: var(--primary-color);
-  font-weight: 600;
-}
-
-/* --- 栅格分配 (Responsive) --- */
-
-/* 卡片 A: 执拗的好奇心 (左侧大块, 跨7列) */
-.card-origin {
-  grid-column: span 7;
-  animation: fadeInUp 0.8s ease-out 0.1s backwards;
-}
-
-/* 卡片 B: 探索者 (右侧上方, 跨5列) */
-.card-explorer {
-  grid-column: span 5;
-  background: rgba(var(--ctp-mocha-surface0-rgb), 0.3); /* 稍微深一点 */
-  animation: fadeInUp 0.8s ease-out 0.2s backwards;
-}
-
-/* 卡片 C: 工程师 (左侧下方, 跨5列) */
-.card-engineer {
-  grid-column: span 5;
-  animation: fadeInUp 0.8s ease-out 0.3s backwards;
-}
-
-/* 卡片 D: 花园 (右侧下方, 跨7列) */
-.card-garden {
-  grid-column: span 7;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border: 1px dashed rgba(255, 255, 255, 0.2); /* 虚线边框暗示“未完成” */
-  animation: fadeInUp 0.8s ease-out 0.4s backwards;
-}
-
-/* 进度条装饰 */
-.growth-indicator {
-  width: 100%;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  margin-top: 1rem;
+.chapter-stage {
+  position: relative;
+  height: 100%;
   overflow: hidden;
 }
 
-.growth-indicator .bar {
-  width: 65%; /* 模拟进度 */
+.chapter-panel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.78fr);
+  gap: clamp(1.4rem, 5vw, 5.2rem);
+  align-items: center;
+  box-sizing: border-box;
+  padding:
+    clamp(4.4rem, 9vh, 6.4rem)
+    clamp(1.25rem, 7vw, 6.8rem)
+    clamp(5.6rem, 10vh, 7rem);
+}
+
+.chapter-panel--jade { --chapter-accent: var(--jade); --chapter-shadow: rgba(148, 226, 213, 0.22); }
+.chapter-panel--porcelain { --chapter-accent: var(--porcelain); --chapter-shadow: rgba(137, 220, 235, 0.2); }
+.chapter-panel--ink { --chapter-accent: var(--ctp-mocha-blue); --chapter-shadow: rgba(137, 180, 250, 0.22); }
+.chapter-panel--cinnabar { --chapter-accent: var(--cinnabar); --chapter-shadow: rgba(243, 139, 168, 0.2); }
+.chapter-panel--gold { --chapter-accent: var(--gold); --chapter-shadow: rgba(249, 226, 175, 0.18); }
+.chapter-panel--bamboo { --chapter-accent: var(--bamboo); --chapter-shadow: rgba(166, 227, 161, 0.18); }
+
+.chapter-copy {
+  position: relative;
+  max-width: 54rem;
+}
+
+.chapter-copy::before {
+  content: '';
+  position: absolute;
+  top: -1.5rem;
+  left: 0;
+  width: clamp(4rem, 10vw, 9rem);
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--chapter-accent), transparent);
+  box-shadow: 0 0 24px var(--chapter-shadow);
+}
+
+.chapter-eyebrow,
+.chapter-index,
+.seal-mark,
+.plate-copy,
+.page-count,
+.track-node,
+.page-arrow {
+  font-family: 'Fira Code', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chapter-eyebrow {
+  margin: 0 0 1rem;
+  color: var(--chapter-accent);
+  font-size: clamp(0.72rem, 1.2vw, 0.86rem);
+  font-weight: 800;
+}
+
+.title-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: clamp(1rem, 2.5vw, 1.8rem);
+  align-items: start;
+  margin-bottom: clamp(1.2rem, 3vw, 2rem);
+}
+
+.chapter-index {
+  display: inline-grid;
+  width: clamp(3.2rem, 7vw, 5.3rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(242, 234, 216, 0.18);
+  border-radius: 34% 66% 52% 48% / 52% 36% 64% 48%;
+  color: var(--ink);
+  background:
+    linear-gradient(145deg, rgba(242, 234, 216, 0.98), rgba(205, 214, 244, 0.72)),
+    var(--paper);
+  box-shadow:
+    0 22px 54px rgba(0, 0, 0, 0.30),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.52),
+    inset -8px -10px 20px rgba(17, 17, 27, 0.18);
+  font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+  font-weight: 900;
+}
+
+h1 {
+  margin: 0;
+  color: rgba(242, 234, 216, 0.94);
+  font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
+  font-size: clamp(2.55rem, 7vw, 6.3rem);
+  font-weight: 900;
+  line-height: 0.98;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.chapter-text {
+  display: grid;
+  gap: clamp(0.78rem, 1.8vh, 1.15rem);
+  max-width: 47rem;
+}
+
+.chapter-text p {
+  margin: 0;
+  color: rgba(205, 214, 244, 0.86);
+  font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
+  font-size: clamp(0.96rem, 1.45vw, 1.13rem);
+  font-weight: 560;
+  line-height: 1.88;
+}
+
+.artifact-field {
+  position: relative;
+  min-height: clamp(26rem, 58vh, 38rem);
+  perspective: 1200px;
+}
+
+.image-slab {
+  position: absolute;
+  inset: clamp(0.8rem, 2vw, 1.2rem) 0 auto auto;
+  width: min(82%, 31rem);
+  aspect-ratio: 4 / 5;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(242, 234, 216, 0.16);
+  border-radius: 28px;
+  background: rgba(24, 24, 37, 0.72);
+  box-shadow:
+    0 34px 80px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: rotateY(-13deg) rotateX(5deg) rotateZ(1deg);
+  transform-origin: center;
+}
+
+.image-slab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(140deg, rgba(242, 234, 216, 0.22), transparent 28%),
+    linear-gradient(180deg, transparent 54%, rgba(17, 17, 27, 0.50));
+  pointer-events: none;
+}
+
+.image-slab img {
+  display: block;
+  width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, var(--primary-color), #a6e3a1);
-  border-radius: 3px;
-  animation: shimmer 2s infinite linear;
-  background-size: 200% 100%;
+  object-fit: cover;
+  filter: saturate(0.82) contrast(0.96) brightness(0.78);
+  transform: scale(1.04);
 }
 
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.material-plate {
+  position: absolute;
+  right: min(40%, 12rem);
+  bottom: clamp(1.6rem, 5vh, 4rem);
+  display: grid;
+  gap: 0.72rem;
+  width: min(58%, 18rem);
+  padding: 1.15rem;
+  border: 1px solid rgba(242, 234, 216, 0.20);
+  border-radius: 24px;
+  color: var(--ink);
+  background:
+    linear-gradient(145deg, rgba(242, 234, 216, 0.92), rgba(205, 214, 244, 0.72));
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.38),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.72),
+    inset -10px -12px 24px rgba(17, 17, 27, 0.16);
+  transform: rotateY(18deg) rotateX(8deg) rotateZ(-4deg);
 }
 
-/* =========================================
-   4. 移动端适配 (Mobile Response)
-   ========================================= */
-@media (max-width: 900px) {
-  .hero-title {
-    font-size: 2.5rem;
-  }
-  
-  .bento-grid {
-    grid-template-columns: 1fr; /* 单列模式 */
-    gap: 1.5rem;
-  }
-  
-  .card-origin,
-  .card-explorer,
-  .card-engineer,
-  .card-garden {
-    grid-column: span 1; /* 全部占满一行 */
+.seal-mark {
+  color: #4f1f2a;
+  font-family: 'LXGW WenKai', serif;
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.plate-line {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(79, 31, 42, 0.55), transparent);
+}
+
+.plate-copy {
+  color: rgba(17, 17, 27, 0.64);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.chapter-stone {
+  position: absolute;
+  left: clamp(0.6rem, 4vw, 3rem);
+  top: clamp(3rem, 9vh, 6rem);
+  display: grid;
+  width: clamp(5.8rem, 12vw, 9rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(242, 234, 216, 0.16);
+  border-radius: 36% 64% 42% 58% / 54% 42% 58% 46%;
+  color: rgba(242, 234, 216, 0.92);
+  background:
+    linear-gradient(145deg, rgba(49, 50, 68, 0.96), rgba(17, 17, 27, 0.82));
+  box-shadow:
+    0 28px 72px rgba(0, 0, 0, 0.42),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.08),
+    inset -12px -14px 30px rgba(0, 0, 0, 0.24);
+  transform: rotateY(-22deg) rotateX(14deg) rotateZ(9deg);
+}
+
+.chapter-stone span {
+  color: var(--chapter-accent);
+  font-family: 'Cinzel', 'Fira Code', serif;
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  font-weight: 900;
+}
+
+.chapter-controls {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1rem, 3vh, 1.9rem);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: auto minmax(10rem, 23rem) auto auto;
+  gap: 0.7rem;
+  align-items: center;
+  transform: translateX(-50%);
+}
+
+.page-track {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.35rem;
+  border: 1px solid rgba(242, 234, 216, 0.14);
+  border-radius: 999px;
+  background: rgba(17, 17, 27, 0.56);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.30);
+}
+
+.track-node,
+.page-arrow {
+  border: 1px solid rgba(242, 234, 216, 0.14);
+  color: rgba(242, 234, 216, 0.76);
+  background: rgba(49, 50, 68, 0.44);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.track-node {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.track-node.active {
+  border-color: rgba(242, 234, 216, 0.32);
+  color: var(--ink);
+  background: linear-gradient(145deg, var(--chapter-accent), rgba(242, 234, 216, 0.84));
+  box-shadow: 0 0 24px var(--chapter-shadow);
+}
+
+.track-node:not(.active):hover,
+.track-node:focus-visible,
+.page-arrow:not(:disabled):hover,
+.page-arrow:focus-visible {
+  border-color: rgba(148, 226, 213, 0.34);
+  color: var(--jade);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.page-arrow {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.page-arrow:disabled {
+  cursor: default;
+  opacity: 0.36;
+}
+
+.page-count {
+  min-width: 4.8rem;
+  color: rgba(242, 234, 216, 0.62);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.scroll-leaf-up-enter-from {
+  opacity: 0;
+  transform: translateY(58px) rotateX(-7deg) scale(0.986);
+  filter: blur(10px);
+}
+
+.scroll-leaf-up-enter-active,
+.scroll-leaf-up-leave-active,
+.scroll-leaf-down-enter-active,
+.scroll-leaf-down-leave-active {
+  transition:
+    opacity 0.56s ease,
+    transform 0.56s cubic-bezier(0.18, 0.9, 0.1, 1.16),
+    filter 0.56s ease;
+}
+
+.scroll-leaf-up-leave-to {
+  opacity: 0;
+  transform: translateY(-58px) rotateX(7deg) scale(0.986);
+  filter: blur(10px);
+}
+
+.scroll-leaf-down-enter-from {
+  opacity: 0;
+  transform: translateY(-58px) rotateX(7deg) scale(0.986);
+  filter: blur(10px);
+}
+
+.scroll-leaf-down-leave-to {
+  opacity: 0;
+  transform: translateY(58px) rotateX(-7deg) scale(0.986);
+  filter: blur(10px);
+}
+
+@media (max-width: 980px) {
+  .chapter-panel {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    align-content: center;
+    padding:
+      clamp(4.6rem, 9vh, 5.4rem)
+      clamp(1.1rem, 5vw, 2rem)
+      clamp(5.2rem, 10vh, 6rem);
   }
 
-  .about-page-wrapper {
-    padding: 6rem 1.5rem 2rem;
+  .chapter-copy {
+    max-width: none;
+  }
+
+  .artifact-field {
+    min-height: clamp(12rem, 26vh, 18rem);
+    order: -1;
+  }
+
+  .image-slab {
+    right: 0;
+    width: min(46vw, 14rem);
+    aspect-ratio: 1.15;
+    border-radius: 22px;
+  }
+
+  .material-plate {
+    right: auto;
+    left: 0;
+    bottom: 0.4rem;
+    width: min(52vw, 15rem);
+    padding: 0.88rem;
+  }
+
+  .chapter-stone {
+    top: 0;
+    left: 50%;
+    width: clamp(4.6rem, 17vw, 6.4rem);
   }
 }
 
-/* =========================================
-   5. 通用动画
-   ========================================= */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
+@media (max-width: 640px) {
+  .self-page {
+    height: calc(100svh - 68px);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .back-link {
+    min-height: 2.15rem;
+    padding: 0 0.76rem;
+    font-size: 0.68rem;
+  }
+
+  .chapter-panel {
+    padding: 4.15rem 1rem 5.6rem;
+  }
+
+  .title-row {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .chapter-index {
+    width: 3.2rem;
+    font-size: 1.2rem;
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 13vw, 3.4rem);
+  }
+
+  .chapter-text {
+    gap: 0.62rem;
+  }
+
+  .chapter-text p {
+    font-size: 0.92rem;
+    line-height: 1.72;
+  }
+
+  .artifact-field {
+    min-height: 9.6rem;
+  }
+
+  .image-slab {
+    width: 42vw;
+    border-radius: 18px;
+  }
+
+  .material-plate {
+    width: 52vw;
+    border-radius: 18px;
+  }
+
+  .seal-mark {
+    font-size: 1.42rem;
+  }
+
+  .chapter-controls {
+    grid-template-columns: auto minmax(8rem, 1fr) auto;
+    width: calc(100% - 1.5rem);
+    gap: 0.48rem;
+  }
+
+  .page-track {
+    justify-content: center;
+  }
+
+  .track-node {
+    width: 1.72rem;
+    height: 1.72rem;
+    font-size: 0.64rem;
+  }
+
+  .page-arrow {
+    width: 2.18rem;
+    height: 2.18rem;
+  }
+
+  .page-count {
+    display: none;
+  }
+}
+
+@media (max-width: 390px) {
+  .artifact-field {
+    display: none;
+  }
+
+  .chapter-panel {
+    align-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-leaf-up-enter-active,
+  .scroll-leaf-up-leave-active,
+  .scroll-leaf-down-enter-active,
+  .scroll-leaf-down-leave-active,
+  .track-node,
+  .page-arrow,
+  .back-link {
+    transition: opacity 0.2s ease;
   }
 }
 </style>
