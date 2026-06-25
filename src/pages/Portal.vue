@@ -71,6 +71,15 @@ const quickLinks = [
   { name: 'ipinfo', url: 'https://ipinfo.io/what-is-my-ip' },
 ]
 
+const resourceSearchSources = [
+  { id: 'literature', label: '文献', file: 'literature.json', path: '/rliterature' },
+  { id: 'programming', label: '编程', file: 'programming.json', path: '/rprogramming' },
+  { id: 'computer', label: '计算机', file: 'computer.json', path: '/rcomputer' },
+  { id: 'materials', label: '资料', file: 'materials.json', path: '/rmaterials' },
+  { id: 'tools', label: '工具', file: 'tools.json', path: '/rtools' },
+  { id: 'files', label: '文件', file: 'files.json', path: '/rfiles' },
+]
+
 const defaultSpotlightLinks = [
   {
     name: '首页',
@@ -102,10 +111,10 @@ const defaultSpotlightLinks = [
   },
   {
     name: '赛博会客厅',
-    path: '/space2',
-    hint: '朋友们与访客空间',
+    path: '/space3',
+    hint: '访客中心、网络邻居与开放空间中枢',
     category: '核心入口',
-    keywords: ['friends', 'guest', 'space2'],
+    keywords: ['lounge', 'visitor', 'friends', 'guest', 'space3'],
   },
   {
     name: '关于',
@@ -119,18 +128,39 @@ const defaultSpotlightLinks = [
 const fallbackSearchItems = [
   ...defaultSpotlightLinks,
   {
-    name: '我的学术',
+    name: '访客中心',
+    path: '/visitor-center',
+    hint: '访客信息、IP 定位和访客地球仪',
+    category: '赛博会客厅',
+    keywords: ['visitor', 'ip', 'globe', 'guest'],
+  },
+  {
+    name: '网络邻居',
+    path: '/space2',
+    hint: '朋友们的个人站点与友链街区',
+    category: '赛博会客厅',
+    keywords: ['friends', 'neighbor', 'links', 'space2'],
+  },
+  {
+    name: '自我介绍',
+    path: '/about/self',
+    hint: '站主自我介绍和个人页面',
+    category: '关于',
+    keywords: ['self', 'intro', 'profile'],
+  },
+  {
+    name: '学术主页',
     path: '/research',
-    hint: '学术主页、研究方向与相关链接',
+    hint: '研究综述、学术脉络和学术名片入口',
     category: '关于',
     keywords: ['research', 'academic', 'scholar'],
   },
   {
-    name: '个人学术简历',
+    name: '我的学术',
     path: '/academic',
-    hint: '个人学术经历与简历入口',
+    hint: '由 JSON 和 Markdown 驱动的学术名片 deck',
     category: '关于',
-    keywords: ['cv', 'resume', 'academic'],
+    keywords: ['cv', 'resume', 'academic', 'deck'],
   },
   {
     name: '版权说明',
@@ -155,7 +185,7 @@ const fallbackSearchItems = [
   },
   {
     name: '计算机',
-    path: '/rcs',
+    path: '/rcomputer',
     hint: '计算机科学与相关学习资源',
     category: '资源链接',
     keywords: ['computer science', 'cs', 'algorithm'],
@@ -189,6 +219,27 @@ const fallbackSearchItems = [
     keywords: ['lab', 'report', 'experiment'],
   },
   {
+    name: 'Ysy Data Analysis Helper',
+    path: '/ysy-data-analysis-helper',
+    hint: '个人实验数据分析工具',
+    category: '代码与项目',
+    keywords: ['data analysis', 'python', 'project'],
+  },
+  {
+    name: 'Brisk Nexus',
+    path: '/brisk-nexus',
+    hint: '个人小巧思合集',
+    category: '代码与项目',
+    keywords: ['brisk', 'nexus', 'toy'],
+  },
+  {
+    name: 'Cyber Match',
+    path: '/cyber-match',
+    hint: 'Cyber Match Vue 游戏',
+    category: '代码与项目',
+    keywords: ['game', 'vue', 'cyber match'],
+  },
+  {
     name: 'Portal',
     path: '/portal',
     hint: 'macOS 风格桌面入口与常用工具',
@@ -220,10 +271,11 @@ const normalizedSearchItems = computed(() => {
 const filteredSpotlightLinks = computed(() => {
   const terms = normalizeText(spotlightQuery.value).split(/\s+/).filter(Boolean)
 
-  if (!terms.length) return defaultSpotlightLinks
+  if (!terms.length) return defaultSpotlightLinks.map(normalizeSearchItem)
 
   return normalizedSearchItems.value
     .filter((item) => terms.every((term) => item.searchText.includes(term)))
+    .sort((a, b) => scoreSearchItem(b, terms) - scoreSearchItem(a, terms))
     .slice(0, 12)
 })
 
@@ -241,27 +293,165 @@ function normalizeText(value) {
   return String(value ?? '').toLowerCase().trim()
 }
 
+function compactText(value, maxLength = 96) {
+  const text = String(value ?? '')
+    .replace(/!\[[^\]]*]\([^)]*\)/g, ' ')
+    .replace(/\[[^\]]+]\([^)]*\)/g, (match) => match.replace(/^\[|\]\([^)]*\)$/g, ''))
+    .replace(/[#>*_`|~-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (text.length <= maxLength) return text
+  return `${text.slice(0, maxLength).trim()}...`
+}
+
 function normalizeSearchItem(item) {
   const name = item.name || item.title || ''
-  const hint = item.hint || item.description || ''
+  const hint = item.hint || item.description || item.desc || ''
   const category = item.category || '站内页面'
   const keywords = Array.isArray(item.keywords) ? item.keywords : []
+  const path = item.path || item.url || item.href || '/'
+  const external = Boolean(item.external || /^https?:\/\//i.test(path))
   const searchText = normalizeText([
     name,
     hint,
     category,
-    item.path,
+    path,
     ...keywords,
   ].join(' '))
 
   return {
     name,
-    path: item.path || '/',
+    path,
+    external,
     hint,
     category,
     keywords,
     searchText,
+    rank: Number(item.rank ?? 60),
   }
+}
+
+function scoreSearchItem(item, terms) {
+  const name = normalizeText(item.name)
+  const category = normalizeText(item.category)
+  const hint = normalizeText(item.hint)
+  const path = normalizeText(item.path)
+  let score = item.rank
+
+  terms.forEach((term) => {
+    if (name === term) score += 120
+    else if (name.startsWith(term)) score += 82
+    else if (name.includes(term)) score += 56
+
+    if (category.includes(term)) score += 24
+    if (path.includes(term)) score += 20
+    if (hint.includes(term)) score += 12
+  })
+
+  if (!item.external) score += 8
+  return score
+}
+
+async function fetchJsonArray(path) {
+  try {
+    const response = await fetch(path, { cache: 'no-cache' })
+    if (!response.ok) return []
+    const data = await response.json()
+    return Array.isArray(data) ? data : []
+  } catch {
+    return []
+  }
+}
+
+function uniqueSearchItems(items) {
+  const seen = new Set()
+  return items.filter((item) => {
+    const normalized = normalizeSearchItem(item)
+    const key = `${normalizeText(normalized.name)}|${normalized.path}`
+    if (!normalized.name || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function buildArticleSearchItems(articles) {
+  return articles.map((article) => ({
+    name: article.title,
+    path: `/space1/${article.id}`,
+    hint: article.desc || article.date || '',
+    category: '随记',
+    keywords: ['article', 'jottings', article.id, article.author, article.date],
+    rank: 72,
+  }))
+}
+
+function buildProjectSearchItems(projects) {
+  return projects
+    .filter((project) => project.homepage || project.repo)
+    .map((project) => ({
+      name: project.name,
+      path: project.homepage || project.repo,
+      external: !project.homepage && Boolean(project.repo),
+      hint: project.desc || '',
+      category: '代码与项目',
+      keywords: ['code', 'project', project.category, project.repo],
+      rank: 76,
+    }))
+}
+
+function buildResourceSearchItems(resourceGroups) {
+  return resourceGroups.flatMap(({ source, items }) => items.map((item) => ({
+    name: item.name,
+    path: item.url || source.path,
+    external: Boolean(item.url),
+    hint: compactText(item.intro || item.add || source.label),
+    category: `资源链接 · ${source.label}`,
+    keywords: ['resource', source.id, source.label, item.url],
+    rank: 54,
+  })))
+}
+
+function buildFriendSearchItems(friends) {
+  return friends.map((friend) => ({
+    name: friend.name,
+    path: friend.link,
+    external: true,
+    hint: friend.desc || '网络邻居',
+    category: '网络邻居',
+    keywords: ['friend', 'neighbor', 'links'],
+    rank: 52,
+  }))
+}
+
+async function loadSearchItems() {
+  const [
+    staticItems,
+    articles,
+    projects,
+    friends,
+    ...resourceData
+  ] = await Promise.all([
+    fetchJsonArray('/data/search-index.json'),
+    fetchJsonArray('/articles.json'),
+    fetchJsonArray('/code_proj.json'),
+    fetchJsonArray('/friends.json'),
+    ...resourceSearchSources.map((source) => fetchJsonArray(`/resource/${source.file}`)),
+  ])
+
+  const resourceGroups = resourceSearchSources.map((source, index) => ({
+    source,
+    items: resourceData[index] || [],
+  }))
+
+  return uniqueSearchItems([
+    ...fallbackSearchItems,
+    ...staticItems,
+    ...buildArticleSearchItems(articles),
+    ...buildProjectSearchItems(projects),
+    ...buildResourceSearchItems(resourceGroups),
+    ...buildFriendSearchItems(friends),
+  ])
 }
 
 function openWindow(id) {
@@ -287,16 +477,7 @@ async function loadPortalData() {
 
     musicTracks.value = await musicRes.json()
     dockGroups.value = await dockRes.json()
-
-    try {
-      const searchRes = await fetch('/data/search-index.json')
-      if (searchRes.ok) {
-        const loadedSearchItems = await searchRes.json()
-        searchItems.value = Array.isArray(loadedSearchItems) ? loadedSearchItems : []
-      }
-    } catch {
-      searchItems.value = []
-    }
+    searchItems.value = await loadSearchItems()
   } catch (error) {
     dataError.value = `Portal data failed: ${error.message}`
   } finally {
@@ -455,18 +636,35 @@ onBeforeUnmount(() => {
           </label>
 
           <div class="spotlight-results" aria-label="Site search results">
-            <RouterLink
+            <template
               v-for="link in filteredSpotlightLinks"
-              :key="link.path"
-              :to="link.path"
-              class="spotlight-result"
+              :key="`${link.external ? 'external' : 'internal'}-${link.path}`"
             >
-              <span class="spotlight-result-copy">
-                <strong>{{ link.name }}</strong>
-                <small>{{ link.category }} · {{ link.hint }}</small>
-              </span>
-              <span class="spotlight-result-action">打开</span>
-            </RouterLink>
+              <a
+                v-if="link.external"
+                :href="link.path"
+                class="spotlight-result"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span class="spotlight-result-copy">
+                  <strong>{{ link.name }}</strong>
+                  <small>{{ link.category }} · {{ link.hint }}</small>
+                </span>
+                <span class="spotlight-result-action">访问</span>
+              </a>
+              <RouterLink
+                v-else
+                :to="link.path"
+                class="spotlight-result"
+              >
+                <span class="spotlight-result-copy">
+                  <strong>{{ link.name }}</strong>
+                  <small>{{ link.category }} · {{ link.hint }}</small>
+                </span>
+                <span class="spotlight-result-action">打开</span>
+              </RouterLink>
+            </template>
             <p v-if="!filteredSpotlightLinks.length" class="spotlight-empty">没有找到对应入口</p>
           </div>
         </section>

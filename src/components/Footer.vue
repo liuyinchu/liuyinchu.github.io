@@ -91,6 +91,7 @@ const footerColumns = [
         title: '代码与项目',
         to: '/code',
         links: [
+          { label: '实验报告', to: '/labreport' },
           { label: 'Brisk Nexus', to: '/brisk-nexus' },
           { label: 'Data Analysis Helper', to: '/ysy-data-analysis-helper' },
           { label: 'Cyber Match', to: '/cyber-match' },

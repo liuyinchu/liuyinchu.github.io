@@ -29,17 +29,59 @@
   },
   {
     "name": "赛博会客厅",
-    "path": "/space2",
+    "path": "/space3",
     "category": "核心入口",
-    "hint": "朋友们、网络邻居与访客空间",
-    "keywords": ["friends", "guest", "neighbor", "space2", "links"]
+    "hint": "访客中心、网络邻居与开放空间中枢",
+    "keywords": ["lounge", "visitor", "friends", "guest", "space3"]
+  },
+  {
+    "name": "访客中心",
+    "path": "/visitor-center",
+    "category": "赛博会客厅",
+    "hint": "访客信息、IP 定位和访客地球仪",
+    "keywords": ["visitor", "ip", "globe", "guest"]
+  },
+  {
+    "name": "网络邻居",
+    "path": "/space2",
+    "category": "赛博会客厅",
+    "hint": "朋友们的个人站点与友链街区",
+    "keywords": ["friends", "neighbor", "links", "space2"]
   },
   {
     "name": "关于",
     "path": "/about",
     "category": "核心入口",
-    "hint": "自我介绍、学术入口、版权说明",
+    "hint": "自我介绍、学术主页、版权说明",
     "keywords": ["about", "profile", "intro", "statement"]
+  },
+  {
+    "name": "自我介绍",
+    "path": "/about/self",
+    "category": "关于",
+    "hint": "站主自我介绍和个人页面",
+    "keywords": ["self", "intro", "profile"]
+  },
+  {
+    "name": "学术主页",
+    "path": "/research",
+    "category": "关于",
+    "hint": "研究综述、学术脉络和学术名片入口",
+    "keywords": ["research", "academic", "scholar", "paper"]
+  },
+  {
+    "name": "我的学术",
+    "path": "/academic",
+    "category": "关于",
+    "hint": "由 JSON 和 Markdown 驱动的学术名片 deck",
+    "keywords": ["academic", "cv", "resume", "experience", "deck"]
+  },
+  {
+    "name": "版权说明",
+    "path": "/credit",
+    "category": "关于",
+    "hint": "网站素材、内容来源、版权与声明",
+    "keywords": ["credit", "copyright", "license", "statement"]
   },
   {
     "name": "文献",
@@ -57,7 +99,7 @@
   },
   {
     "name": "计算机",
-    "path": "/rcs",
+    "path": "/rcomputer",
     "category": "资源链接",
     "hint": "计算机科学、算法、系统与学习资源",
     "keywords": ["computer science", "cs", "algorithm", "system"]
@@ -91,31 +133,31 @@
     "keywords": ["lab", "report", "experiment", "course"]
   },
   {
+    "name": "Ysy Data Analysis Helper",
+    "path": "/ysy-data-analysis-helper",
+    "category": "代码与项目",
+    "hint": "个人实验数据分析工具",
+    "keywords": ["data analysis", "python", "project"]
+  },
+  {
+    "name": "Brisk Nexus",
+    "path": "/brisk-nexus",
+    "category": "代码与项目",
+    "hint": "个人小巧思合集",
+    "keywords": ["brisk", "nexus", "toy"]
+  },
+  {
+    "name": "Cyber Match",
+    "path": "/cyber-match",
+    "category": "代码与项目",
+    "hint": "Cyber Match Vue 游戏",
+    "keywords": ["game", "vue", "cyber match"]
+  },
+  {
     "name": "Portal",
     "path": "/portal",
     "category": "功能页",
     "hint": "macOS 风格桌面入口、常用链接和小工具",
     "keywords": ["portal", "desktop", "dock", "spotlight", "music", "weather", "todo", "calendar"]
-  },
-  {
-    "name": "我的学术",
-    "path": "/research",
-    "category": "关于",
-    "hint": "学术主页、研究方向与相关资料",
-    "keywords": ["research", "academic", "scholar", "paper"]
-  },
-  {
-    "name": "个人学术简历",
-    "path": "/academic",
-    "category": "关于",
-    "hint": "个人学术经历、简历与履历信息",
-    "keywords": ["academic", "cv", "resume", "experience"]
-  },
-  {
-    "name": "版权说明",
-    "path": "/credit",
-    "category": "关于",
-    "hint": "网站素材、内容来源、版权与声明",
-    "keywords": ["credit", "copyright", "license", "statement"]
   }
 ]
