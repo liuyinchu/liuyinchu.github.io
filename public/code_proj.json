@@ -1,5 +1,12 @@
 [
   {
+    "name": "实验报告分享",
+    "desc": "本项目旨在系统性地整理与分享一系列大学物理实验的资料。",
+    "homepage": "/labreport",
+    "repo": "https://github.com/pifuyuini/LabR",
+    "category": "project"
+  },
+  {
     "name": "Ysy Data Analysis Helper",
     "desc": "个人（实验）数据分析工具。",
     "homepage": "/ysy-data-analysis-helper",
