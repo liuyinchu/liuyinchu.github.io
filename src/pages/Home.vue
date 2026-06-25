@@ -1,6 +1,5 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import TypingTitle from '../components/TypingTitle.vue'
 
 const homeSections = [
   {
@@ -124,9 +123,6 @@ onBeforeUnmount(() => {
         <div class="entry-word-stage home-panel__welcome-stage">
           <h1 class="entry-word home-panel__welcome-word">Welcome</h1>
         </div>
-        <div class="home-panel__typing">
-          <TypingTitle />
-        </div>
       </div>
 
       <div
@@ -244,11 +240,8 @@ onBeforeUnmount(() => {
 .home-panel__welcome {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(0.6rem, 1.8vh, 1.25rem);
+  display: grid;
+  place-items: center;
   pointer-events: none;
 }
 
@@ -265,29 +258,6 @@ onBeforeUnmount(() => {
 
 .home-panel__welcome-word {
   margin: 0;
-}
-
-.home-panel__typing {
-  width: min(92vw, 960px);
-  min-height: clamp(2.6rem, 5vw, 4.4rem);
-  pointer-events: auto;
-}
-
-.home-panel__typing :deep(.typing-container) {
-  padding: 0 1rem;
-}
-
-.home-panel__typing :deep(.typing-content) {
-  font-size: clamp(1.08rem, 2vw, 1.8rem);
-  font-weight: 760;
-  line-height: 1.55;
-  letter-spacing: 0;
-}
-
-.home-panel__typing :deep(.typing-text) {
-  filter:
-    drop-shadow(0 0 10px rgba(105, 240, 225, 0.34))
-    drop-shadow(0 14px 34px rgba(0, 0, 0, 0.35));
 }
 
 .home-panel__content {
@@ -414,20 +384,6 @@ onBeforeUnmount(() => {
 
   .entry-word {
     font-size: clamp(2.2rem, 12vw, 4rem);
-  }
-
-  .home-panel__typing {
-    width: min(100vw - 1rem, 34rem);
-    min-height: 4.4rem;
-  }
-
-  .home-panel__typing :deep(.typing-container) {
-    padding: 0 0.5rem;
-  }
-
-  .home-panel__typing :deep(.typing-content) {
-    font-size: clamp(1rem, 5.2vw, 1.45rem);
-    line-height: 1.58;
   }
 
   .home-panel {
