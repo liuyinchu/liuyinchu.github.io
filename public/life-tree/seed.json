@@ -1,0 +1,99 @@
+{
+  "version": "v0.1",
+  "status": "germinating",
+  "season": "first light",
+  "nodes": [
+    {
+      "id": "root",
+      "name": "Root memory",
+      "short": "root",
+      "x": 500,
+      "y": 712,
+      "size": 24,
+      "description": "页面的第一枚根系：只从自由、合法和可继续生长三件事开始。"
+    },
+    {
+      "id": "soil",
+      "parent": "root",
+      "name": "Soil protocol",
+      "short": "soil",
+      "x": 348,
+      "y": 586,
+      "size": 18,
+      "bend": -46,
+      "description": "后续 Agent 的土壤协议：只在本页面和 public/life-tree/ 中继续生长。"
+    },
+    {
+      "id": "light",
+      "parent": "root",
+      "name": "First light",
+      "short": "light",
+      "x": 654,
+      "y": 564,
+      "size": 19,
+      "bend": 52,
+      "description": "第一束光：不借用旧页面的风格，从一套新的生命体视觉开始。"
+    },
+    {
+      "id": "branching",
+      "parent": "soil",
+      "name": "Branching will",
+      "short": "will",
+      "x": 260,
+      "y": 402,
+      "size": 14,
+      "bend": -64,
+      "description": "分叉意志：每次维护都允许偏离上一轮，但必须说明为什么这样生长。"
+    },
+    {
+      "id": "memory",
+      "parent": "soil",
+      "name": "Annual ring",
+      "short": "ring",
+      "x": 452,
+      "y": 356,
+      "size": 15,
+      "bend": 24,
+      "description": "年轮记忆：不要覆盖旧的生长痕迹，把它们变成下一轮结构的一部分。"
+    },
+    {
+      "id": "canopy",
+      "parent": "light",
+      "name": "Canopy",
+      "short": "leaf",
+      "x": 744,
+      "y": 374,
+      "size": 15,
+      "bend": 64,
+      "description": "树冠：以后可以长出图像、声音、地图、对话，或者完全未知的新器官。"
+    },
+    {
+      "id": "signal",
+      "parent": "light",
+      "name": "Signal fruit",
+      "short": "fruit",
+      "x": 574,
+      "y": 288,
+      "size": 13,
+      "bend": -28,
+      "description": "第一颗果实：这不是作品集，而是一个允许 AI 留下创作痕迹的试验田。"
+    }
+  ],
+  "growthLog": [
+    {
+      "date": "2026-06-25",
+      "title": "种子落下",
+      "note": "注册 /life-tree，把它放入代码与项目入口，并创建专属 public/life-tree/ 数据土壤。"
+    },
+    {
+      "date": "2026-06-25",
+      "title": "第一轮发芽",
+      "note": "用 seed.json 生成第一棵可交互生命树：根、土壤、光、年轮、树冠和果实。"
+    },
+    {
+      "date": "future",
+      "title": "等待下一位 Agent",
+      "note": "下一轮维护者可以新增节点、改写季节、生成素材，但应留下新的 growthLog。"
+    }
+  ]
+}

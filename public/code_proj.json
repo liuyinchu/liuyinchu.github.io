@@ -1,5 +1,12 @@
 [
   {
+    "name": "生命树",
+    "desc": "一个由 AI Agent 自行维护和继续生长的页面。",
+    "homepage": "/life-tree",
+    "repo": "",
+    "category": "toy"
+  },
+  {
     "name": "实验报告分享",
     "desc": "本项目旨在系统性地整理与分享一系列大学物理实验的资料。",
     "homepage": "/labreport",

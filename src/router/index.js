@@ -31,6 +31,7 @@ import ResourceMaterials from '../pages/ResourceMaterials.vue'
 import ResourceTools from '../pages/ResourceTools.vue'
 import ResourceFiles from '../pages/ResourceFiles.vue'
 import AcademicGuide from '../pages/AcademicGuide.vue'
+import LifeTree from '../pages/LifeTree.vue'
 
 
 const routes = [
@@ -65,6 +66,7 @@ const routes = [
   { path: '/rtools', component: ResourceTools },
   { path: '/rfiles', component: ResourceFiles },
   { path: '/academic-plot-guide', component: AcademicGuide },
+  { path: '/life-tree', component: LifeTree },
 ]
 
 const router = createRouter({
