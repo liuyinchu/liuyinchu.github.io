@@ -749,11 +749,19 @@ function toggleDirectory() {
 
 @media (max-width: 460px) {
   .poem-line {
-    font-size: clamp(1.45rem, 9vw, 2.2rem);
+    margin-bottom: 1rem;
+    font-size: clamp(1.32rem, 8vw, 1.95rem);
+    line-height: 1.32;
+  }
+
+  .poem-source {
+    margin-top: 1.65rem;
+    font-size: 0.82rem;
   }
 
   .featured-copy h3 {
-    font-size: clamp(1.85rem, 12vw, 3rem);
+    font-size: clamp(1.65rem, 9.2vw, 2.35rem);
+    line-height: 1.12;
   }
 
   .page-dots {

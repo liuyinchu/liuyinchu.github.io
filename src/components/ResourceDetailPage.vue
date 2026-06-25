@@ -551,6 +551,16 @@ onMounted(() => {
     gap: 0.65rem;
   }
 
+  .category-nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+
+  .category-nav a {
+    flex: 0 0 auto;
+  }
+
   .entry-head {
     align-items: flex-start;
     flex-direction: column;
