@@ -1,4 +1,4 @@
-[![Shuyun Yang](/fig/name.svg){.name-logo}](/academic)
+[![](/fig/name.svg){.name-logo}](/academic)
 
 > 点击上方签名进入「我的学术」名片页。这里是更完整的学术主页，用来说明我的研究方向、学习脉络和当前关注的问题。
 
