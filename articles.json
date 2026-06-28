@@ -9,6 +9,14 @@
   }, 
 
   {
+    "id": "lab_guide_intro",
+    "title": "开篇与导论：实验数据处理作为参数估计",
+    "author": "pifuyuini",
+    "date": "2026-06-29",
+    "desc": "导论的核心任务，是把实验课中常见的平均值、标准差、误差、最小二乘和不确定度，放到同一个参数估计框架中理解。",
+    "image": "/bg/heroine.jpg"
+  }, 
+  {
     "id": "keyboard",
     "title": "键影罗成方寸谱，轴声敲入半生笺",
     "author": "pifuyuini",
