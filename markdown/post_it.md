@@ -9,6 +9,7 @@
 - [codex-ppt-skill](https://github.com/ningzimu/codex-ppt-skill)：一个面向 Codex 的 PPT 生成 skill，也可在 Claude Code、OpenClaw、Hermes Agent 等支持 SKILL.md 的 agent 中使用；在这些非 Codex 环境中通常需要配置 gpt-image-2 或第三方 OpenAI 兼容格式的生图 API。它把文章、报告、论文、课程笔记等内容转换成“整页图片式”的演示文稿：先规划大纲和视觉风格，再生成每页幻灯片图片，最后用本地脚本组装为 .pptx。
 - [ScanSci PDF](https://skills.scansci.com/skills/scansci-pdf/)：ScanSci PDF 是一个学术论文下载的 MCP 服务器。它同时尝试 13+ 个数据源（arXiv、Sci-Hub、LibGen、Unpaywall 等），哪个先成功用哪个。支持 100+ 中国高校 WebVPN 和 CARSI 联邦认证，能获取绝大多数付费论文的全文 PDF。
 - [AI-research-SKILLs](https://github.com/Orchestra-Research/AI-research-SKILLs)：这是一个最全面的开源技能库，能够使AI代理自主开展人工智能研究，从提出想法到撰写论文。
+- [novel-generator](https://clawhub.ai/ityhg/skills/novel-generator)：这是一个中文爽文小说生成技能。用户只需提供一句话方向（如"写个都市重生爽文"），AI 代理即可自动完善提示词、规划大纲、逐章创作并输出为独立 Markdown 文件。 
 
 ---
 
