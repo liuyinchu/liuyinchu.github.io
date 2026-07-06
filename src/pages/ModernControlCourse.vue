@@ -1,19 +1,9 @@
 <template>
   <main class="modern-control-page" :class="[`is-${theme}`, `lang-${lang}`]">
     <section class="course-hero" aria-labelledby="course-title">
-      <div class="hero-orbit" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-
       <div class="hero-copy">
-        <p class="hero-eyebrow">{{ copy.eyebrow }}</p>
         <h1 id="course-title">{{ copy.title }}</h1>
         <p class="hero-subtitle">{{ copy.subtitle }}</p>
-        <div class="hero-tags" aria-label="Course focus">
-          <span v-for="tag in copy.tags" :key="tag">{{ tag }}</span>
-        </div>
       </div>
 
       <aside class="hero-panel" aria-label="Course identity and controls">
@@ -22,10 +12,6 @@
           alt="Modern Control Theory and Technology course emblem"
           class="course-logo"
         />
-        <div class="course-mark">
-          <span>{{ copy.term }}</span>
-          <strong>{{ copy.shortName }}</strong>
-        </div>
         <div class="control-row" aria-label="Page switches">
           <button type="button" @click="toggleLang">{{ copy.languageAction }}</button>
           <button type="button" @click="toggleTheme">{{ copy.themeAction }}</button>
@@ -66,23 +52,15 @@ import MarkdownViewer from '../components/MarkdownViewer.vue'
 
 const copyDeck = {
   zh: {
-    eyebrow: '现代控制理论与技术 · 课程实践站',
-    title: '主动隔振与 MIMO 控制实践',
-    subtitle: '面向课堂实践、期末大作业、报告与答辩的半官方指引页面。这里聚焦建模、解耦、状态估计、鲁棒控制与统一频域评定。',
-    shortName: 'Modern Control Studio',
-    term: 'Course Site / Draft 0.1',
-    tags: ['两级质量-弹簧-阻尼', '3-DOF 主动隔振', 'KF / LQG / H∞', 'ASD 统一评定'],
+    title: '现代控制理论与技术课程实践',
+    subtitle: '课堂实践与期末大作业指引：从两级质量弹簧阻尼建模，到三自由度主动隔振系统的解耦、观测、控制与频域评定。',
     tocTitle: '目录',
     languageAction: 'English',
     themeAction: '切换明暗',
   },
   en: {
-    eyebrow: 'Modern Control Theory and Technology · Studio',
-    title: 'Active Isolation and MIMO Control Practice',
-    subtitle: 'A semi-official course page for classroom practice, the final project, report submission, and defense preparation.',
-    shortName: 'Modern Control Studio',
-    term: 'Course Site / Draft 0.1',
-    tags: ['Two-stage model', '3-DOF active isolation', 'KF / LQG / H∞', 'Unified ASD evaluation'],
+    title: 'Modern Control Theory and Technology Practice',
+    subtitle: 'Course practice and final project guide: from two-stage mass-spring-damper modeling to decoupling, observation, control, and ASD evaluation for a 3-DOF active isolation system.',
     tocTitle: 'Contents',
     languageAction: '中文',
     themeAction: 'Theme',
@@ -157,100 +135,79 @@ onBeforeUnmount(() => {
 }
 
 .modern-control-page {
-  --course-bg: #f7f2e7;
-  --course-paper: rgba(255, 252, 244, 0.88);
-  --course-paper-strong: rgba(255, 253, 247, 0.96);
-  --course-ink: #20231f;
-  --course-muted: rgba(32, 35, 31, 0.66);
-  --course-line: rgba(35, 50, 40, 0.16);
-  --course-jade: #2f7367;
-  --course-jade-soft: rgba(47, 115, 103, 0.12);
-  --course-celadon: #dbe8da;
-  --course-gold: #ad7b32;
-  --course-red: #a64b3c;
-  --course-shadow: rgba(32, 26, 18, 0.14);
-  --course-code: #17201d;
+  --course-bg: #f4efe5;
+  --course-paper: rgba(248, 244, 235, 0.9);
+  --course-paper-strong: rgba(255, 252, 245, 0.96);
+  --course-ink: #17201d;
+  --course-muted: rgba(23, 32, 29, 0.68);
+  --course-line: rgba(28, 82, 73, 0.18);
+  --course-jade: #1f695f;
+  --course-jade-soft: rgba(31, 105, 95, 0.11);
+  --course-celadon: #dce8de;
+  --course-gold: #9b7234;
+  --course-red: #9d4b3f;
+  --course-shadow: rgba(57, 46, 31, 0.16);
+  --course-highlight: rgba(255, 255, 255, 0.72);
+  --course-code: #111a17;
 
   min-height: 100vh;
   color: var(--course-ink);
   background:
-    linear-gradient(135deg, rgba(173, 123, 50, 0.08) 0 1px, transparent 1px 30px),
-    linear-gradient(90deg, rgba(47, 115, 103, 0.06) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(47, 115, 103, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 105, 95, 0.055) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(31, 105, 95, 0.045) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(155, 114, 52, 0.08) 0 1px, transparent 1px 34px),
     var(--course-bg);
-  background-size: 30px 30px, 48px 48px, 48px 48px, auto;
+  background-size: 52px 52px, 52px 52px, 34px 34px, auto;
   font-family: 'Inter', 'LXGW WenKai', 'Noto Serif SC', system-ui, sans-serif;
 }
 
 .modern-control-page.is-dark {
-  --course-bg: #101412;
-  --course-paper: rgba(21, 30, 27, 0.82);
-  --course-paper-strong: rgba(24, 34, 31, 0.94);
-  --course-ink: #eee7d8;
-  --course-muted: rgba(238, 231, 216, 0.68);
-  --course-line: rgba(220, 211, 184, 0.18);
-  --course-jade: #8fc7b4;
+  --course-bg: #111716;
+  --course-paper: rgba(20, 30, 28, 0.9);
+  --course-paper-strong: rgba(18, 27, 25, 0.96);
+  --course-ink: #efe8d7;
+  --course-muted: rgba(239, 232, 215, 0.66);
+  --course-line: rgba(181, 205, 182, 0.2);
+  --course-jade: #91c5b8;
   --course-jade-soft: rgba(143, 199, 180, 0.13);
-  --course-celadon: #1f332e;
-  --course-gold: #d8ad63;
+  --course-celadon: #1c302b;
+  --course-gold: #d6ad67;
   --course-red: #d47761;
-  --course-shadow: rgba(0, 0, 0, 0.34);
+  --course-shadow: rgba(0, 0, 0, 0.36);
+  --course-highlight: rgba(255, 255, 255, 0.05);
   --course-code: #0a0f0d;
 
   background:
-    linear-gradient(135deg, rgba(216, 173, 99, 0.08) 0 1px, transparent 1px 30px),
-    linear-gradient(90deg, rgba(143, 199, 180, 0.05) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(143, 199, 180, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 199, 180, 0.055) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(143, 199, 180, 0.045) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(216, 173, 99, 0.08) 0 1px, transparent 1px 34px),
     var(--course-bg);
-  background-size: 30px 30px, 48px 48px, 48px 48px, auto;
+  background-size: 52px 52px, 52px 52px, 34px 34px, auto;
 }
 
 .course-hero {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.38fr);
-  gap: clamp(2rem, 5vw, 5rem);
-  width: min(100% - 3rem, 1240px);
-  min-height: 92vh;
+  grid-template-columns: minmax(0, 1fr) minmax(19rem, 26rem);
+  gap: 4rem;
+  width: min(100% - 4rem, 1440px);
+  min-height: 72vh;
   margin: 0 auto;
-  padding: clamp(4rem, 8vw, 7rem) 0 clamp(2rem, 5vw, 4rem);
+  padding: 5rem 0 3.5rem;
   align-items: center;
 }
 
-.hero-orbit {
+.course-hero::before {
+  content: '';
   position: absolute;
-  inset: 7rem -4vw 2rem;
-  pointer-events: none;
-}
-
-.hero-orbit span {
-  position: absolute;
+  inset: 2rem -1.5rem;
   border: 1px solid var(--course-line);
-  border-radius: 999px;
-  transform: rotate(-12deg);
-}
-
-.hero-orbit span:nth-child(1) {
-  width: min(54vw, 42rem);
-  aspect-ratio: 1.45;
-  right: 5%;
-  top: 6%;
-}
-
-.hero-orbit span:nth-child(2) {
-  width: min(38vw, 30rem);
-  aspect-ratio: 1.2;
-  left: 2%;
-  bottom: 4%;
-  transform: rotate(16deg);
-}
-
-.hero-orbit span:nth-child(3) {
-  width: min(24vw, 18rem);
-  aspect-ratio: 1;
-  right: 20%;
-  bottom: 12%;
-  border-color: rgba(173, 123, 50, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, transparent 0 32%, var(--course-line) 32% calc(32% + 1px), transparent calc(32% + 1px)),
+    linear-gradient(180deg, transparent 0 58%, rgba(155, 114, 52, 0.18) 58% calc(58% + 1px), transparent calc(58% + 1px));
+  pointer-events: none;
+  opacity: 0.68;
 }
 
 .hero-copy,
@@ -260,70 +217,46 @@ onBeforeUnmount(() => {
   z-index: 1;
 }
 
-.hero-eyebrow {
-  margin: 0 0 1rem;
-  color: var(--course-jade);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 h1 {
-  max-width: 11ch;
-  margin: 0 0 1.3rem;
+  max-width: 14ch;
+  margin: 0 0 1.4rem;
   color: var(--course-ink);
   font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
-  font-size: 6.8rem;
+  font-size: 4.9rem;
   font-weight: 800;
-  line-height: 0.92;
+  line-height: 1.04;
   letter-spacing: 0;
 }
 
 .lang-en h1 {
-  max-width: 12ch;
-  font-size: 5.8rem;
+  max-width: 15ch;
+  font-size: 4.2rem;
 }
 
 .hero-subtitle {
-  max-width: 45rem;
+  max-width: 50rem;
   margin: 0;
   color: var(--course-muted);
-  font-size: 1.2rem;
-  line-height: 1.9;
+  font-size: 1.18rem;
+  line-height: 1.95;
 }
 
-.hero-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  margin-top: 1.6rem;
-}
-
-.hero-tags span,
 .control-row button,
 .course-toc,
 .course-article,
 .hero-panel {
   border: 1px solid var(--course-line);
   background: var(--course-paper);
-  box-shadow: 0 24px 70px var(--course-shadow);
+  box-shadow:
+    18px 18px 44px var(--course-shadow),
+    -12px -12px 28px var(--course-highlight);
   backdrop-filter: blur(18px) saturate(122%);
   -webkit-backdrop-filter: blur(18px) saturate(122%);
 }
 
-.hero-tags span {
-  border-radius: 999px;
-  padding: 0.52rem 0.74rem;
-  color: var(--course-ink);
-  font-size: 0.9rem;
-  box-shadow: none;
-}
-
 .hero-panel {
   display: grid;
-  gap: 1rem;
+  gap: 1.1rem;
   align-content: start;
   border-radius: 8px;
   padding: 1rem;
@@ -336,23 +269,6 @@ h1 {
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--course-line);
-}
-
-.course-mark {
-  display: grid;
-  gap: 0.3rem;
-}
-
-.course-mark span {
-  color: var(--course-muted);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-}
-
-.course-mark strong {
-  color: var(--course-ink);
-  font-size: 1.08rem;
 }
 
 .control-row {
@@ -380,11 +296,11 @@ h1 {
 
 .course-layout {
   display: grid;
-  grid-template-columns: minmax(14rem, 0.24fr) minmax(0, 1fr);
-  gap: 1rem;
-  width: min(100% - 3rem, 1240px);
+  grid-template-columns: minmax(16rem, 18rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  width: min(100% - 4rem, 1440px);
   margin: 0 auto;
-  padding: 0 0 clamp(4rem, 7vw, 6rem);
+  padding: 0 0 6rem;
 }
 
 .course-toc,
@@ -396,8 +312,7 @@ h1 {
   position: sticky;
   top: 1rem;
   align-self: start;
-  padding: 1rem;
-  box-shadow: 0 18px 50px var(--course-shadow);
+  padding: 1.1rem;
 }
 
 .course-toc p {
@@ -435,7 +350,7 @@ h1 {
 }
 
 .course-article {
-  padding: 2rem;
+  padding: 2.4rem;
   background: var(--course-paper-strong);
 }
 
@@ -459,12 +374,14 @@ h1 {
   color: var(--course-ink);
   font-family: 'LXGW WenKai', 'Noto Serif SC', 'Inter', serif;
   font-size: 1.08rem;
+  line-height: 1.88;
 }
 
 .course-article :deep(.markdown-body h2) {
-  margin-top: 3.4rem;
-  padding-top: 0.35rem;
+  margin-top: 3.2rem;
+  padding-top: 0.8rem;
   border-top: 1px solid var(--course-line);
+  color: var(--course-jade);
 }
 
 .course-article :deep(.markdown-body h2:first-child) {
@@ -494,7 +411,7 @@ h1 {
 
 .course-article :deep(.course-stage-grid),
 .course-article :deep(.course-method-grid),
-.course-article :deep(.course-figure-grid) {
+.course-article :deep(.course-requirement-grid) {
   display: grid;
   gap: 0.8rem;
   margin: 1.4rem 0 1.8rem;
@@ -508,22 +425,25 @@ h1 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.course-article :deep(.course-figure-grid) {
+.course-article :deep(.course-requirement-grid) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .course-article :deep(.course-stage-grid > div),
 .course-article :deep(.course-method-grid > div),
+.course-article :deep(.course-requirement-grid > div),
 .course-article :deep(.course-deadline),
 .course-article :deep(.course-callout) {
   border: 1px solid var(--course-line);
   border-radius: 8px;
   padding: 1rem;
-  background: rgba(47, 115, 103, 0.07);
+  background: rgba(31, 105, 95, 0.07);
+  box-shadow: inset 0 1px 0 var(--course-highlight);
 }
 
 .course-article :deep(.course-stage-grid strong),
-.course-article :deep(.course-method-grid strong) {
+.course-article :deep(.course-method-grid strong),
+.course-article :deep(.course-requirement-grid strong) {
   display: block;
   margin-bottom: 0.45rem;
   color: var(--course-jade);
@@ -531,6 +451,7 @@ h1 {
 
 .course-article :deep(.course-stage-grid p),
 .course-article :deep(.course-method-grid p),
+.course-article :deep(.course-requirement-grid p),
 .course-article :deep(.course-callout p),
 .course-article :deep(.course-deadline p) {
   margin: 0;
@@ -553,11 +474,18 @@ h1 {
   color: var(--course-ink);
   background: rgba(173, 123, 50, 0.12);
   font-weight: 760;
+  text-decoration: none;
+  box-shadow:
+    10px 10px 24px rgba(57, 46, 31, 0.12),
+    -8px -8px 18px var(--course-highlight);
+  transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
 }
 
-.course-article :deep(.course-download.is-disabled) {
-  cursor: not-allowed;
-  opacity: 0.68;
+.course-article :deep(.course-download:hover),
+.course-article :deep(.course-download:focus-visible) {
+  border-color: rgba(31, 105, 95, 0.42);
+  background: rgba(31, 105, 95, 0.1);
+  transform: translateY(-1px);
 }
 
 .course-article :deep(.course-deadline) {
@@ -625,7 +553,7 @@ h1 {
 
   .course-article :deep(.course-stage-grid),
   .course-article :deep(.course-method-grid),
-  .course-article :deep(.course-figure-grid),
+  .course-article :deep(.course-requirement-grid),
   .course-article :deep(.course-deadline) {
     grid-template-columns: 1fr;
   }
