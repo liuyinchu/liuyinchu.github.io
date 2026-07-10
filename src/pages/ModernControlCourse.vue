@@ -180,12 +180,11 @@ onBeforeUnmount(() => {
   position: relative;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 21.5rem;
+  grid-template-columns: minmax(0, 1fr) 20rem;
   gap: 3rem;
   width: min(100% - 4rem, 1280px);
-  min-height: 34rem;
-  margin: 2rem auto 2.5rem;
-  padding: 3.5rem 4rem;
+  margin: 1.5rem auto 2.25rem;
+  padding: 2.75rem 3.5rem;
   align-items: center;
   border: 1px solid var(--course-line-strong);
   border-top: 3px solid var(--course-jade);
@@ -205,7 +204,7 @@ onBeforeUnmount(() => {
 }
 
 h1 {
-  max-width: 9.5ch;
+  max-width: 9em;
   margin: 0;
   color: var(--course-ink);
   font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
@@ -237,7 +236,7 @@ h1 {
 .hero-panel {
   display: grid;
   width: 100%;
-  max-width: 21.5rem;
+  max-width: 20rem;
   gap: 0.75rem;
   align-content: start;
   justify-self: end;
@@ -265,7 +264,7 @@ h1 {
 }
 
 .control-row button {
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   border-radius: 4px;
   color: var(--course-ink);
   font: inherit;
@@ -517,17 +516,21 @@ h1 {
 
 @media (max-width: 1100px) {
   .course-hero {
-    grid-template-columns: minmax(0, 1fr) 19rem;
-    gap: 2.25rem;
-    padding: 3rem;
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    gap: 2.5rem;
+    padding: 2.25rem 2.5rem;
   }
 
   h1 {
-    font-size: 3.35rem;
+    font-size: 3.15rem;
   }
 
   .lang-en h1 {
-    font-size: 2.95rem;
+    font-size: 2.75rem;
+  }
+
+  .hero-panel {
+    max-width: 18rem;
   }
 
   .course-layout {
@@ -547,12 +550,12 @@ h1 {
   }
 
   h1 {
-    max-width: 12ch;
+    max-width: 10em;
     font-size: 3rem;
   }
 
   .lang-en h1 {
-    max-width: 19ch;
+    max-width: 19em;
     font-size: 2.7rem;
   }
 

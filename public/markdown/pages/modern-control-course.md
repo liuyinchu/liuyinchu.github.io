@@ -785,14 +785,18 @@ FONT_TICK_PT = 9.5
 LINE_WIDTH_PT = 1.5
 
 
-def displacement_asd_from_velocity(velocity, fs=FS, df=DF):
-    """Convert a velocity time series to one-sided displacement ASD."""
+def displacement_asd_from_velocity(
+    velocity,
+    fs=FS,
+    df=DF,
+):
+    """Convert velocity samples to displacement ASD."""
     velocity = np.asarray(velocity, dtype=float)
     nperseg = int(round(fs / df))
     if velocity.size < nperseg:
         raise ValueError(
-            f"Need at least one Welch segment: {nperseg} samples, "
-            f"but got {velocity.size}."
+            f"Need {nperseg} samples; "
+            f"got {velocity.size}."
         )
 
     freq, velocity_psd = signal.welch(
@@ -805,7 +809,10 @@ def displacement_asd_from_velocity(velocity, fs=FS, df=DF):
     )
     omega = 2.0 * np.pi * freq
     omega_epsilon = np.finfo(float).eps
-    displacement_asd = np.sqrt(velocity_psd) / (omega + omega_epsilon)
+    displacement_asd = (
+        np.sqrt(velocity_psd)
+        / (omega + omega_epsilon)
+    )
     return freq, displacement_asd
 
 
@@ -815,11 +822,19 @@ def band_mask(freq, f_min=F_MIN, f_max=F_MAX):
 
 
 def positive_ylim(*asd_arrays, margin=0.08):
-    values = np.concatenate([np.asarray(item, dtype=float).ravel() for item in asd_arrays])
+    values = np.concatenate(
+        [
+            np.asarray(item, dtype=float).ravel()
+            for item in asd_arrays
+        ]
+    )
     values = values[np.isfinite(values) & (values > 0)]
     if values.size == 0:
-        raise ValueError("ASD arrays contain no positive finite values.")
-    return values.min() / (1.0 + margin), values.max() * (1.0 + margin)
+        raise ValueError("No positive finite ASD values.")
+    return (
+        values.min() / (1.0 + margin),
+        values.max() * (1.0 + margin),
+    )
 
 
 def plot_asd_comparison(
@@ -832,12 +847,23 @@ def plot_asd_comparison(
     ylabel=r"Displacement ASD [m/$\sqrt{\mathrm{Hz}}$]",
     output=None,
 ):
-    freq_off, asd_off = displacement_asd_from_velocity(velocity_off, fs=fs, df=df)
-    freq_on, asd_on = displacement_asd_from_velocity(velocity_on, fs=fs, df=df)
+    freq_off, asd_off = displacement_asd_from_velocity(
+        velocity_off,
+        fs=fs,
+        df=df,
+    )
+    freq_on, asd_on = displacement_asd_from_velocity(
+        velocity_on,
+        fs=fs,
+        df=df,
+    )
 
     mask_off = band_mask(freq_off)
     mask_on = band_mask(freq_on)
-    y_min, y_max = positive_ylim(asd_off[mask_off], asd_on[mask_on])
+    y_min, y_max = positive_ylim(
+        asd_off[mask_off],
+        asd_on[mask_on],
+    )
 
     plt.rcParams.update(
         {
@@ -851,9 +877,19 @@ def plot_asd_comparison(
         }
     )
 
-    fig, ax = plt.subplots(figsize=(FIG_W_MM / 25.4, FIG_H_MM / 25.4))
-    ax.loglog(freq_off[mask_off], asd_off[mask_off], label="Control off")
-    ax.loglog(freq_on[mask_on], asd_on[mask_on], label="Control on")
+    fig, ax = plt.subplots(
+        figsize=(FIG_W_MM / 25.4, FIG_H_MM / 25.4)
+    )
+    ax.loglog(
+        freq_off[mask_off],
+        asd_off[mask_off],
+        label="Control off",
+    )
+    ax.loglog(
+        freq_on[mask_on],
+        asd_on[mask_on],
+        label="Control on",
+    )
 
     ax.set_xlim(F_MIN, F_MAX)
     ax.set_ylim(y_min, y_max)
@@ -1163,14 +1199,18 @@ FONT_TICK_PT = 9.5
 LINE_WIDTH_PT = 1.5
 
 
-def displacement_asd_from_velocity(velocity, fs=FS, df=DF):
-    """Convert a velocity time series to one-sided displacement ASD."""
+def displacement_asd_from_velocity(
+    velocity,
+    fs=FS,
+    df=DF,
+):
+    """Convert velocity samples to displacement ASD."""
     velocity = np.asarray(velocity, dtype=float)
     nperseg = int(round(fs / df))
     if velocity.size < nperseg:
         raise ValueError(
-            f"Need at least one Welch segment: {nperseg} samples, "
-            f"but got {velocity.size}."
+            f"Need {nperseg} samples; "
+            f"got {velocity.size}."
         )
     freq, velocity_psd = signal.welch(
         velocity,
@@ -1182,7 +1222,10 @@ def displacement_asd_from_velocity(velocity, fs=FS, df=DF):
     )
     omega = 2.0 * np.pi * freq
     omega_epsilon = np.finfo(float).eps
-    displacement_asd = np.sqrt(velocity_psd) / (omega + omega_epsilon)
+    displacement_asd = (
+        np.sqrt(velocity_psd)
+        / (omega + omega_epsilon)
+    )
     return freq, displacement_asd
 
 
@@ -1196,12 +1239,22 @@ def plot_asd_comparison(
     ylabel=r"Displacement ASD [m/$\sqrt{\mathrm{Hz}}$]",
     output=None,
 ):
-    freq_off, asd_off = displacement_asd_from_velocity(velocity_off, fs=fs, df=df)
-    freq_on, asd_on = displacement_asd_from_velocity(velocity_on, fs=fs, df=df)
+    freq_off, asd_off = displacement_asd_from_velocity(
+        velocity_off,
+        fs=fs,
+        df=df,
+    )
+    freq_on, asd_on = displacement_asd_from_velocity(
+        velocity_on,
+        fs=fs,
+        df=df,
+    )
     mask_off = (freq_off >= F_MIN) & (freq_off <= F_MAX)
     mask_on = (freq_on >= F_MIN) & (freq_on <= F_MAX)
 
-    values = np.concatenate([asd_off[mask_off], asd_on[mask_on]])
+    values = np.concatenate(
+        [asd_off[mask_off], asd_on[mask_on]]
+    )
     values = values[np.isfinite(values) & (values > 0)]
     y_min = values.min() / 1.08
     y_max = values.max() * 1.08
@@ -1218,9 +1271,19 @@ def plot_asd_comparison(
         }
     )
 
-    fig, ax = plt.subplots(figsize=(FIG_W_MM / 25.4, FIG_H_MM / 25.4))
-    ax.loglog(freq_off[mask_off], asd_off[mask_off], label="Control off")
-    ax.loglog(freq_on[mask_on], asd_on[mask_on], label="Control on")
+    fig, ax = plt.subplots(
+        figsize=(FIG_W_MM / 25.4, FIG_H_MM / 25.4)
+    )
+    ax.loglog(
+        freq_off[mask_off],
+        asd_off[mask_off],
+        label="Control off",
+    )
+    ax.loglog(
+        freq_on[mask_on],
+        asd_on[mask_on],
+        label="Control on",
+    )
     ax.set_xlim(F_MIN, F_MAX)
     ax.set_ylim(y_min, y_max)
     ax.set_xlabel("Frequency [Hz]")
