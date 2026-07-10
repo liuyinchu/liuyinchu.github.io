@@ -35,9 +35,9 @@
     "category": "project"
   },
   {
-    "name": "主动隔振与 MIMO 控制实践",
-    "desc": "现代控制理论与技术·期末大作业。",
-    "homepage": "",
+    "name": "现代控制理论与技术课程网站",
+    "desc": "现代控制理论与技术·课堂实践与期末大作业指引。",
+    "homepage": "/modern-control-course",
     "repo": "https://github.com/pifuyuini/un-official-sysuspa-modern-control-course-work",
     "category": "project"
   },
