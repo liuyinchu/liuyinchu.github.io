@@ -763,7 +763,7 @@ $$
 - Control off：控制关闭，仿真时长不少于 $1000\,\mathrm{s}$；
 - Control on：控制开启，仿真时长不少于 $1000\,\mathrm{s}$。
 
-采样率固定为 $f_s=10\,\mathrm{kHz}$。使用 Welch 方法估计位移 ASD，频率分辨率固定为 $\Delta f=0.01\,\mathrm{Hz}$，绘制 $0.01$ 到 $100\,\mathrm{Hz}$ 频段内的 Control off / Control on 对比图。下面代码同时包含 ASD 计算和统一绘图规范。
+采样率固定为 $f_s=10\,\mathrm{kHz}$。仿真导出的时域数据为速度等效量，因此应先使用 Welch 方法估计速度功率谱密度，再通过 $2\pi f$ 完成从速度 ASD 到位移 ASD 的换算。频率分辨率固定为 $\Delta f=0.01\,\mathrm{Hz}$，绘制 $0.01$ 到 $100\,\mathrm{Hz}$ 频段内的 Control off / Control on 位移 ASD 对比图。下面代码同时完成 Welch 估计、速度到位移的换算和统一绘图。
 
 ```python
 from pathlib import Path
@@ -785,25 +785,28 @@ FONT_TICK_PT = 9.5
 LINE_WIDTH_PT = 1.5
 
 
-def displacement_asd(x, fs=FS, df=DF):
-    """Compute one-sided displacement ASD with the course Welch standard."""
-    x = np.asarray(x, dtype=float)
+def displacement_asd_from_velocity(velocity, fs=FS, df=DF):
+    """Convert a velocity time series to one-sided displacement ASD."""
+    velocity = np.asarray(velocity, dtype=float)
     nperseg = int(round(fs / df))
-    if x.size < nperseg:
+    if velocity.size < nperseg:
         raise ValueError(
             f"Need at least one Welch segment: {nperseg} samples, "
-            f"but got {x.size}."
+            f"but got {velocity.size}."
         )
 
-    freq, psd = signal.welch(
-        x,
+    freq, velocity_psd = signal.welch(
+        velocity,
         fs=fs,
         nperseg=nperseg,
         noverlap=nperseg // 2,
         detrend="constant",
         scaling="density",
     )
-    return freq, np.sqrt(psd)
+    omega = 2.0 * np.pi * freq
+    omega_epsilon = np.finfo(float).eps
+    displacement_asd = np.sqrt(velocity_psd) / (omega + omega_epsilon)
+    return freq, displacement_asd
 
 
 def band_mask(freq, f_min=F_MIN, f_max=F_MAX):
@@ -820,8 +823,8 @@ def positive_ylim(*asd_arrays, margin=0.08):
 
 
 def plot_asd_comparison(
-    x_off,
-    x_on,
+    velocity_off,
+    velocity_on,
     *,
     fs=FS,
     df=DF,
@@ -829,8 +832,8 @@ def plot_asd_comparison(
     ylabel=r"Displacement ASD [m/$\sqrt{\mathrm{Hz}}$]",
     output=None,
 ):
-    freq_off, asd_off = displacement_asd(x_off, fs=fs, df=df)
-    freq_on, asd_on = displacement_asd(x_on, fs=fs, df=df)
+    freq_off, asd_off = displacement_asd_from_velocity(velocity_off, fs=fs, df=df)
+    freq_on, asd_on = displacement_asd_from_velocity(velocity_on, fs=fs, df=df)
 
     mask_off = band_mask(freq_off)
     mask_on = band_mask(freq_on)
@@ -871,8 +874,8 @@ def plot_asd_comparison(
 
 # Example:
 # fig, ax = plot_asd_comparison(
-#     x_off=displacement_control_off,
-#     x_on=displacement_control_on,
+#     velocity_off=velocity_control_off,
+#     velocity_on=velocity_control_on,
 #     title="Vertical displacement ASD",
 #     output="figures/vertical_displacement_asd.png",
 # )
@@ -1000,9 +1003,9 @@ For the force input alone, the system is controllable when $m_1>0,m_2>0,k_2\ne0$
 
 ## Final-Project Model: 3-DOF Active Vibration Isolation
 
-The final project uses a 3-DOF active vibration isolation system as the control plant. The course task is not to reproduce the full experimental paper, but to understand the MIMO model, decouple it, analyze controllability and observability, design an observer and a MIMO controller, and evaluate the result with a unified ASD standard.
+The final project uses a 3-DOF active vibration isolation system as the control plant. The task is to understand the MIMO model, decouple it, analyze controllability and observability, design an observer and a MIMO controller, and evaluate the result with a unified ASD standard.
 
-The global frame is attached to the platform center of mass. The retained generalized coordinates are
+The global frame is attached to the platform center of mass. Although a rigid body has six degrees of freedom, only the three dominant degrees of freedom in the target frequency band are retained:
 
 $$
 \boldsymbol{x}_O=
@@ -1014,6 +1017,8 @@ z_O\\
 $$
 
 where $x_O$ is horizontal translation, $z_O$ is vertical translation, and $\phi_{YO}$ is rotation about the $Y_O$ axis. The platform is supported by symmetric vertical and horizontal springs, controlled by two vertical actuators and one horizontal actuator, and measured by two inertial sensors mounted symmetrically on the platform.
+
+The platform mass is $m=60\,\mathrm{kg}$ and its rotational inertia about $Y_O$ is $J_{yy}=4.5\,\mathrm{kg\,m^2}$. The vertical and horizontal stiffnesses are $k_s=4200\,\mathrm{N/m}$ and $k_h=2060\,\mathrm{N/m}$; the corresponding damping coefficients are $d_s=100\,\mathrm{Ns/m}$ and $d_h=70\,\mathrm{Ns/m}$. These values establish the scale of the model; use the parameters in the supplied simulation files for the final project.
 
 The coupled platform dynamics can be written as
 
@@ -1039,7 +1044,7 @@ Here $\boldsymbol{x}_d$ is ground disturbance, $\boldsymbol{u}$ is actuator forc
 
 The original actuator and sensor channels are local. Decoupling maps these local channels to center-of-mass logical coordinates. The resulting 3-input 3-output plant should have dominant diagonal responses for vertical, rotational, and horizontal channels, with reduced off-diagonal coupling. Residual horizontal-rotational coupling can remain because inertial sensors cannot perfectly distinguish translation from tilt-induced apparent acceleration.
 
-The reference system has main resonances around $1.8\,\mathrm{Hz}$ vertical, $1.3\,\mathrm{Hz}$ horizontal, and $2.6\,\mathrm{Hz}$ rotational. Sensor misalignment and tilt-translation coupling can introduce non-minimum phase behavior or weak SISO controllability at particular frequencies, which is why MIMO analysis is required.
+The platform has main resonances around $1.8\,\mathrm{Hz}$ vertical, $1.3\,\mathrm{Hz}$ horizontal, and $2.6\,\mathrm{Hz}$ rotational. Sensor misalignment and tilt-translation coupling can introduce non-minimum phase behavior or weak SISO controllability at particular frequencies, which is why MIMO analysis is required.
 
 ### Disturbance and Noise
 
@@ -1126,7 +1131,7 @@ G_\mathrm{s}=W_2GW_1,
 K=W_1K_\infty W_2.
 $$
 
-Weights should increase low-frequency disturbance rejection while reducing high-frequency noise amplification and sensitivity to unmodeled modes. The virtual sensor fusion idea from the reference paper uses real sensors at low frequency and virtual model-based sensors at high frequency, with a crossover around $10\,\mathrm{Hz}$.
+Weights should increase low-frequency disturbance rejection while reducing high-frequency noise amplification and sensitivity to unmodeled modes. Overly aggressive shaping reduces robust-stability margin: a controller can look strong in nominal simulation while remaining highly sensitive to model error.
 
 Other methods, including MPC, RL, DOB, $\mu$ synthesis, and data-driven control, are allowed if they use the same simulation and ASD evaluation standard.
 
@@ -1137,7 +1142,7 @@ Run at least two simulations:
 - Control off: controller disabled, at least $1000\,\mathrm{s}$;
 - Control on: controller enabled, at least $1000\,\mathrm{s}$.
 
-Use $f_s=10\,\mathrm{kHz}$, Welch ASD with $\Delta f=0.01\,\mathrm{Hz}$, and plot displacement ASD from $0.01$ to $100\,\mathrm{Hz}$. The following code implements the required ASD and plotting standard.
+Use $f_s=10\,\mathrm{kHz}$ and Welch estimation with $\Delta f=0.01\,\mathrm{Hz}$. The exported simulation signals are velocity-equivalent time series, so estimate their velocity PSD first and divide the resulting velocity ASD by $2\pi f$ to obtain displacement ASD. Plot the Control off / Control on displacement ASD from $0.01$ to $100\,\mathrm{Hz}$ using the same conditions and plotting standard.
 
 ```python
 from pathlib import Path
@@ -1158,25 +1163,41 @@ FONT_TICK_PT = 9.5
 LINE_WIDTH_PT = 1.5
 
 
-def displacement_asd(x, fs=FS, df=DF):
-    x = np.asarray(x, dtype=float)
+def displacement_asd_from_velocity(velocity, fs=FS, df=DF):
+    """Convert a velocity time series to one-sided displacement ASD."""
+    velocity = np.asarray(velocity, dtype=float)
     nperseg = int(round(fs / df))
-    if x.size < nperseg:
-        raise ValueError(f"Need at least {nperseg} samples.")
-    freq, psd = signal.welch(
-        x,
+    if velocity.size < nperseg:
+        raise ValueError(
+            f"Need at least one Welch segment: {nperseg} samples, "
+            f"but got {velocity.size}."
+        )
+    freq, velocity_psd = signal.welch(
+        velocity,
         fs=fs,
         nperseg=nperseg,
         noverlap=nperseg // 2,
         detrend="constant",
         scaling="density",
     )
-    return freq, np.sqrt(psd)
+    omega = 2.0 * np.pi * freq
+    omega_epsilon = np.finfo(float).eps
+    displacement_asd = np.sqrt(velocity_psd) / (omega + omega_epsilon)
+    return freq, displacement_asd
 
 
-def plot_asd_comparison(x_off, x_on, title, output=None):
-    freq_off, asd_off = displacement_asd(x_off)
-    freq_on, asd_on = displacement_asd(x_on)
+def plot_asd_comparison(
+    velocity_off,
+    velocity_on,
+    *,
+    fs=FS,
+    df=DF,
+    title="Displacement ASD comparison",
+    ylabel=r"Displacement ASD [m/$\sqrt{\mathrm{Hz}}$]",
+    output=None,
+):
+    freq_off, asd_off = displacement_asd_from_velocity(velocity_off, fs=fs, df=df)
+    freq_on, asd_on = displacement_asd_from_velocity(velocity_on, fs=fs, df=df)
     mask_off = (freq_off >= F_MIN) & (freq_off <= F_MAX)
     mask_on = (freq_on >= F_MIN) & (freq_on <= F_MAX)
 
@@ -1188,8 +1209,11 @@ def plot_asd_comparison(x_off, x_on, title, output=None):
     plt.rcParams.update(
         {
             "font.size": FONT_BASE_PT,
+            "axes.labelsize": FONT_BASE_PT,
+            "axes.titlesize": FONT_BASE_PT,
             "xtick.labelsize": FONT_TICK_PT,
             "ytick.labelsize": FONT_TICK_PT,
+            "legend.fontsize": FONT_TICK_PT,
             "lines.linewidth": LINE_WIDTH_PT,
         }
     )
@@ -1200,7 +1224,7 @@ def plot_asd_comparison(x_off, x_on, title, output=None):
     ax.set_xlim(F_MIN, F_MAX)
     ax.set_ylim(y_min, y_max)
     ax.set_xlabel("Frequency [Hz]")
-    ax.set_ylabel(r"Displacement ASD [m/$\sqrt{\mathrm{Hz}}$]")
+    ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.grid(True, which="both", alpha=0.28)
     ax.legend(frameon=False)
@@ -1211,6 +1235,15 @@ def plot_asd_comparison(x_off, x_on, title, output=None):
         output.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(output, dpi=300, bbox_inches="tight")
     return fig, ax
+
+
+# Example:
+# fig, ax = plot_asd_comparison(
+#     velocity_off=velocity_control_off,
+#     velocity_on=velocity_control_on,
+#     title="Vertical displacement ASD",
+#     output="figures/vertical_displacement_asd.png",
+# )
 ```
 
 Each key DOF or output should have at least one ASD comparison figure. Control off and Control on curves must use the same disturbance, noise, sample rate, and Welch parameters.
@@ -1222,4 +1255,12 @@ Each key DOF or output should have at least one ASD comparison figure. Control o
 <p>Submit a complete PDF report to the course email address. Prepare defense slides based on the report; the defense is scheduled one week after report submission.</p>
 </div>
 
-The report should include model explanation and decoupling, controllability and observability analysis, Kalman filter design and tests, controller design, simulation setup, ASD comparisons, and limitations or possible improvements.
+The report should include:
+
+1. model explanation and the decoupling procedure;
+2. controllability and observability analysis;
+3. Kalman filter design, parameter selection, and testing;
+4. controller design, including control structure, weighting, or performance-index choices;
+5. Control off / Control on simulation settings;
+6. ASD comparison figures and performance interpretation;
+7. method limitations, failed cases, or possible improvements.
