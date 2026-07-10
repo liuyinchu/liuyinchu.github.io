@@ -19,26 +19,28 @@
     </section>
 
     <section class="course-layout" aria-label="Course content">
-      <aside class="course-toc" aria-label="Table of contents">
+      <aside ref="tocRef" class="course-toc" aria-label="Table of contents">
         <p>{{ copy.tocTitle }}</p>
         <nav>
           <a
             v-for="item in visibleToc"
             :key="item.id"
             :href="`#${item.id}`"
-            :class="`toc-level-${item.level}`"
+            :class="[`toc-level-${item.level}`, { 'is-active': activeTocId === item.id }]"
+            :aria-current="activeTocId === item.id ? 'location' : undefined"
+            @click="handleTocClick($event, item.id)"
           >
             {{ item.text }}
           </a>
         </nav>
       </aside>
 
-      <article class="course-article">
+      <article ref="articleRef" class="course-article">
         <MarkdownViewer
           :content="selectedMarkdown"
           variant="embed"
           use-c-j-k
-          @toc-generated="tocItems = $event"
+          @toc-generated="handleTocGenerated"
         />
       </article>
     </section>
@@ -46,7 +48,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import MarkdownViewer from '../components/MarkdownViewer.vue'
 
 const copyDeck = {
@@ -68,7 +70,12 @@ const lang = ref(localStorage.getItem('modern-control-lang') || 'zh')
 const theme = ref(localStorage.getItem('modern-control-theme') || 'light')
 const rawMarkdown = ref('')
 const tocItems = ref([])
+const activeTocId = ref('')
+const tocRef = ref(null)
+const articleRef = ref(null)
 let previousTitle = ''
+let headingElements = []
+let scrollFrame = 0
 
 const copy = computed(() => copyDeck[lang.value] || copyDeck.zh)
 
@@ -91,11 +98,82 @@ function toggleTheme() {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
 }
 
+function syncTocHeadings() {
+  headingElements = visibleToc.value
+    .map((item) => document.getElementById(item.id))
+    .filter((heading) => heading && articleRef.value?.contains(heading))
+  updateActiveToc()
+}
+
+function updateActiveToc() {
+  if (!headingElements.length) {
+    activeTocId.value = ''
+    return
+  }
+
+  let currentId = headingElements[0].id
+  for (const heading of headingElements) {
+    if (heading.getBoundingClientRect().top > 120) break
+    currentId = heading.id
+  }
+  if (activeTocId.value === currentId) return
+  activeTocId.value = currentId
+  nextTick(() => keepActiveTocLinkVisible(currentId))
+}
+
+function keepActiveTocLinkVisible(id) {
+  if (activeTocId.value !== id || !tocRef.value) return
+  const link = tocRef.value.querySelector('a.is-active')
+  if (!link) return
+
+  const linkTop = link.offsetTop
+  const linkBottom = linkTop + link.offsetHeight
+  const visibleTop = tocRef.value.scrollTop
+  const visibleBottom = visibleTop + tocRef.value.clientHeight
+  let nextTop = null
+
+  if (linkTop < visibleTop) {
+    nextTop = linkTop
+  } else if (linkBottom > visibleBottom) {
+    nextTop = linkBottom - tocRef.value.clientHeight
+  }
+
+  if (nextTop !== null) {
+    tocRef.value.scrollTo({ top: nextTop, behavior: 'smooth' })
+  }
+}
+
+function handlePageScroll() {
+  if (scrollFrame) return
+  scrollFrame = window.requestAnimationFrame(() => {
+    scrollFrame = 0
+    updateActiveToc()
+  })
+}
+
+function handleTocClick(event, id) {
+  event.preventDefault()
+  const heading = document.getElementById(id)
+  if (!heading || !articleRef.value?.contains(heading)) return
+
+  activeTocId.value = id
+  const url = new URL(window.location.href)
+  url.hash = id
+  window.history.pushState(null, '', url)
+  heading.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function handleTocGenerated(items) {
+  tocItems.value = items
+  nextTick(syncTocHeadings)
+}
+
 watch(lang, (value) => {
   localStorage.setItem('modern-control-lang', value)
   document.title = value === 'zh'
     ? '现代控制理论与技术课程站'
     : 'Modern Control Theory Course Site'
+  nextTick(syncTocHeadings)
 })
 
 watch(theme, (value) => {
@@ -108,6 +186,7 @@ onMounted(async () => {
   document.title = lang.value === 'zh'
     ? '现代控制理论与技术课程站'
     : 'Modern Control Theory Course Site'
+  window.addEventListener('scroll', handlePageScroll, { passive: true })
 
   try {
     const response = await fetch('/markdown/pages/modern-control-course.md', { cache: 'no-cache' })
@@ -119,6 +198,8 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handlePageScroll)
+  if (scrollFrame) window.cancelAnimationFrame(scrollFrame)
   document.body.classList.remove('modern-control-course-route')
   document.title = previousTitle
 })
@@ -132,23 +213,27 @@ onBeforeUnmount(() => {
 }
 
 .modern-control-page {
-  --course-bg: #dde2df;
-  --course-hero: #17201e;
+  --course-bg: #e3e8e7;
+  --course-hero: #294740;
   --course-paper: #f7f8f5;
-  --course-surface: #e8ece8;
-  --course-jade-panel: #d8e3dc;
+  --course-surface: #edf1f2;
+  --course-jade-panel: #e0e8e9;
   --course-ink: #17201e;
   --course-muted: #596762;
-  --course-line: #bdc7c1;
-  --course-line-strong: #8e9d96;
+  --course-line: #c3cdcf;
+  --course-line-strong: #91a2a7;
   --course-jade: #17695f;
-  --course-jade-soft: #e1ebe5;
+  --course-jade-soft: #e6edef;
   --course-blue: #365f83;
   --course-gold: #a47b37;
   --course-red: #a8473b;
   --course-shadow: rgba(24, 34, 31, 0.17);
-  --course-shadow-soft: rgba(24, 34, 31, 0.12);
-  --course-button-light: #f4f7f3;
+  --course-shadow-soft: rgba(58, 76, 84, 0.12);
+  --course-button-light: #f7f9f8;
+  --course-glaze: #f8faf9;
+  --course-blue-layer: #dce7eb;
+  --course-inner-light: rgba(255, 255, 255, 0.72);
+  --course-material-shadow: rgba(62, 82, 94, 0.16);
   --course-code: #101816;
 
   display: flow-root;
@@ -157,7 +242,7 @@ onBeforeUnmount(() => {
   padding-top: 1.5rem;
   color: var(--course-ink);
   background: var(--course-bg);
-  font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
 }
 
 .modern-control-page.is-dark {
@@ -306,10 +391,16 @@ h1 {
   position: sticky;
   top: 1rem;
   align-self: start;
+  max-height: calc(100vh - 2rem);
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1.2rem 1rem 1.35rem;
   border-top: 3px solid var(--course-gold);
   border-right: 3px solid var(--course-jade);
   background: var(--course-surface);
+  scrollbar-color: var(--course-line-strong) var(--course-surface);
+  scrollbar-width: thin;
 }
 
 .course-toc p {
@@ -343,6 +434,14 @@ h1 {
   background: var(--course-jade-soft);
 }
 
+.course-toc a.is-active,
+.course-toc a.is-active:hover,
+.course-toc a.is-active:focus-visible {
+  border-left-color: var(--course-red);
+  color: var(--course-ink);
+  background: var(--course-jade-soft);
+}
+
 .course-toc .toc-level-3 {
   padding-left: 1rem;
   font-size: 0.92rem;
@@ -372,7 +471,7 @@ h1 {
   margin: 0;
   padding: 0;
   color: var(--course-ink);
-  font-family: 'Inter', 'Noto Serif SC', 'Songti SC', Georgia, serif;
+  font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
   font-size: 1.08rem;
   line-height: 1.88;
 }
@@ -394,6 +493,11 @@ h1 {
 .course-article :deep(.markdown-body h3) {
   color: var(--course-gold);
   font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
+}
+
+.course-article :deep(.markdown-body h2),
+.course-article :deep(.markdown-body h3) {
+  scroll-margin-top: 8rem;
 }
 
 .course-article :deep(.markdown-body blockquote) {
@@ -499,7 +603,7 @@ h1 {
 .course-article :deep(.course-deadline strong) {
   display: block;
   color: var(--course-red);
-  font-family: 'Fira Code', ui-monospace, monospace;
+  font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
   font-size: 2.15rem;
   line-height: 1;
   white-space: nowrap;
@@ -514,6 +618,45 @@ h1 {
 
 .course-article :deep(.md-figure img) {
   border-radius: 4px;
+}
+
+.modern-control-page:not(.is-dark) .hero-panel {
+  border-color: var(--course-line-strong);
+  background: var(--course-jade-panel);
+  box-shadow:
+    inset 0 0 0 1px var(--course-inner-light),
+    0 10px 22px var(--course-material-shadow);
+}
+
+.modern-control-page:not(.is-dark) .control-row button {
+  background: var(--course-glaze);
+  box-shadow:
+    inset 0 0 0 1px var(--course-inner-light),
+    0 4px 9px var(--course-material-shadow);
+}
+
+.modern-control-page:not(.is-dark) .course-toc a.is-active,
+.modern-control-page:not(.is-dark) .course-toc a.is-active:hover,
+.modern-control-page:not(.is-dark) .course-toc a.is-active:focus-visible {
+  background: var(--course-blue-layer);
+  box-shadow:
+    inset 0 0 0 1px var(--course-inner-light),
+    0 3px 7px var(--course-material-shadow);
+}
+
+.modern-control-page:not(.is-dark) .course-article :deep(.course-download) {
+  background: var(--course-glaze);
+  box-shadow:
+    inset 0 0 0 1px var(--course-inner-light),
+    0 5px 11px var(--course-material-shadow);
+}
+
+.modern-control-page:not(.is-dark) .course-article :deep(.course-method-grid > div),
+.modern-control-page:not(.is-dark) .course-article :deep(.course-requirement-grid > div) {
+  background: var(--course-blue-layer);
+  box-shadow:
+    inset 0 0 0 1px var(--course-inner-light),
+    0 6px 13px var(--course-material-shadow);
 }
 
 @media (max-width: 1100px) {
