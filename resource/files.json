@@ -33,5 +33,12 @@
     "url": "/files/notes/ysy_optics.pdf",
     "intro": "2022级光学课作业个人习题解答（英文版）。",
     "add": null
+  },
+  {
+    "idx": 6,
+    "name": "个人 Obsidian 模版",
+    "url": "/files/zip-package/ysy-obsidian-template.zip",
+    "intro": "这是一套可复用的 Obsidian Vault 配置模板，包含：AnuPpuccin 主题及其 Style Settings 配置，Calendar、Excalidraw、Style Settings 三个社区插件及其配置，Obsidian 核心插件启用状态，Markdown 链接、附件目录和关系图谱设置，字体与字号设置。",
+    "add": null
   }
 ]
