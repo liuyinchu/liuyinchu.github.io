@@ -465,10 +465,8 @@ onUnmounted(() => {
   font-weight: 700;
   line-height: 1;
   text-decoration: none;
-  opacity: 0;
-  transform: translateY(18px);
-  animation: mobileLinkIn 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  animation-delay: calc(var(--i) * 0.045s);
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .mobile-menu-container a.is-active,
@@ -489,19 +487,30 @@ onUnmounted(() => {
 
 .mobile-menu-enter-active,
 .mobile-menu-leave-active {
-  transition: opacity 0.24s ease;
+  transform-origin: calc(100% - 38px) 34px;
+  transition:
+    opacity 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    scale 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mobile-menu-enter-active a,
+.mobile-menu-leave-active a {
+  transition:
+    opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i) * 0.035s);
 }
 
 .mobile-menu-enter-from,
 .mobile-menu-leave-to {
   opacity: 0;
+  scale: 0.985;
 }
 
-@keyframes mobileLinkIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.mobile-menu-enter-from a,
+.mobile-menu-leave-to a {
+  opacity: 0;
+  transform: translateY(18px);
 }
 
 @media (max-width: 860px) {

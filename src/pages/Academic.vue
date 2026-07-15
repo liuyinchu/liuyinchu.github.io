@@ -13,7 +13,6 @@ const error = ref(null)
 const pageIdx = ref(0)
 const workPageIdx = ref(0)
 const direction = ref('down')
-const transitioning = ref(false)
 const academicRef = ref(null)
 const contactLinks = computed(() => {
   const links = Object.entries(brief.value?.contact?.links || {}).map(([label, href]) => [label, href])
@@ -153,33 +152,23 @@ function stepWorkPage(delta) {
 }
 
 function step(delta) {
-  if (transitioning.value) return
-
   const next = pageIdx.value + delta
   if (next < 0 || next >= slides.value.length) return
 
   direction.value = delta > 0 ? 'down' : 'up'
-  transitioning.value = true
   pageIdx.value = next
   if (slides.value[next]?.key === 'work') {
     workPageIdx.value = 0
   }
-  window.setTimeout(() => {
-    transitioning.value = false
-  }, 560)
 }
 
 function goTo(idx) {
-  if (idx === pageIdx.value || transitioning.value) return
+  if (idx === pageIdx.value) return
   direction.value = idx > pageIdx.value ? 'down' : 'up'
-  transitioning.value = true
   pageIdx.value = idx
   if (slides.value[idx]?.key === 'work') {
     workPageIdx.value = 0
   }
-  window.setTimeout(() => {
-    transitioning.value = false
-  }, 560)
 }
 
 function onWheel(event) {
@@ -285,7 +274,7 @@ onBeforeUnmount(() => {
     <RouterLink class="research-link" to="/research">Research Homepage</RouterLink>
 
     <div class="deck-stage">
-      <Transition :name="transitionName" mode="out-in">
+      <Transition :name="transitionName">
         <section
           :key="currentSlide.key"
           class="deck-slide"
