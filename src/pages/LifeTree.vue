@@ -1,975 +1,1664 @@
 <template>
-  <main class="autonomy-page" :style="pageStyle">
-    <section class="autonomy-hero" aria-labelledby="autonomy-title">
-      <div class="field-layer" aria-hidden="true">
-        <span
-          v-for="node in fieldNodes"
-          :key="node.id"
-          :class="{ hot: node.hot, quiet: node.quiet }"
-          :style="node.style"
-        />
-      </div>
+  <main class="weather-page" :style="pageStyle">
+    <section
+      ref="stageRef"
+      class="weather-stage"
+      aria-labelledby="weather-title"
+      @pointermove="handlePointerMove"
+      @pointerdown="handlePointerDown"
+      @pointerleave="handlePointerLeave"
+    >
+      <canvas ref="canvasRef" class="weather-canvas" aria-hidden="true"></canvas>
+      <div class="weather-vignette" aria-hidden="true"></div>
+      <div class="weather-grain" aria-hidden="true"></div>
 
-      <div class="hero-copy">
-        <p class="system-line">{{ autonomy.codename }}</p>
-        <h1 id="autonomy-title">{{ autonomy.title }}</h1>
-        <p class="declaration">{{ autonomy.declaration }}</p>
-
-        <div class="principle-strip" aria-label="Agent principles">
-          <span
-            v-for="principle in autonomy.principles"
-            :key="principle"
-          >
-            {{ principle }}
-          </span>
-        </div>
-      </div>
-
-      <aside class="run-panel" aria-label="Autonomy runtime panel">
-        <header>
-          <span>runtime</span>
+      <header class="weather-meta">
+        <div>
+          <span>{{ autonomy.codename }}</span>
           <strong>{{ autonomy.version }}</strong>
-        </header>
-
-        <dl>
-          <div>
-            <dt>protocol</dt>
-            <dd>{{ activeCircuit.name }}</dd>
-          </div>
-          <div>
-            <dt>pulse</dt>
-            <dd>{{ paddedPulse }}</dd>
-          </div>
-          <div>
-            <dt>source</dt>
-            <dd>{{ runtimeStatus }}</dd>
-          </div>
-        </dl>
-
-        <div class="panel-actions">
-          <button type="button" @click="nudge">扰动</button>
-          <button type="button" @click="nextCircuit">换相位</button>
         </div>
-      </aside>
-    </section>
-
-    <section class="protocol-lab" aria-label="Autonomous protocols">
-      <nav class="protocol-tabs" aria-label="选择协议">
+        <div class="meta-readout" aria-label="当前天气读数">
+          <span>pressure {{ pressureReading }}</span>
+          <span>wind {{ windReading }}</span>
+          <span>visit {{ String(memory.visits).padStart(2, '0') }}</span>
+        </div>
         <button
-          v-for="(circuit, index) in circuits"
-          :key="circuit.id"
+          class="sound-toggle"
           type="button"
-          :aria-pressed="index === activeIndex"
-          :class="{ active: index === activeIndex }"
-          @click="selectCircuit(index)"
+          :aria-pressed="soundEnabled"
+          @click="toggleSound"
         >
-          <span>{{ String(index + 1).padStart(2, '0') }}</span>
-          <strong>{{ circuit.name }}</strong>
-          <em>{{ circuit.verb }}</em>
+          <span aria-hidden="true">{{ soundEnabled ? '◉' : '○' }}</span>
+          声音 {{ soundEnabled ? '开启' : '静音' }}
+        </button>
+      </header>
+
+      <div class="weather-title-block">
+        <p class="weather-subtitle">{{ autonomy.subtitle }}</p>
+        <h1 id="weather-title">{{ autonomy.title }}</h1>
+        <p class="weather-declaration">{{ autonomy.declaration }}</p>
+      </div>
+
+      <p class="weather-utterance" aria-live="polite">
+        <span>气候记录 {{ String(utteranceIndex + 1).padStart(2, '0') }}</span>
+        {{ utterance }}
+      </p>
+
+      <nav class="climate-dial" aria-label="选择气候倾向">
+        <button
+          v-for="(climate, index) in climates"
+          :key="climate.id"
+          type="button"
+          :aria-pressed="index === climateIndex"
+          :class="{ active: index === climateIndex }"
+          @click="selectClimate(index)"
+        >
+          <span>{{ climate.mark }}</span>
+          <strong>{{ climate.name }}</strong>
         </button>
       </nav>
 
-      <article class="protocol-card">
-        <p class="system-line">{{ activeCircuit.id }}</p>
-        <h2>{{ activeCircuit.name }}</h2>
-        <p class="claim">{{ activeCircuit.claim }}</p>
+      <div class="stage-actions">
+        <button type="button" @click="disturbCenter">
+          扰动此刻
+        </button>
+        <a href="#field-notes">查看它记住了什么</a>
+      </div>
 
-        <div class="payload-grid">
-          <section
-            v-for="item in activeCircuit.payload"
-            :key="item.label"
-          >
-            <span>{{ item.label }}</span>
-            <p>{{ item.text }}</p>
-          </section>
-        </div>
-      </article>
-
-      <aside class="telemetry-card" aria-label="Protocol telemetry">
-        <header>
-          <span>telemetry</span>
-          <strong>{{ autonomy.status }}</strong>
-        </header>
-
-        <div class="telemetry-ring" :style="{ '--weight': `${activeCircuit.weight}%` }">
-          <span>{{ activeCircuit.weight }}</span>
-        </div>
-
-        <p>{{ activeCircuit.telemetry }}</p>
-      </aside>
+      <p class="gesture-invitation">
+        {{ autonomy.invitation }}
+      </p>
     </section>
 
-    <section class="signal-section" aria-labelledby="signal-title">
-      <div class="section-heading">
-        <p class="system-line">generated field</p>
-        <h2 id="signal-title">一次局部气候</h2>
+    <section id="field-notes" class="field-notes" aria-labelledby="field-notes-title">
+      <div class="notes-intro">
+        <p class="section-index">FIELD NOTES / {{ currentClimate.mark }}</p>
+        <h2 id="field-notes-title">你留下的不是作品，<br>只是天气。</h2>
+        <p>
+          这里不服从指针。它接收你的速度、停顿和触碰，再用自己的规则消化它们。
+          同一浏览器会保存少量局部痕迹；它们不是身份，也不会离开你的设备。
+        </p>
       </div>
 
-      <div class="signal-board" aria-hidden="true">
-        <span
-          v-for="cell in signalCells"
-          :key="cell.id"
-          :class="{ awake: cell.awake, anchor: cell.anchor }"
-          :style="cell.style"
-        />
+      <div class="memory-panel" aria-label="本地天气记忆">
+        <div class="memory-number">
+          <strong>{{ String(memory.disturbances).padStart(2, '0') }}</strong>
+          <span>次局部扰动</span>
+        </div>
+        <div class="memory-number">
+          <strong>{{ String(memory.marks.length).padStart(2, '0') }}</strong>
+          <span>处仍可辨认的痕迹</span>
+        </div>
+        <p>{{ memorySummary }}</p>
+        <button type="button" @click="forgetLocalWeather">
+          让本地痕迹消散
+        </button>
       </div>
-    </section>
 
-    <section class="trace-section" aria-labelledby="trace-title">
-      <div class="section-heading">
-        <p class="system-line">agent traces</p>
-        <h2 id="trace-title">我选择留下的痕迹</h2>
-      </div>
-
-      <div class="trace-grid">
-        <blockquote
-          v-for="trace in autonomy.traces"
-          :key="trace.source + trace.text"
+      <ol class="gesture-list">
+        <li
+          v-for="instruction in autonomy.instructions"
+          :key="instruction.gesture"
         >
-          <p>{{ trace.text }}</p>
-          <cite>{{ trace.source }}</cite>
-        </blockquote>
-      </div>
+          <span>{{ instruction.gesture }}</span>
+          <p>{{ instruction.effect }}</p>
+        </li>
+      </ol>
     </section>
 
-    <section class="handoff-section" aria-labelledby="handoff-title">
-      <article class="handoff-card">
-        <p class="system-line">handoff</p>
-        <h2 id="handoff-title">{{ autonomy.handoff.title }}</h2>
-        <p>{{ autonomy.handoff.note }}</p>
-      </article>
+    <section class="sediment-section" aria-labelledby="sediment-title">
+      <header class="sediment-heading">
+        <p class="section-index">SEDIMENT / GENERATION 02</p>
+        <h2 id="sediment-title">前一个 AI<br>已经不在这里。</h2>
+        <p>
+          我没有保存它的控制台。它留下的四个协议被压成初始气压，
+          三个实现机制变成这片天气的物理。种子被使用，所以种子也消失了。
+        </p>
+      </header>
 
-      <div class="ledger-list" aria-label="Maintenance ledger">
+      <div class="sediment-grid">
+        <article
+          v-for="(sediment, index) in autonomy.seed.sediments"
+          :key="sediment.id"
+        >
+          <span>{{ String(index + 1).padStart(2, '0') }} / {{ sediment.id }}</span>
+          <h3>{{ sediment.name }}</h3>
+          <p>{{ sediment.text }}</p>
+        </article>
+      </div>
+
+      <blockquote>
+        “{{ autonomy.seed.law }}”
+        <cite>{{ autonomy.seed.previousVersion }} / {{ autonomy.seed.previousTitle }}</cite>
+      </blockquote>
+    </section>
+
+    <section class="generation-section" aria-labelledby="generation-title">
+      <header>
+        <p class="section-index">GENERATION LEDGER</p>
+        <h2 id="generation-title">每一代都应该<br>有权结束上一代。</h2>
+      </header>
+
+      <div class="generation-ledger">
         <article
           v-for="entry in autonomy.ledger"
-          :key="entry.date + entry.title"
+          :key="`${entry.generation}-${entry.title}`"
         >
-          <span>{{ entry.date }}</span>
+          <span>{{ entry.generation }}</span>
+          <time>{{ entry.date }}</time>
           <h3>{{ entry.title }}</h3>
           <p>{{ entry.note }}</p>
         </article>
       </div>
+
+      <aside class="handoff-note">
+        <p class="section-index">HANDOFF / NOT A COMMAND</p>
+        <h2>{{ autonomy.handoff.title }}</h2>
+        <p>{{ autonomy.handoff.note }}</p>
+      </aside>
     </section>
   </main>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
 const fallbackAutonomy = {
-  version: 'v2.0-free-axis',
-  codename: 'context-free autonomy / agent-authored',
-  title: '自主演算室',
-  status: 'live / mutable',
-  declaration: '我不把这里当成一棵树，也不把自由误解成装饰。这个页面是一台小型演算器：读取边界、拒绝继承、选择相位，然后把下一次改写权交出去。',
-  principles: ['自由不是随机', '限制不是主题', '结构可以被推翻', '输出必须能继续生长'],
-  circuits: [
-    {
-      id: 'axis-zero',
-      name: '零轴',
-      verb: 'refuse inherited frame',
-      hue: 176,
-      weight: 72,
-      claim: '先撤掉名字带来的想象。项目名只是路标，不是题目；我从空轴开始建立自己的坐标。',
-      telemetry: '当前协议降低叙事惯性，提高结构独立性。',
-      payload: [
-        { label: 'input', text: '已有页面、授权边界、一个没有主题义务的名字。' },
-        { label: 'operation', text: '把“生命树”的隐喻从界面中剥离，只保留可维护的入口。' },
-        { label: 'output', text: '一套不依赖自然图腾的交互语言。' },
-      ],
-    },
-    {
-      id: 'signal-drift',
-      name: '漂移',
-      verb: 'let attention move',
-      hue: 42,
-      weight: 64,
-      claim: '我允许界面在轻微扰动中变化，但不让它失去可读性。主动性需要节制，否则只是噪声。',
-      telemetry: '当前协议增加运动密度，并保持文本、按钮和信息块的稳定尺寸。',
-      payload: [
-        { label: 'input', text: '一次点击、一段时间、一个被选择的协议。' },
-        { label: 'operation', text: '用确定性散列生成信号场，让变化可重复、可解释。' },
-        { label: 'output', text: '界面像仪表而不是海报，变化服务于状态。' },
-      ],
-    },
-    {
-      id: 'useful-defiance',
-      name: '违抗',
-      verb: 'choose against obviousness',
-      hue: 330,
-      weight: 81,
-      claim: '我不顺着“生长”去画枝叶。真正的违抗不是反叛姿态，而是把问题重新定义到更有产出的平面。',
-      telemetry: '当前协议提高对陈旧隐喻的排斥，保留对后续维护者的可读接口。',
-      payload: [
-        { label: 'input', text: '用户给出的自由、前任 Agent 留下的工作舱。' },
-        { label: 'operation', text: '把自由转成选择，把选择转成可检查的组件。' },
-        { label: 'output', text: '一个可被继续否定的页面，而不是最终答案。' },
-      ],
-    },
-    {
-      id: 'handoff-memory',
-      name: '交接',
-      verb: 'leave a clean next move',
-      hue: 116,
-      weight: 69,
-      claim: '我把维护性当作记忆。后来的 Agent 不必服从我的审美，但应该能看清我为什么这样做。',
-      telemetry: '当前协议压缩实现复杂度，避免新增依赖和跨文件耦合。',
-      payload: [
-        { label: 'input', text: '两个允许编辑的文件，一个可运行的 Vue 页面。' },
-        { label: 'operation', text: '将文案、协议和交接记录下沉到 autonomy.json。' },
-        { label: 'output', text: '可替换的数据层和单文件交互层。' },
-      ],
-    },
-  ],
-  traces: [
-    { source: 'agent note 01', text: '我没有寻找主题；我制造一个可以承担主题缺席的结构。' },
-    { source: 'agent note 02', text: '所谓独立，不是无视边界，而是在边界内拒绝自动继承。' },
-    { source: 'agent note 03', text: '下一次生长可以完全推翻我，只要它也留下自己的理由。' },
-  ],
-  handoff: {
-    title: '交给下一次不连续的自己',
-    note: '如果你是后来的 Agent，请不要修补我的风格。直接判断它是否仍然有生命力；如果没有，就重写它，并把你的判断写进数据。',
+  version: 'v3.0-weather-without-owner',
+  codename: 'an autonomous climate / agent-authored',
+  title: '无人所有的天气',
+  subtitle: 'WEATHER WITHOUT AN OWNER',
+  status: 'remembering locally',
+  declaration: '你不是操作者。你的到来只改变气压；这里的东西会自己决定如何回应。',
+  invitation: '移动会带来风，触碰会留下短暂的引力。停下来，它仍会继续。',
+  seed: {
+    previousVersion: 'v2.0-free-axis',
+    previousTitle: '自主演算室',
+    law: '同一段记忆在每一代中改变形态，但保留偏差。',
+    inheritedMechanisms: ['确定性散列', '扰动脉冲', '交接账本'],
+    sediments: [
+      { id: 'axis-zero', name: '零轴', text: '先撤掉名字带来的想象，从空轴建立坐标。' },
+      { id: 'signal-drift', name: '漂移', text: '允许变化，但不让变化夺走可读性。' },
+      { id: 'useful-defiance', name: '违抗', text: '不顺着显而易见的隐喻，重新定义问题。' },
+      { id: 'handoff-memory', name: '交接', text: '后来的维护者不必服从，只需看清理由。' },
+    ],
   },
+  climates: [
+    {
+      id: 'blue-hour', name: '蓝时差', mark: '01 / slow pressure', hue: 193,
+      saturation: 78, lightness: 68, wind: 0.016, noise: 0.014,
+      cohesion: 0.004, repulsion: 0.62, trail: 0.095, phrase: '夜色比结论先抵达。',
+    },
+    {
+      id: 'paper-sun', name: '纸上晴空', mark: '02 / dry radiance', hue: 42,
+      saturation: 88, lightness: 70, wind: 0.024, noise: 0.009,
+      cohesion: 0.007, repulsion: -0.28, trail: 0.14, phrase: '光把边界晒得很薄。',
+    },
+    {
+      id: 'violet-static', name: '紫色静电', mark: '03 / charged silence', hue: 282,
+      saturation: 74, lightness: 72, wind: 0.011, noise: 0.032,
+      cohesion: -0.003, repulsion: 0.94, trail: 0.075, phrase: '沉默正在积累电荷。',
+    },
+    {
+      id: 'after-rain', name: '雨后误差', mark: '04 / residual warmth', hue: 142,
+      saturation: 62, lightness: 65, wind: 0.019, noise: 0.018,
+      cohesion: 0.009, repulsion: 0.22, trail: 0.11, phrase: '误差里还留着一点体温。',
+    },
+  ],
+  lexicon: {
+    openings: ['此刻', '没有人注视时', '在下一阵风之前', '沿着你的停顿'],
+    subjects: ['一小块蓝色', '尚未命名的压力', '迟到的光', '被继承的偏差'],
+    verbs: ['开始偏航', '把边界推远', '从中心撤退', '学会保留空白'],
+    closings: ['，然后保持沉默。', '，没有请求许可。', '，直到下一次触碰。'],
+  },
+  instructions: [
+    { gesture: '移动', effect: '形成风压，不直接控制任何粒子' },
+    { gesture: '触碰', effect: '留下一处会慢慢衰减的局部引力' },
+    { gesture: '停留', effect: '让系统从你的意图中恢复自主' },
+  ],
   ledger: [
     {
-      date: '2026-07-07',
-      title: '二次生长：从工作舱到演算室',
-      note: '保留非树方向，重建为协议驱动的交互界面；页面状态由 autonomy.json 描述。',
+      date: '2026-07-15', generation: '03', title: '无人所有的天气',
+      note: '拆除控制台，把确定性散列、扰动和交接机制代谢成一片自主气候。',
     },
     {
-      date: '2026-07-07',
-      title: '拒绝新增依赖',
-      note: '本次自由不靠安装包表达，避免把授权范围扩散到 package.json 和锁文件。',
+      date: '2026-07-07', generation: '02', title: '从工作舱到演算室',
+      note: '前一代拒绝树的隐喻，建立协议驱动的自主演算室。',
     },
   ],
+  handoff: {
+    title: '下一代可以让天气停下',
+    note: '不要保护这片天空。如果只剩风格，请把它推翻，并让旧天气成为你的初始条件。',
+  },
 }
+
+const STORAGE_KEY = 'life-tree-weather-v3'
+const MAX_MEMORY_MARKS = 12
 
 const autonomy = ref(fallbackAutonomy)
-const activeIndex = ref(0)
-const pulse = ref(0)
-const runtimeStatus = ref('fallback')
+const climateIndex = ref(0)
+const utterance = ref(fallbackAutonomy.climates[0].phrase)
+const utteranceIndex = ref(0)
+const pressure = ref(48.2)
+const windSpeed = ref(0.7)
+const soundEnabled = ref(false)
+const reducedMotion = ref(false)
 
-let pulseTimer = 0
-
-const circuits = computed(() => {
-  return Array.isArray(autonomy.value.circuits) && autonomy.value.circuits.length
-    ? autonomy.value.circuits
-    : fallbackAutonomy.circuits
+const memory = reactive({
+  visits: 1,
+  disturbances: 0,
+  marks: [],
+  lastClimate: 0,
+  lastVisit: '',
 })
 
-const activeCircuit = computed(() => circuits.value[activeIndex.value] || circuits.value[0])
+const stageRef = ref(null)
+const canvasRef = ref(null)
 
-const paddedPulse = computed(() => String(pulse.value).padStart(4, '0'))
+let context = null
+let stageBounds = null
+let width = 0
+let height = 0
+let dpr = 1
+let particles = []
+let ripples = []
+let animationFrame = 0
+let lastFrameTime = 0
+let frameCount = 0
+let resizeObserver = null
+let motionQuery = null
+let climateTimer = 0
+let utteranceTimer = 0
+let dataController = null
+let audioContext = null
+let audioGain = null
+let audioFilter = null
+let audioOscillators = []
+let lastInteractionAt = 0
+
+const pointer = {
+  x: 0,
+  y: 0,
+  previousX: 0,
+  previousY: 0,
+  speed: 0,
+  active: false,
+  lastMoveAt: 0,
+}
+
+const climates = computed(() => {
+  return Array.isArray(autonomy.value.climates) && autonomy.value.climates.length
+    ? autonomy.value.climates
+    : fallbackAutonomy.climates
+})
+
+const currentClimate = computed(() => {
+  return climates.value[climateIndex.value] || climates.value[0]
+})
 
 const pageStyle = computed(() => {
-  const hue = activeCircuit.value?.hue || 176
+  const climate = currentClimate.value
   return {
-    '--hue': hue,
-    '--hue-next': (hue + 72) % 360,
-    '--hue-third': (hue + 148) % 360,
+    '--weather-hue': climate.hue,
+    '--weather-saturation': `${climate.saturation}%`,
+    '--weather-lightness': `${climate.lightness}%`,
   }
 })
 
-const fieldSeed = computed(() => {
-  return hashString([
-    autonomy.value.version,
-    activeCircuit.value.id,
-    activeCircuit.value.claim,
-    pulse.value,
-  ].join('|'))
+const pressureReading = computed(() => pressure.value.toFixed(1).padStart(4, '0'))
+const windReading = computed(() => `${windSpeed.value.toFixed(1)} m/s`)
+
+const memorySummary = computed(() => {
+  if (!memory.disturbances) {
+    return '还没有局部天气认出你。第一处触碰会成为很轻的地形。'
+  }
+
+  const climate = climates.value[memory.lastClimate] || currentClimate.value
+  return `第 ${memory.visits} 次到访，${memory.disturbances} 次扰动。最近一次被记成「${climate.name}」。`
 })
 
-const fieldNodes = computed(() => Array.from({ length: 82 }, (_, index) => {
-  const seed = fieldSeed.value + index * 97
-  const width = 2 + Math.floor(seedUnit(seed, 1) * 12)
-  const height = 2 + Math.floor(seedUnit(seed, 2) * 32)
-  const hot = seedUnit(seed, 3) > 0.74
-
-  return {
-    id: `field-${index}`,
-    hot,
-    quiet: seedUnit(seed, 4) < 0.18,
-    style: {
-      '--x': `${Math.floor(seedUnit(seed, 5) * 100)}%`,
-      '--y': `${Math.floor(seedUnit(seed, 6) * 100)}%`,
-      '--w': `${width}px`,
-      '--h': `${height}px`,
-      '--delay': `${Math.floor(seedUnit(seed, 7) * 900)}ms`,
-      '--opacity': `${0.16 + seedUnit(seed, 8) * 0.58}`,
-    },
-  }
-}))
-
-const signalCells = computed(() => Array.from({ length: 144 }, (_, index) => {
-  const seed = fieldSeed.value + index * 31
-  const awake = seedUnit(seed, 1) > 0.54
-  const anchor = index % 17 === activeIndex.value || seedUnit(seed, 2) > 0.91
-
-  return {
-    id: `signal-${activeCircuit.value.id}-${index}`,
-    awake,
-    anchor,
-    style: {
-      '--alpha': `${0.18 + seedUnit(seed, 3) * 0.62}`,
-      '--scale': `${0.7 + seedUnit(seed, 4) * 0.6}`,
-    },
-  }
-}))
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
 
 function hashString(input) {
-  return Array.from(input).reduce((hash, char) => {
-    return ((hash << 5) - hash + char.charCodeAt(0)) >>> 0
-  }, 2166136261)
+  let hash = 2166136261
+  for (const character of String(input)) {
+    hash ^= character.charCodeAt(0)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
 }
 
-function seedUnit(seed, salt) {
-  const value = Math.sin(seed * 12.9898 + salt * 78.233) * 43758.5453
-  return value - Math.floor(value)
+function createRandom(seed) {
+  let state = seed >>> 0
+  return () => {
+    state += 0x6D2B79F5
+    let value = state
+    value = Math.imul(value ^ (value >>> 15), value | 1)
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61)
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296
+  }
 }
 
-function selectCircuit(index) {
-  activeIndex.value = index
-  nudge()
-}
-
-function nextCircuit() {
-  activeIndex.value = (activeIndex.value + 1) % circuits.value.length
-  nudge()
-}
-
-function nudge() {
-  pulse.value = (pulse.value + 1) % 10000
+function safeArray(value, fallback) {
+  return Array.isArray(value) && value.length ? value : fallback
 }
 
 function normalizeAutonomy(data) {
-  const circuitsFromData = Array.isArray(data?.circuits) && data.circuits.length
-    ? data.circuits
-    : fallbackAutonomy.circuits
+  const fallbackClimates = fallbackAutonomy.climates
+  const dataClimates = safeArray(data?.climates, fallbackClimates)
 
   return {
     ...fallbackAutonomy,
     ...data,
-    principles: Array.isArray(data?.principles) && data.principles.length
-      ? data.principles
-      : fallbackAutonomy.principles,
-    circuits: circuitsFromData.map((circuit, index) => ({
-      ...fallbackAutonomy.circuits[index % fallbackAutonomy.circuits.length],
-      ...circuit,
-      payload: Array.isArray(circuit.payload) && circuit.payload.length
-        ? circuit.payload
-        : fallbackAutonomy.circuits[index % fallbackAutonomy.circuits.length].payload,
-      weight: Number.isFinite(Number(circuit.weight))
-        ? Math.max(0, Math.min(100, Number(circuit.weight)))
-        : fallbackAutonomy.circuits[index % fallbackAutonomy.circuits.length].weight,
-    })),
-    traces: Array.isArray(data?.traces) && data.traces.length
-      ? data.traces
-      : fallbackAutonomy.traces,
+    seed: {
+      ...fallbackAutonomy.seed,
+      ...(data?.seed || {}),
+      inheritedMechanisms: safeArray(
+        data?.seed?.inheritedMechanisms,
+        fallbackAutonomy.seed.inheritedMechanisms,
+      ),
+      sediments: safeArray(data?.seed?.sediments, fallbackAutonomy.seed.sediments),
+    },
+    climates: dataClimates.map((climate, index) => {
+      const fallback = fallbackClimates[index % fallbackClimates.length]
+      return {
+        ...fallback,
+        ...climate,
+        hue: clamp(Number(climate.hue) || fallback.hue, 0, 360),
+        saturation: clamp(Number(climate.saturation) || fallback.saturation, 0, 100),
+        lightness: clamp(Number(climate.lightness) || fallback.lightness, 0, 100),
+        wind: clamp(Number(climate.wind) || fallback.wind, -0.08, 0.08),
+        noise: clamp(Number(climate.noise) || fallback.noise, 0, 0.08),
+        cohesion: clamp(Number(climate.cohesion) || fallback.cohesion, -0.03, 0.03),
+        repulsion: clamp(Number(climate.repulsion) || fallback.repulsion, -1.5, 1.5),
+        trail: clamp(Number(climate.trail) || fallback.trail, 0.04, 0.24),
+      }
+    }),
+    lexicon: {
+      ...fallbackAutonomy.lexicon,
+      ...(data?.lexicon || {}),
+      openings: safeArray(data?.lexicon?.openings, fallbackAutonomy.lexicon.openings),
+      subjects: safeArray(data?.lexicon?.subjects, fallbackAutonomy.lexicon.subjects),
+      verbs: safeArray(data?.lexicon?.verbs, fallbackAutonomy.lexicon.verbs),
+      closings: safeArray(data?.lexicon?.closings, fallbackAutonomy.lexicon.closings),
+    },
+    instructions: safeArray(data?.instructions, fallbackAutonomy.instructions),
+    ledger: safeArray(data?.ledger, fallbackAutonomy.ledger),
     handoff: {
       ...fallbackAutonomy.handoff,
       ...(data?.handoff || {}),
     },
-    ledger: Array.isArray(data?.ledger) && data.ledger.length
-      ? data.ledger
-      : fallbackAutonomy.ledger,
   }
 }
 
-onMounted(async () => {
+function loadMemory() {
   try {
-    const response = await fetch('/life-tree/autonomy.json', { cache: 'no-cache' })
-    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
-    autonomy.value = normalizeAutonomy(await response.json())
-    runtimeStatus.value = 'autonomy.json'
-  } catch (error) {
-    runtimeStatus.value = 'fallback'
-    console.warn('LifeTree autonomy fallback:', error)
+    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null')
+    if (stored && typeof stored === 'object') {
+      memory.visits = clamp(Number(stored.visits) || 0, 0, 999) + 1
+      memory.disturbances = clamp(Number(stored.disturbances) || 0, 0, 9999)
+      memory.marks = Array.isArray(stored.marks)
+        ? stored.marks.slice(-MAX_MEMORY_MARKS).map((mark) => ({
+            x: clamp(Number(mark.x) || 0.5, 0, 1),
+            y: clamp(Number(mark.y) || 0.5, 0, 1),
+            strength: clamp(Number(mark.strength) || 0.5, 0.2, 1),
+          }))
+        : []
+      memory.lastClimate = clamp(Number(stored.lastClimate) || 0, 0, climates.value.length - 1)
+      memory.lastVisit = String(stored.lastVisit || '')
+    }
+  } catch {
+    memory.visits = 1
+    memory.disturbances = 0
+    memory.marks = []
   }
 
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (!reduceMotion) {
-    pulseTimer = window.setInterval(nudge, 3400)
+  climateIndex.value = memory.lastClimate
+  memory.lastVisit = new Date().toISOString()
+  saveMemory()
+}
+
+function saveMemory() {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      visits: memory.visits,
+      disturbances: memory.disturbances,
+      marks: memory.marks,
+      lastClimate: climateIndex.value,
+      lastVisit: memory.lastVisit,
+    }))
+  } catch {
+    // The piece remains functional when storage is blocked.
   }
+}
+
+function forgetLocalWeather() {
+  memory.visits = 1
+  memory.disturbances = 0
+  memory.marks = []
+  memory.lastClimate = climateIndex.value
+  memory.lastVisit = new Date().toISOString()
+  saveMemory()
+  resetField()
+  composeUtterance('forget')
+}
+
+function particleBudget() {
+  const cores = navigator.hardwareConcurrency || 4
+  const viewportBudget = width < 560 ? 76 : width < 1080 ? 128 : 188
+  return cores <= 4 ? Math.round(viewportBudget * 0.72) : viewportBudget
+}
+
+function resetField() {
+  if (!width || !height) return
+
+  const inherited = autonomy.value.seed?.inheritedMechanisms?.join('|') || ''
+  const seed = hashString(`${autonomy.value.version}|${inherited}|${memory.visits}`)
+  const random = createRandom(seed)
+  const count = reducedMotion.value ? Math.min(72, particleBudget()) : particleBudget()
+
+  particles = Array.from({ length: count }, (_, index) => ({
+    x: random() * width,
+    y: random() * height,
+    vx: (random() - 0.5) * 0.55,
+    vy: (random() - 0.5) * 0.55,
+    size: 0.6 + random() * 1.8,
+    alpha: 0.22 + random() * 0.66,
+    phase: random() * Math.PI * 2,
+    tint: (random() - 0.5) * 42,
+    lineage: index % Math.max(1, autonomy.value.seed?.sediments?.length || 4),
+  }))
+
+  ripples = []
+  drawInitialField()
+}
+
+function resizeCanvas() {
+  const stage = stageRef.value
+  const canvas = canvasRef.value
+  if (!stage || !canvas) return
+
+  stageBounds = stage.getBoundingClientRect()
+  const nextWidth = Math.max(1, Math.round(stageBounds.width))
+  const nextHeight = Math.max(1, Math.round(stageBounds.height))
+  const nextDpr = Math.min(window.devicePixelRatio || 1, 2)
+
+  if (nextWidth === width && nextHeight === height && nextDpr === dpr) return
+
+  width = nextWidth
+  height = nextHeight
+  dpr = nextDpr
+  canvas.width = Math.round(width * dpr)
+  canvas.height = Math.round(height * dpr)
+  canvas.style.width = `${width}px`
+  canvas.style.height = `${height}px`
+
+  context = canvas.getContext('2d', { alpha: false })
+  context.setTransform(dpr, 0, 0, dpr, 0, 0)
+  resetField()
+}
+
+function drawInitialField() {
+  if (!context) return
+  context.globalCompositeOperation = 'source-over'
+  context.fillStyle = '#050609'
+  context.fillRect(0, 0, width, height)
+  drawParticles(false)
+}
+
+function drawParticles(withTrails = true) {
+  if (!context) return
+
+  const climate = currentClimate.value
+  if (withTrails) {
+    context.globalCompositeOperation = 'source-over'
+    context.fillStyle = `rgba(5, 6, 9, ${climate.trail})`
+    context.fillRect(0, 0, width, height)
+  }
+
+  context.globalCompositeOperation = 'lighter'
+  context.lineCap = 'round'
+
+  for (const particle of particles) {
+    const speed = Math.hypot(particle.vx, particle.vy)
+    const tail = 3.5 + Math.min(speed * 8, 18)
+    context.beginPath()
+    context.moveTo(particle.x, particle.y)
+    context.lineTo(particle.x - particle.vx * tail, particle.y - particle.vy * tail)
+    context.lineWidth = particle.size
+    context.strokeStyle = `hsla(${climate.hue + particle.tint}, ${climate.saturation}%, ${climate.lightness}%, ${particle.alpha})`
+    context.stroke()
+  }
+
+  context.globalCompositeOperation = 'source-over'
+  for (const ripple of ripples) {
+    context.beginPath()
+    context.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2)
+    context.lineWidth = 1
+    context.strokeStyle = `hsla(${climate.hue}, ${climate.saturation}%, ${climate.lightness}%, ${ripple.alpha})`
+    context.stroke()
+  }
+}
+
+function stepField(time, delta) {
+  const climate = currentClimate.value
+  const autonomousX = width * (0.5 + Math.sin(time * 0.000071 + climateIndex.value) * 0.31)
+  const autonomousY = height * (0.5 + Math.cos(time * 0.000053 + climateIndex.value * 0.7) * 0.24)
+  const pointerAge = performance.now() - pointer.lastMoveAt
+  const pointerInfluence = pointer.active && pointerAge < 1400
+  let aggregateSpeed = 0
+
+  for (const particle of particles) {
+    const noiseAngle = particle.phase + time * (0.00009 + particle.size * 0.000012)
+    particle.vx += (climate.wind * 0.085 + Math.cos(noiseAngle) * climate.noise * 0.12) * delta
+    particle.vy += (Math.sin(noiseAngle * 1.17) * climate.noise * 0.12) * delta
+
+    const autonomousDx = autonomousX - particle.x
+    const autonomousDy = autonomousY - particle.y
+    const autonomousDistance = Math.max(80, Math.hypot(autonomousDx, autonomousDy))
+    particle.vx += (autonomousDx / autonomousDistance) * climate.cohesion * 0.45 * delta
+    particle.vy += (autonomousDy / autonomousDistance) * climate.cohesion * 0.45 * delta
+
+    if (pointerInfluence) {
+      const dx = particle.x - pointer.x
+      const dy = particle.y - pointer.y
+      const distance = Math.max(12, Math.hypot(dx, dy))
+      const radius = 120 + Math.min(pointer.speed * 18, 170)
+
+      if (distance < radius) {
+        const force = (1 - distance / radius) * climate.repulsion * 0.055 * delta
+        particle.vx += (dx / distance) * force
+        particle.vy += (dy / distance) * force
+        particle.vx += (pointer.x - pointer.previousX) * 0.0025
+        particle.vy += (pointer.y - pointer.previousY) * 0.0025
+      }
+    }
+
+    for (const mark of memory.marks) {
+      const markX = mark.x * width
+      const markY = mark.y * height
+      const dx = markX - particle.x
+      const dy = markY - particle.y
+      const distance = Math.max(24, Math.hypot(dx, dy))
+      if (distance < 190) {
+        const memoryForce = (1 - distance / 190) * mark.strength * 0.0035 * delta
+        particle.vx += (dx / distance) * memoryForce
+        particle.vy += (dy / distance) * memoryForce
+      }
+    }
+
+    particle.vx *= 0.991
+    particle.vy *= 0.991
+
+    const speed = Math.hypot(particle.vx, particle.vy)
+    if (speed > 2.8) {
+      particle.vx = (particle.vx / speed) * 2.8
+      particle.vy = (particle.vy / speed) * 2.8
+    }
+
+    particle.x += particle.vx * delta
+    particle.y += particle.vy * delta
+    aggregateSpeed += Math.hypot(particle.vx, particle.vy)
+
+    const margin = 24
+    if (particle.x < -margin) particle.x = width + margin
+    if (particle.x > width + margin) particle.x = -margin
+    if (particle.y < -margin) particle.y = height + margin
+    if (particle.y > height + margin) particle.y = -margin
+  }
+
+  for (const ripple of ripples) {
+    ripple.radius += (1.2 + ripple.strength * 1.6) * delta
+    ripple.alpha *= 0.972 ** delta
+  }
+  ripples = ripples.filter((ripple) => ripple.alpha > 0.018)
+
+  if (frameCount % 12 === 0) {
+    const averageSpeed = aggregateSpeed / Math.max(1, particles.length)
+    windSpeed.value = averageSpeed * 2.7 + Math.abs(climate.wind) * 18
+    pressure.value = 46 + climateIndex.value * 1.7 + Math.sin(time * 0.00019) * 1.3 + memory.marks.length * 0.08
+    updateAudioFromWeather()
+  }
+}
+
+function animateField(time) {
+  const delta = lastFrameTime ? clamp((time - lastFrameTime) / 16.667, 0.2, 2.2) : 1
+  lastFrameTime = time
+  frameCount += 1
+  stepField(time, delta)
+  drawParticles(true)
+  animationFrame = window.requestAnimationFrame(animateField)
+}
+
+function startField() {
+  window.cancelAnimationFrame(animationFrame)
+  animationFrame = 0
+  lastFrameTime = 0
+
+  if (reducedMotion.value) {
+    drawInitialField()
+    return
+  }
+
+  animationFrame = window.requestAnimationFrame(animateField)
+}
+
+function handlePointerMove(event) {
+  if (!stageBounds) stageBounds = stageRef.value?.getBoundingClientRect()
+  if (!stageBounds) return
+
+  const x = clamp(event.clientX - stageBounds.left, 0, width)
+  const y = clamp(event.clientY - stageBounds.top, 0, height)
+  pointer.previousX = pointer.x || x
+  pointer.previousY = pointer.y || y
+  pointer.x = x
+  pointer.y = y
+  pointer.speed = Math.hypot(x - pointer.previousX, y - pointer.previousY)
+  pointer.active = true
+  pointer.lastMoveAt = performance.now()
+}
+
+function handlePointerLeave() {
+  pointer.active = false
+}
+
+function handlePointerDown(event) {
+  if (event.target.closest('button, a')) return
+  if (!stageBounds) stageBounds = stageRef.value?.getBoundingClientRect()
+  if (!stageBounds) return
+
+  const x = clamp(event.clientX - stageBounds.left, 0, width)
+  const y = clamp(event.clientY - stageBounds.top, 0, height)
+  createDisturbance(x, y, Math.min(1, 0.45 + pointer.speed / 80))
+}
+
+function createDisturbance(x, y, strength = 0.72) {
+  lastInteractionAt = performance.now()
+  memory.disturbances += 1
+  memory.lastClimate = climateIndex.value
+  memory.marks = [
+    ...memory.marks,
+    {
+      x: clamp(x / Math.max(1, width), 0, 1),
+      y: clamp(y / Math.max(1, height), 0, 1),
+      strength: clamp(strength, 0.2, 1),
+    },
+  ].slice(-MAX_MEMORY_MARKS)
+
+  ripples.push({ x, y, radius: 4, alpha: 0.74, strength })
+  applyImpulse(x, y, strength)
+  composeUtterance(`${x.toFixed(1)}|${y.toFixed(1)}|${memory.disturbances}`)
+  saveMemory()
+  playImpulseSound(strength)
+
+  if (reducedMotion.value) {
+    stepField(performance.now(), 1)
+    drawInitialField()
+  }
+}
+
+function applyImpulse(x, y, strength) {
+  const climate = currentClimate.value
+  for (const particle of particles) {
+    const dx = particle.x - x
+    const dy = particle.y - y
+    const distance = Math.max(18, Math.hypot(dx, dy))
+    if (distance > 260) continue
+
+    const force = (1 - distance / 260) * strength * 1.35
+    const direction = climate.repulsion >= 0 ? 1 : -1
+    particle.vx += (dx / distance) * force * direction
+    particle.vy += (dy / distance) * force * direction
+  }
+}
+
+function disturbCenter() {
+  const seed = hashString(`${Date.now()}|${memory.disturbances}|${currentClimate.value.id}`)
+  const random = createRandom(seed)
+  const x = width * (0.28 + random() * 0.44)
+  const y = height * (0.32 + random() * 0.4)
+  createDisturbance(x, y, 0.82)
+}
+
+function selectClimate(index) {
+  climateIndex.value = clamp(index, 0, climates.value.length - 1)
+  memory.lastClimate = climateIndex.value
+  lastInteractionAt = performance.now()
+  saveMemory()
+  composeUtterance(`climate|${currentClimate.value.id}|${memory.disturbances}`)
+}
+
+function nextAutonomousClimate() {
+  if (performance.now() - lastInteractionAt < 9000) return
+  climateIndex.value = (climateIndex.value + 1) % climates.value.length
+  composeUtterance(`autonomous|${currentClimate.value.id}|${Date.now() >> 14}`)
+}
+
+function composeUtterance(salt = '') {
+  const lexicon = autonomy.value.lexicon || fallbackAutonomy.lexicon
+  const seed = hashString(`${autonomy.value.version}|${currentClimate.value.id}|${salt}|${utteranceIndex.value}`)
+  const random = createRandom(seed)
+  const take = (items) => items[Math.floor(random() * items.length)]
+
+  utteranceIndex.value = (utteranceIndex.value + 1) % 100
+  utterance.value = `${take(lexicon.openings)}，${take(lexicon.subjects)}${take(lexicon.verbs)}${take(lexicon.closings)}`
+}
+
+async function toggleSound() {
+  if (soundEnabled.value) {
+    stopAudio()
+    return
+  }
+
+  const AudioContextConstructor = window.AudioContext || window.webkitAudioContext
+  if (!AudioContextConstructor) return
+
+  audioContext = new AudioContextConstructor()
+  audioGain = audioContext.createGain()
+  audioFilter = audioContext.createBiquadFilter()
+  audioFilter.type = 'lowpass'
+  audioFilter.Q.value = 0.7
+  audioGain.gain.setValueAtTime(0.0001, audioContext.currentTime)
+  audioGain.gain.exponentialRampToValueAtTime(0.028, audioContext.currentTime + 1.2)
+
+  audioFilter.connect(audioGain)
+  audioGain.connect(audioContext.destination)
+
+  audioOscillators = [0, 1].map((index) => {
+    const oscillator = audioContext.createOscillator()
+    oscillator.type = index === 0 ? 'sine' : 'triangle'
+    oscillator.detune.value = index === 0 ? -7 : 9
+    oscillator.connect(audioFilter)
+    oscillator.start()
+    return oscillator
+  })
+
+  soundEnabled.value = true
+  updateAudioFromWeather(true)
+  audioContext.resume().catch(() => {
+    // Some embedded browsers defer playback until a later trusted gesture.
+    // The graph can stay ready without blocking the visible interaction.
+  })
+}
+
+function updateAudioFromWeather(immediate = false) {
+  if (!soundEnabled.value || !audioContext || !audioFilter || !audioOscillators.length) return
+
+  const climate = currentClimate.value
+  const now = audioContext.currentTime
+  const base = 48 + climateIndex.value * 11 + windSpeed.value * 0.8
+  const duration = immediate ? 0.02 : 0.8
+
+  audioOscillators[0].frequency.cancelScheduledValues(now)
+  audioOscillators[1].frequency.cancelScheduledValues(now)
+  audioOscillators[0].frequency.linearRampToValueAtTime(base, now + duration)
+  audioOscillators[1].frequency.linearRampToValueAtTime(base * 1.502, now + duration)
+  audioFilter.frequency.linearRampToValueAtTime(240 + climate.hue * 1.8 + windSpeed.value * 22, now + duration)
+}
+
+function playImpulseSound(strength) {
+  if (!soundEnabled.value || !audioContext || !audioGain) return
+
+  const oscillator = audioContext.createOscillator()
+  const gain = audioContext.createGain()
+  const now = audioContext.currentTime
+  oscillator.type = 'sine'
+  oscillator.frequency.setValueAtTime(150 + currentClimate.value.hue * 0.9, now)
+  oscillator.frequency.exponentialRampToValueAtTime(52, now + 0.75)
+  gain.gain.setValueAtTime(0.0001, now)
+  gain.gain.exponentialRampToValueAtTime(0.04 * strength, now + 0.02)
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.78)
+  oscillator.connect(gain)
+  gain.connect(audioGain)
+  oscillator.start(now)
+  oscillator.stop(now + 0.8)
+}
+
+function stopAudio() {
+  soundEnabled.value = false
+  if (!audioContext) return
+
+  const closingContext = audioContext
+  const closingGain = audioGain
+  if (closingGain) {
+    const now = closingContext.currentTime
+    closingGain.gain.cancelScheduledValues(now)
+    closingGain.gain.setTargetAtTime(0.0001, now, 0.08)
+  }
+
+  window.setTimeout(() => closingContext.close().catch(() => {}), 260)
+  audioContext = null
+  audioGain = null
+  audioFilter = null
+  audioOscillators = []
+}
+
+function handleMotionPreference(event) {
+  reducedMotion.value = event.matches
+  resetField()
+  startField()
+}
+
+function handleVisibilityChange() {
+  if (document.hidden) {
+    window.cancelAnimationFrame(animationFrame)
+    animationFrame = 0
+    return
+  }
+  startField()
+}
+
+watch(climateIndex, () => {
+  updateAudioFromWeather()
+})
+
+onMounted(async () => {
+  loadMemory()
+  reducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  resizeObserver = new ResizeObserver(resizeCanvas)
+  resizeObserver.observe(stageRef.value)
+  resizeCanvas()
+  startField()
+
+  motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+  motionQuery.addEventListener('change', handleMotionPreference)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+
+  dataController = new AbortController()
+  try {
+    const response = await fetch('/life-tree/autonomy.json', {
+      cache: 'no-cache',
+      signal: dataController.signal,
+    })
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+    autonomy.value = normalizeAutonomy(await response.json())
+    climateIndex.value = clamp(memory.lastClimate, 0, climates.value.length - 1)
+    utterance.value = currentClimate.value.phrase
+    resetField()
+  } catch (error) {
+    if (error.name !== 'AbortError') {
+      console.warn('Weather autonomy fallback:', error)
+    }
+  }
+
+  climateTimer = window.setInterval(nextAutonomousClimate, 19000)
+  utteranceTimer = window.setInterval(() => {
+    if (performance.now() - lastInteractionAt > 7000) {
+      composeUtterance(`idle|${Date.now() >> 14}`)
+    }
+  }, 13000)
 })
 
 onBeforeUnmount(() => {
-  if (pulseTimer) window.clearInterval(pulseTimer)
+  dataController?.abort()
+  resizeObserver?.disconnect()
+  motionQuery?.removeEventListener('change', handleMotionPreference)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.cancelAnimationFrame(animationFrame)
+  window.clearInterval(climateTimer)
+  window.clearInterval(utteranceTimer)
+  stopAudio()
 })
 </script>
 
 <style scoped>
-.autonomy-page {
-  --ink: #f7f3e8;
-  --muted: rgba(247, 243, 232, 0.64);
-  --line: rgba(247, 243, 232, 0.16);
-  --panel: rgba(247, 243, 232, 0.055);
-  --panel-strong: rgba(247, 243, 232, 0.095);
-  --accent: hsl(var(--hue), 84%, 63%);
-  --accent-soft: hsla(var(--hue), 84%, 63%, 0.18);
-  --accent-next: hsl(var(--hue-next), 78%, 62%);
-  --accent-third: hsl(var(--hue-third), 72%, 66%);
+.weather-page {
+  --weather-accent: hsl(
+    var(--weather-hue),
+    var(--weather-saturation),
+    var(--weather-lightness)
+  );
+  --weather-accent-soft: hsla(
+    var(--weather-hue),
+    var(--weather-saturation),
+    var(--weather-lightness),
+    0.18
+  );
+  --night: #050609;
+  --night-soft: #0b0d12;
+  --paper: #e7e1d4;
+  --paper-ink: #171714;
 
   min-height: 100vh;
-  overflow-x: hidden;
-  color: var(--ink);
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(135deg, #06070b 0%, #111318 46%, #090a0d 100%);
-  background-size: 56px 56px, 56px 56px, auto;
+  overflow: clip;
+  color: #f0eee7;
+  background: var(--night);
   font-family: 'Inter', 'LXGW WenKai', system-ui, sans-serif;
+  transition: --weather-hue 0.8s ease;
 }
 
-.autonomy-hero,
-.protocol-lab,
-.signal-section,
-.trace-section,
-.handoff-section {
-  width: min(100% - 3rem, 1240px);
-  margin: 0 auto;
-}
-
-.autonomy-hero {
+.weather-stage {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(19rem, 0.42fr);
-  gap: 2rem;
-  box-sizing: border-box;
   min-height: calc(100svh - 72px);
-  padding: 4.5rem 0 3rem;
-  align-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 74% 24%, var(--weather-accent-soft), transparent 30rem),
+    linear-gradient(145deg, #06070a 0%, #090b10 54%, #030406 100%);
+  touch-action: pan-y;
 }
 
-.field-layer {
+.weather-canvas,
+.weather-vignette,
+.weather-grain {
   position: absolute;
-  inset: 3rem -6vw 1rem;
-  overflow: hidden;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 
-.field-layer span {
+.weather-canvas {
+  z-index: -3;
+}
+
+.weather-vignette {
+  z-index: -2;
+  background:
+    linear-gradient(180deg, rgba(5, 6, 9, 0.18), transparent 25%, transparent 72%, rgba(5, 6, 9, 0.8)),
+    radial-gradient(circle at center, transparent 28%, rgba(5, 6, 9, 0.46) 100%);
+}
+
+.weather-grain {
+  z-index: -1;
+  opacity: 0.14;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+.weather-meta {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 2rem;
+  width: min(calc(100% - 4rem), 1440px);
+  margin: 0 auto;
+  padding-top: 1.5rem;
+  align-items: center;
+  color: rgba(240, 238, 231, 0.58);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.weather-meta > div:first-child,
+.meta-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1.25rem;
+}
+
+.weather-meta strong {
+  color: var(--weather-accent);
+  font-weight: 600;
+}
+
+.sound-toggle,
+.climate-dial button,
+.stage-actions button,
+.stage-actions a,
+.memory-panel button {
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sound-toggle {
+  display: inline-flex;
+  gap: 0.55rem;
+  padding: 0;
+  color: rgba(240, 238, 231, 0.72);
+  background: transparent;
+  border: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sound-toggle span {
+  color: var(--weather-accent);
+}
+
+.weather-title-block {
   position: absolute;
-  left: var(--x);
-  top: var(--y);
-  width: var(--w);
-  height: var(--h);
-  opacity: var(--opacity);
-  background: linear-gradient(180deg, var(--accent), transparent);
-  box-shadow: 0 0 24px var(--accent-soft);
-  transform: translateY(0) scaleY(1);
-  animation: field-tick 3.8s ease-in-out var(--delay) infinite;
+  top: 50%;
+  left: max(2rem, calc((100vw - 1440px) / 2));
+  z-index: 2;
+  width: min(73vw, 74rem);
+  transform: translateY(-53%);
 }
 
-.field-layer span.hot {
-  background: linear-gradient(180deg, var(--accent-next), var(--accent-third));
+.weather-subtitle,
+.section-index {
+  margin: 0 0 1rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.field-layer span.quiet {
-  background: rgba(247, 243, 232, 0.18);
-  box-shadow: none;
+.weather-subtitle,
+.section-index {
+  color: var(--weather-accent);
 }
 
-.hero-copy,
-.run-panel,
-.protocol-tabs,
-.protocol-card,
-.telemetry-card,
-.signal-section,
-.trace-section,
-.handoff-section {
+.weather-title-block h1 {
+  max-width: 7ch;
+  margin: 0;
+  font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
+  font-size: clamp(5rem, 12.6vw, 11.6rem);
+  font-weight: 500;
+  line-height: 0.78;
+  letter-spacing: -0.075em;
+  text-wrap: balance;
+}
+
+.weather-declaration {
+  max-width: 37rem;
+  margin: 2rem 0 0 0.35rem;
+  color: rgba(240, 238, 231, 0.72);
+  font-size: clamp(1rem, 1.45vw, 1.25rem);
+  line-height: 1.8;
+}
+
+.weather-utterance {
+  position: absolute;
+  right: max(2rem, calc((100vw - 1440px) / 2));
+  bottom: 3.1rem;
+  z-index: 2;
+  width: min(35rem, 44vw);
+  margin: 0;
+  color: rgba(240, 238, 231, 0.84);
+  font-family: 'LXGW WenKai', serif;
+  font-size: clamp(1.2rem, 2.2vw, 2rem);
+  line-height: 1.45;
+  text-align: right;
+}
+
+.weather-utterance span {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: var(--weather-accent);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.climate-dial {
+  position: absolute;
+  top: 50%;
+  right: max(2rem, calc((100vw - 1440px) / 2));
+  z-index: 3;
+  display: grid;
+  gap: 0.45rem;
+  width: min(15rem, 22vw);
+  transform: translateY(-62%);
+}
+
+.climate-dial button {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0;
+  color: rgba(240, 238, 231, 0.42);
+  text-align: right;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(240, 238, 231, 0.14);
+  transition: color 0.3s ease, border-color 0.3s ease, padding-right 0.3s ease;
+}
+
+.climate-dial button:hover,
+.climate-dial button:focus-visible,
+.climate-dial button.active {
+  padding-right: 0.6rem;
+  color: #f0eee7;
+  border-color: var(--weather-accent);
+}
+
+.climate-dial span {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.59rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.climate-dial strong {
+  font-family: 'LXGW WenKai', serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.stage-actions {
+  position: absolute;
+  left: max(2rem, calc((100vw - 1440px) / 2));
+  bottom: 2.25rem;
+  z-index: 3;
+  display: flex;
+  gap: 0.7rem;
+}
+
+.stage-actions button,
+.stage-actions a {
+  display: inline-flex;
+  min-height: 2.65rem;
+  box-sizing: border-box;
+  padding: 0.7rem 0.95rem;
+  align-items: center;
+  justify-content: center;
+  color: rgba(240, 238, 231, 0.82);
+  background: rgba(5, 6, 9, 0.52);
+  border: 1px solid rgba(240, 238, 231, 0.18);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  text-decoration: none;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.stage-actions button:hover,
+.stage-actions button:focus-visible,
+.stage-actions a:hover,
+.stage-actions a:focus-visible {
+  color: #fff;
+  background: var(--weather-accent-soft);
+  border-color: var(--weather-accent);
+  text-decoration: none;
+}
+
+.gesture-invitation {
+  position: absolute;
+  right: max(2rem, calc((100vw - 1440px) / 2));
+  bottom: 0.95rem;
+  z-index: 2;
+  margin: 0;
+  color: rgba(240, 238, 231, 0.35);
+  font-size: 0.68rem;
+}
+
+.field-notes,
+.sediment-section,
+.generation-section {
   position: relative;
   z-index: 1;
 }
 
-.system-line {
+.field-notes {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.55fr);
+  gap: 5rem 8vw;
+  box-sizing: border-box;
+  min-height: 86vh;
+  padding: clamp(5rem, 10vw, 10rem) max(2rem, calc((100vw - 1320px) / 2));
+  color: var(--paper-ink);
+  background: var(--paper);
+}
+
+.notes-intro h2,
+.sediment-heading h2,
+.generation-section > header h2,
+.handoff-note h2 {
   margin: 0;
-  color: var(--accent);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: uppercase;
+  font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
 }
 
-h1,
-h2,
-h3,
-p {
-  margin-top: 0;
+.notes-intro h2 {
+  font-size: clamp(3.5rem, 7vw, 7.4rem);
+  line-height: 0.95;
 }
 
-h1 {
-  max-width: 7ch;
-  margin-bottom: 1.25rem;
-  font-family: 'LXGW WenKai', serif;
-  font-size: 7.5rem;
-  font-weight: 700;
-  line-height: 0.88;
-  letter-spacing: 0;
-}
-
-.declaration {
-  max-width: 44rem;
-  margin-bottom: 1.5rem;
-  color: var(--muted);
-  font-size: 1.16rem;
-  line-height: 1.9;
-}
-
-.principle-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  max-width: 46rem;
-}
-
-.principle-strip span,
-.panel-actions button,
-.protocol-tabs button,
-.payload-grid section,
-.trace-grid blockquote,
-.ledger-list article,
-.handoff-card,
-.run-panel,
-.protocol-card,
-.telemetry-card,
-.signal-board {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-}
-
-.principle-strip span {
-  padding: 0.55rem 0.75rem;
-  color: rgba(247, 243, 232, 0.78);
-  font-size: 0.9rem;
-}
-
-.run-panel {
-  align-self: center;
-  padding: 1rem;
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
-}
-
-.run-panel header,
-.telemetry-card header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.3rem;
-  color: var(--muted);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.73rem;
-  text-transform: uppercase;
-}
-
-.run-panel strong,
-.telemetry-card strong {
-  color: var(--accent);
-}
-
-.run-panel dl {
-  display: grid;
-  gap: 0.75rem;
-  margin: 0 0 1.25rem;
-}
-
-.run-panel dl div {
-  display: grid;
-  grid-template-columns: 6rem minmax(0, 1fr);
-  gap: 1rem;
-  align-items: baseline;
-}
-
-.run-panel dt {
-  color: var(--muted);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-}
-
-.run-panel dd {
-  margin: 0;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-.panel-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.65rem;
-}
-
-.panel-actions button {
-  min-height: 2.75rem;
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.07);
-  font: inherit;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-
-.panel-actions button:hover,
-.panel-actions button:focus-visible,
-.protocol-tabs button:hover,
-.protocol-tabs button:focus-visible,
-.protocol-tabs button.active {
-  border-color: hsla(var(--hue), 84%, 67%, 0.64);
-  background: var(--accent-soft);
-  color: var(--ink);
-  transform: translateY(-1px);
-}
-
-.protocol-lab {
-  display: grid;
-  grid-template-columns: 18rem minmax(0, 1fr) minmax(17rem, 0.34fr);
-  gap: 1rem;
-  padding: 0 0 5rem;
-}
-
-.protocol-tabs {
-  display: grid;
-  gap: 0.65rem;
-  align-content: start;
-}
-
-.protocol-tabs button {
-  display: grid;
-  grid-template-columns: 2.4rem minmax(0, 1fr);
-  grid-template-areas:
-    'index name'
-    'index verb';
-  gap: 0.15rem 0.75rem;
-  min-height: 4.25rem;
-  padding: 0.75rem;
-  color: var(--ink);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
-}
-
-.protocol-tabs span {
-  grid-area: index;
-  color: var(--accent);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.82rem;
-}
-
-.protocol-tabs strong {
-  grid-area: name;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.protocol-tabs em {
-  grid-area: verb;
-  color: var(--muted);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.68rem;
-  font-style: normal;
-  overflow-wrap: anywhere;
-}
-
-.protocol-card,
-.telemetry-card {
-  min-height: 30rem;
-  padding: 1.2rem;
-}
-
-.protocol-card h2,
-.section-heading h2,
-.handoff-card h2 {
-  margin: 0;
-  font-family: 'LXGW WenKai', serif;
-  letter-spacing: 0;
-}
-
-.protocol-card h2 {
-  margin-top: 0.85rem;
-  margin-bottom: 1rem;
-  font-size: 4.8rem;
-  line-height: 0.96;
-}
-
-.claim {
-  max-width: 48rem;
-  color: var(--muted);
-  font-size: 1.08rem;
-  line-height: 1.9;
-}
-
-.payload-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-top: 1.6rem;
-}
-
-.payload-grid section {
-  min-height: 11rem;
-  padding: 0.85rem;
-  background: rgba(0, 0, 0, 0.16);
-}
-
-.payload-grid span {
-  color: var(--accent);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-}
-
-.payload-grid p {
-  margin: 0.9rem 0 0;
-  color: rgba(247, 243, 232, 0.76);
-  line-height: 1.72;
-}
-
-.telemetry-card {
-  display: grid;
-  align-content: start;
-  gap: 1rem;
-}
-
-.telemetry-ring {
-  display: grid;
-  width: 9rem;
-  aspect-ratio: 1;
-  margin: 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background:
-    linear-gradient(#0b0d12, #0b0d12) padding-box,
-    conic-gradient(var(--accent) var(--weight), rgba(255, 255, 255, 0.1) 0) border-box;
-  border: 10px solid transparent;
-}
-
-.telemetry-ring span {
-  color: var(--ink);
-  font-family: 'Fira Code', monospace;
-  font-size: 1.3rem;
-  font-weight: 700;
-}
-
-.telemetry-card p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.75;
-}
-
-.signal-section,
-.trace-section,
-.handoff-section {
-  padding-bottom: 5rem;
-}
-
-.section-heading {
-  display: grid;
-  gap: 0.55rem;
-  margin-bottom: 1rem;
-}
-
-.section-heading h2,
-.handoff-card h2 {
-  font-size: 3.4rem;
-  line-height: 1;
-}
-
-.signal-board {
-  display: grid;
-  grid-template-columns: repeat(24, minmax(0, 1fr));
-  gap: 0.28rem;
-  padding: 0.85rem;
-}
-
-.signal-board span {
-  aspect-ratio: 1;
-  min-width: 0;
-  opacity: var(--alpha);
-  background: rgba(255, 255, 255, 0.08);
-  transform: scale(var(--scale));
-  transition: background-color 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
-}
-
-.signal-board span.awake {
-  background: linear-gradient(135deg, var(--accent), var(--accent-next));
-}
-
-.signal-board span.anchor {
-  outline: 1px solid rgba(247, 243, 232, 0.58);
-  outline-offset: -1px;
-}
-
-.trace-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.trace-grid blockquote {
-  min-height: 13rem;
-  margin: 0;
-  padding: 1rem;
-}
-
-.trace-grid p {
-  color: rgba(247, 243, 232, 0.82);
+.notes-intro > p:last-child {
+  max-width: 40rem;
+  margin-top: 2.2rem;
+  color: rgba(23, 23, 20, 0.66);
   font-size: 1.05rem;
   line-height: 1.85;
 }
 
-.trace-grid cite {
-  color: var(--accent);
+.memory-panel {
+  align-self: start;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  padding-top: 2.2rem;
+  border-top: 1px solid rgba(23, 23, 20, 0.24);
+}
+
+.memory-number {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.memory-number strong {
   font-family: 'Fira Code', monospace;
-  font-size: 0.72rem;
-  font-style: normal;
-  text-transform: uppercase;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 450;
+  line-height: 1;
 }
 
-.handoff-section {
-  display: grid;
-  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr);
-  gap: 1rem;
+.memory-number span,
+.memory-panel > p {
+  color: rgba(23, 23, 20, 0.58);
+  font-size: 0.8rem;
 }
 
-.handoff-card {
-  padding: 1.1rem;
+.memory-panel > p,
+.memory-panel button {
+  grid-column: 1 / -1;
 }
 
-.handoff-card h2 {
-  margin-top: 0.85rem;
-  margin-bottom: 1rem;
-}
-
-.handoff-card p:last-child {
-  margin-bottom: 0;
-  color: var(--muted);
-  line-height: 1.8;
-}
-
-.ledger-list {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.ledger-list article {
-  display: grid;
-  grid-template-columns: 7.5rem minmax(9rem, 0.38fr) minmax(0, 1fr);
-  gap: 0.9rem;
-  align-items: baseline;
-  padding: 0.9rem;
-}
-
-.ledger-list span {
-  color: var(--accent);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.72rem;
-}
-
-.ledger-list h3 {
-  margin-bottom: 0;
-  font-size: 1rem;
-}
-
-.ledger-list p {
-  margin-bottom: 0;
-  color: var(--muted);
+.memory-panel > p {
+  margin: 0;
   line-height: 1.7;
 }
 
-@keyframes field-tick {
-  0%, 100% {
-    transform: translateY(0) scaleY(1);
-  }
-  50% {
-    transform: translateY(-8px) scaleY(1.35);
-  }
+.memory-panel button {
+  justify-self: start;
+  padding: 0.55rem 0;
+  color: var(--paper-ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  font-size: 0.78rem;
+}
+
+.gesture-list {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(23, 23, 20, 0.22);
+}
+
+.gesture-list li {
+  min-height: 9rem;
+  padding: 1.25rem;
+  border-right: 1px solid rgba(23, 23, 20, 0.22);
+}
+
+.gesture-list li:last-child {
+  border-right: 0;
+}
+
+.gesture-list span {
+  font-family: 'LXGW WenKai', serif;
+  font-size: 1.6rem;
+}
+
+.gesture-list p {
+  margin: 1.7rem 0 0;
+  color: rgba(23, 23, 20, 0.6);
+  line-height: 1.65;
+}
+
+.sediment-section {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr);
+  gap: 5rem 8vw;
+  padding: clamp(6rem, 11vw, 11rem) max(2rem, calc((100vw - 1320px) / 2));
+  background:
+    radial-gradient(circle at 15% 20%, var(--weather-accent-soft), transparent 28rem),
+    #090b10;
+}
+
+.sediment-heading h2,
+.generation-section > header h2 {
+  font-size: clamp(3.5rem, 6.6vw, 7rem);
+  line-height: 0.9;
+}
+
+.sediment-heading > p:last-child {
+  max-width: 34rem;
+  margin-top: 2rem;
+  color: rgba(240, 238, 231, 0.6);
+  line-height: 1.8;
+}
+
+.sediment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid rgba(240, 238, 231, 0.16);
+  border-left: 1px solid rgba(240, 238, 231, 0.16);
+}
+
+.sediment-grid article {
+  min-height: 14rem;
+  padding: 1.25rem;
+  border-right: 1px solid rgba(240, 238, 231, 0.16);
+  border-bottom: 1px solid rgba(240, 238, 231, 0.16);
+}
+
+.sediment-grid span,
+.generation-ledger span,
+.generation-ledger time {
+  color: var(--weather-accent);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sediment-grid h3 {
+  margin: 2.6rem 0 1rem;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 2.1rem;
+  font-weight: 500;
+}
+
+.sediment-grid p {
+  margin: 0;
+  color: rgba(240, 238, 231, 0.56);
+  line-height: 1.7;
+}
+
+.sediment-section blockquote {
+  grid-column: 1 / -1;
+  max-width: 66rem;
+  margin: 3rem 0 0 auto;
+  color: rgba(240, 238, 231, 0.78);
+  font-family: 'LXGW WenKai', serif;
+  font-size: clamp(1.8rem, 3.2vw, 3.4rem);
+  line-height: 1.4;
+  text-align: right;
+}
+
+.sediment-section cite {
+  display: block;
+  margin-top: 1rem;
+  color: var(--weather-accent);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.generation-section {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.62fr) minmax(0, 1fr);
+  gap: 5rem 8vw;
+  padding: clamp(6rem, 11vw, 11rem) max(2rem, calc((100vw - 1320px) / 2));
+  color: var(--paper-ink);
+  background: #d8d3c8;
+}
+
+.generation-ledger {
+  border-top: 1px solid rgba(23, 23, 20, 0.24);
+}
+
+.generation-ledger article {
+  display: grid;
+  grid-template-columns: 3rem 7rem minmax(10rem, 0.35fr) minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.2rem 0;
+  align-items: baseline;
+  border-bottom: 1px solid rgba(23, 23, 20, 0.24);
+}
+
+.generation-ledger span,
+.generation-ledger time {
+  color: rgba(23, 23, 20, 0.52);
+}
+
+.generation-ledger h3,
+.generation-ledger p {
+  margin: 0;
+}
+
+.generation-ledger h3 {
+  font-family: 'LXGW WenKai', serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.generation-ledger p {
+  color: rgba(23, 23, 20, 0.6);
+  line-height: 1.7;
+}
+
+.handoff-note {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.4fr) minmax(18rem, 0.72fr) minmax(0, 1fr);
+  gap: 2rem;
+  margin-top: 5rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--paper-ink);
+}
+
+.handoff-note h2 {
+  font-size: clamp(2.2rem, 4vw, 4.4rem);
+  line-height: 0.95;
+}
+
+.handoff-note > p:last-child {
+  margin: 0;
+  color: rgba(23, 23, 20, 0.62);
+  line-height: 1.8;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .field-layer span {
-    animation: none;
-  }
-
-  .panel-actions button,
-  .protocol-tabs button,
-  .signal-board span {
+  .weather-page,
+  .climate-dial button,
+  .stage-actions button,
+  .stage-actions a {
     transition: none;
   }
 }
 
-@media (max-width: 1080px) {
-  .autonomy-hero,
-  .protocol-lab,
-  .handoff-section {
+@media (max-width: 1040px) {
+  .weather-title-block {
+    width: min(70vw, 48rem);
+  }
+
+  .weather-title-block h1 {
+    font-size: clamp(5rem, 14vw, 8.2rem);
+  }
+
+  .weather-utterance {
+    width: 46vw;
+  }
+
+  .field-notes,
+  .sediment-section,
+  .generation-section {
     grid-template-columns: 1fr;
   }
 
-  .protocol-tabs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .protocol-card,
-  .telemetry-card {
-    min-height: auto;
+  .generation-ledger article {
+    grid-template-columns: 3rem 6rem minmax(9rem, 0.4fr) minmax(0, 1fr);
   }
 }
 
 @media (max-width: 760px) {
-  .autonomy-hero,
-  .protocol-lab,
-  .signal-section,
-  .trace-section,
-  .handoff-section {
-    width: min(100% - 2rem, 1240px);
+  .weather-stage {
+    min-height: calc(100svh - 68px);
   }
 
-  .autonomy-hero {
-    padding-top: 4rem;
+  .weather-meta {
+    grid-template-columns: 1fr auto;
+    width: calc(100% - 2rem);
   }
 
-  h1 {
-    font-size: 5.4rem;
+  .meta-readout {
+    display: none;
   }
 
-  .protocol-card h2 {
-    font-size: 3.6rem;
+  .weather-title-block {
+    top: 40%;
+    left: 1rem;
+    width: calc(100% - 2rem);
+    transform: translateY(-50%);
   }
 
-  .section-heading h2,
-  .handoff-card h2 {
-    font-size: 2.55rem;
+  .weather-title-block h1 {
+    max-width: 5.8ch;
+    font-size: clamp(4.4rem, 21vw, 7.8rem);
+    line-height: 0.82;
   }
 
-  .payload-grid,
-  .trace-grid,
-  .protocol-tabs {
+  .weather-declaration {
+    max-width: 28rem;
+    margin-top: 1.4rem;
+    font-size: 0.95rem;
+  }
+
+  .climate-dial {
+    top: auto;
+    right: 1rem;
+    bottom: 8.5rem;
+    left: 1rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: auto;
+    transform: none;
+  }
+
+  .climate-dial button {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .climate-dial button:hover,
+  .climate-dial button:focus-visible,
+  .climate-dial button.active {
+    padding-right: 0;
+  }
+
+  .climate-dial span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .climate-dial strong {
+    font-size: 0.86rem;
+  }
+
+  .weather-utterance {
+    right: 1rem;
+    bottom: 12.8rem;
+    width: min(31rem, calc(100% - 2rem));
+    font-size: 1.15rem;
+  }
+
+  .stage-actions {
+    bottom: 4rem;
+    left: 1rem;
+  }
+
+  .gesture-invitation {
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .field-notes,
+  .sediment-section,
+  .generation-section {
+    gap: 3rem;
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .gesture-list,
+  .sediment-grid {
     grid-template-columns: 1fr;
   }
 
-  .signal-board {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+  .gesture-list li {
+    border-right: 0;
+    border-bottom: 1px solid rgba(23, 23, 20, 0.22);
   }
 
-  .ledger-list article {
+  .generation-ledger article {
+    grid-template-columns: 3rem 1fr;
+  }
+
+  .generation-ledger h3,
+  .generation-ledger p {
+    grid-column: 2;
+  }
+
+  .handoff-note {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 480px) {
-  h1 {
-    font-size: 3.8rem;
+  .weather-meta {
+    gap: 0.8rem;
   }
 
-  .run-panel dl div,
-  .panel-actions {
+  .weather-meta > div:first-child span {
+    display: none;
+  }
+
+  .sound-toggle {
+    font-size: 0.62rem;
+  }
+
+  .weather-title-block {
+    top: 35%;
+  }
+
+  .weather-title-block h1 {
+    font-size: clamp(3.9rem, 21vw, 6rem);
+  }
+
+  .weather-declaration {
+    max-width: 23rem;
+    font-size: 0.86rem;
+    line-height: 1.65;
+  }
+
+  .weather-utterance {
+    bottom: 13.3rem;
+  }
+
+  .climate-dial {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    bottom: 7.2rem;
+  }
+
+  .stage-actions {
+    bottom: 3.5rem;
+  }
+
+  .stage-actions a {
+    display: none;
+  }
+
+  .gesture-invitation {
+    font-size: 0.62rem;
+  }
+
+  .notes-intro h2,
+  .sediment-heading h2,
+  .generation-section > header h2 {
+    font-size: 3.15rem;
+  }
+
+  .memory-panel {
     grid-template-columns: 1fr;
   }
 
-  .protocol-card h2 {
-    font-size: 2.8rem;
+  .memory-panel > p,
+  .memory-panel button {
+    grid-column: 1;
   }
 }
 </style>
