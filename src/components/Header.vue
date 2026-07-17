@@ -1,10 +1,11 @@
 <template>
   <header
+    ref="siteHeaderRef"
     class="site-header"
     :class="{
       'is-scrolled': isScrolled,
       'is-hidden': isHeaderHidden && !isMenuOpen,
-      'is-menu-open': isMenuOpen,
+      'is-menu-open': isMenuRendered,
     }"
   >
     <div class="header-inner">
@@ -42,32 +43,39 @@
     </div>
 
     <Teleport to="body">
-      <Transition name="mobile-menu">
-        <nav
-          v-if="isMenuOpen"
-          id="mobile-nav"
-          class="mobile-menu-container"
-          aria-label="Mobile navigation"
+      <nav
+        v-if="isMenuRendered"
+        id="mobile-nav"
+        ref="mobileMenuRef"
+        class="mobile-menu-container"
+        aria-label="Mobile navigation"
+      >
+        <RouterLink
+          v-for="(item, index) in navItems"
+          :key="item.to"
+          :to="item.to"
+          :class="{ 'is-active': isActive(item) }"
+          :style="{ '--i': index + 1 }"
+          @click="closeMenu"
         >
-          <RouterLink
-            v-for="(item, index) in navItems"
-            :key="item.to"
-            :to="item.to"
-            :class="{ 'is-active': isActive(item) }"
-            :style="{ '--i': index + 1 }"
-            @click="closeMenu"
-          >
-            {{ item.label }}
-          </RouterLink>
-        </nav>
-      </Transition>
+          {{ item.label }}
+        </RouterLink>
+      </nav>
     </Teleport>
   </header>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import {
+  enterMobileMenu,
+  leaveMobileMenu,
+  prepareMobileMenu,
+  setFluidHeaderHidden,
+  stopMobileMenuMotion,
+  stopFluidHeaderMotion,
+} from '../utils/interactionMotion'
 
 const navItems = [
   {
@@ -115,12 +123,16 @@ const navItems = [
 
 const route = useRoute()
 const isMenuOpen = ref(false)
+const isMenuRendered = ref(false)
 const isScrolled = ref(false)
 const isHeaderHidden = ref(false)
+const siteHeaderRef = ref(null)
+const mobileMenuRef = ref(null)
 const currentPath = computed(() => route.path)
 
 let lastScrollY = 0
 let ticking = false
+let menuMotionRequest = 0
 
 function isActive(item) {
   return item.match.some((path) => (
@@ -135,13 +147,35 @@ function setBodyLocked(locked) {
 function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value
   isHeaderHidden.value = false
-  setBodyLocked(isMenuOpen.value)
 }
 
 function closeMenu() {
   if (!isMenuOpen.value) return
   isMenuOpen.value = false
-  setBodyLocked(false)
+}
+
+async function syncMobileMenu(open) {
+  const request = ++menuMotionRequest
+  setBodyLocked(open)
+
+  if (open && !isMenuRendered.value) isMenuRendered.value = true
+  await nextTick()
+  if (request !== menuMotionRequest) return
+
+  const element = mobileMenuRef.value
+  if (!element) return
+
+  if (open) {
+    prepareMobileMenu(element)
+    enterMobileMenu(element)
+    return
+  }
+
+  leaveMobileMenu(element, () => {
+    if (!isMenuOpen.value && request === menuMotionRequest) {
+      isMenuRendered.value = false
+    }
+  })
 }
 
 function updateHeaderState() {
@@ -178,14 +212,32 @@ watch(
   },
 )
 
+watch(
+  [isHeaderHidden, isMenuOpen],
+  ([hidden, menuOpen]) => {
+    setFluidHeaderHidden(siteHeaderRef.value, hidden && !menuOpen)
+  },
+  { flush: 'post' },
+)
+
+watch(
+  isMenuOpen,
+  (open) => syncMobileMenu(open),
+  { flush: 'post' },
+)
+
 onMounted(() => {
   lastScrollY = Math.max(window.scrollY, 0)
   isScrolled.value = lastScrollY > 12
+  setFluidHeaderHidden(siteHeaderRef.value, false)
   window.addEventListener('scroll', handleScroll, { passive: true })
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  menuMotionRequest += 1
+  stopMobileMenuMotion(mobileMenuRef.value)
+  stopFluidHeaderMotion(siteHeaderRef.value)
   setBodyLocked(false)
 })
 </script>
@@ -201,7 +253,6 @@ onUnmounted(() => {
   backdrop-filter: blur(16px) saturate(135%);
   -webkit-backdrop-filter: blur(16px) saturate(135%);
   transition:
-    transform 0.28s ease,
     background-color 0.24s ease,
     border-color 0.24s ease,
     box-shadow 0.24s ease;
@@ -216,10 +267,6 @@ onUnmounted(() => {
 
 .site-header.is-menu-open {
   z-index: 1004;
-}
-
-.site-header.is-hidden {
-  transform: translateY(-110%);
 }
 
 .header-inner {
@@ -485,34 +532,6 @@ onUnmounted(() => {
   background: linear-gradient(90deg, #74c7ec, #f5c2e7);
 }
 
-.mobile-menu-enter-active,
-.mobile-menu-leave-active {
-  transform-origin: calc(100% - 38px) 34px;
-  transition:
-    opacity 0.22s cubic-bezier(0.32, 0.72, 0, 1),
-    scale 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.mobile-menu-enter-active a,
-.mobile-menu-leave-active a {
-  transition:
-    opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1),
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: calc(var(--i) * 0.035s);
-}
-
-.mobile-menu-enter-from,
-.mobile-menu-leave-to {
-  opacity: 0;
-  scale: 0.985;
-}
-
-.mobile-menu-enter-from a,
-.mobile-menu-leave-to a {
-  opacity: 0;
-  transform: translateY(18px);
-}
-
 @media (max-width: 860px) {
   .header-inner {
     width: min(100% - 32px, 1180px);
@@ -546,6 +565,35 @@ onUnmounted(() => {
   .site-name {
     max-width: calc(100vw - 132px);
     font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .site-header,
+  .site-header.is-scrolled,
+  .site-header.is-menu-open {
+    background-color: rgba(var(--ctp-mocha-base-rgb), 0.98);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .mobile-menu-container {
+    background: rgba(var(--ctp-mocha-base-rgb), 0.99);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .site-header,
+  .site-header.is-scrolled,
+  .site-header.is-menu-open {
+    background-color: rgb(var(--ctp-mocha-base-rgb));
+    border-bottom-color: rgba(255, 255, 255, 0.42);
+  }
+
+  .mobile-menu-container {
+    background: rgb(var(--ctp-mocha-base-rgb));
   }
 }
 </style>
