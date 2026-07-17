@@ -31,6 +31,7 @@ const aboutLinks = [
 
 const pageIdx = ref(0)
 const direction = ref('down')
+const transitioning = ref(false)
 const aboutRef = ref(null)
 const transitionName = computed(() => (direction.value === 'down' ? 'page-up-elastic' : 'page-down-elastic'))
 
@@ -40,11 +41,17 @@ let originalHtmlOverflow = ''
 let originalBodyOverflow = ''
 
 function step(delta) {
+  if (transitioning.value) return
+
   const next = pageIdx.value + delta
   if (next < 0 || next > 1) return
 
   direction.value = delta > 0 ? 'down' : 'up'
+  transitioning.value = true
   pageIdx.value = next
+  window.setTimeout(() => {
+    transitioning.value = false
+  }, 520)
 }
 
 function goTo(idx) {
@@ -114,7 +121,7 @@ onBeforeUnmount(() => {
     <div class="about-backdrop" aria-hidden="true"></div>
 
     <div class="about-stage">
-      <Transition :name="transitionName">
+      <Transition :name="transitionName" mode="out-in">
         <section
           v-if="pageIdx === 0"
           key="typing"

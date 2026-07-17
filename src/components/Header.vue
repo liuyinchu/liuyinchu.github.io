@@ -1,15 +1,14 @@
 <template>
   <header
-    ref="siteHeaderRef"
     class="site-header"
     :class="{
       'is-scrolled': isScrolled,
-      'is-hidden': isHeaderHidden && !isMenuRendered,
-      'is-menu-open': isMenuRendered,
+      'is-hidden': isHeaderHidden && !isMenuOpen,
+      'is-menu-open': isMenuOpen,
     }"
   >
     <div class="header-inner">
-      <RouterLink to="/" class="logo-area" @click="closeMenu()">
+      <RouterLink to="/" class="logo-area" @click="closeMenu">
         <span class="logo-shell" aria-hidden="true">
           <img src="/favicon_liuyin.svg" alt="" class="logo" />
         </span>
@@ -28,7 +27,6 @@
       </nav>
 
       <button
-        ref="menuToggleRef"
         class="mobile-nav-toggle"
         :class="{ 'is-active': isMenuOpen }"
         type="button"
@@ -44,43 +42,32 @@
     </div>
 
     <Teleport to="body">
-      <nav
-        v-if="isMenuRendered"
-        id="mobile-nav"
-        ref="mobileMenuRef"
-        class="mobile-menu-container"
-        aria-label="Mobile navigation"
-        :aria-hidden="(!isMenuOpen).toString()"
-        :inert="!isMenuOpen"
-      >
-        <RouterLink
-          v-for="(item, index) in navItems"
-          :key="item.to"
-          :to="item.to"
-          :class="{ 'is-active': isActive(item) }"
-          :style="{ '--i': index + 1 }"
-          @click="closeMenu()"
+      <Transition name="mobile-menu">
+        <nav
+          v-if="isMenuOpen"
+          id="mobile-nav"
+          class="mobile-menu-container"
+          aria-label="Mobile navigation"
         >
-          {{ item.label }}
-        </RouterLink>
-      </nav>
+          <RouterLink
+            v-for="(item, index) in navItems"
+            :key="item.to"
+            :to="item.to"
+            :class="{ 'is-active': isActive(item) }"
+            :style="{ '--i': index + 1 }"
+            @click="closeMenu"
+          >
+            {{ item.label }}
+          </RouterLink>
+        </nav>
+      </Transition>
     </Teleport>
   </header>
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import {
-  enterMobileMenu,
-  leaveMobileMenu,
-  prepareMobileMenu,
-  setMobileMenuToggleOpen,
-  setFluidHeaderHidden,
-  stopMobileMenuMotion,
-  stopMobileMenuToggleMotion,
-  stopFluidHeaderMotion,
-} from '../utils/interactionMotion'
 
 const navItems = [
   {
@@ -128,21 +115,12 @@ const navItems = [
 
 const route = useRoute()
 const isMenuOpen = ref(false)
-const isMenuRendered = ref(false)
 const isScrolled = ref(false)
 const isHeaderHidden = ref(false)
-const siteHeaderRef = ref(null)
-const mobileMenuRef = ref(null)
-const menuToggleRef = ref(null)
 const currentPath = computed(() => route.path)
 
 let lastScrollY = 0
 let ticking = false
-let scrollFrame = 0
-let menuMotionRequest = 0
-let bodyLockActive = false
-let bodyOverflowBeforeMenu = ''
-let menuOpenedFromKeyboard = false
 
 function isActive(item) {
   return item.match.some((path) => (
@@ -151,91 +129,19 @@ function isActive(item) {
 }
 
 function setBodyLocked(locked) {
-  if (locked && !bodyLockActive) {
-    bodyOverflowBeforeMenu = document.body.style.overflow
-    bodyLockActive = true
-    document.body.style.overflow = 'hidden'
-  } else if (!locked && bodyLockActive) {
-    document.body.style.overflow = bodyOverflowBeforeMenu
-    bodyLockActive = false
-  }
+  document.body.style.overflow = locked ? 'hidden' : ''
 }
 
-function toggleMenu(event) {
-  menuOpenedFromKeyboard = !isMenuOpen.value && event?.detail === 0
+function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value
   isHeaderHidden.value = false
+  setBodyLocked(isMenuOpen.value)
 }
 
-function closeMenu(restoreFocus = false) {
+function closeMenu() {
   if (!isMenuOpen.value) return
-  const shouldRestoreFocus = (
-    restoreFocus
-    || mobileMenuRef.value?.contains(document.activeElement)
-  )
-  if (shouldRestoreFocus) {
-    menuToggleRef.value?.focus({ preventScroll: true })
-  }
   isMenuOpen.value = false
-  menuOpenedFromKeyboard = false
-}
-
-async function syncMobileMenu(open) {
-  const request = ++menuMotionRequest
-  if (open) setBodyLocked(true)
-
-  if (open && !isMenuRendered.value) isMenuRendered.value = true
-  await nextTick()
-  if (request !== menuMotionRequest) return
-
-  const element = mobileMenuRef.value
-  if (!element) {
-    if (!open) {
-      isMenuRendered.value = false
-      setBodyLocked(false)
-    }
-    return
-  }
-
-  if (open) {
-    prepareMobileMenu(element, menuToggleRef.value)
-    enterMobileMenu(element, menuToggleRef.value)
-    if (menuOpenedFromKeyboard) {
-      element.querySelector('a')?.focus({ preventScroll: true })
-      menuOpenedFromKeyboard = false
-    }
-    return
-  }
-
-  leaveMobileMenu(element, () => {
-    if (!isMenuOpen.value && request === menuMotionRequest) {
-      isMenuRendered.value = false
-      setBodyLocked(false)
-    }
-  })
-}
-
-function handleMenuKeydown(event) {
-  if (!isMenuOpen.value) return
-
-  if (event.key === 'Escape') {
-    event.preventDefault()
-    closeMenu(true)
-    return
-  }
-
-  if (event.key !== 'Tab') return
-  const links = Array.from(mobileMenuRef.value?.querySelectorAll('a') ?? [])
-  const focusables = [menuToggleRef.value, ...links].filter(Boolean)
-  if (!focusables.length) return
-
-  const currentIndex = focusables.indexOf(document.activeElement)
-  event.preventDefault()
-  const direction = event.shiftKey ? -1 : 1
-  const nextIndex = currentIndex === -1
-    ? (event.shiftKey ? focusables.length - 1 : 0)
-    : (currentIndex + direction + focusables.length) % focusables.length
-  focusables[nextIndex].focus({ preventScroll: true })
+  setBodyLocked(false)
 }
 
 function updateHeaderState() {
@@ -254,13 +160,12 @@ function updateHeaderState() {
 
   lastScrollY = scrollY
   ticking = false
-  scrollFrame = 0
 }
 
 function handleScroll() {
   if (ticking) return
   ticking = true
-  scrollFrame = window.requestAnimationFrame(updateHeaderState)
+  window.requestAnimationFrame(updateHeaderState)
 }
 
 watch(
@@ -273,43 +178,14 @@ watch(
   },
 )
 
-watch(
-  [isHeaderHidden, isMenuOpen],
-  ([hidden, menuOpen]) => {
-    setFluidHeaderHidden(siteHeaderRef.value, hidden && !menuOpen)
-  },
-  { flush: 'post' },
-)
-
-watch(
-  isMenuOpen,
-  (open) => syncMobileMenu(open),
-  { flush: 'post' },
-)
-
-watch(
-  isMenuOpen,
-  (open) => setMobileMenuToggleOpen(menuToggleRef.value, open),
-  { flush: 'post' },
-)
-
 onMounted(() => {
   lastScrollY = Math.max(window.scrollY, 0)
   isScrolled.value = lastScrollY > 12
   window.addEventListener('scroll', handleScroll, { passive: true })
-  window.addEventListener('keydown', handleMenuKeydown)
 })
 
-onBeforeUnmount(() => {
+onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
-  window.removeEventListener('keydown', handleMenuKeydown)
-  if (scrollFrame) window.cancelAnimationFrame(scrollFrame)
-  scrollFrame = 0
-  ticking = false
-  menuMotionRequest += 1
-  stopMobileMenuMotion(mobileMenuRef.value)
-  stopMobileMenuToggleMotion(menuToggleRef.value)
-  stopFluidHeaderMotion(siteHeaderRef.value)
   setBodyLocked(false)
 })
 </script>
@@ -325,6 +201,7 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(16px) saturate(135%);
   -webkit-backdrop-filter: blur(16px) saturate(135%);
   transition:
+    transform 0.28s ease,
     background-color 0.24s ease,
     border-color 0.24s ease,
     box-shadow 0.24s ease;
@@ -339,6 +216,10 @@ onBeforeUnmount(() => {
 
 .site-header.is-menu-open {
   z-index: 1004;
+}
+
+.site-header.is-hidden {
+  transform: translateY(-110%);
 }
 
 .header-inner {
@@ -485,7 +366,6 @@ onBeforeUnmount(() => {
 }
 
 .mobile-nav-toggle {
-  --menu-icon-progress: 0;
   position: relative;
   z-index: 1003;
   display: none;
@@ -524,11 +404,14 @@ onBeforeUnmount(() => {
   height: 2px;
   background-color: currentColor;
   border-radius: 999px;
+  transition:
+    top 0.2s ease,
+    transform 0.24s ease,
+    opacity 0.18s ease;
 }
 
 .hamburger-inner {
   top: 8px;
-  transform: rotate(calc(var(--menu-icon-progress) * 45deg));
 }
 
 .hamburger-inner::before,
@@ -537,13 +420,25 @@ onBeforeUnmount(() => {
 }
 
 .hamburger-inner::before {
-  top: calc(-7px + var(--menu-icon-progress) * 7px);
-  opacity: calc(1 - var(--menu-icon-progress));
+  top: -7px;
 }
 
 .hamburger-inner::after {
-  top: calc(7px - var(--menu-icon-progress) * 7px);
-  transform: rotate(calc(var(--menu-icon-progress) * -90deg));
+  top: 7px;
+}
+
+.mobile-nav-toggle.is-active .hamburger-inner {
+  transform: rotate(45deg);
+}
+
+.mobile-nav-toggle.is-active .hamburger-inner::before {
+  top: 0;
+  opacity: 0;
+}
+
+.mobile-nav-toggle.is-active .hamburger-inner::after {
+  top: 0;
+  transform: rotate(-90deg);
 }
 
 .mobile-menu-container {
@@ -570,8 +465,10 @@ onBeforeUnmount(() => {
   font-weight: 700;
   line-height: 1;
   text-decoration: none;
-  opacity: 1;
-  transform: translateY(0);
+  opacity: 0;
+  transform: translateY(18px);
+  animation: mobileLinkIn 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: calc(var(--i) * 0.045s);
 }
 
 .mobile-menu-container a.is-active,
@@ -588,6 +485,23 @@ onBeforeUnmount(() => {
   margin: 0.58rem auto 0;
   border-radius: 999px;
   background: linear-gradient(90deg, #74c7ec, #f5c2e7);
+}
+
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: opacity 0.24s ease;
+}
+
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  opacity: 0;
+}
+
+@keyframes mobileLinkIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 860px) {
@@ -623,58 +537,6 @@ onBeforeUnmount(() => {
   .site-name {
     max-width: calc(100vw - 132px);
     font-size: 1rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .site-header,
-  .logo-shell::before,
-  .logo,
-  .site-name,
-  .desktop-menu a,
-  .desktop-menu a::after,
-  .mobile-nav-toggle {
-    transition: none;
-  }
-
-  .logo-area:hover .logo,
-  .logo-area:focus-visible .logo {
-    transform: none;
-  }
-
-  .logo-area:hover .logo-shell::before,
-  .logo-area:focus-visible .logo-shell::before {
-    opacity: 0;
-    transform: scale(0.7);
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .site-header,
-  .site-header.is-scrolled,
-  .site-header.is-menu-open {
-    background-color: rgba(var(--ctp-mocha-base-rgb), 0.98);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  .mobile-menu-container {
-    background: rgba(var(--ctp-mocha-base-rgb), 0.99);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
-
-@media (prefers-contrast: more) {
-  .site-header,
-  .site-header.is-scrolled,
-  .site-header.is-menu-open {
-    background-color: rgb(var(--ctp-mocha-base-rgb));
-    border-bottom-color: rgba(255, 255, 255, 0.42);
-  }
-
-  .mobile-menu-container {
-    background: rgb(var(--ctp-mocha-base-rgb));
   }
 }
 </style>

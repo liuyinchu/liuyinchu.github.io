@@ -87,6 +87,7 @@ const chapters = [
 
 const pageIdx = ref(0)
 const direction = ref('down')
+const transitioning = ref(false)
 const selfRef = ref(null)
 const transitionName = computed(() => (direction.value === 'down' ? 'scroll-leaf-up' : 'scroll-leaf-down'))
 const currentChapter = computed(() => chapters[pageIdx.value])
@@ -99,17 +100,27 @@ let originalHtmlOverflow = ''
 let originalBodyOverflow = ''
 
 function step(delta) {
+  if (transitioning.value) return
+
   const next = pageIdx.value + delta
   if (next < 0 || next >= chapters.length) return
 
   direction.value = delta > 0 ? 'down' : 'up'
+  transitioning.value = true
   pageIdx.value = next
+  window.setTimeout(() => {
+    transitioning.value = false
+  }, 560)
 }
 
 function goTo(idx) {
-  if (idx === pageIdx.value) return
+  if (idx === pageIdx.value || transitioning.value) return
   direction.value = idx > pageIdx.value ? 'down' : 'up'
+  transitioning.value = true
   pageIdx.value = idx
+  window.setTimeout(() => {
+    transitioning.value = false
+  }, 560)
 }
 
 function onWheel(event) {
@@ -177,7 +188,7 @@ onBeforeUnmount(() => {
     <RouterLink class="back-link" to="/about">关于</RouterLink>
 
     <div class="chapter-stage">
-      <Transition :name="transitionName">
+      <Transition :name="transitionName" mode="out-in">
         <section
           :key="currentChapter.index"
           class="chapter-panel"
