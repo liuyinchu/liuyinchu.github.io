@@ -124,6 +124,14 @@ const defaultLinkOpen = md.renderer.rules.link_open || ((tokens, idx, options, e
 md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
   const token = tokens[idx]
   const href = token.attrGet('href') || ''
+  const classNames = new Set(
+    (token.attrGet('class') || '').split(/\s+/).filter(Boolean)
+  )
+
+  if (!classNames.has('header-anchor') && !classNames.has('md-button')) {
+    token.attrJoin('class', 'md-text-link')
+  }
+
   if (/^https?:\/\//i.test(href)) {
     token.attrSet('target', '_blank')
     token.attrSet('rel', 'noopener noreferrer')
@@ -478,6 +486,12 @@ onBeforeUnmount(() => {
   text-wrap: balance;
 }
 
+.markdown-body :deep(h1),
+.markdown-body :deep(h2),
+.markdown-body :deep(h3) {
+  scroll-margin-top: calc(var(--site-header-height, 72px) + 1.25rem);
+}
+
 .markdown-body :deep(h1) {
   font-family: "Cinzel", "LXGW WenKai", serif;
   font-size: clamp(2.25rem, 3.2vw, 2.75rem);
@@ -497,8 +511,15 @@ onBeforeUnmount(() => {
   font-size: clamp(1.28rem, 1.65vw, 1.45rem);
 }
 
+.markdown-body :deep(h4),
+.markdown-body :deep(h5),
+.markdown-body :deep(h6) {
+  color: var(--md-text);
+}
+
 .markdown-body :deep(.header-anchor) {
   margin-right: 0.45rem;
+  border: 0;
   color: rgba(137, 180, 250, 0.72);
   text-decoration: none;
   opacity: 1;
@@ -511,18 +532,27 @@ onBeforeUnmount(() => {
   color: #89dceb;
 }
 
-.markdown-body :deep(a) {
-  color: var(--md-link);
+.markdown-body :deep(.md-text-link) {
+  padding-inline: 0.06em;
+  border: 0;
+  border-radius: 0.16em;
+  color: var(--md-text);
   font-weight: 680;
   text-decoration: none;
-  border-bottom: 1px solid rgba(137, 180, 250, 0.42);
-  transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  background-image: linear-gradient(#b4befe, #b4befe);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 0.14em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: color 180ms ease, background-size 210ms var(--motion-ease), box-shadow 180ms ease;
 }
 
-.markdown-body :deep(a:hover),
-.markdown-body :deep(a:focus-visible) {
-  color: var(--md-link-strong);
-  border-bottom-color: currentColor;
+.markdown-body :deep(.md-text-link:hover),
+.markdown-body :deep(.md-text-link:focus-visible) {
+  color: #181825;
+  background-size: 100% 100%;
+  box-shadow: 0 0.22em 0.65em rgba(180, 190, 254, 0.18);
 }
 
 .markdown-body :deep(ul),

@@ -59,9 +59,13 @@ function onMarkdownLoaded(rawText) {
       <div class="header-content">
         <h1>{{ articleMeta.title }}</h1>
         <div class="meta-info">
-          <span>作者: {{ articleMeta.author }}</span>
-          <span>发布于: {{ articleMeta.date }}</span>
-          <span v-if="articleMeta.readingTime">阅读时间: {{ articleMeta.readingTime }}</span>
+          <div class="meta-primary">
+            <span>作者: {{ articleMeta.author }}</span>
+            <span>发布于: {{ articleMeta.date }}</span>
+          </div>
+          <span v-if="articleMeta.readingTime" class="meta-reading">
+            阅读时间: {{ articleMeta.readingTime }}
+          </span>
         </div>
       </div>
     </header>
@@ -89,7 +93,10 @@ function onMarkdownLoaded(rawText) {
 <style scoped>
 .title-container {
   position: relative;
-  padding: 6rem 2rem;
+  display: flex;
+  min-height: 22rem;
+  align-items: flex-end;
+  padding: 7rem clamp(2rem, 5vw, 5rem) 5rem;
   margin-bottom: 3rem;
   border-radius: 1rem;
   overflow: hidden;
@@ -107,23 +114,55 @@ function onMarkdownLoaded(rawText) {
 .header-content {
   position: relative;
   z-index: 2;
-  max-width: 860px;
+  width: 100%;
+  max-width: 1120px;
   margin: 0 auto;
-  text-align: center;
+  text-align: left;
   text-shadow: 0 2px 8px rgba(0,0,0,0.7);
 }
 .header-content h1 {
-  font-size: 3rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
+  margin: 0 0 1.25rem;
   color: #fff;
+  font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+  font-size: clamp(2.4rem, 3.8vw, 3.7rem);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
 }
 .header-content .meta-info {
   display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  font-size: 0.95rem;
-  opacity: 0.9;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.38rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: "LXGW WenKai", "Noto Serif SC", serif;
+  font-size: 0.96rem;
+  line-height: 1.55;
+}
+.meta-primary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.4rem;
+}
+.meta-reading {
+  color: rgba(255, 255, 255, 0.76);
+}
+/* Keep the title in the lower half without moving its layout box. */
+.header-content h1,
+.header-content .meta-info {
+  position: relative;
+  z-index: 1;
+}
+/* A little more contrast behind the left-aligned title on bright covers. */
+.header-content::before {
+  content: '';
+  position: absolute;
+  inset: -2rem -3rem;
+  z-index: 0;
+  max-width: 78rem;
+  background: radial-gradient(ellipse at left, rgba(17, 17, 27, 0.3), transparent 70%);
+  pointer-events: none;
 }
 .page-container {
   padding: 3rem 1rem;
@@ -162,7 +201,8 @@ function onMarkdownLoaded(rawText) {
   }
 
   .title-container {
-    padding: 3.25rem 1.15rem;
+    min-height: 20rem;
+    padding: 4.2rem 1.35rem 2.8rem;
     margin-bottom: 1.6rem;
     border-radius: 0.9rem;
   }
@@ -183,10 +223,13 @@ function onMarkdownLoaded(rawText) {
   }
 
   .header-content .meta-info {
-    gap: 0.35rem 0.75rem;
+    gap: 0.3rem;
     font-size: 0.84rem;
     line-height: 1.55;
-    flex-wrap: wrap;
+  }
+
+  .meta-primary {
+    gap: 0.2rem 0.85rem;
   }
 
   .main-content-area {
@@ -205,7 +248,8 @@ function onMarkdownLoaded(rawText) {
   }
 
   .title-container {
-    padding: 2.8rem 1rem;
+    min-height: 18rem;
+    padding: 3.8rem 1rem 2.4rem;
   }
 
   .header-content h1 {
