@@ -6,6 +6,34 @@ defineProps({
 })
 
 const isPaused = ref(false)
+const railViewport = ref(null)
+const railTrack = ref(null)
+
+function handleRailWheel(event) {
+  if (!event.shiftKey || !railViewport.value || !railTrack.value) return
+
+  event.preventDefault()
+  const rawDelta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+    ? event.deltaY
+    : event.deltaX
+  const deltaUnit = event.deltaMode === 1
+    ? 18
+    : event.deltaMode === 2
+      ? railViewport.value.clientWidth
+      : 1
+  const distance = rawDelta * deltaUnit * 1.8
+  const duplicateSet = railTrack.value.children[1]
+
+  if (!duplicateSet || getComputedStyle(duplicateSet).display === 'none') {
+    railViewport.value.scrollLeft += distance
+    return
+  }
+
+  const gap = Number.parseFloat(getComputedStyle(railTrack.value).gap) || 0
+  const loopWidth = (railTrack.value.scrollWidth + gap) / 2
+  const nextOffset = railViewport.value.scrollLeft + distance
+  railViewport.value.scrollLeft = ((nextOffset % loopWidth) + loopWidth) % loopWidth
+}
 </script>
 
 <template>
@@ -19,18 +47,26 @@ const isPaused = ref(false)
         <p>Selected reading</p>
         <h2 id="featured-rail-title">精选文章</h2>
       </div>
-      <button
-        type="button"
-        :aria-pressed="isPaused.toString()"
-        @click="isPaused = !isPaused"
-      >
-        <span aria-hidden="true">{{ isPaused ? '▶' : 'Ⅱ' }}</span>
-        {{ isPaused ? '继续滚动' : '暂停滚动' }}
-      </button>
+      <div class="rail-heading-actions">
+        <small>Shift + Wheel</small>
+        <button
+          type="button"
+          :aria-pressed="isPaused.toString()"
+          @click="isPaused = !isPaused"
+        >
+          <span aria-hidden="true">{{ isPaused ? '▶' : 'Ⅱ' }}</span>
+          {{ isPaused ? '继续滚动' : '暂停滚动' }}
+        </button>
+      </div>
     </div>
 
-    <div class="rail-viewport">
-      <div class="rail-track" :class="{ 'is-paused': isPaused }">
+    <div
+      ref="railViewport"
+      class="rail-viewport"
+      aria-label="精选文章横向列表；按住 Shift 使用鼠标滚轮可快速浏览"
+      @wheel="handleRailWheel"
+    >
+      <div ref="railTrack" class="rail-track" :class="{ 'is-paused': isPaused }">
         <div
           v-for="copyIndex in 2"
           :key="copyIndex"
@@ -108,6 +144,20 @@ const isPaused = ref(false)
   cursor: pointer;
 }
 
+.rail-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rail-heading-actions small {
+  color: rgba(205, 214, 244, 0.46);
+  font-family: 'Fira Code', ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .rail-heading button:hover,
 .rail-heading button:focus-visible {
   border-color: rgba(137, 180, 250, 0.46);
@@ -115,10 +165,17 @@ const isPaused = ref(false)
 }
 
 .rail-viewport {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
   border-radius: 1rem;
+  scrollbar-width: none;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 2.4rem, #000 calc(100% - 2.4rem), transparent);
   mask-image: linear-gradient(90deg, transparent, #000 2.4rem, #000 calc(100% - 2.4rem), transparent);
+}
+
+.rail-viewport::-webkit-scrollbar {
+  display: none;
 }
 
 .rail-track {
@@ -234,6 +291,10 @@ const isPaused = ref(false)
   }
 
   .rail-heading button {
+    display: none;
+  }
+
+  .rail-heading-actions small {
     display: none;
   }
 

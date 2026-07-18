@@ -93,6 +93,13 @@ const resultSummary = computed(() => {
   return `${filteredArticles.value.length} 篇随记`
 })
 
+const archiveLabel = computed(() => {
+  if (loadError.value) return 'Archive unavailable'
+  if (!articles.value.length) return 'Loading archive'
+  if (!filteredArticles.value.length) return 'No matching jottings'
+  return `${filteredArticles.value.length} jottings`
+})
+
 const selectedFeaturedArticles = computed(() => (
   featuredSelections.value
     .map((selection) => {
@@ -143,25 +150,17 @@ function handleOutsidePointer(event) {
   <main class="journal-page">
     <section class="journal-hero" aria-labelledby="journal-title">
       <div class="hero-intro">
-        <div>
+        <div class="poem-block">
           <p class="hero-kicker">Jottings · Since 2024</p>
-          <h1 id="journal-title">随手写下，慢慢整理。</h1>
-        </div>
-        <p class="hero-description">
-          思考、学习和生活留下的边角。可以从搜索开始，也可以任由精选文章带路。
-        </p>
-      </div>
-
-      <div class="poem-ribbon" aria-label="阿尔弗雷德·爱德华·豪斯迈《西罗普郡少年》选句">
-        <div class="poem-track">
-          <p>
-            <span v-for="line in poemLines" :key="line">{{ line }}</span>
-            <em>— 阿尔弗雷德·爱德华·豪斯迈《西罗普郡少年》</em>
+          <h1 id="journal-title" class="poem-line">{{ poemLines[0] }}</h1>
+          <p
+            v-for="line in poemLines.slice(1)"
+            :key="line"
+            class="poem-line"
+          >
+            {{ line }}
           </p>
-          <p aria-hidden="true">
-            <span v-for="line in poemLines" :key="`copy-${line}`">{{ line }}</span>
-            <em>— 阿尔弗雷德·爱德华·豪斯迈《西罗普郡少年》</em>
-          </p>
+          <p class="poem-source">— 阿尔弗雷德·爱德华·豪斯迈《西罗普郡少年》</p>
         </div>
       </div>
 
@@ -244,7 +243,7 @@ function handleOutsidePointer(event) {
     <section class="article-section" aria-labelledby="article-section-heading">
       <div class="section-heading">
         <div>
-          <p class="section-label">{{ resultSummary }}</p>
+          <p class="section-label">{{ archiveLabel }}</p>
           <h2 id="article-section-heading">文章</h2>
         </div>
         <p class="page-indicator">第 {{ currentPage }} / {{ totalPages }} 页</p>
@@ -404,81 +403,29 @@ function handleOutsidePointer(event) {
 }
 
 .hero-intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(17rem, 0.6fr);
-  align-items: end;
-  gap: clamp(2rem, 5vw, 6rem);
+  display: block;
 }
 
-.hero-intro h1 {
-  max-width: 15ch;
-  margin: 0;
+.poem-block {
+  max-width: 68rem;
+}
+
+.poem-line {
+  margin: 0 0 clamp(0.85rem, 1.5vw, 1.25rem);
   color: #f5f6ff;
-  font-size: clamp(2.7rem, 6.6vw, 6.4rem);
-  font-weight: 760;
-  letter-spacing: -0.055em;
-  line-height: 0.98;
-  text-wrap: balance;
+  font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
+  font-size: clamp(1.55rem, 3.15vw, 3.2rem);
+  font-weight: 660;
+  letter-spacing: 0;
+  line-height: 1.32;
+  text-wrap: pretty;
 }
 
-.hero-description {
-  max-width: 30rem;
-  margin: 0 0 0.35rem;
-  color: rgba(205, 214, 244, 0.68);
+.poem-source {
+  margin: clamp(1.4rem, 2.6vw, 2.1rem) 0 0;
+  color: rgba(205, 214, 244, 0.62);
   font-family: 'LXGW WenKai', serif;
-  font-size: clamp(1rem, 1.3vw, 1.14rem);
-  line-height: 1.75;
-}
-
-.poem-ribbon {
-  overflow: hidden;
-  margin-top: clamp(2rem, 4vw, 3.25rem);
-  border-block: 1px solid rgba(180, 190, 254, 0.1);
-  color: rgba(205, 214, 244, 0.54);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 3rem, #000 calc(100% - 3rem), transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 3rem, #000 calc(100% - 3rem), transparent);
-}
-
-.poem-track {
-  display: flex;
-  width: max-content;
-  animation: poem-scroll 76s linear infinite;
-  will-change: transform;
-}
-
-.poem-ribbon:hover .poem-track {
-  animation-play-state: paused;
-}
-
-.poem-track p {
-  display: flex;
-  gap: 2.8rem;
-  margin: 0;
-  padding: 0.75rem 1.4rem;
-  white-space: nowrap;
-  font-family: 'LXGW WenKai', serif;
-  font-size: 0.79rem;
-}
-
-.poem-track span {
-  position: relative;
-}
-
-.poem-track span::after {
-  content: '✦';
-  position: absolute;
-  right: -1.65rem;
-  color: rgba(137, 180, 250, 0.56);
-  font-size: 0.55rem;
-}
-
-.poem-track em {
-  color: rgba(180, 190, 254, 0.6);
-  font-style: normal;
-}
-
-@keyframes poem-scroll {
-  to { transform: translateX(-50%); }
+  font-size: clamp(0.88rem, 1.1vw, 1.02rem);
 }
 
 .discovery-panel {
@@ -486,7 +433,7 @@ function handleOutsidePointer(event) {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: clamp(1.5rem, 4vw, 4rem);
-  margin-top: 1.35rem;
+  margin-top: clamp(2.4rem, 4.5vw, 4rem);
   padding: clamp(1rem, 2vw, 1.35rem);
   border: 1px solid rgba(180, 190, 254, 0.12);
   border-radius: 1.15rem;
@@ -927,26 +874,8 @@ function handleOutsidePointer(event) {
     padding-top: 5.4rem;
   }
 
-  .hero-intro,
   .discovery-panel {
     grid-template-columns: 1fr;
-  }
-
-  .hero-intro {
-    gap: 1.2rem;
-  }
-
-  .hero-intro h1 {
-    max-width: 12ch;
-  }
-
-  .hero-description {
-    max-width: 34rem;
-  }
-
-  .poem-ribbon {
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
-    mask-image: linear-gradient(90deg, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
   }
 
   .discovery-panel {
@@ -1000,14 +929,9 @@ function handleOutsidePointer(event) {
 }
 
 @media (max-width: 460px) {
-  .hero-intro h1 {
-    font-size: clamp(2.35rem, 13.5vw, 3.35rem);
-    line-height: 1.02;
-  }
-
-  .poem-track p {
-    gap: 2.2rem;
-    font-size: 0.73rem;
+  .poem-line {
+    font-size: clamp(1.4rem, 7.2vw, 2rem);
+    line-height: 1.38;
   }
 
   .featured-copy h3 {
@@ -1023,22 +947,6 @@ function handleOutsidePointer(event) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .poem-ribbon {
-    overflow-x: auto;
-    -webkit-mask-image: none;
-    mask-image: none;
-    scrollbar-width: thin;
-  }
-
-  .poem-track {
-    animation: none;
-    will-change: auto;
-  }
-
-  .poem-track p:nth-child(2) {
-    display: none;
-  }
-
   .featured-card img,
   .side-card img,
   .latest-card img {
