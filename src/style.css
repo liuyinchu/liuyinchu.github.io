@@ -31,6 +31,19 @@
 
   /* 毛玻璃背景备用 */
   --frosted-glass: rgba(var(--ctp-mocha-base-rgb), 0.75);
+
+  /* 全站节奏与布局基线 */
+  --site-header-height: 72px;
+  --page-gutter: clamp(1rem, 4vw, 3rem);
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 /* 全局基础样式 */
@@ -40,12 +53,40 @@ body {
   font-family: 'Inter', 'Helvetica Neue', 'Segoe UI', sans-serif;
   margin: 0;
   padding: 0;
+  min-width: 0;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 html {
   color-scheme: dark;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--site-header-height) + 1rem);
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: rgba(137, 180, 250, 0.52) rgba(30, 30, 46, 0.88);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a,
+input,
+summary {
+  -webkit-tap-highlight-color: rgba(137, 180, 250, 0.16);
+}
+
+:focus-visible {
+  outline: 2px solid rgba(137, 220, 235, 0.9);
+  outline-offset: 3px;
 }
 
 * {
@@ -238,7 +279,26 @@ a:hover {
 
 /* 减少动效偏好：禁用全局光标闪烁 */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .cursor { animation: none !important; display: none; }
+}
+
+@media (max-width: 860px) {
+  :root {
+    --site-header-height: 68px;
+  }
 }
 
 /* 细节：链接/按钮 hover 更灵动但不过火 */
