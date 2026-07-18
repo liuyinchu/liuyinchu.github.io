@@ -71,6 +71,7 @@ const footerColumns = [
         title: '随记',
         to: '/space1',
         links: [
+          { label: '说说', to: '/talk' },
           { label: '星穹文库', to: '/space4' },
         ],
       },

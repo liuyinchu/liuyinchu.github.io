@@ -77,6 +77,11 @@ const navItems = [
     match: ['/space1', '/space4'],
   },
   {
+    label: '说说',
+    to: '/talk',
+    match: ['/talk'],
+  },
+  {
     label: '资源链接',
     to: '/rd',
     match: [

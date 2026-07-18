@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import FeaturedArticleRail from '../components/journal/FeaturedArticleRail.vue'
+import TalkTicker from '../components/journal/TalkTicker.vue'
 
 const ARTICLES_PER_PAGE = 7
 
@@ -148,6 +149,8 @@ function handleOutsidePointer(event) {
 
 <template>
   <main class="journal-page">
+    <TalkTicker />
+
     <section class="journal-hero" aria-labelledby="journal-title">
       <div class="hero-intro">
         <div class="poem-block">
