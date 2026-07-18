@@ -1352,22 +1352,6 @@ onBeforeUnmount(() => {
   background: rgba(249, 226, 175, 0.1);
 }
 
-.markdown-body :deep(.md-kbd) {
-  display: inline-flex;
-  min-width: 1.8em;
-  min-height: 1.8em;
-  align-items: center;
-  justify-content: center;
-  padding: 0.08em 0.42em;
-  border: 1px solid rgba(205, 214, 244, 0.24);
-  border-bottom-width: 3px;
-  border-radius: 0.42em;
-  color: #cdd6f4;
-  background: rgba(69, 71, 90, 0.72);
-  font-family: "Fira Code", monospace;
-  font-size: 0.82em;
-}
-
 .markdown-body :deep(.md-mark) {
   padding: 0.02em 0.22em;
   border-radius: 0.25em;

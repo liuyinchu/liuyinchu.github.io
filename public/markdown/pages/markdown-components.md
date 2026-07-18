@@ -188,12 +188,11 @@
 
 选择这句话时留意提示：:tip[我是一条小提示]{tip="选择、悬停或聚焦时出现的补充说明"}
 
-状态可以写成 :badge[Stable]{tone="success"} 或 :badge[Draft]{tone="warning"}，快捷键可以写作 :kbd[⌘ K]，重点可以使用 :mark[柔和高亮]，进度也能直接表达为 :progress[72]{label="完成度"}。
+状态可以写成 :badge[Stable]{tone="success"} 或 :badge[Draft]{tone="warning"}，重点可以使用 :mark[柔和高亮]，进度也能直接表达为 :progress[72]{label="完成度"}。
 
 ```markdown
 :tip[我是一条小提示]{tip="提示内容"}
 :badge[Stable]{tone="success"}
-:kbd[⌘ K]
 :mark[柔和高亮]
 :progress[72]{label="完成度"}
 ```

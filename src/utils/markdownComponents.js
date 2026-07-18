@@ -10,7 +10,7 @@ const BLOCK_COMPONENTS = new Set([
   'link-card',
 ])
 
-const INLINE_COMPONENTS = new Set(['alert', 'blur', 'tip', 'badge', 'kbd', 'mark', 'progress'])
+const INLINE_COMPONENTS = new Set(['alert', 'blur', 'tip', 'badge', 'mark', 'progress'])
 
 const ALERT_TYPES = new Set(['note', 'info', 'tip', 'success', 'question', 'warning', 'danger'])
 
@@ -127,10 +127,6 @@ function renderInlineComponent(md, token, env, escapeHtml) {
     const requestedTone = String(attributes.tone || attributes.type || 'accent').toLowerCase()
     const tone = BADGE_TONES.has(requestedTone) ? requestedTone : 'accent'
     return `<span class="md-badge md-badge--${tone}">${content}</span>`
-  }
-
-  if (name === 'kbd') {
-    return `<kbd class="md-kbd">${content}</kbd>`
   }
 
   if (name === 'mark') {

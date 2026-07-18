@@ -46,6 +46,9 @@ assert.doesNotMatch(alerts, /<circle/)
 const removedQuote = render(':quote[保持为普通文本]')
 assert.doesNotMatch(removedQuote, /md-(?:inline-)?quote/)
 
+const removedKbd = render(':kbd[⌘ K]')
+assert.doesNotMatch(removedKbd, /md-kbd|<kbd/)
+
 const footnotes = render(`一次[^same]，再次[^same]。
 
 [^same]: 支持 **Markdown**。`)
