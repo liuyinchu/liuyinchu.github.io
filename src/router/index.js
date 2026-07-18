@@ -33,6 +33,7 @@ import ResourceFiles from '../pages/ResourceFiles.vue'
 import AcademicGuide from '../pages/AcademicGuide.vue'
 import LifeTree from '../pages/LifeTree.vue'
 import ModernControlCourse from '../pages/ModernControlCourse.vue'
+import MarkdownComponents from '../pages/MarkdownComponents.vue'
 
 
 const routes = [
@@ -69,6 +70,7 @@ const routes = [
   { path: '/academic-plot-guide', component: AcademicGuide },
   { path: '/life-tree', component: LifeTree },
   { path: '/modern-control-course', component: ModernControlCourse },
+  { path: '/markdown-components', component: MarkdownComponents },
 ]
 
 const router = createRouter({

@@ -7,6 +7,11 @@ import markdownItContainer from 'markdown-it-container'
 import markdownItTaskLists from 'markdown-it-task-lists'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
+import {
+  attachMarkdownComponentInteractions,
+  installMarkdownComponentRules,
+  renderMarkdownWithComponents,
+} from '../utils/markdownComponents'
 
 const props = defineProps({
   src: { type: String, default: '' },
@@ -24,6 +29,7 @@ let mathJaxReadyPromise = null
 let mermaidModule = null
 let mermaidReady = false
 let copyCleanups = []
+let componentCleanup = null
 let mounted = false
 
 function escapeHtml(value = '') {
@@ -101,6 +107,8 @@ md.use(mdAnchor, {
   .use(markdownItContainer, 'note', containerRenderer('note', 'NOTE'))
   .use(markdownItContainer, 'tip', containerRenderer('tip', 'TIP'))
   .use(markdownItContainer, 'warning', containerRenderer('warning', 'WARNING'))
+
+installMarkdownComponentRules(md, escapeHtml)
 
 const defaultFence = md.renderer.rules.fence
 md.renderer.rules.fence = (tokens, idx, options, env, self) => {
@@ -228,6 +236,11 @@ function cleanupCopyButtons() {
   copyCleanups = []
 }
 
+function cleanupComponentInteractions() {
+  componentCleanup?.()
+  componentCleanup = null
+}
+
 async function copyText(text) {
   if (navigator.clipboard?.writeText) {
     try {
@@ -331,13 +344,15 @@ async function renderMarkdown() {
 
     emit('markdownLoaded', rawText)
     const { replaced, formulas } = extractFormulas(rawText)
-    renderedHtml.value = restoreFormulas(md.render(replaced), formulas)
+    renderedHtml.value = restoreFormulas(renderMarkdownWithComponents(replaced, md, escapeHtml), formulas)
 
     await nextTick()
     if (token !== renderToken) return
 
     emitToc()
     attachCopyButtons()
+    cleanupComponentInteractions()
+    componentCleanup = attachMarkdownComponentInteractions(markdownBodyRef.value)
     await renderMermaid()
     await typesetMath()
   } catch (error) {
@@ -360,6 +375,7 @@ watch(
 
 onBeforeUnmount(() => {
   cleanupCopyButtons()
+  cleanupComponentInteractions()
 })
 </script>
 
@@ -526,10 +542,15 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(.task-list-item input) {
-  width: 1rem;
-  height: 1rem;
+  width: 1.1rem;
+  height: 1.1rem;
   margin: 0 0.55rem 0 -1.45rem;
   accent-color: var(--md-accent-2);
+  cursor: pointer;
+}
+
+.markdown-body :deep(.task-list-item label) {
+  cursor: pointer;
 }
 
 .markdown-body :deep(blockquote) {
@@ -772,6 +793,618 @@ onBeforeUnmount(() => {
   color: #b4befe;
 }
 
+.markdown-body :deep(.md-alert) {
+  --alert-accent: #89b4fa;
+  --alert-soft: rgba(137, 180, 250, 0.12);
+  position: relative;
+  margin: 2rem 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--alert-accent) 34%, transparent);
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, var(--alert-soft), transparent 54%),
+    rgba(30, 30, 46, 0.76);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+}
+
+.markdown-body :deep(.md-alert::before) {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.24rem;
+  background: var(--alert-accent);
+}
+
+.markdown-body :deep(.md-alert--tip),
+.markdown-body :deep(.md-alert--success) {
+  --alert-accent: #94e2d5;
+  --alert-soft: rgba(148, 226, 213, 0.12);
+}
+
+.markdown-body :deep(.md-alert--question) {
+  --alert-accent: #cba6f7;
+  --alert-soft: rgba(203, 166, 247, 0.12);
+}
+
+.markdown-body :deep(.md-alert--warning) {
+  --alert-accent: #f9e2af;
+  --alert-soft: rgba(249, 226, 175, 0.12);
+}
+
+.markdown-body :deep(.md-alert--danger) {
+  --alert-accent: #f38ba8;
+  --alert-soft: rgba(243, 139, 168, 0.12);
+}
+
+.markdown-body :deep(.md-alert-head) {
+  display: flex;
+  align-items: center;
+  gap: 0.72rem;
+  padding: 0.88rem 1.1rem 0.72rem 1.25rem;
+  color: var(--alert-accent);
+  font-family: "Inter", "LXGW WenKai", sans-serif;
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.markdown-body :deep(.md-alert-icon) {
+  display: inline-grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--alert-accent) 42%, transparent);
+  border-radius: 50%;
+  font-family: "Fira Code", monospace;
+  font-weight: 800;
+}
+
+.markdown-body :deep(.md-alert-body) {
+  padding: 0 1.2rem 1.05rem 1.25rem;
+}
+
+.markdown-body :deep(.md-alert-body > :last-child) {
+  margin-bottom: 0;
+}
+
+.markdown-body :deep(.md-alert-inline) {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  padding: 0.06em 0.42em;
+  border: 1px solid color-mix(in srgb, var(--alert-accent, #89b4fa) 36%, transparent);
+  border-radius: 0.5em;
+  color: var(--alert-accent, #89b4fa);
+  background: var(--alert-soft, rgba(137, 180, 250, 0.1));
+}
+
+.markdown-body :deep(.md-blur-inline) {
+  appearance: none;
+  display: inline;
+  margin: 0;
+  padding: 0.05em 0.35em;
+  border: 1px dashed rgba(180, 190, 254, 0.3);
+  border-radius: 0.38em;
+  color: inherit;
+  background: rgba(69, 71, 90, 0.5);
+  font: inherit;
+  cursor: pointer;
+}
+
+.markdown-body :deep(.md-blur-inline span) {
+  filter: blur(0.34em);
+  opacity: 0.72;
+  transition: filter 0.28s ease, opacity 0.28s ease;
+}
+
+.markdown-body :deep(.md-blur-inline:hover span),
+.markdown-body :deep(.md-blur-inline:focus-visible span),
+.markdown-body :deep(.md-blur-inline.is-revealed span) {
+  filter: blur(0);
+  opacity: 1;
+}
+
+.markdown-body :deep(.md-blur-block) {
+  margin: 2rem 0;
+  overflow: hidden;
+  border: 1px solid rgba(180, 190, 254, 0.16);
+  border-radius: 1rem;
+  background: rgba(24, 24, 37, 0.68);
+}
+
+.markdown-body :deep(.md-blur-block-head) {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.78rem 1rem;
+  border-bottom: 1px solid rgba(180, 190, 254, 0.12);
+  color: var(--md-muted);
+  font-size: 0.86rem;
+}
+
+.markdown-body :deep(.md-blur-block-head button) {
+  border: 1px solid rgba(137, 180, 250, 0.26);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  color: #cdd6f4;
+  background: rgba(49, 50, 68, 0.72);
+  font: inherit;
+  cursor: pointer;
+}
+
+.markdown-body :deep(.md-blur-block-content) {
+  padding: 1.15rem;
+  filter: blur(0.72rem);
+  opacity: 0.48;
+  user-select: none;
+  pointer-events: none;
+  transition: filter 0.36s ease, opacity 0.36s ease;
+}
+
+.markdown-body :deep(.md-blur-block.is-revealed .md-blur-block-content) {
+  filter: blur(0);
+  opacity: 1;
+  user-select: auto;
+  pointer-events: auto;
+}
+
+.markdown-body :deep(.md-folding) {
+  margin: 1.65rem 0;
+  overflow: clip;
+  border: 1px solid rgba(180, 190, 254, 0.16);
+  border-radius: 0.9rem;
+  background: rgba(30, 30, 46, 0.6);
+}
+
+.markdown-body :deep(.md-folding summary) {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.92rem 1rem;
+  color: #cdd6f4;
+  font-weight: 720;
+  cursor: pointer;
+  list-style: none;
+}
+
+.markdown-body :deep(.md-folding summary::-webkit-details-marker) {
+  display: none;
+}
+
+.markdown-body :deep(.md-folding summary::before) {
+  content: '+';
+  display: inline-grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 50%;
+  color: #11111b;
+  background: #89b4fa;
+  font-family: "Fira Code", monospace;
+  transition: rotate 0.22s ease;
+}
+
+.markdown-body :deep(.md-folding[open] summary::before) {
+  rotate: 45deg;
+}
+
+.markdown-body :deep(.md-folding-content) {
+  padding: 0 1rem 1rem 3.1rem;
+  border-top: 1px solid rgba(180, 190, 254, 0.1);
+}
+
+.markdown-body :deep(.md-folding .md-folding) {
+  margin: 0.8rem 0 0;
+}
+
+.markdown-body :deep(.md-quote) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 1.2rem 1.25rem;
+  border: 1px solid rgba(203, 166, 247, 0.2);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 0 0, rgba(203, 166, 247, 0.16), transparent 14rem),
+    rgba(30, 30, 46, 0.68);
+}
+
+.markdown-body :deep(.md-quote-icon) {
+  display: grid;
+  min-width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  color: #cba6f7;
+  font-family: "Fira Code", monospace;
+  font-size: 1.2rem;
+}
+
+.markdown-body :deep(.md-quote-icon svg) {
+  width: 1.65rem;
+  height: 1.65rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.markdown-body :deep(.md-quote blockquote) {
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.markdown-body :deep(.md-inline-quote) {
+  color: #cba6f7;
+  font-style: italic;
+}
+
+.markdown-body :deep(.md-inline-quote::before) {
+  content: '「';
+}
+
+.markdown-body :deep(.md-inline-quote::after) {
+  content: '」';
+}
+
+.markdown-body :deep(.md-chat) {
+  display: grid;
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 1.1rem;
+  list-style: none;
+  border: 1px solid rgba(180, 190, 254, 0.14);
+  border-radius: 1.1rem;
+  background:
+    linear-gradient(180deg, rgba(49, 50, 68, 0.32), rgba(24, 24, 37, 0.72));
+}
+
+.markdown-body :deep(.md-chat-message) {
+  display: grid;
+  max-width: min(82%, 38rem);
+  margin: 0;
+  padding: 0;
+}
+
+.markdown-body :deep(.md-chat-message.is-self) {
+  justify-self: end;
+}
+
+.markdown-body :deep(.md-chat-speaker) {
+  margin: 0 0.45rem 0.3rem;
+  color: var(--md-muted);
+  font-size: 0.78rem;
+}
+
+.markdown-body :deep(.md-chat-message.is-self .md-chat-speaker) {
+  text-align: right;
+}
+
+.markdown-body :deep(.md-chat-bubble) {
+  padding: 0.72rem 0.95rem;
+  border: 1px solid rgba(180, 190, 254, 0.14);
+  border-radius: 0.35rem 1rem 1rem 1rem;
+  background: rgba(69, 71, 90, 0.68);
+}
+
+.markdown-body :deep(.md-chat-message.is-self .md-chat-bubble) {
+  border-color: rgba(137, 180, 250, 0.22);
+  border-radius: 1rem 0.35rem 1rem 1rem;
+  background: linear-gradient(135deg, rgba(137, 180, 250, 0.28), rgba(180, 190, 254, 0.18));
+}
+
+.markdown-body :deep(.md-chat-bubble > :last-child) {
+  margin-bottom: 0;
+}
+
+.markdown-body :deep(.md-chat-system) {
+  justify-self: center;
+  margin: 0;
+  padding: 0.2rem 0.72rem;
+  border-radius: 999px;
+  color: rgba(205, 214, 244, 0.58);
+  background: rgba(17, 17, 27, 0.48);
+  font-size: 0.76rem;
+  text-align: center;
+}
+
+.markdown-body :deep(.md-chat-system > :last-child) {
+  margin-bottom: 0;
+}
+
+.markdown-body :deep(.md-timeline),
+.markdown-body :deep(.md-steps) {
+  position: relative;
+  display: grid;
+  gap: 0;
+  margin: 2rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.markdown-body :deep(.md-timeline::before),
+.markdown-body :deep(.md-steps::before) {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  bottom: 1rem;
+  left: 0.85rem;
+  width: 1px;
+  background: linear-gradient(#89b4fa, #cba6f7);
+}
+
+.markdown-body :deep(.md-timeline li),
+.markdown-body :deep(.md-steps li) {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 1rem;
+  margin: 0;
+  padding: 0 0 1.45rem;
+}
+
+.markdown-body :deep(.md-timeline-marker),
+.markdown-body :deep(.md-steps-marker) {
+  z-index: 1;
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border: 1px solid rgba(137, 180, 250, 0.55);
+  border-radius: 50%;
+  color: #11111b;
+  background: #89b4fa;
+  font-family: "Fira Code", monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.markdown-body :deep(.md-timeline-marker) {
+  width: 0.72rem;
+  height: 0.72rem;
+  margin: 0.52rem;
+  background: #cba6f7;
+}
+
+.markdown-body :deep(.md-timeline-content),
+.markdown-body :deep(.md-steps-content) {
+  padding: 0.1rem 0 0;
+}
+
+.markdown-body :deep(.md-timeline-content > strong),
+.markdown-body :deep(.md-steps-content > strong) {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #89dceb;
+}
+
+.markdown-body :deep(.md-gallery),
+.markdown-body :deep(.md-columns) {
+  display: grid;
+  grid-template-columns: repeat(var(--md-columns, 2), minmax(0, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+  align-items: start;
+}
+
+.markdown-body :deep(.md-gallery .md-figure) {
+  margin: 0;
+}
+
+.markdown-body :deep(.md-gallery > p:empty) {
+  display: none;
+}
+
+.markdown-body :deep(.md-column),
+.markdown-body :deep(.md-columns > *) {
+  margin-top: 0;
+}
+
+.markdown-body :deep(.md-column) {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid rgba(180, 190, 254, 0.12);
+  border-radius: 0.85rem;
+  background: rgba(30, 30, 46, 0.46);
+}
+
+.markdown-body :deep(.md-column > :first-child) {
+  margin-top: 0;
+}
+
+.markdown-body :deep(.md-column > :last-child) {
+  margin-bottom: 0;
+}
+
+.markdown-body :deep(.md-link-card) {
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  margin: 1.65rem 0;
+  padding: 1.1rem 3.3rem 1.1rem 1.15rem;
+  border: 1px solid rgba(137, 180, 250, 0.18);
+  border-radius: 1rem;
+  color: var(--md-text);
+  background: linear-gradient(135deg, rgba(137, 180, 250, 0.12), rgba(30, 30, 46, 0.72));
+}
+
+.markdown-body :deep(.md-link-card > span) {
+  color: var(--md-muted);
+  font-family: "Fira Code", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+}
+
+.markdown-body :deep(.md-link-card > strong) {
+  color: #89dceb;
+  font-size: 1.1rem;
+}
+
+.markdown-body :deep(.md-link-card > div > :last-child) {
+  margin-bottom: 0;
+}
+
+.markdown-body :deep(.md-link-card > i) {
+  position: absolute;
+  top: 50%;
+  right: 1.15rem;
+  translate: 0 -50%;
+  color: #89b4fa;
+  font-size: 1.35rem;
+  transition: translate 0.2s ease;
+}
+
+.markdown-body :deep(.md-link-card:hover > i) {
+  translate: 0.2rem -50%;
+}
+
+.markdown-body :deep(.md-tip-inline) {
+  position: relative;
+  border-bottom: 1px dashed #f9e2af;
+  color: #f9e2af;
+  cursor: help;
+}
+
+.markdown-body :deep(.md-tip-inline::after) {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 20;
+  bottom: calc(100% + 0.55rem);
+  left: 50%;
+  width: max-content;
+  max-width: min(20rem, 78vw);
+  padding: 0.55rem 0.72rem;
+  border: 1px solid rgba(249, 226, 175, 0.28);
+  border-radius: 0.55rem;
+  color: #cdd6f4;
+  background: #181825;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  opacity: 0;
+  pointer-events: none;
+  translate: -50% 0.3rem;
+  transition: opacity 0.18s ease, translate 0.18s ease;
+}
+
+.markdown-body :deep(.md-tip-inline:hover::after),
+.markdown-body :deep(.md-tip-inline:focus-visible::after) {
+  opacity: 1;
+  translate: -50% 0;
+}
+
+.markdown-body :deep(.md-badge) {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12em 0.55em;
+  border: 1px solid rgba(137, 180, 250, 0.3);
+  border-radius: 999px;
+  color: #89b4fa;
+  background: rgba(137, 180, 250, 0.1);
+  font-family: "Inter", sans-serif;
+  font-size: 0.78em;
+  font-weight: 760;
+  line-height: 1.5;
+}
+
+.markdown-body :deep(.md-badge--success) {
+  border-color: rgba(148, 226, 213, 0.34);
+  color: #94e2d5;
+  background: rgba(148, 226, 213, 0.1);
+}
+
+.markdown-body :deep(.md-badge--warning) {
+  border-color: rgba(249, 226, 175, 0.34);
+  color: #f9e2af;
+  background: rgba(249, 226, 175, 0.1);
+}
+
+.markdown-body :deep(.md-kbd) {
+  display: inline-flex;
+  min-width: 1.8em;
+  min-height: 1.8em;
+  align-items: center;
+  justify-content: center;
+  padding: 0.08em 0.42em;
+  border: 1px solid rgba(205, 214, 244, 0.24);
+  border-bottom-width: 3px;
+  border-radius: 0.42em;
+  color: #cdd6f4;
+  background: rgba(69, 71, 90, 0.72);
+  font-family: "Fira Code", monospace;
+  font-size: 0.82em;
+}
+
+.markdown-body :deep(.md-mark) {
+  padding: 0.02em 0.22em;
+  border-radius: 0.25em;
+  color: #11111b;
+  background: linear-gradient(100deg, rgba(249, 226, 175, 0.85), rgba(203, 166, 247, 0.76));
+}
+
+.markdown-body :deep(.md-progress) {
+  display: inline-grid;
+  grid-template-columns: auto minmax(5rem, 9rem) auto;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: min(100%, 16rem);
+  color: var(--md-muted);
+  font-size: 0.78em;
+}
+
+.markdown-body :deep(.md-progress-track) {
+  height: 0.45rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(69, 71, 90, 0.72);
+}
+
+.markdown-body :deep(.md-progress-track > span) {
+  display: block;
+  width: var(--md-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #89b4fa, #cba6f7);
+}
+
+.markdown-body :deep(.md-footnote-ref) {
+  scroll-margin-top: 6rem;
+}
+
+.markdown-body :deep(.md-footnote-ref a) {
+  border-bottom: 0;
+  font-family: "Fira Code", monospace;
+  font-size: 0.72em;
+}
+
+.markdown-body :deep(.md-footnotes) {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(180, 190, 254, 0.18);
+  color: var(--md-muted);
+  font-size: 0.9rem;
+}
+
+.markdown-body :deep(.md-footnotes h2) {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+.markdown-body :deep(.md-footnotes li) {
+  scroll-margin-top: 6rem;
+}
+
+.markdown-body :deep(.md-footnote-back) {
+  margin-left: 0.35rem;
+  border-bottom: 0;
+}
+
 .markdown-body :deep(.markdown-mermaid) {
   margin: 2.25rem 0;
   padding: 1.2rem;
@@ -969,6 +1602,46 @@ onBeforeUnmount(() => {
 
   .markdown-body :deep(.md-button) {
     width: 100%;
+  }
+
+  .markdown-body :deep(.md-chat-message) {
+    max-width: 92%;
+  }
+
+  .markdown-body :deep(.md-gallery),
+  .markdown-body :deep(.md-columns) {
+    grid-template-columns: 1fr;
+  }
+
+  .markdown-body :deep(.md-folding-content) {
+    padding-left: 1rem;
+  }
+
+  .markdown-body :deep(.md-quote) {
+    grid-template-columns: 1fr;
+  }
+
+  .markdown-body :deep(.md-quote-icon) {
+    width: fit-content;
+  }
+
+  .markdown-body :deep(.md-progress) {
+    grid-template-columns: 1fr auto;
+  }
+
+  .markdown-body :deep(.md-progress-track) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-body :deep(.md-blur-inline span),
+  .markdown-body :deep(.md-blur-block-content),
+  .markdown-body :deep(.md-folding summary::before),
+  .markdown-body :deep(.md-link-card > i),
+  .markdown-body :deep(.md-tip-inline::after) {
+    transition: none;
   }
 }
 </style>

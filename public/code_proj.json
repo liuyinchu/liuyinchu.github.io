@@ -54,5 +54,12 @@
     "homepage": "/cyber-match",
     "repo": "",
     "category": "toy"
+  },
+  {
+    "name": "Markdown Component Lab",
+    "desc": "本站通用 Markdown 富组件的用法、效果与可复制示例。",
+    "homepage": "/markdown-components",
+    "repo": "",
+    "category": "code"
   }
 ]
