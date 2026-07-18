@@ -561,6 +561,18 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (min-width: 1800px) {
+  .s4-content {
+    max-width: 1760px;
+    padding-right: 64px;
+    padding-left: 64px;
+  }
+
+  :deep(.s4-orbit__stage) {
+    min-height: 37rem;
+  }
+}
+
 @media (max-width: 640px) {
   .s4-hero {
     padding-top: 76px;

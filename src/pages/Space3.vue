@@ -287,6 +287,17 @@ const loungeLinks = [
   font-weight: 700;
 }
 
+@media (min-width: 1800px) {
+  .lounge-hero,
+  .lounge-grid {
+    width: min(1560px, 100%);
+  }
+
+  .lounge-hero {
+    grid-template-columns: minmax(0, 1.12fr) minmax(440px, 0.88fr);
+  }
+}
+
 @media (max-width: 860px) {
   .lounge-hero,
   .lounge-grid {

@@ -605,6 +605,17 @@ onMounted(() => {
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* Responsive */
+@media (min-width: 1800px) {
+  .content-container {
+    max-width: 1680px;
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 28px;
+  }
+}
+
 @media (max-width: 768px) {
   .resource-directory-wrapper { padding: 28px 14px; }
   .directory-header { margin-bottom: 32px; }

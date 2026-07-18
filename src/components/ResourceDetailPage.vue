@@ -496,6 +496,18 @@ onMounted(() => {
   color: var(--ctp-red);
 }
 
+@media (min-width: 1800px) {
+  .resource-hero,
+  .resource-layout {
+    width: min(100% - 6rem, 1560px);
+  }
+
+  .resource-layout {
+    grid-template-columns: 19rem minmax(0, 1fr);
+    gap: 5rem;
+  }
+}
+
 @media (max-width: 980px) {
   .resource-hero {
     grid-template-columns: 1fr;

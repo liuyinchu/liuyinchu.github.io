@@ -318,6 +318,12 @@ onBeforeUnmount(() => {
   transform: translateY(-0.45rem);
 }
 
+@media (min-width: 1800px) {
+  .talk-ticker {
+    width: min(100% - 6rem, 1920px);
+  }
+}
+
 @media (max-width: 720px) {
   .talk-ticker {
     grid-template-columns: auto minmax(0, 1fr) auto;

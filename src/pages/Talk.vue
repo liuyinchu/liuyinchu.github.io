@@ -138,6 +138,18 @@ onMounted(async () => {
   text-align: center;
 }
 
+@media (min-width: 1800px) {
+  .talk-hero {
+    width: min(100% - 6rem, 1760px);
+    min-height: 34rem;
+  }
+
+  .talk-hero__content {
+    max-width: 72rem;
+    padding: 5.5rem 6.5rem;
+  }
+}
+
 @media (max-width: 720px) {
   .talk-page {
     padding-top: 1rem;

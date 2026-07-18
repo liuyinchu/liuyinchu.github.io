@@ -312,6 +312,19 @@ onMounted(async () => {
 .token.punc { color: var(--ctp-mocha-overlay2); }
 .token.str { color: var(--ctp-mocha-green); }
 
+@media (min-width: 1800px) {
+  .neighbors-hero,
+  .friends-grid,
+  .exchange-section {
+    width: min(1760px, 100%);
+  }
+
+  .friends-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.35rem;
+  }
+}
+
 @media (max-width: 900px) {
   .exchange-panel {
     grid-template-columns: 1fr;

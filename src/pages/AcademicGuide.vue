@@ -353,6 +353,12 @@ const palettes = paletteRawData.map(group => group.map(color => `#${color}`));
   gap: 40px;
 }
 
+@media (min-width: 1800px) {
+  .content-wrapper {
+    max-width: 1560px;
+  }
+}
+
 @media (max-width: 768px) {
   .calculator-layout {
     grid-template-columns: 1fr;

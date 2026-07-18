@@ -362,6 +362,21 @@ const footerColumns = [
   color: #fff;
 }
 
+@media (min-width: 1800px) {
+  .footer-shell {
+    width: min(1760px, calc(100vw - 96px));
+  }
+
+  .footer-layout {
+    grid-template-columns: minmax(18rem, 0.68fr) minmax(0, 2.8fr);
+    column-gap: clamp(6rem, 8vw, 11rem);
+  }
+
+  .footer-directory {
+    gap: clamp(4rem, 5vw, 7rem);
+  }
+}
+
 @media (max-width: 980px) {
   .footer-layout {
     grid-template-columns: 1fr;

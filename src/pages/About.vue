@@ -618,6 +618,20 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (min-width: 1800px) {
+  .directory-shell {
+    width: min(1560px, 100%);
+    grid-template-columns: minmax(300px, 0.32fr) minmax(0, 1fr);
+    gap: 7rem;
+  }
+
+  .link-matrix {
+    width: 100%;
+    max-width: 1040px;
+    justify-self: end;
+  }
+}
+
 @media (max-width: 980px) {
   .about-page {
     height: auto;

@@ -276,6 +276,17 @@ function handleRailWheel(event) {
   to { transform: translateX(calc(-50% - var(--rail-gap) / 2)); }
 }
 
+@media (min-width: 1800px) {
+  .featured-rail {
+    width: min(100% - 6rem, 1920px);
+  }
+
+  .rail-card {
+    width: clamp(20rem, 19vw, 28rem);
+    min-height: 18rem;
+  }
+}
+
 @media (max-width: 760px) {
   .featured-rail {
     width: min(100% - 2rem, 1320px);

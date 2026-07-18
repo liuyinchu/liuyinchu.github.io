@@ -189,6 +189,26 @@ function onMarkdownLoaded(rawText) {
   width: 260px;
   display: none;
 }
+@media (min-width: 1800px) {
+  .header-content {
+    max-width: 1600px;
+  }
+
+  .main-content-area {
+    max-width: 1760px;
+    justify-content: center;
+    gap: 3rem;
+  }
+
+  .article-wrapper {
+    max-width: 1100px;
+  }
+
+  .toc-wrapper {
+    width: 300px;
+  }
+}
+
 @media (min-width: 1100px) {
   .toc-wrapper {
     display: block;

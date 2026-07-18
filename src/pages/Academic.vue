@@ -953,6 +953,18 @@ onMounted(loadAcademicData)
   border: 0;
 }
 
+@media (min-width: 1800px) {
+  .academic-shell {
+    grid-template-columns: 11rem minmax(0, 1fr);
+    width: min(100% - 6rem, 1560px);
+    gap: 7rem;
+  }
+
+  .profile-layout {
+    grid-template-columns: minmax(19rem, 0.62fr) minmax(0, 1.38fr);
+  }
+}
+
 @media (max-width: 900px) {
   .signature-hero {
     min-height: calc(100svh - 68px);

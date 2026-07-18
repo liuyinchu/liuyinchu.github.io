@@ -879,6 +879,22 @@ h1 {
   }
 }
 
+@media (min-width: 1800px) {
+  .visitor-overview {
+    width: min(1680px, calc(100% - 6rem));
+    grid-template-columns: minmax(0, 0.86fr) minmax(520px, 1.14fr);
+    gap: 5rem;
+  }
+
+  .globe-svg {
+    width: min(1900px, 92vw);
+  }
+
+  .globe-overlay {
+    width: min(1040px, calc(100% - 4rem));
+  }
+}
+
 @media (max-width: 980px) {
   .visitor-overview {
     grid-template-columns: 1fr;

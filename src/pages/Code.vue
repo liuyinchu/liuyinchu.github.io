@@ -605,6 +605,17 @@ const filtered = computed(() => {
 /* =========================================
    响应式适配 (Responsive)
    ========================================= */
+@media (min-width: 1800px) {
+  .code-projects-page {
+    --max-w: 1760px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.75rem;
+  }
+}
+
 @media (max-width: 768px) {
   .code-projects-page { --header-h: min(58svh, 28rem); }
   .page-header { min-height: 21rem; padding-inline: 1rem; box-sizing: border-box; }

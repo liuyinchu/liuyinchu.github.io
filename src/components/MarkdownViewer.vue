@@ -1632,6 +1632,12 @@ onBeforeUnmount(() => {
   background: rgba(137, 180, 250, 0.48);
 }
 
+@media (min-width: 1800px) {
+  .markdown-body--page {
+    max-width: min(100% - 4rem, 1120px);
+  }
+}
+
 @media (max-width: 768px) {
   .markdown-body {
     margin: 1rem auto;

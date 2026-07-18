@@ -575,6 +575,16 @@ onUnmounted(() => {
   }
 }
 
+@media (min-width: 1800px) {
+  .header-inner {
+    width: min(1760px, calc(100vw - 96px));
+  }
+
+  .desktop-menu {
+    gap: clamp(1.35rem, 1.5vw, 2.15rem);
+  }
+}
+
 @media (max-width: 860px) {
   .header-inner {
     width: min(100% - 32px, 1180px);

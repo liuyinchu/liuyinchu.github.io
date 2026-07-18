@@ -874,6 +874,30 @@ function handleOutsidePointer(event) {
   border: 0;
 }
 
+@media (min-width: 1800px) {
+  .journal-hero,
+  .article-section {
+    width: min(100% - 6rem, 1920px);
+  }
+
+  .poem-block {
+    max-width: 82rem;
+  }
+
+  .article-layout {
+    grid-template-columns: minmax(0, 1.7fr) minmax(27rem, 0.72fr);
+    gap: 3rem;
+  }
+
+  .latest-grid {
+    gap: 4.5rem 7rem;
+  }
+
+  .latest-card {
+    grid-template-columns: minmax(11rem, 0.68fr) minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 980px) {
   .article-layout {
     grid-template-columns: 1fr;

@@ -661,6 +661,18 @@ h1 {
     0 6px 13px var(--course-material-shadow);
 }
 
+@media (min-width: 1800px) {
+  .course-hero,
+  .course-layout {
+    width: min(100% - 6rem, 1600px);
+  }
+
+  .course-layout {
+    grid-template-columns: 18rem minmax(0, 1fr);
+    gap: 2rem;
+  }
+}
+
 @media (max-width: 1100px) {
   .course-hero {
     gap: 2rem;

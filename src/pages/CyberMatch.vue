@@ -836,6 +836,12 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (min-width: 1800px) {
+  .game-shell {
+    width: min(1440px, calc(100vw - 80px));
+  }
+}
+
 @media (max-width: 820px) {
   .hud {
     align-items: stretch;

@@ -1459,6 +1459,12 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (min-width: 1800px) {
+  .weather-meta {
+    width: min(calc(100% - 6rem), 1760px);
+  }
+}
+
 @media (max-width: 1040px) {
   .weather-title-block {
     width: min(70vw, 48rem);
