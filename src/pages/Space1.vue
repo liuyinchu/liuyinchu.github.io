@@ -303,6 +303,7 @@ function handleOutsidePointer(event) {
               <span>{{ article.author }}</span>
               <span>{{ article.date }}</span>
             </p>
+            <p class="latest-desc">{{ article.desc }}</p>
           </div>
         </RouterLink>
       </div>
@@ -766,6 +767,27 @@ function handleOutsidePointer(event) {
 
 .latest-card h3 {
   margin-top: 0;
+}
+
+.latest-copy {
+  min-width: 0;
+}
+
+.latest-card .article-meta {
+  margin-top: 0.65rem;
+  font-size: 0.8rem;
+}
+
+.latest-desc {
+  display: -webkit-box;
+  margin: 0.5rem 0 0;
+  overflow: hidden;
+  color: rgba(205, 214, 244, 0.52);
+  font-size: clamp(0.72rem, 0.78vw, 0.82rem);
+  font-weight: 450;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .featured-card img,
