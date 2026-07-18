@@ -298,6 +298,58 @@ a:hover {
 @media (max-width: 860px) {
   :root {
     --site-header-height: 68px;
+    --page-gutter: clamp(0.9rem, 4.5vw, 1.5rem);
+  }
+
+  body {
+    overflow-wrap: anywhere;
+  }
+
+  main,
+  section,
+  article,
+  aside,
+  nav {
+    min-width: 0;
+  }
+
+  img,
+  picture,
+  video,
+  svg {
+    max-width: 100%;
+  }
+
+  img,
+  video {
+    height: auto;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: max(1rem, 16px);
+  }
+
+  .typing-screen {
+    height: auto;
+    min-height: 100svh;
+    min-height: 100dvh;
+    background-attachment: scroll;
+  }
+
+  .main-content {
+    padding-inline: var(--page-gutter);
+  }
+}
+
+@media (pointer: coarse) {
+  button,
+  summary,
+  input:not([type='hidden']),
+  select,
+  [role='button'] {
+    min-height: 2.75rem;
   }
 }
 

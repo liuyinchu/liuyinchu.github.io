@@ -26,10 +26,11 @@
           class="card hero"
           ref="cardRef"
           @wheel.passive="onWheel"
-          @keydown.stop.prevent="onKey"
+          @keydown.stop="onKey"
           tabindex="0"
           @touchstart.passive="onTouchStart"
           @touchend.passive="onTouchEnd"
+          @touchcancel.passive="onTouchCancel"
         >
           <h1>Paper Switch Brush</h1>
           <img class="psb-logo" src="/fig/psb.svg" alt="psb" />
@@ -43,10 +44,11 @@
           class="card glass"
           ref="cardRef"
           @wheel.passive="onWheel"
-          @keydown.stop.prevent="onKey"
+          @keydown.stop="onKey"
           tabindex="0"
           @touchstart.passive="onTouchStart"
           @touchend.passive="onTouchEnd"
+          @touchcancel.passive="onTouchCancel"
         >
           <header class="head">
             <h2 class="title">{{ curPaper.title }}</h2>
@@ -95,10 +97,11 @@
           class="card glass summary"
           ref="cardRef"
           @wheel.passive="onWheel"
-          @keydown.stop.prevent="onKey"
+          @keydown.stop="onKey"
           tabindex="0"
           @touchstart.passive="onTouchStart"
           @touchend.passive="onTouchEnd"
+          @touchcancel.passive="onTouchCancel"
         >
           <header class="head">
             <h2 class="title">Today’s Picks</h2>
@@ -173,18 +176,26 @@ async function loadDailyWithFallback() {
 onMounted(loadDailyWithFallback)
 
 /* ======= 页面 Chrome 处理：仅本页隐藏页眉/页脚 + 禁止整页滚动 ======= */
-let headerEl = null, footerEl = null, headerOld = '', footerOld = ''
+let headerEl = null
+let footerEl = null
+let headerOld = ''
+let footerOld = ''
+let overflowSnapshot = null
 onMounted(() => {
+  overflowSnapshot = {
+    root: document.documentElement.style.overflow,
+    body: document.body.style.overflow,
+  }
   document.documentElement.style.overflow = 'hidden'
   document.body.style.overflow = 'hidden'
-  headerEl = document.querySelector('header')
-  footerEl = document.querySelector('footer')
+  headerEl = document.querySelector('.site-header')
+  footerEl = document.querySelector('.site-footer')
   if (headerEl) { headerOld = headerEl.style.display; headerEl.style.display = 'none' }
   if (footerEl) { footerOld = footerEl.style.display; footerEl.style.display = 'none' }
 })
 onBeforeUnmount(() => {
-  document.documentElement.style.overflow = ''
-  document.body.style.overflow = ''
+  document.documentElement.style.overflow = overflowSnapshot?.root ?? ''
+  document.body.style.overflow = overflowSnapshot?.body ?? ''
   if (headerEl) headerEl.style.display = headerOld
   if (footerEl) footerEl.style.display = footerOld
 })
@@ -220,31 +231,71 @@ function step(delta) {
 function onWheel(e) {
   if (!insideCard(e.clientX, e.clientY)) return
   if (Math.abs(e.deltaY) < 8) return
-  step(e.deltaY > 0 ? +1 : -1)
+  const delta = e.deltaY > 0 ? +1 : -1
+  if (!canStepFromScrollable(e.target, delta)) return
+  step(delta)
 }
 
 function onKey(e) {
   // 键盘在卡片聚焦时才有效
   if (document.activeElement !== cardRef.value) return
-  if (['ArrowDown', 'PageDown', ' '].includes(e.key)) step(+1)
-  if (['ArrowUp', 'PageUp'].includes(e.key)) step(-1)
+  if (['ArrowDown', 'PageDown', ' '].includes(e.key)) {
+    e.preventDefault()
+    step(+1)
+  }
+  if (['ArrowUp', 'PageUp'].includes(e.key)) {
+    e.preventDefault()
+    step(-1)
+  }
+}
+
+function scrollableFrom(target) {
+  return target instanceof Element ? target.closest('.content, .summary-list') : null
+}
+
+function canStepFromScrollable(target, delta) {
+  const region = scrollableFrom(target)
+  if (!region || region.scrollHeight <= region.clientHeight + 1) return true
+  if (delta > 0) {
+    return region.scrollTop + region.clientHeight >= region.scrollHeight - 1
+  }
+  return region.scrollTop <= 1
 }
 
 let touchY = 0, touchX = 0
+let touchEligible = false
+let touchCanStepForward = true
+let touchCanStepBackward = true
 function onTouchStart(e) {
   const t = e.changedTouches[0]
-  if (!insideCard(t.clientX, t.clientY)) return
+  touchEligible = insideCard(t.clientX, t.clientY)
+    && !(e.target instanceof Element && e.target.closest('a, button, input, textarea, select'))
+  if (!touchEligible) return
   touchY = t.clientY
   touchX = t.clientX
+  const region = scrollableFrom(e.target)
+  touchCanStepBackward = !region || region.scrollTop <= 1
+  touchCanStepForward = !region
+    || region.scrollHeight <= region.clientHeight + 1
+    || region.scrollTop + region.clientHeight >= region.scrollHeight - 1
 }
 function onTouchEnd(e) {
+  if (!touchEligible) return
+  touchEligible = false
   const t = e.changedTouches[0]
   if (!insideCard(t.clientX, t.clientY)) return
   const dy = t.clientY - touchY
   const dx = t.clientX - touchX
   if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 30) {
-    step(dy < 0 ? +1 : -1)
+    const delta = dy < 0 ? +1 : -1
+    if (delta > 0 && !touchCanStepForward) return
+    if (delta < 0 && !touchCanStepBackward) return
+    step(delta)
   }
+}
+
+function onTouchCancel() {
+  touchEligible = false
 }
 
 /* ======= Markdown（轻量） ======= */
@@ -349,7 +400,7 @@ function jumpPrompt() {
   --thin: 1px;
 }
 
-.psb-root { position: fixed; inset: 0; background: var(--background-color); color: var(--text-color); z-index: 0; }
+.psb-root { position: fixed; inset: 0; height: 100dvh; overflow: hidden; background: var(--background-color); color: var(--text-color); z-index: 0; }
 
 /* 背景块更多 + 铺满 */
 .bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; }
@@ -375,7 +426,10 @@ function jumpPrompt() {
 /* 单卡居中（固定尺寸，竖向更短） */
 .card {
   width: min(980px, 92vw);
-  height: min(68vh, 760px); /* ↓ 比之前更矮，包括 summary */
+  height: min(68dvh, 760px); /* ↓ 比之前更矮，包括 summary */
+  min-height: 0;
+  max-height: calc(100dvh - 24px);
+  box-sizing: border-box;
   border-radius: var(--radius);
   border: var(--thin) solid var(--border-color);
   box-shadow: var(--shadow);
@@ -412,7 +466,11 @@ function jumpPrompt() {
   margin-top: clamp(8px, 2vw, 12px);
   display: grid; grid-template-columns: 1fr 1fr 1fr;
   gap: clamp(10px, 2vw, 16px);
+  min-height: 0;
   overflow: auto; padding-right: 6px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 @media (max-width: 1080px) { .content { grid-template-columns: 1fr; } }
 .block h3 { margin: 0 0 6px; font-size: 12px; letter-spacing:.04em; text-transform:uppercase; color: var(--accent-color); }
@@ -466,7 +524,7 @@ function jumpPrompt() {
 }
 
 /* Summary 列表（高度随整体更矮） */
-.summary .summary-list { margin-top: 8px; max-height: 48vh; overflow: auto; padding-right: 6px; }
+.summary .summary-list { margin-top: 8px; min-height: 0; max-height: 48dvh; overflow: auto; padding-right: 6px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 .summary ol { margin: 0; padding-left: 18px; }
 .summary li { margin: 8px 0; display: flex; gap: 6px; align-items: baseline; }
 .sum-title { font-weight: 600; }
@@ -572,5 +630,73 @@ function jumpPrompt() {
 .dark-overlay{
   position:absolute; inset:0;
   background: radial-gradient(ellipse at 60% 40%, rgba(0,0,0,.62), rgba(0,0,0,.9));
+}
+
+@media (max-width: 700px) {
+  .card {
+    width: calc(100vw - 16px);
+    height: calc(100dvh - 16px);
+    padding: 12px;
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .actions.spread {
+    gap: 8px;
+  }
+
+  .psb_cblock {
+    height: 44px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .head .title,
+  .authors,
+  .sum-title {
+    overflow-wrap: anywhere;
+  }
+
+  .psb-logo {
+    max-width: 125%;
+  }
+}
+
+@media (max-width: 950px) and (max-height: 560px) and (orientation: landscape) {
+  .card {
+    width: calc(100vw - 16px);
+    height: calc(100dvh - 8px);
+    max-height: calc(100dvh - 8px);
+    padding: 10px;
+  }
+
+  .content {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .hero {
+    gap: 4px;
+  }
+
+  .hero h1 {
+    font-size: clamp(24px, 7vh, 36px);
+  }
+
+  .psb-logo {
+    width: min(62vw, 520px);
+    max-width: 100%;
+    max-height: 52dvh;
+  }
+
+  .hint {
+    margin: 0;
+  }
+
+  .psb_cblock {
+    height: 38px;
+  }
 }
 </style>

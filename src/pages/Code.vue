@@ -604,11 +604,55 @@ const filtered = computed(() => {
    响应式适配 (Responsive)
    ========================================= */
 @media (max-width: 768px) {
-  .hero-title { font-size: 3rem; }
-  .intro-card { padding: 1.5rem; }
+  .code-projects-page { --header-h: min(58svh, 28rem); }
+  .page-header { min-height: 21rem; padding-inline: 1rem; box-sizing: border-box; }
+  .hero-title {
+    max-width: 100%;
+    font-size: clamp(2rem, 10vw, 3rem);
+    line-height: 1.15;
+    letter-spacing: 0.03em;
+    overflow-wrap: anywhere;
+  }
+  .hero-subtitle { max-width: 100%; font-size: 0.8rem; letter-spacing: 0.14em; }
+  .intro-section,
+  .directory-section,
+  .contrib-section { width: calc(100% - 1rem); }
+  .intro-section { margin-top: -2.5rem; }
+  .intro-card { padding: 1.25rem; }
+  .intro-text { font-size: 1rem; line-height: 1.75; text-align: left; }
+  .contrib-section { margin: 2.5rem auto; }
   .directory-toolbar { flex-direction: column; align-items: stretch; }
-  .search-input { width: 100%; }
-  .tabs { justify-content: center; }
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.25rem;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 18px;
+  }
+  .tab {
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.55rem 0.2rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+  .search-box { width: 100%; }
+  .search-input { width: 100%; min-height: 44px; box-sizing: border-box; font-size: 1rem; }
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .card-head { gap: 0.5rem; }
+  .card-title { min-width: 0; padding-left: 0; overflow-wrap: anywhere; }
+  .card-tag { flex: 0 0 auto; }
   .card-actions { flex-direction: column; }
+  .action-btn { min-height: 44px; }
+}
+
+@media (max-width: 950px) and (max-height: 520px) and (orientation: landscape) {
+  .code-projects-page { --header-h: min(78svh, 19rem); }
+  .page-header { min-height: 16rem; }
+  .header-content { gap: 0.75rem; }
+  .hero-title { font-size: clamp(2.4rem, 7vw, 4rem); }
+  .hero-subtitle { font-size: 0.78rem; letter-spacing: 0.16em; }
+  .intro-section { margin-top: -2rem; }
 }
 </style>

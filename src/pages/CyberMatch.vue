@@ -837,21 +837,54 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 820px) {
-  .hud,
-  .progress-copy,
-  .record-row {
+  .hud {
     align-items: stretch;
     flex-direction: column;
   }
 
   .stats,
-  .mode-bar,
   .board-topline {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .stat-item {
     text-align: left;
+  }
+
+  .mode-bar {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .mode-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mode-card {
+    flex: 0 0 min(72vw, 13rem);
+    scroll-snap-align: start;
+  }
+
+  .board-topline {
+    gap: 0.35rem;
+  }
+
+  .board-topline > div {
+    min-width: 0;
+  }
+
+  .board-topline strong {
+    font-size: clamp(0.7rem, 2.7vw, 0.92rem);
+    overflow-wrap: anywhere;
+  }
+
+  .progress-copy,
+  .record-row {
+    flex-wrap: wrap;
   }
 
   .cards-grid {
@@ -861,13 +894,13 @@ onBeforeUnmount(() => {
 
 @media (max-width: 560px) {
   .game-shell {
-    width: min(100vw, calc(100vw - 16px));
-    padding: 0.5rem;
+    width: 100%;
+    padding: 0.25rem max(0.25rem, env(safe-area-inset-right)) 0.75rem max(0.25rem, env(safe-area-inset-left));
   }
 
   .hero-panel {
     border-radius: 14px;
-    padding: 0.75rem;
+    padding: 0.5rem;
   }
 
   .brand {
@@ -888,16 +921,79 @@ onBeforeUnmount(() => {
   }
 
   .board-frame {
-    padding: 0.5rem;
+    padding: 0.3rem;
     border-radius: 14px;
   }
 
+  .board-topline {
+    gap: 0.2rem;
+    margin-bottom: 0.45rem;
+    padding: 0.45rem 0.25rem;
+  }
+
+  .sector-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.05em;
+  }
+
   .cards-grid {
-    gap: 0.28rem;
+    grid-template-columns: repeat(var(--columns), minmax(2.75rem, 1fr));
+    gap: 0.18rem;
+    overflow-x: auto;
+    padding: 0.2rem 0.1rem 0.45rem;
+    overscroll-behavior-inline: contain;
+  }
+
+  .card-scene {
+    touch-action: manipulation;
   }
 
   .card-face {
     border-radius: 8px;
+  }
+
+  .compact-btn,
+  .restart-btn {
+    min-height: 44px;
+  }
+}
+
+@media (hover: none) {
+  .card-scene:not(:disabled):hover .card-object {
+    transform: none;
+  }
+
+  .mode-card:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 950px) and (max-height: 600px) and (orientation: landscape) {
+  .game-shell {
+    padding: 0.4rem;
+  }
+
+  .hero-panel {
+    padding: 0.65rem;
+  }
+
+  .hud,
+  .mode-bar {
+    margin-bottom: 0.55rem;
+  }
+
+  .board-frame {
+    padding: 0.45rem;
+  }
+
+  .board-topline {
+    margin-bottom: 0.45rem;
+    padding: 0.5rem;
+  }
+
+  .cards-grid {
+    width: min(100%, calc(100svh - 4.5rem));
+    margin-inline: auto;
   }
 }
 </style>

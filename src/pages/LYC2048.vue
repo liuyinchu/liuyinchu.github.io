@@ -19,7 +19,13 @@
       </div>
     </div>
 
-    <div class="m2048-board" :class="{ 'board-focused': isFocused }">
+    <div
+      class="m2048-board"
+      :class="{ 'board-focused': isFocused }"
+      @touchstart.passive="handleTouchStart"
+      @touchend="handleTouchEnd"
+      @touchcancel="cancelTouch"
+    >
       <div class="m2048-grid-row" v-for="(row, rIndex) in board" :key="'r-'+rIndex">
         <div class="m2048-grid-cell" v-for="(cell, cIndex) in row" :key="'c-'+cIndex">
           <div 
@@ -37,13 +43,13 @@
         <button @click.stop="initGame">再试一次</button>
       </div>
 
-      <div v-if="!isFocused && !gameOver" class="m2048-focus-hint">
-        <span>点击此处激活游戏</span>
+      <div v-if="!isFocused && !gameOver" class="m2048-focus-hint" @click.stop="focusGame">
+        <span>点击或轻触此处激活游戏</span>
       </div>
     </div>
 
     <div class="m2048-hint">
-      <span v-if="isFocused">使用 <strong>↑ ↓ ← →</strong> 键移动</span>
+      <span v-if="isFocused">滑动棋盘，或使用 <strong>↑ ↓ ← →</strong> 键移动</span>
       <span v-else>游戏已暂停输入 (防止误触)</span>
     </div>
   </div>
@@ -60,6 +66,40 @@ const score = ref(0);
 const gameOver = ref(false);
 const isFocused = ref(false);
 const gameContainerRef = ref(null);
+let touchStart = null;
+
+const focusGame = () => gameContainerRef.value?.focus();
+
+const handleTouchStart = (event) => {
+  if (event.touches.length !== 1 || gameOver.value) return;
+  const touch = event.touches[0];
+  touchStart = { x: touch.clientX, y: touch.clientY };
+  focusGame();
+};
+
+const handleTouchEnd = (event) => {
+  const touch = event.changedTouches?.[0];
+  if (!touchStart || !touch) {
+    touchStart = null;
+    return;
+  }
+
+  const deltaX = touch.clientX - touchStart.x;
+  const deltaY = touch.clientY - touchStart.y;
+  touchStart = null;
+
+  if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 24) return;
+
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    move(deltaX > 0 ? 'right' : 'left');
+  } else {
+    move(deltaY > 0 ? 'down' : 'up');
+  }
+};
+
+const cancelTouch = () => {
+  touchStart = null;
+};
 
 // --- 核心逻辑 (完全无副作用) ---
 
@@ -271,6 +311,7 @@ onMounted(() => {
   gap: 10px;
   transition: box-shadow 0.3s ease;
   border: 2px solid transparent;
+  touch-action: none;
 }
 
 /* 视觉反馈：当游戏获得焦点时，边框发光 */
@@ -385,5 +426,97 @@ onMounted(() => {
 
 .m2048-hint strong {
   color: #cdd6f4;
+}
+
+@media (max-width: 520px) {
+  .m2048-container {
+    width: calc(100% - 1rem);
+    box-sizing: border-box;
+    margin-top: 5rem;
+    padding: 1rem 0.5rem;
+  }
+
+  .m2048-board {
+    width: min(350px, calc(100vw - 2rem));
+    height: auto;
+    aspect-ratio: 1;
+    box-sizing: border-box;
+    padding: clamp(5px, 2vw, 10px);
+    gap: clamp(5px, 2vw, 10px);
+  }
+
+  .m2048-grid-row {
+    gap: clamp(5px, 2vw, 10px);
+  }
+
+  .m2048-title {
+    font-size: clamp(2.25rem, 12vw, 3rem);
+  }
+
+  .m2048-score-box {
+    min-width: 0;
+    padding-inline: 0.65rem;
+  }
+
+  .m2048-new-game-btn,
+  .m2048-overlay button {
+    min-height: 44px;
+  }
+
+  .m2048-tile {
+    font-size: clamp(1.2rem, 8vw, 1.875rem);
+  }
+
+  .tile-128,
+  .tile-256,
+  .tile-512 {
+    font-size: clamp(1rem, 7vw, 1.625rem);
+  }
+
+  .tile-1024,
+  .tile-2048 {
+    font-size: clamp(0.85rem, 6vw, 1.25rem);
+  }
+
+  .m2048-hint {
+    height: auto;
+    min-height: 20px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 950px) and (max-height: 560px) and (orientation: landscape) {
+  .m2048-container {
+    width: calc(100% - 1rem);
+    box-sizing: border-box;
+    margin-top: 3.5rem;
+    padding: 0.5rem;
+  }
+
+  .m2048-header {
+    width: 100%;
+    margin-bottom: 0.35rem;
+  }
+
+  .m2048-title {
+    font-size: 2rem;
+  }
+
+  .m2048-board {
+    width: min(350px, calc(100svh - 10rem));
+    height: auto;
+    aspect-ratio: 1;
+    box-sizing: border-box;
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .m2048-grid-row {
+    gap: 6px;
+  }
+
+  .m2048-hint {
+    margin-top: 0.35rem;
+  }
 }
 </style>

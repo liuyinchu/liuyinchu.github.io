@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const chapters = [
   {
@@ -89,6 +89,7 @@ const pageIdx = ref(0)
 const direction = ref('down')
 const transitioning = ref(false)
 const selfRef = ref(null)
+const usesNativeScroll = ref(false)
 const transitionName = computed(() => (direction.value === 'down' ? 'scroll-leaf-up' : 'scroll-leaf-down'))
 const currentChapter = computed(() => chapters[pageIdx.value])
 const pageNumber = computed(() => String(pageIdx.value + 1).padStart(2, '0'))
@@ -98,6 +99,40 @@ let touchX = 0
 let touchY = 0
 let originalHtmlOverflow = ''
 let originalBodyOverflow = ''
+let compactQuery = null
+
+function restoreDocumentOverflow() {
+  document.documentElement.style.overflow = originalHtmlOverflow
+  document.body.style.overflow = originalBodyOverflow
+}
+
+function syncLayoutMode(event) {
+  usesNativeScroll.value = event.matches
+
+  if (usesNativeScroll.value) {
+    restoreDocumentOverflow()
+    return
+  }
+
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
+}
+
+function isInteractiveTarget(target) {
+  return target instanceof Element
+    && Boolean(target.closest('a, button, input, textarea, select, summary, [contenteditable="true"]'))
+}
+
+function revealChapterStart() {
+  if (!usesNativeScroll.value) return
+
+  nextTick(() => {
+    selfRef.value?.scrollIntoView({
+      block: 'start',
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    })
+  })
+}
 
 function step(delta) {
   if (transitioning.value) return
@@ -108,6 +143,7 @@ function step(delta) {
   direction.value = delta > 0 ? 'down' : 'up'
   transitioning.value = true
   pageIdx.value = next
+  revealChapterStart()
   window.setTimeout(() => {
     transitioning.value = false
   }, 560)
@@ -118,18 +154,21 @@ function goTo(idx) {
   direction.value = idx > pageIdx.value ? 'down' : 'up'
   transitioning.value = true
   pageIdx.value = idx
+  revealChapterStart()
   window.setTimeout(() => {
     transitioning.value = false
   }, 560)
 }
 
 function onWheel(event) {
-  if (Math.abs(event.deltaY) < 12) return
+  if (usesNativeScroll.value || Math.abs(event.deltaY) < 12) return
   event.preventDefault()
   step(event.deltaY > 0 ? 1 : -1)
 }
 
 function onKey(event) {
+  if (usesNativeScroll.value || isInteractiveTarget(event.target)) return
+
   if (['ArrowDown', 'PageDown', ' '].includes(event.key)) {
     event.preventDefault()
     step(1)
@@ -142,12 +181,14 @@ function onKey(event) {
 }
 
 function onTouchStart(event) {
+  if (usesNativeScroll.value) return
   const touch = event.changedTouches[0]
   touchX = touch.clientX
   touchY = touch.clientY
 }
 
 function onTouchEnd(event) {
+  if (usesNativeScroll.value) return
   const touch = event.changedTouches[0]
   const dx = touch.clientX - touchX
   const dy = touch.clientY - touchY
@@ -160,14 +201,18 @@ function onTouchEnd(event) {
 onMounted(() => {
   originalHtmlOverflow = document.documentElement.style.overflow
   originalBodyOverflow = document.body.style.overflow
-  document.documentElement.style.overflow = 'hidden'
-  document.body.style.overflow = 'hidden'
-  window.requestAnimationFrame(() => selfRef.value?.focus())
+  compactQuery = window.matchMedia('(max-width: 980px)')
+  syncLayoutMode(compactQuery)
+  compactQuery.addEventListener('change', syncLayoutMode)
+
+  if (!usesNativeScroll.value) {
+    window.requestAnimationFrame(() => selfRef.value?.focus())
+  }
 })
 
 onBeforeUnmount(() => {
-  document.documentElement.style.overflow = originalHtmlOverflow
-  document.body.style.overflow = originalBodyOverflow
+  compactQuery?.removeEventListener('change', syncLayoutMode)
+  restoreDocumentOverflow()
 })
 </script>
 
@@ -691,10 +736,26 @@ h1 {
 }
 
 @media (max-width: 980px) {
+  .self-page {
+    height: auto;
+    min-height: calc(100svh - 72px);
+    overflow: clip;
+    touch-action: pan-y;
+  }
+
+  .chapter-stage {
+    height: auto;
+    min-height: calc(100svh - 72px);
+    overflow: visible;
+  }
+
   .chapter-panel {
+    position: relative;
+    inset: auto;
     grid-template-columns: 1fr;
     gap: 1.2rem;
     align-content: center;
+    min-height: calc(100svh - 72px);
     padding:
       clamp(4.6rem, 9vh, 5.4rem)
       clamp(1.1rem, 5vw, 2rem)
@@ -733,8 +794,11 @@ h1 {
 }
 
 @media (max-width: 640px) {
-  .self-page {
-    height: calc(100svh - 68px);
+  .self-page,
+  .chapter-stage,
+  .chapter-panel {
+    height: auto;
+    min-height: calc(100svh - 68px);
   }
 
   .back-link {
@@ -744,7 +808,7 @@ h1 {
   }
 
   .chapter-panel {
-    padding: 4.15rem 1rem 5.6rem;
+    padding: 4.15rem 1rem calc(5.6rem + env(safe-area-inset-bottom));
   }
 
   .title-row {
@@ -789,6 +853,7 @@ h1 {
   }
 
   .chapter-controls {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
     grid-template-columns: auto minmax(8rem, 1fr) auto;
     width: calc(100% - 1.5rem);
     gap: 0.48rem;

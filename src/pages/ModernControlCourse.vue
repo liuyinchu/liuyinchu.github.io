@@ -383,6 +383,8 @@ h1 {
 
 .course-toc,
 .course-article {
+  min-width: 0;
+  box-sizing: border-box;
   border: 1px solid var(--course-line);
   border-radius: 3px;
 }
@@ -677,7 +679,7 @@ h1 {
 @media (max-width: 760px) {
   .course-hero,
   .course-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .course-hero {
@@ -702,10 +704,25 @@ h1 {
 
   .course-toc {
     position: static;
+    width: 100%;
   }
 
   .course-toc nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .course-toc a,
+  .course-article {
+    overflow-wrap: anywhere;
+  }
+
+  .course-article {
+    width: 100%;
+  }
+
+  .course-article :deep(.markdown-body) {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .course-article :deep(.course-stage-grid),
@@ -716,7 +733,7 @@ h1 {
   }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 680px) {
   .modern-control-page {
     padding-top: 0.75rem;
   }

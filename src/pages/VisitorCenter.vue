@@ -317,6 +317,8 @@ function focusVisitorLocation() {
 }
 
 function onGlobePointerDown(event) {
+  if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return
+
   isDragging.value = true
   dragOrigin = {
     x: event.clientX,
@@ -342,7 +344,9 @@ function onGlobePointerMove(event) {
 function onGlobePointerUp(event) {
   isDragging.value = false
   dragOrigin = null
-  event.currentTarget.releasePointerCapture?.(event.pointerId)
+  if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+  }
 }
 
 function updateScrollProgress() {
@@ -697,14 +701,14 @@ h1 {
 .globe-sticky {
   position: sticky;
   top: 72px;
-  height: calc(100vh - 72px);
-  min-height: 720px;
+  height: calc(100dvh - 72px);
+  min-height: min(720px, calc(100dvh - 72px));
   overflow: hidden;
   cursor: grab;
   background:
     linear-gradient(180deg, rgba(var(--ctp-mocha-base-rgb), 0.02), rgba(var(--ctp-mocha-crust-rgb), 0.58)),
     linear-gradient(145deg, rgba(var(--ctp-mocha-surface0-rgb), 0.26), rgba(var(--ctp-mocha-crust-rgb), 0.68));
-  touch-action: none;
+  touch-action: pan-y pinch-zoom;
   user-select: none;
 }
 
@@ -894,6 +898,14 @@ h1 {
   }
 }
 
+@media (max-width: 860px) {
+  .globe-sticky {
+    top: 68px;
+    height: calc(100dvh - 68px);
+    min-height: min(640px, calc(100dvh - 68px));
+  }
+}
+
 @media (max-width: 640px) {
   .visitor-overview {
     width: min(100% - 2rem, 1180px);
@@ -917,11 +929,8 @@ h1 {
   }
 
   .globe-scroll-section {
-    min-height: 1900px;
-  }
-
-  .globe-sticky {
-    min-height: 640px;
+    height: 280dvh;
+    min-height: 0;
   }
 
   .globe-svg {
@@ -936,5 +945,46 @@ h1 {
     font-size: 2.35rem;
   }
 
+}
+
+
+@media (max-width: 950px) and (max-height: 620px) and (orientation: landscape) {
+  .visitor-overview {
+    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+    gap: 1rem;
+    min-height: calc(100dvh - 68px);
+    padding: 1.5rem 0;
+  }
+
+  h1 {
+    font-size: clamp(2.8rem, 8vw, 4rem);
+  }
+
+  .welcome-line {
+    width: min(230px, 75%);
+  }
+
+  .info-panel {
+    gap: 0.7rem;
+    padding: 1rem;
+  }
+
+  .panel-heading h2 {
+    font-size: 1.8rem;
+  }
+
+  .info-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .globe-scroll-section {
+    height: 280dvh;
+    min-height: 0;
+  }
+
+  .globe-overlay {
+    padding-top: 1rem;
+  }
 }
 </style>

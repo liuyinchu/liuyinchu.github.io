@@ -33,12 +33,36 @@ const pageIdx = ref(0)
 const direction = ref('down')
 const transitioning = ref(false)
 const aboutRef = ref(null)
+const usesNativeScroll = ref(false)
 const transitionName = computed(() => (direction.value === 'down' ? 'page-up-elastic' : 'page-down-elastic'))
 
 let touchX = 0
 let touchY = 0
 let originalHtmlOverflow = ''
 let originalBodyOverflow = ''
+let compactQuery = null
+
+function restoreDocumentOverflow() {
+  document.documentElement.style.overflow = originalHtmlOverflow
+  document.body.style.overflow = originalBodyOverflow
+}
+
+function syncLayoutMode(event) {
+  usesNativeScroll.value = event.matches
+
+  if (usesNativeScroll.value) {
+    restoreDocumentOverflow()
+    return
+  }
+
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
+}
+
+function isInteractiveTarget(target) {
+  return target instanceof Element
+    && Boolean(target.closest('a, button, input, textarea, select, summary, [contenteditable="true"]'))
+}
 
 function step(delta) {
   if (transitioning.value) return
@@ -60,12 +84,14 @@ function goTo(idx) {
 }
 
 function onWheel(event) {
-  if (Math.abs(event.deltaY) < 12) return
+  if (usesNativeScroll.value || Math.abs(event.deltaY) < 12) return
   event.preventDefault()
   step(event.deltaY > 0 ? 1 : -1)
 }
 
 function onKey(event) {
+  if (usesNativeScroll.value || isInteractiveTarget(event.target)) return
+
   if (['ArrowDown', 'PageDown', ' '].includes(event.key)) {
     event.preventDefault()
     step(1)
@@ -78,12 +104,14 @@ function onKey(event) {
 }
 
 function onTouchStart(event) {
+  if (usesNativeScroll.value) return
   const touch = event.changedTouches[0]
   touchX = touch.clientX
   touchY = touch.clientY
 }
 
 function onTouchEnd(event) {
+  if (usesNativeScroll.value) return
   const touch = event.changedTouches[0]
   const dx = touch.clientX - touchX
   const dy = touch.clientY - touchY
@@ -96,14 +124,18 @@ function onTouchEnd(event) {
 onMounted(() => {
   originalHtmlOverflow = document.documentElement.style.overflow
   originalBodyOverflow = document.body.style.overflow
-  document.documentElement.style.overflow = 'hidden'
-  document.body.style.overflow = 'hidden'
-  window.requestAnimationFrame(() => aboutRef.value?.focus())
+  compactQuery = window.matchMedia('(max-width: 980px)')
+  syncLayoutMode(compactQuery)
+  compactQuery.addEventListener('change', syncLayoutMode)
+
+  if (!usesNativeScroll.value) {
+    window.requestAnimationFrame(() => aboutRef.value?.focus())
+  }
 })
 
 onBeforeUnmount(() => {
-  document.documentElement.style.overflow = originalHtmlOverflow
-  document.body.style.overflow = originalBodyOverflow
+  compactQuery?.removeEventListener('change', syncLayoutMode)
+  restoreDocumentOverflow()
 })
 </script>
 
@@ -151,6 +183,10 @@ onBeforeUnmount(() => {
         >
           <div class="directory-shell">
             <div class="directory-copy">
+              <button class="back-control" type="button" @click="goTo(0)">
+                <span aria-hidden="true">←</span>
+                Intro
+              </button>
               <p class="eyebrow">ABOUT HUB</p>
               <h1 id="about-title">关于</h1>
               <p class="hero-lead">
@@ -267,6 +303,18 @@ onBeforeUnmount(() => {
   color: var(--ctp-mocha-sky);
   font-size: 0.76rem;
   font-weight: 700;
+}
+
+.back-control {
+  display: none;
+  width: max-content;
+  align-items: center;
+  gap: 0.55rem;
+  border: 0;
+  padding: 0;
+  color: var(--ctp-mocha-subtext0);
+  background: transparent;
+  cursor: pointer;
 }
 
 .typing-center :deep(.typing-container) {
@@ -571,12 +619,40 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 980px) {
+  .about-page {
+    height: auto;
+    min-height: calc(100svh - 72px);
+    overflow: clip;
+    touch-action: pan-y;
+  }
+
+  .about-stage {
+    height: auto;
+    min-height: calc(100svh - 72px);
+    overflow: visible;
+  }
+
+  .about-panel {
+    position: relative;
+    inset: auto;
+    min-height: calc(100svh - 72px);
+  }
+
+  .about-panel--directory {
+    align-items: start;
+  }
+
   .directory-shell {
     grid-template-columns: 1fr;
     gap: 1.4rem;
-    align-content: center;
-    overflow-y: auto;
-    padding-right: 0.4rem;
+    align-content: start;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .back-control {
+    display: inline-flex;
   }
 
   .directory-copy h1 {
@@ -601,6 +677,12 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
+  .about-page,
+  .about-stage,
+  .about-panel {
+    min-height: calc(100svh - 68px);
+  }
+
   .about-panel {
     padding: 1.15rem;
   }

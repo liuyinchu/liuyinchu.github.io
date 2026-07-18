@@ -6,6 +6,8 @@
       aria-labelledby="weather-title"
       @pointermove="handlePointerMove"
       @pointerdown="handlePointerDown"
+      @pointerup="handlePointerLeave"
+      @pointercancel="handlePointerLeave"
       @pointerleave="handlePointerLeave"
     >
       <canvas ref="canvasRef" class="weather-canvas" aria-hidden="true"></canvas>
@@ -1483,7 +1485,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 760px) {
   .weather-stage {
-    min-height: calc(100svh - 68px);
+    min-height: max(calc(100svh - 68px), 640px);
   }
 
   .weather-meta {
@@ -1595,6 +1597,12 @@ onBeforeUnmount(() => {
 
   .handoff-note {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 950px) and (max-height: 620px) and (orientation: landscape) {
+  .weather-stage {
+    min-height: 620px;
   }
 }
 

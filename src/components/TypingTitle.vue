@@ -340,6 +340,7 @@ onBeforeUnmount(() => {
 }
 
 .typing-container {
+  box-sizing: border-box;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -351,6 +352,8 @@ onBeforeUnmount(() => {
 }
 
 .typing-content {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   position: relative;
   /* 响应式字号：针对移动端优化，大屏下不过大 */
   font-size: clamp(1.7rem, 4vw, 3rem);

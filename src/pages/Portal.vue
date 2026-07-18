@@ -1467,35 +1467,80 @@ onBeforeUnmount(() => {
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (max-width: 950px) and (max-height: 600px) and (orientation: landscape) {
   .portal-menu-bar {
-    height: 1.95rem;
-    padding: 0 0.45rem;
+    height: calc(3rem + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 0.35rem 0;
   }
 
+  .menu-left,
+  .menu-right {
+    gap: 0.08rem;
+  }
+
+  .menu-home-link,
   .menu-app-button {
-    height: 1.35rem;
-    padding: 0 0.4rem;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
   }
 
+  .menu-brand-icon,
   .icon-menu-button img {
-    width: 1rem;
-    height: 1rem;
+    width: 1.1rem;
+    height: 1.1rem;
   }
 
   .mac-window {
-    top: calc(50% - 0.2rem);
-    width: calc(100vw - 1rem);
-    max-height: calc(100dvh - 8.5rem);
-    min-height: 23rem;
+    top: calc(3rem + env(safe-area-inset-top) + 0.45rem);
+    right: 0.5rem;
+    bottom: calc(4.2rem + max(0.55rem, env(safe-area-inset-bottom)));
+    left: 0.5rem;
+    width: auto;
+    max-height: none;
+    min-height: 0;
+    transform: none;
   }
 
   .window-titlebar {
-    grid-template-columns: 4.2rem minmax(0, 1fr) 4.2rem;
+    grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
+    min-height: 2.75rem;
+    padding: 0 0.55rem;
+  }
+
+  .traffic-lights {
+    gap: 0;
+  }
+
+  .traffic-light.minimize,
+  .traffic-light.zoom {
+    display: none;
+  }
+
+  .traffic-light.close {
+    position: relative;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-left: -0.55rem;
+    background: transparent;
+  }
+
+  .traffic-light.close::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 0.78rem;
+    height: 0.78rem;
+    margin: auto;
+    border-radius: 50%;
+    background: #ff5f57;
   }
 
   .window-body {
     padding: 0.85rem;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .app-panel-heading h1 {
@@ -1512,7 +1557,10 @@ onBeforeUnmount(() => {
     bottom: max(0.55rem, env(safe-area-inset-bottom));
     max-width: calc(100vw - 1rem);
     padding: 0.46rem 0.62rem;
-    justify-content: center;
+    justify-content: flex-start;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .launcher-item span {
@@ -1520,7 +1568,10 @@ onBeforeUnmount(() => {
   }
 
   .launcher-item {
-    width: 2.65rem;
+    width: 2.75rem;
+    min-height: 2.75rem;
+    scroll-snap-align: start;
+    touch-action: manipulation;
   }
 
   .launcher-item.hide-on-compact {

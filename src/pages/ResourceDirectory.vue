@@ -26,7 +26,7 @@
               @keydown.enter.prevent="onEnter"
             />
             
-            <button v-if="searchQuery" class="clear-btn" @click="clearSearch">
+            <button v-if="searchQuery" class="clear-btn" type="button" aria-label="清除搜索" @click="clearSearch">
               ✕
             </button>
           </div>
@@ -40,7 +40,7 @@
                   class="result-item"
                   :class="{ 'is-selected': index === selectedIndex }"
                   @mouseenter="selectedIndex = index"
-                  @mousedown.prevent="handleResultClick(item)"
+                  @click="handleResultClick(item)"
                 >
                   <div class="result-info">
                     <span class="result-name">{{ item.name }}</span>
@@ -75,7 +75,7 @@
             <h2 class="card-title" @click="navigateToCategory(cat.routePath)">
               <span class="icon-placeholder">#</span> {{ cat.label }}
             </h2>
-            <button class="more-btn" @click="navigateToCategory(cat.routePath)">
+            <button class="more-btn" type="button" @click="navigateToCategory(cat.routePath)">
               View All
             </button>
           </div>
@@ -329,6 +329,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 0 16px;
   height: 50px;
+  box-sizing: border-box;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -348,6 +349,8 @@ onMounted(() => {
 
 .search-input {
   flex: 1;
+  min-width: 0;
+  width: 100%;
   background: transparent;
   border: none;
   color: var(--ctp-text);
@@ -379,14 +382,16 @@ onMounted(() => {
   top: 100%;
   left: 0;
   width: 100%;
+  box-sizing: border-box;
   margin-top: 8px;
   background: rgba(30, 30, 46, 0.98);
   border: 1px solid var(--ctp-surface1);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  max-height: 350px;
+  max-height: min(350px, 45dvh);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .result-item {
@@ -440,12 +445,14 @@ onMounted(() => {
 /* --- Category Grid --- */
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
   gap: 24px;
 }
 
 /* Card Style (矮卡片版本) */
 .category-card {
+  min-width: 0;
+  box-sizing: border-box;
   background: rgba(49, 50, 68, 0.3);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(180, 190, 254, 0.1);
@@ -512,11 +519,15 @@ onMounted(() => {
   padding: 0;
   margin: 0;
   flex-grow: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .resource-item {
   display: flex;
+  min-width: 0;
   align-items: baseline;
   padding: 6px 0;
   border-bottom: 1px solid rgba(166, 173, 200, 0.05);
@@ -536,6 +547,8 @@ onMounted(() => {
 }
 
 .item-link {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--ctp-text);
   text-decoration: none;
   font-size: 1rem;
@@ -549,6 +562,8 @@ onMounted(() => {
 /* 移除了下划线动画，保持极简，只变色 */
 
 .item-text-only {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--ctp-overlay0);
   cursor: default;
 }
@@ -588,6 +603,9 @@ onMounted(() => {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .resource-directory-wrapper { padding: 28px 14px; }
+  .directory-header { margin-bottom: 32px; }
+  .sub-title { margin-bottom: 20px; }
   .main-title { font-size: 2rem; }
   .category-grid { grid-template-columns: 1fr; }
   .category-card { height: auto; max-height: 400px; }

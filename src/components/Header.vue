@@ -27,6 +27,7 @@
       </nav>
 
       <button
+        ref="mobileToggleRef"
         class="mobile-nav-toggle"
         :class="{ 'is-active': isMenuOpen }"
         type="button"
@@ -117,10 +118,13 @@ const route = useRoute()
 const isMenuOpen = ref(false)
 const isScrolled = ref(false)
 const isHeaderHidden = ref(false)
+const mobileToggleRef = ref(null)
 const currentPath = computed(() => route.path)
 
 let lastScrollY = 0
 let ticking = false
+let scrollFrame = 0
+let bodyLockSnapshot = null
 
 function isActive(item) {
   return item.match.some((path) => (
@@ -129,7 +133,21 @@ function isActive(item) {
 }
 
 function setBodyLocked(locked) {
-  document.body.style.overflow = locked ? 'hidden' : ''
+  if (locked && !bodyLockSnapshot) {
+    bodyLockSnapshot = {
+      rootOverflow: document.documentElement.style.overflow,
+      bodyOverflow: document.body.style.overflow,
+    }
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    return
+  }
+
+  if (!locked && bodyLockSnapshot) {
+    document.documentElement.style.overflow = bodyLockSnapshot.rootOverflow
+    document.body.style.overflow = bodyLockSnapshot.bodyOverflow
+    bodyLockSnapshot = null
+  }
 }
 
 function toggleMenu() {
@@ -160,12 +178,19 @@ function updateHeaderState() {
 
   lastScrollY = scrollY
   ticking = false
+  scrollFrame = 0
 }
 
 function handleScroll() {
   if (ticking) return
   ticking = true
-  window.requestAnimationFrame(updateHeaderState)
+  scrollFrame = window.requestAnimationFrame(updateHeaderState)
+}
+
+function handleWindowKeydown(event) {
+  if (event.key !== 'Escape' || !isMenuOpen.value) return
+  closeMenu()
+  window.requestAnimationFrame(() => mobileToggleRef.value?.focus())
 }
 
 watch(
@@ -182,10 +207,13 @@ onMounted(() => {
   lastScrollY = Math.max(window.scrollY, 0)
   isScrolled.value = lastScrollY > 12
   window.addEventListener('scroll', handleScroll, { passive: true })
+  window.addEventListener('keydown', handleWindowKeydown)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener('keydown', handleWindowKeydown)
+  if (scrollFrame) window.cancelAnimationFrame(scrollFrame)
   setBodyLocked(false)
 })
 </script>
@@ -450,7 +478,13 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 1.1rem;
+  box-sizing: border-box;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 6.5rem 2rem 3rem;
+  padding-bottom: max(3rem, env(safe-area-inset-bottom));
   background:
     radial-gradient(circle at 50% 0%, rgba(116, 199, 236, 0.12), transparent 34%),
     rgba(var(--ctp-mocha-base-rgb), 0.94);
@@ -537,6 +571,18 @@ onUnmounted(() => {
   .site-name {
     max-width: calc(100vw - 132px);
     font-size: 1rem;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .mobile-menu-container {
+    justify-content: flex-start;
+    gap: 0.55rem;
+    padding-top: max(4.5rem, env(safe-area-inset-top));
+  }
+
+  .mobile-menu-container a {
+    font-size: clamp(1.15rem, 6vh, 1.55rem);
   }
 }
 </style>
