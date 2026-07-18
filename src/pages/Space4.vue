@@ -18,7 +18,6 @@ const query = ref('')
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const compactExperience = window.matchMedia('(max-width: 760px), (pointer: coarse)')
 const viewMode = ref(reduced || compactExperience.matches ? 'timeline' : 'orbit')
-const titleChars = [...'星穹文库']
 
 async function loadArticles() {
   loading.value = true
@@ -112,11 +111,7 @@ onBeforeUnmount(() => {
 
     <div class="s4-content">
       <section class="s4-hero">
-        <p class="s4-hero__kicker">ARTICLE OBSERVATORY · SPACE 4</p>
-        <h1 class="s4-hero__title" aria-label="星穹文库">
-          <span v-for="(ch, i) in titleChars" :key="i" aria-hidden="true" :style="{ '--i': i }">{{ ch }}</span>
-        </h1>
-        <p class="s4-hero__sub">把每一篇随记安放成一颗星辰——转动星环，或沿时间航线，换一种方式漫步全部记录。</p>
+        <h1 class="s4-hero__title">THE STELLAR ARCHIVE</h1>
         <dl class="s4-hero__stats">
           <div class="s4-stat">
             <dt>收录文章</dt>
@@ -178,9 +173,8 @@ onBeforeUnmount(() => {
       </section>
 
       <footer class="s4-foot">
-        <p v-if="viewMode === 'orbit'" class="s4-foot__hint">星环可横向拖拽或触控板横滑，方向键 ← → 切换；点击或回车打开正面卡片。</p>
-        <p v-else class="s4-foot__hint">沿时间航线向下浏览，年份坐标可快速跳转；移动端默认使用此模式。</p>
-        <RouterLink class="s4-foot__link" to="/space1">返回经典索引 /space1</RouterLink>
+        <p v-if="viewMode === 'orbit'" class="s4-foot__hint">星环支持拖拽、鼠标滚轮与触控板横滑，方向键 ← → 切换；点击卡片即可打开文章。</p>
+        <RouterLink class="s4-foot__link" to="/space1">返回经典索引</RouterLink>
       </footer>
     </div>
 
@@ -268,41 +262,20 @@ onBeforeUnmount(() => {
   padding-top: clamp(118px, 17vh, 170px);
 }
 
-.s4-hero__kicker {
-  margin: 0 0 14px;
-  font-size: 12px;
-  letter-spacing: 0.42em;
-  text-indent: 0.42em;
-  color: rgba(137, 220, 235, 0.78);
-  animation: s4-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
 .s4-hero__title {
   margin: 0;
-  font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
-  font-size: clamp(3rem, 9vw, 5.2rem);
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.25rem, 6.8vw, 5.35rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
   background: linear-gradient(115deg, #f4f7ff 10%, #a5b8ff 48%, #cba6f7 88%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 6px 26px rgba(137, 160, 250, 0.28));
-}
-
-.s4-hero__title span {
-  display: inline-block;
   animation: s4-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: calc(var(--i) * 95ms + 120ms);
-}
-
-.s4-hero__sub {
-  margin: 18px auto 0;
-  max-width: 560px;
-  font-size: 15px;
-  line-height: 1.8;
-  color: rgba(186, 195, 230, 0.78);
-  animation: s4-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
 }
 
 .s4-hero__stats {
@@ -310,8 +283,8 @@ onBeforeUnmount(() => {
   justify-content: center;
   gap: clamp(26px, 6vw, 56px);
   flex-wrap: wrap;
-  margin: 34px 0 0;
-  animation: s4-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
+  margin: 42px 0 0;
+  animation: s4-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
 }
 
 .s4-stat dt {
@@ -569,9 +542,7 @@ onBeforeUnmount(() => {
 /* ---------- 动效降级 ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .s4-hero__kicker,
-  .s4-hero__title span,
-  .s4-hero__sub,
+  .s4-hero__title,
   .s4-hero__stats,
   .s4-controls {
     animation: none;
@@ -595,9 +566,11 @@ onBeforeUnmount(() => {
     padding-top: 76px;
   }
 
-  .s4-hero__kicker {
-    font-size: 10px;
-    letter-spacing: 0.28em;
+  .s4-hero__title {
+    font-size: clamp(1.7rem, 9.4vw, 2.7rem);
+    line-height: 1.12;
+    letter-spacing: 0.1em;
+    text-indent: 0.1em;
   }
 
   .s4-hero__stats {

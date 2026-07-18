@@ -1,5 +1,5 @@
 <template>
-  <footer class="site-footer">
+  <footer class="site-footer" :class="{ 'site-footer--space4': route.path === '/space4' }">
     <div class="footer-shell">
       <div class="footer-layout">
         <div class="footer-brand">
@@ -59,9 +59,10 @@
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 
 const currentYear = new Date().getFullYear()
+const route = useRoute()
 
 const footerColumns = [
   {
@@ -148,6 +149,19 @@ const footerColumns = [
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(116, 199, 236, 0.62), rgba(245, 194, 231, 0.52), transparent);
   opacity: 0.9;
+}
+
+.site-footer.site-footer--space4 {
+  margin-top: 0;
+  border-top: 0;
+  background:
+    radial-gradient(circle at 15% 18%, rgba(116, 199, 236, 0.1), transparent 32%),
+    radial-gradient(circle at 85% 24%, rgba(203, 166, 247, 0.08), transparent 30%),
+    linear-gradient(180deg, #151723 0%, rgba(30, 30, 46, 0.98) 38%, #1e1e2e 100%);
+}
+
+.site-footer.site-footer--space4::before {
+  display: none;
 }
 
 .footer-shell {

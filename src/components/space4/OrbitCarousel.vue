@@ -1,6 +1,6 @@
 <script setup>
 // 3D 星环画廊：文章卡片分布在圆柱面上，支持拖拽（含惯性）、滚轮、方向键，
-// 空闲时自动巡游并吸附到最近卡片。点击侧面卡片旋至正面，点击正面卡片进入正文。
+// 空闲时自动巡游并吸附到最近卡片；点击任意可见卡片直接进入正文。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Space4ArticleCard from './Space4ArticleCard.vue'
 
@@ -19,6 +19,7 @@ const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 let rafId = 0
 let dragging = false
 let dragMoved = 0
+let captureActive = false
 let lastX = 0
 let lastT = 0
 let vel = 0 // 度 / 帧
@@ -121,7 +122,6 @@ function onPointerDown(e) {
   lastX = e.clientX
   lastT = performance.now()
   lastInteract = lastT
-  viewportRef.value?.setPointerCapture?.(e.pointerId)
   scheduleLoop()
 }
 
@@ -133,6 +133,10 @@ function onPointerMove(e) {
   lastX = e.clientX
   lastT = now
   dragMoved += Math.abs(dx)
+  if (!captureActive && dragMoved > 8) {
+    viewportRef.value?.setPointerCapture?.(e.pointerId)
+    captureActive = true
+  }
   const degPerPx = step.value / (cardW.value * 1.05) // 拖过一张卡宽 ≈ 转过一张卡
   angle.value += dx * degPerPx
   vel = 0.72 * vel + 0.28 * ((dx * degPerPx) / (dt / 16.7))
@@ -144,14 +148,16 @@ function onPointerUp(e) {
   if (!dragging) return
   dragging = false
   lastInteract = performance.now()
-  viewportRef.value?.releasePointerCapture?.(e.pointerId)
+  if (captureActive) viewportRef.value?.releasePointerCapture?.(e.pointerId)
+  captureActive = false
 }
 
 function onWheel(e) {
-  const isHorizontalIntent = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.15 || e.shiftKey
-  if (!isHorizontalIntent) return
+  const rawDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+  if (!rawDelta) return
   e.preventDefault()
-  const d = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY
+  const modeScale = e.deltaMode === 1 ? 18 : e.deltaMode === 2 ? viewportRef.value?.clientWidth || 800 : 1
+  const d = Math.max(-180, Math.min(180, rawDelta * modeScale))
   snapTarget = null
   vel += d * 0.012
   lastInteract = performance.now()
@@ -177,16 +183,7 @@ function goBy(dir) {
 function onCardActivate(i) {
   if (dragMoved > 8) return // 视为拖拽而非点击
   lastInteract = performance.now()
-  if (i === frontIndex.value) {
-    emit('activate', props.articles[i])
-  } else {
-    // 旋到这张卡（取最短路径）
-    const target = -i * step.value
-    const d = (((target - angle.value) % 360) + 540) % 360 - 180
-    snapTarget = angle.value + d
-    vel = 0
-    scheduleLoop()
-  }
+  emit('activate', props.articles[i])
 }
 
 function openFront() {
@@ -226,7 +223,7 @@ onBeforeUnmount(() => {
     tabindex="0"
     role="region"
     aria-roledescription="三维星环"
-    aria-label="文章星环：可横向拖拽、触控板横滑或使用左右方向键浏览，回车打开正面文章"
+    aria-label="文章星环：可拖拽、使用鼠标滚轮、触控板横滑或左右方向键浏览，点击卡片即可打开文章"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
