@@ -1,13 +1,17 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import FeaturedArticleRail from '../components/journal/FeaturedArticleRail.vue'
 
 const ARTICLES_PER_PAGE = 7
 
 const articles = ref([])
+const featuredSelections = ref([])
 const searchQuery = ref('')
 const currentPage = ref(1)
 const isDirectoryOpen = ref(false)
 const featuredOffset = ref(0)
+const loadError = ref('')
+const directoryWrap = ref(null)
 
 const poemLines = [
   '来自远方，来自黄昏和清晨，来自十二重高天的好风轻扬，飘来生命气息的吹拂，吹在我身上。',
@@ -16,12 +20,32 @@ const poemLines = [
 ]
 
 onMounted(async () => {
+  window.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('pointerdown', handleOutsidePointer)
+
   try {
-    const res = await fetch('/articles.json')
-    articles.value = await res.json()
+    const [articleResult, featuredResult] = await Promise.allSettled([
+      fetch('/articles.json'),
+      fetch('/featured-articles.json'),
+    ])
+
+    if (articleResult.status === 'rejected') throw articleResult.reason
+    const articleResponse = articleResult.value
+    if (!articleResponse.ok) throw new Error(`文章列表请求失败：${articleResponse.status}`)
+    articles.value = await articleResponse.json()
+
+    if (featuredResult.status === 'fulfilled' && featuredResult.value.ok) {
+      featuredSelections.value = await featuredResult.value.json()
+    }
   } catch (error) {
+    loadError.value = '随记列表暂时没有加载成功，请稍后刷新。'
     console.error('无法加载文章列表:', error)
   }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('pointerdown', handleOutsidePointer)
 })
 
 const normalizedQuery = computed(() => searchQuery.value.trim().toLowerCase())
@@ -63,10 +87,20 @@ const sideArticles = computed(() => remainingPageArticles.value.slice(0, 2))
 const gridArticles = computed(() => remainingPageArticles.value.slice(2))
 
 const resultSummary = computed(() => {
+  if (loadError.value) return loadError.value
   if (!articles.value.length) return '正在加载文章'
   if (!filteredArticles.value.length) return '没有找到匹配的文章'
   return `${filteredArticles.value.length} 篇随记`
 })
+
+const selectedFeaturedArticles = computed(() => (
+  featuredSelections.value
+    .map((selection) => {
+      const article = articles.value.find((item) => item.id === selection.id)
+      return article ? { ...article, featuredLabel: selection.label || '精选' } : null
+    })
+    .filter(Boolean)
+))
 
 watch(searchQuery, () => {
   currentPage.value = 1
@@ -93,83 +127,111 @@ function goToPage(page) {
 function toggleDirectory() {
   isDirectoryOpen.value = !isDirectoryOpen.value
 }
+
+function handleGlobalKeydown(event) {
+  if (event.key === 'Escape') isDirectoryOpen.value = false
+}
+
+function handleOutsidePointer(event) {
+  if (isDirectoryOpen.value && !directoryWrap.value?.contains(event.target)) {
+    isDirectoryOpen.value = false
+  }
+}
 </script>
 
 <template>
   <main class="journal-page">
-    <section class="journal-hero" aria-labelledby="journal-poem-heading">
-      <div class="hero-kicker">Jottings</div>
-      <div class="hero-grid">
-        <div class="poem-block">
-          <h1 id="journal-poem-heading" class="sr-only">随记开始区</h1>
-          <p
-            v-for="line in poemLines"
-            :key="line"
-            class="poem-line"
-          >
-            {{ line }}
+    <section class="journal-hero" aria-labelledby="journal-title">
+      <div class="hero-intro">
+        <div>
+          <p class="hero-kicker">Jottings · Since 2024</p>
+          <h1 id="journal-title">随手写下，慢慢整理。</h1>
+        </div>
+        <p class="hero-description">
+          思考、学习和生活留下的边角。可以从搜索开始，也可以任由精选文章带路。
+        </p>
+      </div>
+
+      <div class="poem-ribbon" aria-label="阿尔弗雷德·爱德华·豪斯迈《西罗普郡少年》选句">
+        <div class="poem-track">
+          <p>
+            <span v-for="line in poemLines" :key="line">{{ line }}</span>
+            <em>— 阿尔弗雷德·爱德华·豪斯迈《西罗普郡少年》</em>
           </p>
-          <p class="poem-source">阿尔弗雷德·爱德华·豪斯迈《西罗普郡少年》</p>
+          <p aria-hidden="true">
+            <span v-for="line in poemLines" :key="`copy-${line}`">{{ line }}</span>
+            <em>— 阿尔弗雷德·爱德华·豪斯迈《西罗普郡少年》</em>
+          </p>
         </div>
       </div>
 
-      <div class="hero-tools">
-        <label class="search-shell" for="journal-search">
-          <span class="search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M10.8 18.1a7.3 7.3 0 1 1 5.16-2.14l4.04 4.04-1.42 1.42-4.04-4.04a7.25 7.25 0 0 1-3.74 1.02Zm0-2a5.3 5.3 0 1 0 0-10.6 5.3 5.3 0 0 0 0 10.6Z" />
-            </svg>
-          </span>
-          <input
-            id="journal-search"
-            v-model="searchQuery"
-            type="search"
-            autocomplete="off"
-            placeholder="搜索标题、摘要、日期"
-          >
-          <button
-            v-if="searchQuery"
-            class="search-clear"
-            type="button"
-            aria-label="清空搜索"
-            @click.prevent="clearSearch"
-          >
-            Clear
-          </button>
-        </label>
+      <div class="discovery-panel">
+        <div class="discovery-copy">
+          <p>Find a note</p>
+          <strong aria-live="polite">{{ resultSummary }}</strong>
+        </div>
 
-        <div class="directory-wrap">
-          <button
-            class="directory-button"
-            type="button"
-            :aria-expanded="isDirectoryOpen.toString()"
-            aria-controls="journal-directory"
-            @click="toggleDirectory"
-          >
-            <span>目录</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M7 10l5 5 5-5H7Z" />
-            </svg>
-          </button>
-
-          <div
-            v-if="isDirectoryOpen"
-            id="journal-directory"
-            class="directory-panel"
-          >
-            <RouterLink
-              v-for="article in articles"
-              :key="article.id"
-              class="directory-link"
-              :to="`/space1/${article.id}`"
+        <div class="hero-tools">
+          <label class="search-shell" for="journal-search">
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M10.8 18.1a7.3 7.3 0 1 1 5.16-2.14l4.04 4.04-1.42 1.42-4.04-4.04a7.25 7.25 0 0 1-3.74 1.02Zm0-2a5.3 5.3 0 1 0 0-10.6 5.3 5.3 0 0 0 0 10.6Z" />
+              </svg>
+            </span>
+            <input
+              id="journal-search"
+              v-model="searchQuery"
+              type="search"
+              autocomplete="off"
+              placeholder="搜索标题、摘要、日期"
             >
-              <span>{{ article.title }}</span>
-              <small>{{ article.date }}</small>
-            </RouterLink>
+            <button
+              v-if="searchQuery"
+              class="search-clear"
+              type="button"
+              aria-label="清空搜索"
+              @click.prevent="clearSearch"
+            >
+              清空
+            </button>
+          </label>
+
+          <div ref="directoryWrap" class="directory-wrap">
+            <button
+              class="directory-button"
+              type="button"
+              :aria-expanded="isDirectoryOpen.toString()"
+              aria-controls="journal-directory"
+              @click="toggleDirectory"
+            >
+              <span>全部目录</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 10l5 5 5-5H7Z" />
+              </svg>
+            </button>
+
+            <div
+              v-if="isDirectoryOpen"
+              id="journal-directory"
+              class="directory-panel"
+            >
+              <RouterLink
+                v-for="article in articles"
+                :key="article.id"
+                class="directory-link"
+                :to="`/space1/${article.id}`"
+                @click="isDirectoryOpen = false"
+              >
+                <span>{{ article.title }}</span>
+                <small>{{ article.date }}</small>
+              </RouterLink>
+            </div>
           </div>
         </div>
       </div>
     </section>
+
+    <FeaturedArticleRail :articles="selectedFeaturedArticles" />
 
     <section class="article-section" aria-labelledby="article-section-heading">
       <div class="section-heading">
@@ -189,7 +251,7 @@ function toggleDirectory() {
           class="featured-card"
           :to="`/space1/${featuredArticle.id}`"
         >
-          <img :src="featuredArticle.image" :alt="featuredArticle.title">
+          <img :src="featuredArticle.image" :alt="featuredArticle.title" decoding="async">
           <div class="featured-copy">
             <h3>{{ featuredArticle.title }}</h3>
             <p class="article-meta">
@@ -207,7 +269,7 @@ function toggleDirectory() {
             class="side-card"
             :to="`/space1/${article.id}`"
           >
-            <img :src="article.image" :alt="article.title">
+            <img :src="article.image" :alt="article.title" loading="lazy" decoding="async">
             <h3>{{ article.title }}</h3>
             <p class="article-meta">
               <span>{{ article.author }}</span>
@@ -227,7 +289,7 @@ function toggleDirectory() {
           class="latest-card"
           :to="`/space1/${article.id}`"
         >
-          <img :src="article.image" :alt="article.title">
+          <img :src="article.image" :alt="article.title" loading="lazy" decoding="async">
           <div class="latest-copy">
             <h3>{{ article.title }}</h3>
             <p class="article-meta">
@@ -239,8 +301,17 @@ function toggleDirectory() {
       </div>
 
       <div
-        v-if="!filteredArticles.length && !articles.length"
+        v-if="loadError"
         class="empty-state"
+        role="status"
+      >
+        {{ loadError }}
+      </div>
+
+      <div
+        v-else-if="!filteredArticles.length && !articles.length"
+        class="empty-state"
+        role="status"
       >
         正在加载文章。
       </div>
@@ -311,41 +382,130 @@ function toggleDirectory() {
 .journal-hero {
   width: min(100% - 3rem, 1320px);
   margin: 0 auto;
-  padding: clamp(5rem, 10vw, 8.5rem) 0 clamp(3.5rem, 7vw, 5.5rem);
+  padding: clamp(5.8rem, 9vw, 8rem) 0 clamp(3.2rem, 6vw, 5rem);
 }
 
 .hero-kicker,
 .section-label {
-  margin: 0 0 1.3rem;
+  margin: 0 0 0.7rem;
   color: rgba(205, 214, 244, 0.62);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 750;
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
-.hero-grid {
+.hero-intro {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1.4fr) minmax(17rem, 0.6fr);
+  align-items: end;
+  gap: clamp(2rem, 5vw, 6rem);
 }
 
-.poem-block {
-  max-width: 58rem;
-}
-
-.poem-line {
-  margin: 0 0 1.35rem;
+.hero-intro h1 {
+  max-width: 15ch;
+  margin: 0;
   color: #f5f6ff;
-  font-size: clamp(1.6rem, 3.85vw, 4.05rem);
+  font-size: clamp(2.7rem, 6.6vw, 6.4rem);
   font-weight: 760;
-  line-height: 1.24;
-  letter-spacing: 0;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  text-wrap: balance;
 }
 
-.poem-source {
-  margin: 2.15rem 0 0;
-  color: rgba(205, 214, 244, 0.66);
-  font-size: clamp(0.98rem, 1.25vw, 1.14rem);
+.hero-description {
+  max-width: 30rem;
+  margin: 0 0 0.35rem;
+  color: rgba(205, 214, 244, 0.68);
+  font-family: 'LXGW WenKai', serif;
+  font-size: clamp(1rem, 1.3vw, 1.14rem);
+  line-height: 1.75;
+}
+
+.poem-ribbon {
+  overflow: hidden;
+  margin-top: clamp(2rem, 4vw, 3.25rem);
+  border-block: 1px solid rgba(180, 190, 254, 0.1);
+  color: rgba(205, 214, 244, 0.54);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 3rem, #000 calc(100% - 3rem), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 3rem, #000 calc(100% - 3rem), transparent);
+}
+
+.poem-track {
+  display: flex;
+  width: max-content;
+  animation: poem-scroll 76s linear infinite;
+  will-change: transform;
+}
+
+.poem-ribbon:hover .poem-track {
+  animation-play-state: paused;
+}
+
+.poem-track p {
+  display: flex;
+  gap: 2.8rem;
+  margin: 0;
+  padding: 0.75rem 1.4rem;
+  white-space: nowrap;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 0.79rem;
+}
+
+.poem-track span {
+  position: relative;
+}
+
+.poem-track span::after {
+  content: '✦';
+  position: absolute;
+  right: -1.65rem;
+  color: rgba(137, 180, 250, 0.56);
+  font-size: 0.55rem;
+}
+
+.poem-track em {
+  color: rgba(180, 190, 254, 0.6);
+  font-style: normal;
+}
+
+@keyframes poem-scroll {
+  to { transform: translateX(-50%); }
+}
+
+.discovery-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  margin-top: 1.35rem;
+  padding: clamp(1rem, 2vw, 1.35rem);
+  border: 1px solid rgba(180, 190, 254, 0.12);
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(135deg, rgba(137, 180, 250, 0.07), transparent 45%),
+    rgba(30, 30, 46, 0.54);
+}
+
+.discovery-copy {
+  min-width: 10rem;
+}
+
+.discovery-copy p {
+  margin: 0 0 0.3rem;
+  color: rgba(205, 214, 244, 0.46);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.discovery-copy strong {
+  display: block;
+  max-width: 20rem;
+  color: rgba(205, 214, 244, 0.88);
+  font-size: 0.95rem;
+  font-weight: 680;
 }
 
 .hero-tools {
@@ -353,8 +513,7 @@ function toggleDirectory() {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.9rem;
-  max-width: 54rem;
-  margin-top: clamp(2.8rem, 5vw, 4.2rem);
+  min-width: 0;
 }
 
 .search-shell {
@@ -692,7 +851,6 @@ function toggleDirectory() {
 }
 
 @media (max-width: 980px) {
-  .hero-grid,
   .article-layout {
     grid-template-columns: 1fr;
   }
@@ -711,6 +869,43 @@ function toggleDirectory() {
   .journal-hero,
   .article-section {
     width: min(100% - 2rem, 1320px);
+  }
+
+  .journal-hero {
+    padding-top: 5.4rem;
+  }
+
+  .hero-intro,
+  .discovery-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-intro {
+    gap: 1.2rem;
+  }
+
+  .hero-intro h1 {
+    max-width: 12ch;
+  }
+
+  .hero-description {
+    max-width: 34rem;
+  }
+
+  .poem-ribbon {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+  }
+
+  .discovery-panel {
+    gap: 1rem;
+  }
+
+  .discovery-copy {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
   }
 
   .hero-tools {
@@ -748,15 +943,14 @@ function toggleDirectory() {
 }
 
 @media (max-width: 460px) {
-  .poem-line {
-    margin-bottom: 1rem;
-    font-size: clamp(1.32rem, 8vw, 1.95rem);
-    line-height: 1.32;
+  .hero-intro h1 {
+    font-size: clamp(2.35rem, 13.5vw, 3.35rem);
+    line-height: 1.02;
   }
 
-  .poem-source {
-    margin-top: 1.65rem;
-    font-size: 0.82rem;
+  .poem-track p {
+    gap: 2.2rem;
+    font-size: 0.73rem;
   }
 
   .featured-copy h3 {
@@ -768,6 +962,30 @@ function toggleDirectory() {
     order: -1;
     width: 100%;
     justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poem-ribbon {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+    scrollbar-width: thin;
+  }
+
+  .poem-track {
+    animation: none;
+    will-change: auto;
+  }
+
+  .poem-track p:nth-child(2) {
+    display: none;
+  }
+
+  .featured-card img,
+  .side-card img,
+  .latest-card img {
+    transition: none;
   }
 }
 </style>

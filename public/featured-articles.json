@@ -1,0 +1,26 @@
+[
+  {
+    "id": "modernity_and_diet",
+    "label": "思想与生活"
+  },
+  {
+    "id": "ai_agent_blog",
+    "label": "工具与协作"
+  },
+  {
+    "id": "raman_ms_gate_note",
+    "label": "物理札记"
+  },
+  {
+    "id": "keyboard",
+    "label": "器物手账"
+  },
+  {
+    "id": "learn_rust",
+    "label": "编程学习"
+  },
+  {
+    "id": "post_it",
+    "label": "随想"
+  }
+]
