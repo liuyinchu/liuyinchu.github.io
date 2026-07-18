@@ -24,8 +24,8 @@ const loungeLinks = [
         <p class="kicker">CYBER LOUNGE</p>
         <h1 id="lounge-title">赛博会客厅</h1>
         <p class="hero-text">
-          我教你们的不是邻人，而是朋友。<br />
-          让朋友成为大地的节日。
+          “我教你们的不是邻人，而是朋友。<br />
+          让朋友成为大地的节日。”
         </p>
       </div>
 

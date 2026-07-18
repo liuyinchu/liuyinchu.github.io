@@ -383,7 +383,7 @@ function handleOutsidePointer(event) {
 
   min-height: 100vh;
   color: var(--ctp-text);
-  background: var(--ctp-mantle);
+  background: var(--ctp-base);
   font-family: 'Inter', 'LXGW WenKai', system-ui, sans-serif;
 }
 
@@ -723,7 +723,7 @@ function handleOutsidePointer(event) {
 .article-desc {
   max-width: 50rem;
   margin: 1rem 0 0;
-  color: rgba(205, 214, 244, 0.76);
+  color: rgba(205, 214, 244, 0.82);
   font-size: 1.06rem;
   line-height: 1.75;
 }
@@ -782,7 +782,7 @@ function handleOutsidePointer(event) {
   display: -webkit-box;
   margin: 0.5rem 0 0;
   overflow: hidden;
-  color: rgba(205, 214, 244, 0.52);
+  color: rgba(205, 214, 244, 0.62);
   font-size: clamp(0.72rem, 0.78vw, 0.82rem);
   font-weight: 450;
   line-height: 1.55;

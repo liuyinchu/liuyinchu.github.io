@@ -48,7 +48,7 @@ function handleRailWheel(event) {
         <h2 id="featured-rail-title">精选文章</h2>
       </div>
       <div class="rail-heading-actions">
-        <small>Shift + Wheel</small>
+        <small>按住 Shift，滚轮横向浏览</small>
         <button
           type="button"
           :aria-pressed="isPaused.toString()"
@@ -89,7 +89,7 @@ function handleRailWheel(event) {
             <div class="rail-card-copy">
               <p>{{ article.featuredLabel }}</p>
               <h3>{{ article.title }}</h3>
-              <span>{{ article.date }} <i aria-hidden="true">↗</i></span>
+              <span>{{ article.date }}</span>
             </div>
           </RouterLink>
         </div>
@@ -152,10 +152,8 @@ function handleRailWheel(event) {
 
 .rail-heading-actions small {
   color: rgba(205, 214, 244, 0.46);
-  font-family: 'Fira Code', ui-monospace, monospace;
   font-size: 0.68rem;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .rail-heading button:hover,
@@ -256,28 +254,16 @@ function handleRailWheel(event) {
 }
 
 .rail-card-copy span {
-  display: flex;
-  justify-content: space-between;
+  display: block;
   margin-top: 0.7rem;
   color: rgba(205, 214, 244, 0.67);
   font-size: 0.78rem;
-}
-
-.rail-card-copy i {
-  color: #89b4fa;
-  font-style: normal;
-  transition: translate 0.25s ease;
 }
 
 .rail-card:hover img,
 .rail-card:focus-visible img {
   transform: scale(1.035);
   opacity: 0.92;
-}
-
-.rail-card:hover i,
-.rail-card:focus-visible i {
-  translate: 0.22rem 0;
 }
 
 @keyframes featured-rail-scroll {
@@ -339,8 +325,7 @@ function handleRailWheel(event) {
     mask-image: none;
   }
 
-  .rail-card img,
-  .rail-card-copy i {
+  .rail-card img {
     transition: none;
   }
 }
