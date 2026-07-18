@@ -17,15 +17,34 @@ installMarkdownComponentRules(md, escapeHtml)
 
 const render = (source) => renderMarkdownWithComponents(source, md, escapeHtml)
 
+const plainMarkdown = `## 普通 Markdown
+
+正文包含 **粗体**、[链接](/space1) 与 \`inline code\`。
+
+> 这是原生引用。
+
+- 列表一
+- 列表二
+`
+assert.equal(render(plainMarkdown), md.render(plainMarkdown))
+
 const nested = render(`::blur
-:::quote{icon="tabler:files"}
-**嵌套内容**
-:::
+> **嵌套内容**
 ::`)
 assert.match(nested, /md-blur-block/)
-assert.match(nested, /md-quote/)
+assert.match(nested, /<blockquote>/)
 assert.match(nested, /<strong>嵌套内容<\/strong>/)
-assert.match(nested, /<svg/)
+assert.doesNotMatch(nested, /md-quote/)
+
+const alerts = [...['note', 'info', 'tip', 'success', 'question', 'warning', 'danger']]
+  .map((type) => render(`::alert{type="${type}"}\n${type}\n::`))
+  .join('')
+assert.equal((alerts.match(/class="md-alert /g) || []).length, 7)
+assert.equal((alerts.match(/class="md-alert-symbol"/g) || []).length, 7)
+assert.doesNotMatch(alerts, /<circle/)
+
+const removedQuote = render(':quote[保持为普通文本]')
+assert.doesNotMatch(removedQuote, /md-(?:inline-)?quote/)
 
 const footnotes = render(`一次[^same]，再次[^same]。
 
@@ -57,6 +76,8 @@ const unsafeLink = render(`::link-card{href="javascript:alert(1)" title="安全�
 ::`)
 assert.match(unsafeLink, /href="#"/)
 assert.doesNotMatch(unsafeLink, /javascript:/)
+assert.match(unsafeLink, /md-link-card-icon/)
+assert.match(unsafeLink, /<svg/)
 
 const unclosed = render(`::alert
 没有闭合

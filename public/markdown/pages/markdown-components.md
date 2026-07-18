@@ -30,7 +30,19 @@
 ## Alert
 
 :alert
-这是默认的 Note Alert。
+这是默认的 Note Alert，适合补充背景与旁注。
+::
+
+::alert{type="info" title="信息"}
+用于呈现读者需要知道的客观信息。
+::
+
+::alert{type="tip" title="提示"}
+用于给出更省力的路径、技巧或建议。
+::
+
+::alert{type="success" title="完成"}
+用于确认任务完成或操作成功。
 ::
 
 ::alert{type="question" title="一个问题"}
@@ -39,17 +51,41 @@
 答案可以慢一点出现。
 ::
 
-::alert{type="success" title="完成"}
-同一套语法还支持 `note / info / tip / success / question / warning / danger`。
+::alert{type="warning" title="注意"}
+用于提醒需要确认、但还没有造成错误的事项。
+::
+
+::alert{type="danger" title="危险"}
+用于标出会造成数据丢失或不可逆后果的操作。
 ::
 
 ```markdown
 :alert
-这是默认提示。
+这是默认的 Note Alert。
+::
+
+::alert{type="info" title="信息"}
+客观信息。
+::
+
+::alert{type="tip" title="提示"}
+一条更省力的建议。
+::
+
+::alert{type="success" title="完成"}
+操作已经成功。
 ::
 
 ::alert{type="question" title="一个问题"}
 默认插槽的 [超链接](#alert) **粗体** `Inline code`
+::
+
+::alert{type="warning" title="注意"}
+需要确认的事项。
+::
+
+::alert{type="danger" title="危险"}
+不可逆操作。
 ::
 ```
 
@@ -58,9 +94,7 @@
 行内剧透：:blur[你知道得太多了。]
 
 ::blur{label="剧透保护"}
-:::quote
-也未必。
-:::
+> 也未必。
 
 这里可以继续放置链接、列表或其它组件。
 ::
@@ -69,9 +103,7 @@
 :blur[你知道得太多了。]
 
 ::blur{label="剧透保护"}
-:::quote
-也未必。
-:::
+> 也未必。
 ::
 ```
 
@@ -121,36 +153,6 @@
 :::folding{title="第二层"}
 嵌套内容
 :::
-::
-```
-
-## Quote
-
-:quote[有时候，有些话，有点意思。]
-
-::quote{icon="tabler:files"}
-令图标有所指，引用亦有中心。
-::
-
-::quote
-#icon
-ヾ(•ω•`)o
-#default
-图标插槽也可以是 Emoji、颜文字或者英文装饰。
-::
-
-```markdown
-:quote[有时候，有些话，有点意思。]
-
-::quote{icon="tabler:files"}
-令图标有所指，引用亦有中心。
-::
-
-::quote
-#icon
-ヾ(•ω•`)o
-#default
-自定义图标插槽。
 ::
 ```
 

@@ -406,10 +406,13 @@ onBeforeUnmount(() => {
   max-width: 900px;
   margin: 2rem auto;
   padding: 0 1rem;
+  box-sizing: content-box;
   color: var(--md-text);
   font-family: "LXGW WenKai", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Inter", "Noto Serif SC", "Times New Roman", serif;
   font-size: clamp(1.13rem, 1.08vw, 1.22rem);
   line-height: 2.02;
+  -webkit-font-smoothing: auto;
+  text-rendering: auto;
 }
 
 .markdown-body--embed {
@@ -542,15 +545,10 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(.task-list-item input) {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1rem;
+  height: 1rem;
   margin: 0 0.55rem 0 -1.45rem;
   accent-color: var(--md-accent-2);
-  cursor: pointer;
-}
-
-.markdown-body :deep(.task-list-item label) {
-  cursor: pointer;
 }
 
 .markdown-body :deep(blockquote) {
@@ -794,73 +792,86 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(.md-alert) {
-  --alert-accent: #89b4fa;
-  --alert-soft: rgba(137, 180, 250, 0.12);
+  --alert-accent: #b4befe;
+  --alert-soft: rgba(180, 190, 254, 0.09);
   position: relative;
-  margin: 2rem 0;
+  margin: 1.85rem 0;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--alert-accent) 34%, transparent);
-  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--alert-accent) 23%, transparent);
+  border-left: 3px solid var(--alert-accent);
+  border-radius: 0.8rem;
   background:
-    linear-gradient(135deg, var(--alert-soft), transparent 54%),
-    rgba(30, 30, 46, 0.76);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+    linear-gradient(105deg, var(--alert-soft), transparent 52%),
+    rgba(24, 24, 37, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 12px 34px rgba(0, 0, 0, 0.12);
 }
 
-.markdown-body :deep(.md-alert::before) {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 0.24rem;
-  background: var(--alert-accent);
+.markdown-body :deep(.md-alert--info) {
+  --alert-accent: #89b4fa;
+  --alert-soft: rgba(137, 180, 250, 0.09);
 }
 
-.markdown-body :deep(.md-alert--tip),
+.markdown-body :deep(.md-alert--tip) {
+  --alert-accent: #89dceb;
+  --alert-soft: rgba(137, 220, 235, 0.09);
+}
+
 .markdown-body :deep(.md-alert--success) {
   --alert-accent: #94e2d5;
-  --alert-soft: rgba(148, 226, 213, 0.12);
+  --alert-soft: rgba(148, 226, 213, 0.09);
 }
 
 .markdown-body :deep(.md-alert--question) {
   --alert-accent: #cba6f7;
-  --alert-soft: rgba(203, 166, 247, 0.12);
+  --alert-soft: rgba(203, 166, 247, 0.09);
 }
 
 .markdown-body :deep(.md-alert--warning) {
   --alert-accent: #f9e2af;
-  --alert-soft: rgba(249, 226, 175, 0.12);
+  --alert-soft: rgba(249, 226, 175, 0.09);
 }
 
 .markdown-body :deep(.md-alert--danger) {
   --alert-accent: #f38ba8;
-  --alert-soft: rgba(243, 139, 168, 0.12);
+  --alert-soft: rgba(243, 139, 168, 0.09);
 }
 
 .markdown-body :deep(.md-alert-head) {
   display: flex;
   align-items: center;
-  gap: 0.72rem;
-  padding: 0.88rem 1.1rem 0.72rem 1.25rem;
+  gap: 0.62rem;
+  padding: 0.92rem 1.1rem 0.52rem 1.05rem;
   color: var(--alert-accent);
   font-family: "Inter", "LXGW WenKai", sans-serif;
-  font-size: 0.86rem;
-  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
+.markdown-body :deep(.md-alert-head > strong) {
+  color: inherit;
+  font-weight: 760;
+}
+
 .markdown-body :deep(.md-alert-icon) {
-  display: inline-grid;
-  width: 1.55rem;
-  height: 1.55rem;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--alert-accent) 42%, transparent);
-  border-radius: 50%;
-  font-family: "Fira Code", monospace;
-  font-weight: 800;
+  display: inline-flex;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.markdown-body :deep(.md-alert-symbol) {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .markdown-body :deep(.md-alert-body) {
-  padding: 0 1.2rem 1.05rem 1.25rem;
+  padding: 0 1.1rem 0.98rem 1.05rem;
 }
 
 .markdown-body :deep(.md-alert-body > :last-child) {
@@ -869,13 +880,22 @@ onBeforeUnmount(() => {
 
 .markdown-body :deep(.md-alert-inline) {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.35em;
-  padding: 0.06em 0.42em;
-  border: 1px solid color-mix(in srgb, var(--alert-accent, #89b4fa) 36%, transparent);
-  border-radius: 0.5em;
-  color: var(--alert-accent, #89b4fa);
-  background: var(--alert-soft, rgba(137, 180, 250, 0.1));
+  align-items: center;
+  gap: 0.32em;
+  padding: 0.08em 0.42em 0.08em 0.34em;
+  border: 1px solid color-mix(in srgb, var(--alert-accent, #b4befe) 24%, transparent);
+  border-radius: 0.42em;
+  color: var(--alert-accent, #b4befe);
+  background: var(--alert-soft, rgba(180, 190, 254, 0.09));
+  line-height: 1.35;
+  vertical-align: 0.02em;
+}
+
+.markdown-body :deep(.md-alert-inline-icon) {
+  display: inline-flex;
+  width: 0.94em;
+  height: 0.94em;
+  flex: 0 0 auto;
 }
 
 .markdown-body :deep(.md-blur-inline) {
@@ -959,7 +979,7 @@ onBeforeUnmount(() => {
   background: rgba(30, 30, 46, 0.6);
 }
 
-.markdown-body :deep(.md-folding summary) {
+.markdown-body :deep(.md-folding > summary) {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -968,89 +988,44 @@ onBeforeUnmount(() => {
   font-weight: 720;
   cursor: pointer;
   list-style: none;
+  transition: color 0.18s ease, background-color 0.18s ease;
 }
 
-.markdown-body :deep(.md-folding summary::-webkit-details-marker) {
+.markdown-body :deep(.md-folding > summary:hover),
+.markdown-body :deep(.md-folding > summary:focus-visible) {
+  color: #89dceb;
+  background: rgba(137, 180, 250, 0.06);
+}
+
+.markdown-body :deep(.md-folding > summary::-webkit-details-marker) {
   display: none;
 }
 
-.markdown-body :deep(.md-folding summary::before) {
-  content: '+';
-  display: inline-grid;
-  width: 1.35rem;
-  height: 1.35rem;
-  place-items: center;
-  border-radius: 50%;
-  color: #11111b;
-  background: #89b4fa;
-  font-family: "Fira Code", monospace;
-  transition: rotate 0.22s ease;
+.markdown-body :deep(.md-folding > summary::before) {
+  content: '';
+  width: 0.54rem;
+  height: 0.54rem;
+  flex: 0 0 auto;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  color: #89b4fa;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  transition: transform 0.2s ease, color 0.18s ease;
 }
 
-.markdown-body :deep(.md-folding[open] summary::before) {
-  rotate: 45deg;
+.markdown-body :deep(.md-folding[open] > summary::before) {
+  color: #89dceb;
+  transform: rotate(45deg);
 }
 
-.markdown-body :deep(.md-folding-content) {
-  padding: 0 1rem 1rem 3.1rem;
+.markdown-body :deep(.md-folding > .md-folding-content) {
+  padding: 0.95rem 1rem 1rem 2.3rem;
   border-top: 1px solid rgba(180, 190, 254, 0.1);
 }
 
 .markdown-body :deep(.md-folding .md-folding) {
   margin: 0.8rem 0 0;
-}
-
-.markdown-body :deep(.md-quote) {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 1rem;
-  margin: 2rem 0;
-  padding: 1.2rem 1.25rem;
-  border: 1px solid rgba(203, 166, 247, 0.2);
-  border-radius: 1rem;
-  background:
-    radial-gradient(circle at 0 0, rgba(203, 166, 247, 0.16), transparent 14rem),
-    rgba(30, 30, 46, 0.68);
-}
-
-.markdown-body :deep(.md-quote-icon) {
-  display: grid;
-  min-width: 2.2rem;
-  height: 2.2rem;
-  place-items: center;
-  color: #cba6f7;
-  font-family: "Fira Code", monospace;
-  font-size: 1.2rem;
-}
-
-.markdown-body :deep(.md-quote-icon svg) {
-  width: 1.65rem;
-  height: 1.65rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.markdown-body :deep(.md-quote blockquote) {
-  margin: 0;
-  padding: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.markdown-body :deep(.md-inline-quote) {
-  color: #cba6f7;
-  font-style: italic;
-}
-
-.markdown-body :deep(.md-inline-quote::before) {
-  content: '「';
-}
-
-.markdown-body :deep(.md-inline-quote::after) {
-  content: '」';
 }
 
 .markdown-body :deep(.md-chat) {
@@ -1225,43 +1200,95 @@ onBeforeUnmount(() => {
 .markdown-body :deep(.md-link-card) {
   position: relative;
   display: grid;
-  gap: 0.35rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "eyebrow icon"
+    "title icon"
+    "copy icon";
+  gap: 0.28rem 1rem;
   margin: 1.65rem 0;
-  padding: 1.1rem 3.3rem 1.1rem 1.15rem;
-  border: 1px solid rgba(137, 180, 250, 0.18);
-  border-radius: 1rem;
+  padding: 1.12rem 1.15rem 1.08rem 1.2rem;
+  border: 1px solid rgba(180, 190, 254, 0.16);
+  border-radius: 0.9rem;
   color: var(--md-text);
-  background: linear-gradient(135deg, rgba(137, 180, 250, 0.12), rgba(30, 30, 46, 0.72));
+  background:
+    linear-gradient(110deg, rgba(137, 180, 250, 0.075), transparent 58%),
+    rgba(24, 24, 37, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.markdown-body :deep(.md-link-card > span) {
+.markdown-body :deep(.md-link-card:hover),
+.markdown-body :deep(.md-link-card:focus-visible) {
+  border-color: rgba(137, 180, 250, 0.4);
+  color: var(--md-text);
+  background-color: rgba(30, 30, 46, 0.76);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 14px 34px rgba(0, 0, 0, 0.16);
+  transform: translateY(-2px);
+}
+
+.markdown-body :deep(.md-link-card:focus-visible) {
+  outline: 2px solid rgba(137, 180, 250, 0.58);
+  outline-offset: 3px;
+}
+
+.markdown-body :deep(.md-link-card-eyebrow) {
+  grid-area: eyebrow;
   color: var(--md-muted);
   font-family: "Fira Code", monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  font-size: 0.68rem;
+  font-weight: 680;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
 }
 
-.markdown-body :deep(.md-link-card > strong) {
-  color: #89dceb;
-  font-size: 1.1rem;
+.markdown-body :deep(.md-link-card-title) {
+  grid-area: title;
+  color: #cdd6f4;
+  font-size: 1.08rem;
+  line-height: 1.45;
 }
 
-.markdown-body :deep(.md-link-card > div > :last-child) {
+.markdown-body :deep(.md-link-card-copy) {
+  grid-area: copy;
+  color: rgba(205, 214, 244, 0.66);
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+.markdown-body :deep(.md-link-card-copy > :last-child) {
   margin-bottom: 0;
 }
 
-.markdown-body :deep(.md-link-card > i) {
-  position: absolute;
-  top: 50%;
-  right: 1.15rem;
-  translate: 0 -50%;
+.markdown-body :deep(.md-link-card-icon) {
+  grid-area: icon;
+  align-self: center;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgba(137, 180, 250, 0.18);
+  border-radius: 0.62rem;
   color: #89b4fa;
-  font-size: 1.35rem;
-  transition: translate 0.2s ease;
+  background: rgba(137, 180, 250, 0.06);
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.markdown-body :deep(.md-link-card:hover > i) {
-  translate: 0.2rem -50%;
+.markdown-body :deep(.md-link-card-icon svg) {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.markdown-body :deep(.md-link-card:hover .md-link-card-icon),
+.markdown-body :deep(.md-link-card:focus-visible .md-link-card-icon) {
+  border-color: rgba(137, 220, 235, 0.38);
+  color: #89dceb;
+  transform: translate(2px, -2px);
 }
 
 .markdown-body :deep(.md-tip-inline) {
@@ -1349,17 +1376,29 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(.md-progress) {
-  display: inline-grid;
-  grid-template-columns: auto minmax(5rem, 9rem) auto;
+  display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  min-width: min(100%, 16rem);
+  gap: 0.42rem;
+  max-width: 100%;
+  padding: 0.1em 0.4em;
+  border: 1px solid rgba(180, 190, 254, 0.14);
+  border-radius: 0.45em;
   color: var(--md-muted);
+  background: rgba(30, 30, 46, 0.5);
   font-size: 0.78em;
+  line-height: 1.4;
+  vertical-align: 0.04em;
+  white-space: nowrap;
+}
+
+.markdown-body :deep(.md-progress-label) {
+  color: rgba(205, 214, 244, 0.72);
 }
 
 .markdown-body :deep(.md-progress-track) {
+  width: clamp(3.6rem, 8vw, 5.8rem);
   height: 0.45rem;
+  flex: 0 0 auto;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(69, 71, 90, 0.72);
@@ -1371,6 +1410,15 @@ onBeforeUnmount(() => {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #89b4fa, #cba6f7);
+}
+
+.markdown-body :deep(.md-progress-value) {
+  min-width: 3ch;
+  color: #89b4fa;
+  font-family: "Fira Code", monospace;
+  font-size: 0.92em;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .markdown-body :deep(.md-footnote-ref) {
@@ -1554,6 +1602,7 @@ onBeforeUnmount(() => {
   .markdown-body--page {
     max-width: min(100% - 1.4rem, 960px);
     padding: 1rem;
+    box-sizing: border-box;
     border-radius: 0.9rem;
   }
 
@@ -1613,33 +1662,17 @@ onBeforeUnmount(() => {
     grid-template-columns: 1fr;
   }
 
-  .markdown-body :deep(.md-folding-content) {
+  .markdown-body :deep(.md-folding > .md-folding-content) {
     padding-left: 1rem;
-  }
-
-  .markdown-body :deep(.md-quote) {
-    grid-template-columns: 1fr;
-  }
-
-  .markdown-body :deep(.md-quote-icon) {
-    width: fit-content;
-  }
-
-  .markdown-body :deep(.md-progress) {
-    grid-template-columns: 1fr auto;
-  }
-
-  .markdown-body :deep(.md-progress-track) {
-    grid-column: 1 / -1;
-    grid-row: 2;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .markdown-body :deep(.md-blur-inline span),
   .markdown-body :deep(.md-blur-block-content),
-  .markdown-body :deep(.md-folding summary::before),
-  .markdown-body :deep(.md-link-card > i),
+  .markdown-body :deep(.md-folding > summary::before),
+  .markdown-body :deep(.md-link-card),
+  .markdown-body :deep(.md-link-card-icon),
   .markdown-body :deep(.md-tip-inline::after) {
     transition: none;
   }

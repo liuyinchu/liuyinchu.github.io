@@ -3,7 +3,6 @@ const BLOCK_COMPONENTS = new Set([
   'blur',
   'chat',
   'folding',
-  'quote',
   'timeline',
   'steps',
   'gallery',
@@ -11,28 +10,46 @@ const BLOCK_COMPONENTS = new Set([
   'link-card',
 ])
 
-const INLINE_COMPONENTS = new Set(['alert', 'blur', 'quote', 'tip', 'badge', 'kbd', 'mark', 'progress'])
+const INLINE_COMPONENTS = new Set(['alert', 'blur', 'tip', 'badge', 'kbd', 'mark', 'progress'])
 
 const ALERT_TYPES = new Set(['note', 'info', 'tip', 'success', 'question', 'warning', 'danger'])
 
+function alertIcon(paths) {
+  return `<svg class="md-alert-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths}</svg>`
+}
+
 const ALERT_META = {
-  note: { icon: '✦', label: 'Note' },
-  info: { icon: 'i', label: 'Info' },
-  tip: { icon: '↗', label: 'Tip' },
-  success: { icon: '✓', label: 'Success' },
-  question: { icon: '?', label: 'Question' },
-  warning: { icon: '!', label: 'Warning' },
-  danger: { icon: '×', label: 'Danger' },
+  note: {
+    icon: alertIcon('<path d="M6.75 3.75h7.5L18 7.5v12.75H6.75z"/><path d="M14.25 3.75V7.5H18"/><path d="M9.5 11h5M9.5 14.5h5"/>'),
+    label: 'Note',
+  },
+  info: {
+    icon: alertIcon('<path d="M12 10.5v6"/><path d="M12 7.25h.01"/>'),
+    label: 'Info',
+  },
+  tip: {
+    icon: alertIcon('<path d="M9 18h6M10 21h4"/><path d="M8.5 15.4a6 6 0 1 1 7 0C14.5 16.1 14 17 14 18h-4c0-1-.5-1.9-1.5-2.6Z"/>'),
+    label: 'Tip',
+  },
+  success: {
+    icon: alertIcon('<path d="m5.5 12.5 4 4 9-9"/>'),
+    label: 'Success',
+  },
+  question: {
+    icon: alertIcon('<path d="M9.35 9a3 3 0 1 1 3.6 2.94c-.75.19-.95.81-.95 1.56"/><path d="M12 17.25h.01"/>'),
+    label: 'Question',
+  },
+  warning: {
+    icon: alertIcon('<path d="M12 4 3.75 19h16.5z"/><path d="M12 9.25v4.5M12 16.75h.01"/>'),
+    label: 'Warning',
+  },
+  danger: {
+    icon: alertIcon('<path d="m7.25 7.25 9.5 9.5M16.75 7.25l-9.5 9.5"/>'),
+    label: 'Danger',
+  },
 }
 
 const BADGE_TONES = new Set(['accent', 'info', 'success', 'warning', 'danger', 'muted'])
-
-const QUOTE_ICONS = {
-  'tabler:files': '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-2"/><path d="M13 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/></svg>',
-  'tabler:quote': '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 11H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v7a4 4 0 0 1-4 4"/><path d="M20 11h-5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v7a4 4 0 0 1-4 4"/></svg>',
-  'tabler:bulb': '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M8.5 15.5A6 6 0 1 1 15.5 15.5C14.5 16.2 14 17 14 18h-4c0-1-.5-1.8-1.5-2.5Z"/></svg>',
-  'tabler:help-circle': '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.6 2.6 0 1 1 3.3 2.5c-.7.25-1 .75-1 1.5"/><path d="M12 17h.01"/></svg>',
-}
 
 function parseAttributes(source = '') {
   const attributes = Object.create(null)
@@ -59,12 +76,6 @@ function safeHref(value = '') {
   const href = String(value).trim()
   if (/^(?:https?:\/\/|mailto:|\/(?!\/)|#)/i.test(href)) return href
   return '#'
-}
-
-function renderQuoteIcon(value, md, env, escapeHtml, allowMarkdown = false) {
-  const icon = String(value || '❝').trim()
-  if (QUOTE_ICONS[icon]) return QUOTE_ICONS[icon]
-  return allowMarkdown ? md.renderInline(icon, env) : escapeHtml(icon)
 }
 
 function findClosingBracket(source, start) {
@@ -107,10 +118,6 @@ function renderInlineComponent(md, token, env, escapeHtml) {
     return `<button type="button" class="md-blur-inline" data-md-blur-inline aria-pressed="false"><span>${content}</span></button>`
   }
 
-  if (name === 'quote') {
-    return `<span class="md-inline-quote">${content}</span>`
-  }
-
   if (name === 'tip') {
     const tip = escapeHtml(attributes.tip || attributes.text || '提示')
     return `<span class="md-tip-inline" tabindex="0" data-tip="${tip}">${content}</span>`
@@ -134,13 +141,13 @@ function renderInlineComponent(md, token, env, escapeHtml) {
     const rawValue = Number.parseFloat(token.content)
     const value = Number.isFinite(rawValue) ? Math.min(100, Math.max(0, rawValue)) : 0
     const label = escapeHtml(attributes.label || '进度')
-    return `<span class="md-progress" role="progressbar" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><span class="md-progress-label">${label}</span><span class="md-progress-track"><span style="--md-progress:${value}%"></span></span><strong>${value}%</strong></span>`
+    return `<span class="md-progress" role="progressbar" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><span class="md-progress-label">${label}</span><span class="md-progress-track" aria-hidden="true"><span style="--md-progress:${value}%"></span></span><span class="md-progress-value">${value}%</span></span>`
   }
 
   const requestedType = String(attributes.type || 'note').toLowerCase()
   const type = ALERT_TYPES.has(requestedType) ? requestedType : 'note'
   const meta = ALERT_META[type]
-  return `<span class="md-alert-inline md-alert--${type}"><span aria-hidden="true">${meta.icon}</span>${content}</span>`
+  return `<span class="md-alert-inline md-alert--${type}"><span class="md-alert-inline-icon" aria-hidden="true">${meta.icon}</span>${content}</span>`
 }
 
 export function installMarkdownComponentRules(md, escapeHtml) {
@@ -201,7 +208,7 @@ export function installMarkdownComponentRules(md, escapeHtml) {
 }
 
 function parseBlockOpening(line) {
-  const match = line.match(/^(\s*)(:{1,6})(alert|blur|chat|folding|quote|timeline|steps|gallery|columns|link-card)(?:\{([^}]*)\})?\s*$/i)
+  const match = line.match(/^(\s*)(:{1,6})(alert|blur|chat|folding|timeline|steps|gallery|columns|link-card)(?:\{([^}]*)\})?\s*$/i)
   const name = match?.[3]?.toLowerCase()
   if (!match || !BLOCK_COMPONENTS.has(name)) return null
   return {
@@ -295,17 +302,6 @@ function splitMarkerSections(source) {
   return sections.filter((section) => section.label || section.lines.some((line) => line.trim()))
 }
 
-function splitQuoteSlots(source) {
-  const lines = source.split('\n')
-  const iconIndex = lines.findIndex((line) => line.trim() === '#icon')
-  const defaultIndex = lines.findIndex((line) => line.trim() === '#default')
-  if (iconIndex === -1 || defaultIndex === -1 || defaultIndex < iconIndex) return null
-  return {
-    icon: lines.slice(iconIndex + 1, defaultIndex).join('\n').trim(),
-    body: lines.slice(defaultIndex + 1).join('\n').trim(),
-  }
-}
-
 function splitColumnSections(source) {
   const sections = []
   let current = []
@@ -346,14 +342,6 @@ function renderComponent(name, attributes, source, context) {
     return `<details class="md-folding"${open}><summary>${summary}</summary><div class="md-folding-content">${renderFragment(source, context)}</div></details>`
   }
 
-  if (name === 'quote') {
-    const slots = splitQuoteSlots(source)
-    const iconSource = slots?.icon || attributes.icon || '❝'
-    const bodySource = slots?.body || source
-    const icon = renderQuoteIcon(iconSource, md, env, escapeHtml, Boolean(slots))
-    return `<figure class="md-quote"><div class="md-quote-icon" aria-hidden="true">${icon}</div><blockquote>${renderFragment(bodySource, context)}</blockquote></figure>`
-  }
-
   if (name === 'chat') {
     const messages = splitMarkerSections(source)
     const items = messages.map((message) => {
@@ -389,7 +377,7 @@ function renderComponent(name, attributes, source, context) {
   const href = escapeHtml(safeHref(attributes.href || '#'))
   const title = escapeHtml(attributes.title || '继续阅读')
   const eyebrow = escapeHtml(attributes.eyebrow || 'RELATED')
-  return `<a class="md-link-card" href="${href}"><span>${eyebrow}</span><strong>${title}</strong><div>${renderFragment(source, context)}</div><i aria-hidden="true">↗</i></a>`
+  return `<a class="md-link-card" href="${href}"><span class="md-link-card-eyebrow">${eyebrow}</span><strong class="md-link-card-title">${title}</strong><div class="md-link-card-copy">${renderFragment(source, context)}</div><span class="md-link-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span></a>`
 }
 
 function renderFragment(source, context) {
