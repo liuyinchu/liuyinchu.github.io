@@ -1,6 +1,6 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import MarkdownRenderer from '../components/academic/MarkdownRenderer.vue'
+import { computed, onMounted, ref } from 'vue'
+import MarkdownViewer from '../components/MarkdownViewer.vue'
 
 const brief = ref(null)
 const publications = ref([])
@@ -8,671 +8,410 @@ const markdownContent = ref('')
 const experience = ref([])
 const conferences = ref([])
 const isLoading = ref(true)
-const error = ref(null)
+const dataIssues = ref([])
 
-const pageIdx = ref(0)
-const workPageIdx = ref(0)
-const direction = ref('down')
-const transitioning = ref(false)
-const academicRef = ref(null)
+const sections = [
+  ['academic-profile', 'Profile'],
+  ['academic-focus', 'Research Focus'],
+  ['academic-work', 'Current Work'],
+  ['academic-publications', 'Publications'],
+  ['academic-record', 'Experience'],
+  ['academic-contact', 'Contact'],
+]
+
 const contactLinks = computed(() => {
-  const links = Object.entries(brief.value?.contact?.links || {}).map(([label, href]) => [label, href])
+  const links = Object.entries(brief.value?.contact?.links || {}).map(([label, href]) => ({ label, href }))
   const email = brief.value?.contact?.email
-
   return [
-    ['Research Homepage', '/research'],
+    { label: 'Research Homepage', href: '/research' },
     ...links,
-    ...(email ? [['Email', `mailto:${email}`]] : []),
+    ...(email ? [{ label: 'Email', href: `mailto:${email}` }] : []),
   ]
 })
-const slides = computed(() => [
-  {
-    key: 'signature',
-    eyebrow: 'Academic Card',
-    title: brief.value?.name || 'Shuyun Yang',
-  },
-  {
-    key: 'profile',
-    eyebrow: 'Slide 01 / Profile',
-    title: '学术名片',
-    lead: '',
-    metrics: [
-      { value: brief.value?.name || 'Yang Shuyun', label: 'Name' },
-      { value: brief.value?.title || 'Academic Profile', label: 'Current Title' },
-      { value: brief.value?.research_interests?.[0] || 'Research Focus', label: 'Primary Focus' },
-    ],
-    statements: brief.value?.career_three_lines || [],
-  },
-  {
-    key: 'directions',
-    eyebrow: 'Slide 02 / Research Focus',
-    title: '研究方向',
-    lead: '',
-    interests: brief.value?.research_interests || [],
-  },
-  {
-    key: 'work',
-    eyebrow: 'Slide 03 / Current Work',
-    title: '当前工作',
-    lead: '',
-    markdownPages: workMarkdownPages.value,
-  },
-  {
-    key: 'publications',
-    eyebrow: 'Slide 04 / Publications',
-    title: '出版与成果',
-    lead: '',
-    publications: publications.value,
-    highlights: brief.value?.highlights || [],
-  },
-  {
-    key: 'record',
-    eyebrow: 'Slide 05 / Record',
-    title: '经历与会议',
-    lead: '',
-    timeline: experience.value.map((item) => [item.period, `${item.organization}｜${item.role}。${item.description}`]),
-    conferences: conferences.value,
-  },
-  {
-    key: 'contact',
-    eyebrow: 'Slide 06 / Links',
-    title: '联系与入口',
-    lead: brief.value?.contact?.email || '',
-    links: contactLinks.value,
-  },
-])
-const currentSlide = computed(() => slides.value[pageIdx.value] || slides.value[0])
-const transitionName = computed(() => (direction.value === 'down' ? 'deck-forward' : 'deck-backward'))
-const pageNumber = computed(() => String(pageIdx.value + 1).padStart(2, '0'))
-const totalPages = computed(() => String(slides.value.length).padStart(2, '0'))
-const currentWorkMarkdown = computed(() => workMarkdownPages.value[workPageIdx.value] || '')
-const workPageNumber = computed(() => String(workPageIdx.value + 1).padStart(2, '0'))
-const workPageTotal = computed(() => String(Math.max(workMarkdownPages.value.length, 1)).padStart(2, '0'))
 
-let touchX = 0
-let touchY = 0
-let originalHtmlOverflow = ''
-let originalBodyOverflow = ''
+const visiblePublications = computed(() => publications.value.filter((item) => {
+  const placeholderAuthors = item.authors?.some((author) => /您的名字|your name/i.test(author))
+  return item.title && !/论文题目|paper title/i.test(item.title) && !placeholderAuthors && !/xxxx/i.test(item.link || '')
+}))
 
-function splitMarkdownPages(source) {
-  const blocks = source.trim().split(/\n{2,}/).filter(Boolean).flatMap((block) => {
-    if (block.length <= 480 || block.startsWith('#') || block.startsWith('```') || block.includes('|')) {
-      return [block]
-    }
+const visibleConferences = computed(() => conferences.value.filter((item) => (
+  item.name
+  && !/conference name/i.test(item.name)
+  && !/yyyy/i.test(item.date || '')
+)))
 
-    const sentences = block.match(/[^.!?。！？]+[.!?。！？]+["')\]]*/g) || [block]
-    const chunks = []
-    let chunk = ''
+const visibleHighlights = computed(() => (brief.value?.highlights || []).filter((item) => (
+  item && !/^(?:is'?s|it'?s) a pity/i.test(item.trim())
+)))
 
-    for (const sentence of sentences) {
-      if (chunk && chunk.length + sentence.length > 480) {
-        chunks.push(chunk.trim())
-        chunk = ''
-      }
-      chunk += sentence
-    }
+const renderedWorkContent = computed(() => markdownContent.value
+  .replace(/^##\s+My Current and Future Work[^\n]*\n+/i, '')
+  .replace(/^#\s+/gm, '### ')
+  .replace(/^##\s+/gm, '#### '))
 
-    if (chunk.trim()) chunks.push(chunk.trim())
-    return chunks.length ? chunks : [block]
-  })
-  const pages = []
-  let current = []
-  let weight = 0
-
-  for (const block of blocks) {
-    const blockWeight = block.length + (block.startsWith('#') ? 180 : 0)
-
-    if (current.length && weight + blockWeight > 560) {
-      pages.push(current.join('\n\n'))
-      current = []
-      weight = 0
-    }
-
-    current.push(block)
-    weight += blockWeight
-  }
-
-  if (current.length) {
-    pages.push(current.join('\n\n'))
-  }
-
-  return pages.length ? pages : ['']
-}
-
-const workMarkdownPages = computed(() => splitMarkdownPages(markdownContent.value))
-
-function stepWorkPage(delta) {
-  if (currentSlide.value.key !== 'work') return false
-  if (workMarkdownPages.value.length <= 1) return false
-
-  const next = workPageIdx.value + delta
-  if (next < 0 || next >= workMarkdownPages.value.length) return false
-
-  workPageIdx.value = next
-  return true
-}
-
-function step(delta) {
-  if (transitioning.value) return
-
-  const next = pageIdx.value + delta
-  if (next < 0 || next >= slides.value.length) return
-
-  direction.value = delta > 0 ? 'down' : 'up'
-  transitioning.value = true
-  pageIdx.value = next
-  if (slides.value[next]?.key === 'work') {
-    workPageIdx.value = 0
-  }
-  window.setTimeout(() => {
-    transitioning.value = false
-  }, 560)
-}
-
-function goTo(idx) {
-  if (idx === pageIdx.value || transitioning.value) return
-  direction.value = idx > pageIdx.value ? 'down' : 'up'
-  transitioning.value = true
-  pageIdx.value = idx
-  if (slides.value[idx]?.key === 'work') {
-    workPageIdx.value = 0
-  }
-  window.setTimeout(() => {
-    transitioning.value = false
-  }, 560)
-}
-
-function onWheel(event) {
-  if (Math.abs(event.deltaY) < 12) return
-  event.preventDefault()
-  const delta = event.deltaY > 0 ? 1 : -1
-  step(delta)
-}
-
-function onKey(event) {
-  if (['ArrowDown', 'PageDown', ' '].includes(event.key)) {
-    event.preventDefault()
-    step(1)
-  }
-
-  if (['ArrowUp', 'PageUp'].includes(event.key)) {
-    event.preventDefault()
-    step(-1)
-  }
-}
-
-function onTouchStart(event) {
-  const touch = event.changedTouches[0]
-  touchX = touch.clientX
-  touchY = touch.clientY
-}
-
-function onTouchEnd(event) {
-  const touch = event.changedTouches[0]
-  const dx = touch.clientX - touchX
-  const dy = touch.clientY - touchY
-
-  if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 34) {
-    const delta = dy < 0 ? 1 : -1
-    step(delta)
-  }
+async function fetchResource(url, type) {
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`)
+  return type === 'text' ? response.text() : response.json()
 }
 
 async function loadAcademicData() {
-  try {
-    const responses = await Promise.all([
-      fetch('/data/academic_brief.json'),
-      fetch('/data/publications.json'),
-      fetch('/data/highlight_work.md'),
-      fetch('/data/experience.json'),
-      fetch('/data/conferences.json'),
-    ])
+  const resources = [
+    ['brief', '/data/academic_brief.json', 'json', '学术简介'],
+    ['publications', '/data/publications.json', 'json', '成果列表'],
+    ['markdown', '/data/highlight_work.md', 'text', '当前工作'],
+    ['experience', '/data/experience.json', 'json', '经历'],
+    ['conferences', '/data/conferences.json', 'json', '会议记录'],
+  ]
 
-    for (const res of responses) {
-      if (!res.ok) throw new Error(`网络请求失败: ${res.status}`)
+  const results = await Promise.allSettled(resources.map(([, url, type]) => fetchResource(url, type)))
+  const issues = []
+
+  results.forEach((result, index) => {
+    const [key, , , label] = resources[index]
+    if (result.status === 'rejected') {
+      issues.push(label)
+      console.error(`Academic 数据加载失败（${label}）:`, result.reason)
+      return
     }
 
-    const [briefData, pubsData, mdText, expData, confData] = await Promise.all([
-      responses[0].json(),
-      responses[1].json(),
-      responses[2].text(),
-      responses[3].json(),
-      responses[4].json(),
-    ])
+    if (key === 'brief') brief.value = result.value
+    if (key === 'publications') publications.value = Array.isArray(result.value) ? result.value : []
+    if (key === 'markdown') markdownContent.value = result.value
+    if (key === 'experience') experience.value = Array.isArray(result.value) ? result.value : []
+    if (key === 'conferences') conferences.value = Array.isArray(result.value) ? result.value : []
+  })
 
-    brief.value = briefData
-    publications.value = pubsData
-    markdownContent.value = mdText
-    experience.value = expData
-    conferences.value = confData
-  } catch (err) {
-    error.value = err
-  } finally {
-    isLoading.value = false
-  }
+  dataIssues.value = issues
+  isLoading.value = false
 }
 
-onMounted(() => {
-  originalHtmlOverflow = document.documentElement.style.overflow
-  originalBodyOverflow = document.body.style.overflow
-  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-  document.documentElement.style.overflow = 'hidden'
-  document.body.style.overflow = 'hidden'
-  window.requestAnimationFrame(() => academicRef.value?.focus())
-  loadAcademicData()
-})
-
-onBeforeUnmount(() => {
-  document.documentElement.style.overflow = originalHtmlOverflow
-  document.body.style.overflow = originalBodyOverflow
-})
+onMounted(loadAcademicData)
 </script>
 
 <template>
-  <main
-    ref="academicRef"
-    class="academic-deck"
-    aria-labelledby="academic-title"
-    tabindex="0"
-    @wheel="onWheel"
-    @keydown="onKey"
-    @touchstart.passive="onTouchStart"
-    @touchend.passive="onTouchEnd"
-  >
-    <div class="deck-atmosphere" aria-hidden="true"></div>
-    <div class="deck-grid" aria-hidden="true"></div>
+  <main class="academic-page">
+    <div class="academic-atmosphere" aria-hidden="true"></div>
 
-    <RouterLink class="research-link" to="/research">Research Homepage</RouterLink>
+    <section class="signature-hero" aria-labelledby="academic-title">
+      <RouterLink class="research-link" to="/research">Research Homepage</RouterLink>
+      <div class="signature-copy">
+        <p>Academic Card · Yang Shuyun</p>
+        <h1 id="academic-title" class="sr-only">{{ brief?.name || 'Yang Shuyun' }} 的学术主页</h1>
+        <div class="signature-stage" aria-label="Shuyun Yang signature">
+          <svg
+            class="signature-outline"
+            viewBox="0 0 460 149"
+            role="img"
+            aria-label="Shuyun Yang signature outline"
+          >
+            <defs>
+              <filter id="academic-signature-outline-filter">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="1.7" result="expanded" />
+                <feComposite in="expanded" in2="SourceAlpha" operator="out" result="outline" />
+                <feFlood flood-color="#89b4fa" flood-opacity="0.95" result="color" />
+                <feComposite in="color" in2="outline" operator="in" />
+              </filter>
+            </defs>
+            <image
+              href="/fig/signature-shuyun-yang.png"
+              width="460"
+              height="149"
+              preserveAspectRatio="xMidYMid meet"
+              filter="url(#academic-signature-outline-filter)"
+            />
+          </svg>
+          <img
+            class="signature-fill"
+            src="/fig/signature-shuyun-yang.png"
+            alt="Shuyun Yang signature"
+          >
+        </div>
+        <p class="signature-role">{{ brief?.title || 'Academic Profile' }}</p>
+        <a class="enter-profile" href="#academic-profile">
+          <span>Explore profile</span>
+          <span aria-hidden="true">↓</span>
+        </a>
+      </div>
+    </section>
 
-    <div class="deck-stage">
-      <Transition :name="transitionName" mode="out-in">
-        <section
-          :key="currentSlide.key"
-          class="deck-slide"
-          :class="`deck-slide--${currentSlide.key}`"
-          :aria-label="currentSlide.title"
-        >
-          <template v-if="currentSlide.key === 'signature'">
-            <div class="signature-slide">
-              <p class="slide-eyebrow">{{ currentSlide.eyebrow }}</p>
-              <div class="signature-stage" aria-label="Shuyun Yang signature">
-                <svg
-                  class="signature-outline"
-                  viewBox="0 0 460 149"
-                  role="img"
-                  aria-label="Shuyun Yang signature outline"
-                >
-                  <defs>
-                    <filter id="signature-outline-filter">
-                      <feMorphology in="SourceAlpha" operator="dilate" radius="1.7" result="expanded" />
-                      <feComposite in="expanded" in2="SourceAlpha" operator="out" result="outline" />
-                      <feFlood flood-color="#89b4fa" flood-opacity="0.95" result="color" />
-                      <feComposite in="color" in2="outline" operator="in" />
-                    </filter>
-                  </defs>
-                  <image
-                    href="/fig/signature-shuyun-yang.png"
-                    width="460"
-                    height="149"
-                    preserveAspectRatio="xMidYMid meet"
-                    filter="url(#signature-outline-filter)"
-                  />
-                </svg>
-                <img
-                  class="signature-fill"
-                  src="/fig/signature-shuyun-yang.png"
-                  alt="Shuyun Yang signature"
-                >
+    <div class="academic-shell">
+      <aside class="academic-nav" aria-label="学术主页章节">
+        <p>INDEX</p>
+        <a v-for="([id, label], index) in sections" :key="id" :href="`#${id}`">
+          <span>{{ String(index + 1).padStart(2, '0') }}</span>
+          {{ label }}
+        </a>
+      </aside>
+
+      <div class="academic-content">
+        <div v-if="isLoading" class="academic-status" role="status">
+          <span aria-hidden="true"></span>
+          正在读取学术资料…
+        </div>
+
+        <div v-else-if="dataIssues.length" class="academic-notice" role="status">
+          部分资料暂未载入：{{ dataIssues.join('、') }}。其余内容仍可正常浏览。
+        </div>
+
+        <section id="academic-profile" class="academic-section profile-section" aria-labelledby="profile-title">
+          <header class="section-heading">
+            <p>01 / Profile</p>
+            <h2 id="profile-title">学术名片</h2>
+          </header>
+
+          <div class="profile-layout">
+            <dl class="identity-card">
+              <div>
+                <dt>Name</dt>
+                <dd>{{ brief?.name || 'Yang Shuyun' }}</dd>
               </div>
-              <button class="enter-deck" type="button" @click="step(1)">
-                <span>Enter Deck</span>
-                <span aria-hidden="true">↓</span>
-              </button>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="slide-copy">
-              <p class="slide-eyebrow">{{ currentSlide.eyebrow }}</p>
-              <h1 id="academic-title">{{ currentSlide.title }}</h1>
-              <p v-if="currentSlide.lead" class="slide-lead">{{ currentSlide.lead }}</p>
-            </div>
-
-            <div v-if="currentSlide.metrics" class="metric-board">
-              <div
-                v-for="metric in currentSlide.metrics"
-                :key="metric.value"
-                class="metric-item"
-              >
-                <span>{{ metric.value }}</span>
-                <p>{{ metric.label }}</p>
+              <div>
+                <dt>Current title</dt>
+                <dd>{{ brief?.title || 'Undergraduate' }}</dd>
               </div>
-            </div>
+              <div>
+                <dt>Primary focus</dt>
+                <dd>{{ brief?.research_interests?.[0] || 'Control and dynamics' }}</dd>
+              </div>
+            </dl>
 
-            <div v-if="currentSlide.cards" class="direction-board">
-              <article
-                v-for="card in currentSlide.cards"
-                :key="card[0]"
-                class="direction-card"
-              >
-                <span>{{ card[0] }}</span>
-                <p>{{ card[1] }}</p>
-              </article>
-            </div>
-
-            <div v-if="currentSlide.statements" class="statement-stack">
-              <p
-                v-for="statement in currentSlide.statements"
-                :key="statement"
-              >
+            <div class="profile-statements">
+              <p v-for="statement in brief?.career_three_lines || []" :key="statement">
                 {{ statement }}
               </p>
-            </div>
-
-            <div v-if="currentSlide.interests" class="interest-board">
-              <span
-                v-for="interest in currentSlide.interests"
-                :key="interest"
-              >
-                {{ interest }}
-              </span>
-            </div>
-
-            <div v-if="currentSlide.markdownPages" class="markdown-page-deck">
-              <Transition name="markdown-page" mode="out-in">
-                <div :key="workPageIdx" class="markdown-page">
-                  <MarkdownRenderer :source="currentWorkMarkdown" />
-                </div>
-              </Transition>
-              <div
-                v-if="currentSlide.markdownPages.length > 1"
-                class="markdown-pager"
-                aria-label="当前工作内容翻页"
-              >
-                <button
-                  type="button"
-                  :disabled="workPageIdx === 0"
-                  aria-label="上一页当前工作内容"
-                  @click="stepWorkPage(-1)"
-                >
-                  ←
-                </button>
-                <span>{{ workPageNumber }} / {{ workPageTotal }}</span>
-                <button
-                  type="button"
-                  :disabled="workPageIdx === currentSlide.markdownPages.length - 1"
-                  aria-label="下一页当前工作内容"
-                  @click="stepWorkPage(1)"
-                >
-                  →
-                </button>
-              </div>
-            </div>
-
-            <div v-if="currentSlide.publications" class="publication-board">
-              <article
-                v-for="item in currentSlide.publications"
-                :key="`${item.title}-${item.year}`"
-                class="publication-item"
-              >
-                <span>{{ item.type || 'Publication' }}</span>
-                <h2>{{ item.title }}</h2>
-                <p>{{ item.authors?.join(', ') }}</p>
-                <small>{{ item.venue }} · {{ item.year }}</small>
-                <a
-                  v-if="item.link"
-                  :href="item.link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open
-                </a>
-              </article>
-              <p
-                v-for="highlight in currentSlide.highlights"
-                :key="highlight"
-                class="highlight-line"
-              >
-                {{ highlight }}
+              <p v-if="!brief?.career_three_lines?.length">
+                Profile details are being prepared.
               </p>
             </div>
-
-            <div v-if="currentSlide.timeline" class="timeline-board">
-              <article
-                v-for="item in currentSlide.timeline"
-                :key="item[0]"
-                class="timeline-item"
-              >
-                <span>{{ item[0] }}</span>
-                <p>{{ item[1] }}</p>
-              </article>
-            </div>
-
-            <div v-if="currentSlide.conferences" class="conference-board">
-              <article
-                v-for="item in currentSlide.conferences"
-                :key="`${item.name}-${item.date}`"
-                class="conference-item"
-              >
-                <span>{{ item.date }}</span>
-                <h2>{{ item.name }}</h2>
-                <p>{{ item.event }} · {{ item.location }}</p>
-              </article>
-            </div>
-
-            <div v-if="currentSlide.links" class="link-board">
-              <a
-                v-for="link in currentSlide.links"
-                :key="link[0]"
-                :href="link[1]"
-                :target="link[1].startsWith('http') ? '_blank' : undefined"
-                :rel="link[1].startsWith('http') ? 'noopener noreferrer' : undefined"
-              >
-                <span>{{ link[0] }}</span>
-                <span aria-hidden="true">→</span>
-              </a>
-            </div>
-          </template>
+          </div>
         </section>
-      </Transition>
-    </div>
 
-    <nav class="deck-controls" aria-label="我的学术分页">
-      <button
-        class="deck-arrow"
-        type="button"
-        :disabled="pageIdx === 0"
-        aria-label="上一页"
-        @click="step(-1)"
-      >
-        ↑
-      </button>
-      <div class="deck-progress">
-        <button
-          v-for="(slide, idx) in slides"
-          :key="slide.key"
-          class="progress-node"
-          :class="{ active: idx === pageIdx }"
-          type="button"
-          :aria-label="`前往第 ${idx + 1} 页`"
-          @click="goTo(idx)"
-        ></button>
+        <section id="academic-focus" class="academic-section" aria-labelledby="focus-title">
+          <header class="section-heading section-heading--split">
+            <div>
+              <p>02 / Research Focus</p>
+              <h2 id="focus-title">研究方向</h2>
+            </div>
+            <span>从精密测量到智能控制，一组彼此相连的问题。</span>
+          </header>
+
+          <ul class="interest-list">
+            <li v-for="(interest, index) in brief?.research_interests || []" :key="interest">
+              <span>{{ String(index + 1).padStart(2, '0') }}</span>
+              {{ interest }}
+            </li>
+          </ul>
+        </section>
+
+        <section id="academic-work" class="academic-section" aria-labelledby="work-title">
+          <header class="section-heading section-heading--split">
+            <div>
+              <p>03 / Current Work</p>
+              <h2 id="work-title">当前工作</h2>
+            </div>
+            <span>Current and future work &amp; vision</span>
+          </header>
+
+          <div v-if="renderedWorkContent" class="work-document">
+            <MarkdownViewer :content="renderedWorkContent" variant="embed" />
+          </div>
+          <div v-else class="empty-state">当前工作说明正在整理。</div>
+        </section>
+
+        <section id="academic-publications" class="academic-section" aria-labelledby="publications-title">
+          <header class="section-heading section-heading--split">
+            <div>
+              <p>04 / Publications</p>
+              <h2 id="publications-title">出版与成果</h2>
+            </div>
+            <span>只展示已确认的公开记录。</span>
+          </header>
+
+          <div v-if="visiblePublications.length" class="publication-list">
+            <article v-for="item in visiblePublications" :key="`${item.title}-${item.year}`">
+              <div class="publication-meta">
+                <span>{{ item.type || 'Publication' }}</span>
+                <time>{{ item.year }}</time>
+              </div>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.authors?.join(', ') }}</p>
+              <small>{{ item.venue }}</small>
+              <a v-if="item.link" :href="item.link" target="_blank" rel="noopener noreferrer">Open publication ↗</a>
+            </article>
+          </div>
+          <div v-else class="empty-state">
+            <strong>公开成果列表待更新</strong>
+            <p>示例占位数据不会在正式页面中冒充真实成果；后续补充 JSON 后会自动显示。</p>
+          </div>
+
+          <div v-if="visibleHighlights.length" class="highlight-list">
+            <p v-for="highlight in visibleHighlights" :key="highlight">{{ highlight }}</p>
+          </div>
+        </section>
+
+        <section id="academic-record" class="academic-section" aria-labelledby="record-title">
+          <header class="section-heading">
+            <p>05 / Experience</p>
+            <h2 id="record-title">经历与会议</h2>
+          </header>
+
+          <div class="record-grid">
+            <div>
+              <h3>Experience</h3>
+              <ol v-if="experience.length" class="experience-list">
+                <li v-for="item in experience" :key="`${item.period}-${item.organization}`">
+                  <time>{{ item.period }}</time>
+                  <h4>{{ item.role }}</h4>
+                  <p>{{ item.organization }}</p>
+                  <span>{{ item.description }}</span>
+                </li>
+              </ol>
+              <div v-else class="empty-state empty-state--compact">经历资料待更新。</div>
+            </div>
+
+            <div>
+              <h3>Conferences</h3>
+              <div v-if="visibleConferences.length" class="conference-list">
+                <article v-for="item in visibleConferences" :key="`${item.name}-${item.date}`">
+                  <time>{{ item.date }}</time>
+                  <h4>{{ item.name }}</h4>
+                  <p>{{ item.event }} · {{ item.location }}</p>
+                </article>
+              </div>
+              <div v-else class="empty-state empty-state--compact">
+                会议记录尚未公开；示例占位条目已隐藏。
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="academic-contact" class="academic-section contact-section" aria-labelledby="contact-title">
+          <header class="section-heading section-heading--split">
+            <div>
+              <p>06 / Contact</p>
+              <h2 id="contact-title">联系与入口</h2>
+            </div>
+            <span>{{ brief?.contact?.email || 'Contact details' }}</span>
+          </header>
+
+          <div class="contact-grid">
+            <template v-for="link in contactLinks" :key="link.label">
+              <RouterLink v-if="link.href.startsWith('/')" :to="link.href">
+                <span>{{ link.label }}</span>
+                <i aria-hidden="true">↗</i>
+              </RouterLink>
+              <a
+                v-else
+                :href="link.href"
+                :target="link.href.startsWith('http') ? '_blank' : undefined"
+                :rel="link.href.startsWith('http') ? 'noopener noreferrer' : undefined"
+              >
+                <span>{{ link.label }}</span>
+                <i aria-hidden="true">↗</i>
+              </a>
+            </template>
+          </div>
+        </section>
       </div>
-      <button
-        class="deck-arrow"
-        type="button"
-        :disabled="pageIdx === slides.length - 1"
-        aria-label="下一页"
-        @click="step(1)"
-      >
-        ↓
-      </button>
-      <span class="deck-count">{{ pageNumber }} / {{ totalPages }}</span>
-    </nav>
+    </div>
   </main>
 </template>
 
 <style scoped>
-.academic-deck {
-  --deck-line: rgba(var(--ctp-mocha-overlay0-rgb), 0.28);
-  --deck-line-strong: rgba(var(--ctp-mocha-blue-rgb), 0.48);
-  --deck-panel: rgba(24, 24, 37, 0.62);
+.academic-page {
+  --academic-panel: rgba(24, 24, 37, 0.7);
+  --academic-border: rgba(180, 190, 254, 0.14);
   position: relative;
-  height: calc(100svh - 72px);
-  overflow: hidden;
-  isolation: isolate;
-  color: var(--ctp-mocha-text);
-  outline: none;
+  min-height: 100dvh;
+  overflow: clip;
+  color: #cdd6f4;
   background:
-    linear-gradient(118deg, rgba(137, 180, 250, 0.13), transparent 28%),
-    linear-gradient(242deg, transparent 35%, rgba(180, 190, 254, 0.10) 62%, transparent 78%),
-    linear-gradient(180deg, #090a12 0%, var(--ctp-mocha-crust) 48%, #14131f 100%);
+    radial-gradient(circle at 14% 12%, rgba(137, 180, 250, 0.11), transparent 34rem),
+    radial-gradient(circle at 86% 28%, rgba(203, 166, 247, 0.08), transparent 32rem),
+    #0d0e18;
   font-family: 'Inter', 'LXGW WenKai', sans-serif;
 }
 
-.deck-atmosphere,
-.deck-grid {
-  position: absolute;
+.academic-atmosphere {
+  position: fixed;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
-}
-
-.deck-atmosphere {
-  z-index: -3;
   background:
-    linear-gradient(110deg, transparent 0%, rgba(116, 199, 236, 0.12) 34%, transparent 58%),
-    linear-gradient(168deg, transparent 12%, rgba(203, 166, 247, 0.08) 52%, transparent 78%);
-  filter: blur(26px);
-  opacity: 0.92;
-  transform: scale(1.05);
+    linear-gradient(rgba(205, 214, 244, 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(205, 214, 244, 0.022) 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: linear-gradient(180deg, #000, transparent 82%);
 }
 
-.deck-grid {
-  z-index: -2;
-  background:
-    linear-gradient(rgba(205, 214, 244, 0.052) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(205, 214, 244, 0.046) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.74) 62%, transparent 100%);
+.signature-hero {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  box-sizing: border-box;
+  min-height: calc(100svh - 72px);
+  place-items: center;
+  padding: clamp(4.5rem, 10vh, 7rem) 1.25rem;
 }
 
-.academic-deck::before,
-.academic-deck::after {
+.signature-hero::after {
   content: '';
   position: absolute;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.academic-deck::before {
-  top: 13vh;
-  right: -12vw;
-  width: 52vw;
-  height: 34vh;
-  border: 1px solid rgba(var(--ctp-mocha-blue-rgb), 0.26);
-  transform: rotate(-16deg) skewX(-10deg);
-}
-
-.academic-deck::after {
-  left: -14vw;
-  bottom: 11vh;
-  width: 46vw;
-  height: 20vh;
-  border: 1px solid rgba(var(--ctp-mocha-lavender-rgb), 0.22);
-  transform: rotate(12deg) skewX(18deg);
+  right: 8vw;
+  bottom: 8vh;
+  left: 8vw;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(137, 180, 250, 0.34), transparent);
 }
 
 .research-link {
   position: absolute;
-  top: clamp(1rem, 3vw, 1.8rem);
-  left: clamp(1rem, 4vw, 3rem);
-  z-index: 6;
+  top: 1.4rem;
+  right: clamp(1rem, 4vw, 3rem);
   display: inline-flex;
+  min-height: 2.65rem;
   align-items: center;
-  min-height: 2.35rem;
-  padding: 0 0.88rem;
-  border: 1px solid rgba(var(--ctp-mocha-overlay0-rgb), 0.36);
+  padding: 0 0.95rem;
+  border: 1px solid var(--academic-border);
   border-radius: 999px;
-  color: rgba(205, 214, 244, 0.78);
-  background: rgba(var(--ctp-mocha-base-rgb), 0.46);
+  color: rgba(205, 214, 244, 0.72);
+  background: rgba(17, 17, 27, 0.48);
   font-family: 'Fira Code', monospace;
-  font-size: 0.72rem;
-  font-weight: 750;
+  font-size: 0.7rem;
   text-decoration: none;
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease,
-    background 0.2s ease;
 }
 
 .research-link:hover,
 .research-link:focus-visible {
-  border-color: rgba(var(--ctp-mocha-blue-rgb), 0.52);
-  color: var(--ctp-mocha-blue);
-  background: rgba(var(--ctp-mocha-surface0-rgb), 0.62);
-  outline: none;
-  transform: translateY(-2px);
+  border-color: rgba(137, 180, 250, 0.5);
+  color: #89dceb;
 }
 
-.deck-stage {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-}
-
-.deck-slide {
-  position: absolute;
-  inset: 0;
+.signature-copy {
   display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(18rem, 0.86fr);
-  gap: clamp(1.5rem, 5vw, 5rem);
-  align-items: center;
-  box-sizing: border-box;
-  padding:
-    clamp(4.6rem, 10vh, 6.8rem)
-    clamp(1.25rem, 7vw, 6.6rem)
-    clamp(5.6rem, 11vh, 7.2rem);
-}
-
-.deck-slide--signature {
-  display: grid;
+  width: min(900px, 100%);
   place-items: center;
-  grid-template-columns: 1fr;
   text-align: center;
 }
 
-.signature-slide {
-  display: grid;
-  place-items: center;
-  width: min(860px, 100%);
-}
-
-.slide-eyebrow,
-.deck-count,
-.deck-arrow,
-.progress-node,
-.metric-item span,
-.direction-card span,
-.timeline-item span,
-.link-board a {
+.signature-copy > p:first-child,
+.section-heading > p,
+.section-heading > div > p {
+  margin: 0;
+  color: rgba(137, 220, 235, 0.7);
   font-family: 'Fira Code', monospace;
-  letter-spacing: 0.06em;
+  font-size: 0.68rem;
+  font-weight: 760;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-}
-
-.slide-eyebrow {
-  margin: 0 0 1rem;
-  color: var(--ctp-mocha-sky);
-  font-size: 0.72rem;
-  font-weight: 800;
 }
 
 .signature-stage {
   position: relative;
   width: min(78vw, 720px);
   aspect-ratio: 460 / 149;
-  margin: clamp(1.2rem, 5vh, 3rem) 0 1rem;
+  margin: clamp(1.4rem, 5vh, 3rem) 0 0.7rem;
 }
 
 .signature-outline,
@@ -685,713 +424,703 @@ onBeforeUnmount(() => {
 }
 
 .signature-outline {
-  filter: drop-shadow(0 0 18px rgba(var(--ctp-mocha-blue-rgb), 0.35));
   clip-path: inset(0 100% 0 0);
+  filter: drop-shadow(0 0 18px rgba(137, 180, 250, 0.35));
   animation: signature-trace 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
 }
 
 .signature-fill {
-  opacity: 0;
-  filter:
-    drop-shadow(0 24px 58px rgba(0, 0, 0, 0.34))
-    drop-shadow(0 0 24px rgba(var(--ctp-mocha-lavender-rgb), 0.18));
   clip-path: inset(0 100% 0 0);
+  opacity: 0;
+  filter: drop-shadow(0 24px 58px rgba(0, 0, 0, 0.34)) drop-shadow(0 0 24px rgba(180, 190, 254, 0.18));
   animation:
     signature-fill 1.35s cubic-bezier(0.16, 1, 0.3, 1) 1.15s forwards,
     signature-settle 3s ease-in-out 2.2s infinite;
 }
 
-.enter-deck {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-height: 2.8rem;
-  padding: 0 1rem;
-  border: 1px solid rgba(var(--ctp-mocha-blue-rgb), 0.38);
-  border-radius: 999px;
-  color: var(--ctp-mocha-text);
-  background: rgba(var(--ctp-mocha-surface0-rgb), 0.52);
-  cursor: pointer;
-  font-weight: 800;
-  transition:
-    border-color 0.2s ease,
-    transform 0.2s ease,
-    background 0.2s ease;
-}
-
-.enter-deck:hover,
-.enter-deck:focus-visible {
-  border-color: rgba(var(--ctp-mocha-sky-rgb), 0.68);
-  background: rgba(var(--ctp-mocha-surface1-rgb), 0.62);
-  outline: none;
-  transform: translateY(-2px);
-}
-
-.slide-copy {
-  display: grid;
-  align-content: center;
-  max-width: 48rem;
-}
-
-.slide-copy h1 {
-  margin: 0;
-  color: rgba(245, 246, 255, 0.96);
-  font-family: 'Inter', 'LXGW WenKai', sans-serif;
-  font-size: clamp(3rem, 8.5vw, 7rem);
-  font-weight: 900;
-  line-height: 0.92;
-  letter-spacing: 0;
-}
-
-.slide-lead {
-  max-width: 42rem;
-  margin: clamp(1.1rem, 3vh, 1.8rem) 0 0;
-  color: rgba(205, 214, 244, 0.82);
-  font-family: 'LXGW WenKai', serif;
-  font-size: clamp(1rem, 1.5vw, 1.16rem);
-  font-weight: 560;
-  line-height: 1.82;
-}
-
-.metric-board,
-.direction-board,
-.interest-board,
-.markdown-page-deck,
-.publication-board,
-.statement-stack,
-.timeline-board,
-.conference-board,
-.link-board {
-  position: relative;
-  display: grid;
-  align-self: center;
-  border: 1px solid var(--deck-line);
-  border-radius: 8px;
-  background:
-    linear-gradient(145deg, rgba(var(--ctp-mocha-surface0-rgb), 0.68), rgba(var(--ctp-mocha-base-rgb), 0.28));
-  box-shadow:
-    0 28px 82px rgba(0, 0, 0, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.055);
-  overflow: hidden;
-}
-
-.metric-board::before,
-.direction-board::before,
-.interest-board::before,
-.markdown-page-deck::before,
-.publication-board::before,
-.statement-stack::before,
-.timeline-board::before,
-.conference-board::before,
-.link-board::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--ctp-mocha-blue), var(--ctp-mocha-lavender), transparent);
-}
-
-.metric-board {
-  grid-template-columns: 1fr;
-}
-
-.deck-slide--profile .statement-stack,
-.deck-slide--record .conference-board {
-  grid-column: 2;
-}
-
-.deck-slide--profile .statement-stack {
-  margin-top: -1rem;
-}
-
-.metric-item {
-  display: grid;
-  gap: 0.35rem;
-  padding: clamp(1.1rem, 3vw, 1.55rem);
-  border-bottom: 1px solid var(--deck-line);
-}
-
-.metric-item:last-child {
-  border-bottom: 0;
-}
-
-.metric-item span {
-  color: var(--ctp-mocha-blue);
-  font-size: clamp(1.25rem, 3vw, 2.2rem);
-  font-weight: 900;
-}
-
-.metric-item p,
-.direction-card p,
-.statement-stack p,
-.timeline-item p {
-  margin: 0;
-  color: rgba(205, 214, 244, 0.78);
-  font-size: 0.94rem;
-  line-height: 1.7;
-}
-
-.direction-board {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.direction-card {
-  display: grid;
-  gap: 0.7rem;
-  min-height: 10rem;
-  padding: clamp(1rem, 2.4vw, 1.35rem);
-  border-right: 1px solid var(--deck-line);
-  border-bottom: 1px solid var(--deck-line);
-}
-
-.direction-card:nth-child(2n) {
-  border-right: 0;
-}
-
-.direction-card:nth-last-child(-n + 2) {
-  border-bottom: 0;
-}
-
-.direction-card span {
-  color: var(--ctp-mocha-lavender);
-  font-size: 0.82rem;
-  font-weight: 850;
-}
-
-.interest-board {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.72rem;
-  padding: clamp(1rem, 2.6vw, 1.5rem);
-}
-
-.interest-board span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 3.4rem;
-  padding: 0.7rem 0.9rem;
-  border: 1px solid rgba(var(--ctp-mocha-blue-rgb), 0.18);
-  border-radius: 6px;
-  color: rgba(205, 214, 244, 0.88);
-  background: rgba(var(--ctp-mocha-surface1-rgb), 0.28);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.82rem;
-  font-weight: 760;
-  line-height: 1.4;
-}
-
-.markdown-page-deck {
-  grid-template-rows: 1fr auto;
-  min-height: min(54vh, 36rem);
-  padding: clamp(1rem, 2.4vw, 1.45rem);
-}
-
-.markdown-page {
-  display: grid;
-  align-content: start;
-  min-height: 0;
-}
-
-.markdown-page :deep(.academic-markdown),
-.markdown-page :deep(.markdown-renderer) {
-  margin: 0;
-}
-
-.markdown-page :deep(h1),
-.markdown-page :deep(h2) {
-  margin-top: 0;
-  font-size: clamp(1.08rem, 1.7vw, 1.38rem);
-}
-
-.markdown-page :deep(p),
-.markdown-page :deep(li) {
-  font-size: clamp(0.84rem, 1.2vw, 0.94rem);
-  line-height: 1.64;
-}
-
-.markdown-pager {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.65rem;
-  margin-top: 1rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid rgba(var(--ctp-mocha-overlay0-rgb), 0.22);
-}
-
-.markdown-pager button {
-  display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  place-items: center;
-  border: 1px solid rgba(var(--ctp-mocha-blue-rgb), 0.36);
-  border-radius: 999px;
-  color: rgba(205, 214, 244, 0.86);
-  background: rgba(var(--ctp-mocha-surface0-rgb), 0.52);
-  cursor: pointer;
-  font-weight: 900;
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease,
-    background 0.2s ease;
-}
-
-.markdown-pager button:disabled {
-  cursor: default;
-  opacity: 0.32;
-}
-
-.markdown-pager button:not(:disabled):hover,
-.markdown-pager button:focus-visible {
-  border-color: rgba(var(--ctp-mocha-sky-rgb), 0.72);
-  color: var(--ctp-mocha-sky);
-  background: rgba(var(--ctp-mocha-surface1-rgb), 0.62);
-  outline: none;
-  transform: translateY(-2px);
-}
-
-.markdown-pager span {
-  color: rgba(205, 214, 244, 0.74);
+.signature-role {
+  margin: 0 0 1.3rem;
+  color: rgba(205, 214, 244, 0.58);
   font-family: 'Fira Code', monospace;
   font-size: 0.72rem;
-  font-weight: 820;
-  letter-spacing: 0.08em;
-}
-
-.markdown-page-enter-active,
-.markdown-page-leave-active {
-  transition:
-    opacity 0.22s ease,
-    transform 0.22s ease;
-}
-
-.markdown-page-enter-from {
-  opacity: 0;
-  transform: translateX(1rem);
-}
-
-.markdown-page-leave-to {
-  opacity: 0;
-  transform: translateX(-1rem);
-}
-
-.publication-board {
-  padding: 0.75rem;
-  gap: 0.7rem;
-}
-
-.publication-item {
-  position: relative;
-  display: grid;
-  gap: 0.35rem;
-  padding: 1rem;
-  border: 1px solid var(--deck-line);
-  border-radius: 6px;
-  background: rgba(var(--ctp-mocha-base-rgb), 0.28);
-}
-
-.publication-item span,
-.publication-item small,
-.conference-item span {
-  color: var(--ctp-mocha-sky);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.68rem;
-  font-weight: 820;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.publication-item h2,
-.conference-item h2 {
-  margin: 0;
-  color: rgba(245, 246, 255, 0.92);
-  font-size: clamp(1.05rem, 1.6vw, 1.32rem);
-  line-height: 1.3;
+.enter-profile {
+  display: inline-flex;
+  min-height: 2.9rem;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0 1.05rem;
+  border: 1px solid rgba(137, 180, 250, 0.36);
+  border-radius: 999px;
+  color: #d8def8;
+  background: rgba(49, 50, 68, 0.48);
+  font-size: 0.82rem;
+  font-weight: 740;
+  text-decoration: none;
+  transition: border-color 0.22s ease, background-color 0.22s ease, transform 0.22s ease;
 }
 
-.publication-item p,
-.conference-item p,
-.highlight-line {
-  margin: 0;
-  color: rgba(205, 214, 244, 0.76);
-  font-size: 0.9rem;
-  line-height: 1.65;
+.enter-profile:hover,
+.enter-profile:focus-visible {
+  border-color: rgba(137, 220, 235, 0.62);
+  background: rgba(69, 71, 90, 0.62);
+  transform: translateY(-2px);
 }
 
-.publication-item a {
-  position: absolute;
-  right: 0.8rem;
-  top: 0.8rem;
-  color: var(--ctp-mocha-blue);
+@keyframes signature-trace {
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes signature-fill {
+  0% { clip-path: inset(0 100% 0 0); opacity: 0; }
+  100% { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+@keyframes signature-settle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.academic-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  width: min(100% - 3rem, 1200px);
+  margin: 0 auto;
+  gap: clamp(2.5rem, 6vw, 6rem);
+  padding: clamp(4rem, 8vw, 7rem) 0 clamp(4rem, 8vw, 7rem);
+}
+
+.academic-nav {
+  position: sticky;
+  top: 6rem;
+  display: grid;
+  align-self: start;
+  gap: 0.1rem;
+}
+
+.academic-nav > p {
+  margin: 0 0 0.8rem;
+  color: rgba(166, 173, 200, 0.42);
   font-family: 'Fira Code', monospace;
-  font-size: 0.7rem;
-  font-weight: 820;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+}
+
+.academic-nav a {
+  display: grid;
+  grid-template-columns: 1.7rem 1fr;
+  gap: 0.45rem;
+  padding: 0.65rem 0.2rem;
+  border-bottom: 1px solid rgba(180, 190, 254, 0.08);
+  color: rgba(205, 214, 244, 0.56);
+  font-size: 0.72rem;
   text-decoration: none;
 }
 
-.highlight-line {
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba(var(--ctp-mocha-lavender-rgb), 0.18);
-  border-radius: 6px;
-  background: rgba(var(--ctp-mocha-lavender-rgb), 0.08);
+.academic-nav a:hover,
+.academic-nav a:focus-visible {
+  color: #89dceb;
 }
 
-.statement-stack {
-  gap: 0;
+.academic-nav span {
+  color: rgba(137, 180, 250, 0.58);
+  font-family: 'Fira Code', monospace;
 }
 
-.statement-stack p {
-  position: relative;
-  padding: clamp(1rem, 2.4vw, 1.45rem) clamp(1.1rem, 2.8vw, 1.75rem);
-  border-bottom: 1px solid var(--deck-line);
+.academic-content {
+  min-width: 0;
 }
 
-.statement-stack p:last-child {
+.academic-status,
+.academic-notice {
+  margin-bottom: 2rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--academic-border);
+  border-radius: 0.75rem;
+  color: rgba(205, 214, 244, 0.7);
+  background: rgba(30, 30, 46, 0.58);
+  font-size: 0.8rem;
+}
+
+.academic-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.academic-status span {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #89b4fa;
+  box-shadow: 0 0 1rem rgba(137, 180, 250, 0.5);
+  animation: status-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  50% { opacity: 0.35; }
+}
+
+.academic-section {
+  scroll-margin-top: 6rem;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 40rem;
+}
+
+.academic-section + .academic-section {
+  margin-top: clamp(5rem, 11vw, 9rem);
+}
+
+.section-heading {
+  margin-bottom: clamp(1.6rem, 4vw, 2.6rem);
+}
+
+.section-heading--split {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.section-heading h2 {
+  margin: 0.35rem 0 0;
+  color: #f1f3ff;
+  font-size: clamp(2.2rem, 5vw, 4.6rem);
+  font-weight: 790;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.section-heading--split > span {
+  max-width: 22rem;
+  color: rgba(205, 214, 244, 0.52);
+  font-family: 'LXGW WenKai', serif;
+  font-size: 0.85rem;
+  line-height: 1.65;
+  text-align: right;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.72fr) minmax(0, 1.28fr);
+  gap: 1rem;
+}
+
+.identity-card,
+.profile-statements,
+.work-document,
+.publication-list article,
+.empty-state,
+.record-grid > div,
+.contact-grid a {
+  border: 1px solid var(--academic-border);
+  border-radius: 1rem;
+  background: var(--academic-panel);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.identity-card {
+  margin: 0;
+  overflow: hidden;
+}
+
+.identity-card div {
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid rgba(180, 190, 254, 0.1);
+}
+
+.identity-card div:last-child {
   border-bottom: 0;
 }
 
-.statement-stack p::before {
+.identity-card dt {
+  margin-bottom: 0.35rem;
+  color: rgba(137, 220, 235, 0.58);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.identity-card dd {
+  margin: 0;
+  color: #e3e7fb;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.4;
+}
+
+.profile-statements {
+  display: grid;
+  align-content: center;
+  overflow: hidden;
+}
+
+.profile-statements p {
+  position: relative;
+  margin: 0;
+  padding: 1rem 1.2rem 1rem 1.45rem;
+  border-bottom: 1px solid rgba(180, 190, 254, 0.1);
+  color: rgba(205, 214, 244, 0.75);
+  font-family: 'LXGW WenKai', serif;
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+
+.profile-statements p:last-child {
+  border-bottom: 0;
+}
+
+.profile-statements p::before {
   content: '';
   position: absolute;
   top: 1.45rem;
   left: 0;
-  width: 4px;
-  height: 1.4rem;
-  background: var(--ctp-mocha-blue);
+  width: 0.22rem;
+  height: 1.3rem;
+  background: linear-gradient(#89b4fa, #cba6f7);
 }
 
-.timeline-board {
-  gap: 0;
-}
-
-.conference-board {
-  gap: 0;
-  margin-top: -0.75rem;
-  border-top: 0;
-  background: rgba(var(--ctp-mocha-base-rgb), 0.38);
-}
-
-.conference-item {
+.interest-list {
   display: grid;
-  gap: 0.35rem;
-  padding: clamp(1rem, 2.4vw, 1.35rem);
-  border-bottom: 1px solid var(--deck-line);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.conference-item:last-child {
-  border-bottom: 0;
-}
-
-.timeline-item {
+.interest-list li {
   display: grid;
-  grid-template-columns: minmax(7rem, 0.34fr) 1fr;
-  gap: 1rem;
-  padding: clamp(1rem, 2.4vw, 1.45rem);
-  border-bottom: 1px solid var(--deck-line);
+  grid-template-columns: 2rem minmax(0, 1fr);
+  min-height: 4.7rem;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--academic-border);
+  border-radius: 0.85rem;
+  color: rgba(225, 230, 252, 0.86);
+  background: rgba(30, 30, 46, 0.54);
+  font-size: 0.88rem;
 }
 
-.timeline-item:last-child {
-  border-bottom: 0;
+.interest-list span {
+  color: rgba(137, 180, 250, 0.58);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.68rem;
 }
 
-.timeline-item span {
-  color: var(--ctp-mocha-sky);
-  font-size: 0.76rem;
-  font-weight: 850;
+.work-document {
+  overflow: hidden;
+  padding: clamp(1.2rem, 3vw, 2.2rem);
 }
 
-.link-board {
-  padding: 0.6rem;
+.work-document :deep(.markdown-body) {
+  max-width: 72ch;
+  margin: 0;
+  padding: 0;
+  font-size: clamp(0.98rem, 1.2vw, 1.08rem);
+  line-height: 1.85;
 }
 
-.link-board a {
+.work-document :deep(.markdown-body h1),
+.work-document :deep(.markdown-body h3) {
+  font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+}
+
+.work-document :deep(.markdown-body h2),
+.work-document :deep(.markdown-body h4) {
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+.publication-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.publication-list article {
+  padding: 1.1rem 1.2rem;
+}
+
+.publication-meta {
   display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: rgba(137, 220, 235, 0.64);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.publication-list h3 {
+  margin: 0.65rem 0 0.35rem;
+  color: #eef1ff;
+  font-size: 1.2rem;
+}
+
+.publication-list p,
+.publication-list small {
+  margin: 0;
+  color: rgba(205, 214, 244, 0.66);
+  font-size: 0.82rem;
+}
+
+.publication-list small {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.publication-list a {
+  display: inline-flex;
+  margin-top: 0.8rem;
+  color: #89b4fa;
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.highlight-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.highlight-list p {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-left: 2px solid #cba6f7;
+  color: rgba(205, 214, 244, 0.72);
+  background: rgba(203, 166, 247, 0.07);
+}
+
+.empty-state {
+  padding: 1.4rem;
+  color: rgba(205, 214, 244, 0.62);
+}
+
+.empty-state strong {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: rgba(238, 241, 255, 0.86);
+}
+
+.empty-state p {
+  max-width: 62ch;
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.65;
+}
+
+.empty-state--compact {
+  border: 0;
+  box-shadow: none;
+  background: rgba(49, 50, 68, 0.32);
+  font-size: 0.82rem;
+}
+
+.record-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.record-grid > div {
+  min-width: 0;
+  padding: 1.1rem;
+}
+
+.record-grid > div > h3 {
+  margin: 0 0 1rem;
+  color: rgba(137, 220, 235, 0.72);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.experience-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0 0 0 1.25rem;
+  border-left: 1px solid rgba(137, 180, 250, 0.28);
+  list-style: none;
+}
+
+.experience-list li {
+  position: relative;
+  padding: 0 0 1.35rem 0.25rem;
+}
+
+.experience-list li::before {
+  content: '';
+  position: absolute;
+  top: 0.3rem;
+  left: -1.6rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid #89b4fa;
+  border-radius: 50%;
+  background: #181825;
+}
+
+.experience-list time,
+.conference-list time {
+  color: rgba(137, 180, 250, 0.62);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.64rem;
+}
+
+.experience-list h4,
+.conference-list h4 {
+  margin: 0.35rem 0;
+  color: #eef1ff;
+  font-size: 1rem;
+}
+
+.experience-list p,
+.conference-list p {
+  margin: 0;
+  color: rgba(205, 214, 244, 0.68);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.experience-list span {
+  display: block;
+  margin-top: 0.5rem;
+  color: rgba(205, 214, 244, 0.52);
+  font-family: 'LXGW WenKai', serif;
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+
+.conference-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.conference-list article {
+  padding: 0.85rem;
+  border: 1px solid rgba(180, 190, 254, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(49, 50, 68, 0.28);
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.contact-grid a {
+  display: flex;
+  min-height: 4rem;
   align-items: center;
   justify-content: space-between;
-  min-height: 3.6rem;
+  gap: 1rem;
   padding: 0 1rem;
-  border-bottom: 1px solid var(--deck-line);
-  border-radius: 6px;
-  color: rgba(205, 214, 244, 0.82);
+  color: rgba(225, 230, 252, 0.82);
   text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 820;
-  transition:
-    color 0.2s ease,
-    background 0.2s ease,
-    transform 0.2s ease;
+  transition: border-color 0.22s ease, transform 0.22s ease, background-color 0.22s ease;
 }
 
-.link-board a:last-child {
-  border-bottom: 0;
+.contact-grid a:hover,
+.contact-grid a:focus-visible {
+  border-color: rgba(137, 220, 235, 0.46);
+  background: rgba(49, 50, 68, 0.72);
+  transform: translateY(-2px);
 }
 
-.link-board a:hover,
-.link-board a:focus-visible {
-  color: var(--ctp-mocha-text);
-  background: rgba(var(--ctp-mocha-blue-rgb), 0.14);
-  outline: none;
-  transform: translateX(0.35rem);
+.contact-grid i {
+  color: #89dceb;
+  font-style: normal;
 }
 
-.deck-controls {
+.sr-only {
   position: absolute;
-  left: 50%;
-  bottom: clamp(1rem, 3vh, 1.8rem);
-  z-index: 8;
-  display: grid;
-  grid-template-columns: auto minmax(8rem, 16rem) auto auto;
-  gap: 0.65rem;
-  align-items: center;
-  transform: translateX(-50%);
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.deck-progress {
-  display: flex;
-  gap: 0.36rem;
-  align-items: center;
-  padding: 0.42rem;
-  border: 1px solid rgba(var(--ctp-mocha-overlay0-rgb), 0.30);
-  border-radius: 999px;
-  background: rgba(var(--ctp-mocha-base-rgb), 0.62);
-}
-
-.progress-node {
-  width: 1.1rem;
-  height: 1.1rem;
-  border: 1px solid rgba(205, 214, 244, 0.18);
-  border-radius: 999px;
-  background: rgba(var(--ctp-mocha-surface1-rgb), 0.46);
-  cursor: pointer;
-  transition:
-    width 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.progress-node.active {
-  width: 2.4rem;
-  border-color: rgba(var(--ctp-mocha-blue-rgb), 0.54);
-  background: linear-gradient(90deg, var(--ctp-mocha-blue), var(--ctp-mocha-lavender));
-}
-
-.deck-arrow {
-  display: grid;
-  width: 2.45rem;
-  height: 2.45rem;
-  place-items: center;
-  border: 1px solid rgba(var(--ctp-mocha-overlay0-rgb), 0.34);
-  border-radius: 999px;
-  color: rgba(205, 214, 244, 0.82);
-  background: rgba(var(--ctp-mocha-base-rgb), 0.62);
-  cursor: pointer;
-  font-weight: 900;
-}
-
-.deck-arrow:disabled {
-  cursor: default;
-  opacity: 0.36;
-}
-
-.deck-arrow:not(:disabled):hover,
-.deck-arrow:focus-visible {
-  border-color: rgba(var(--ctp-mocha-blue-rgb), 0.54);
-  color: var(--ctp-mocha-blue);
-  outline: none;
-}
-
-.deck-count {
-  min-width: 4.2rem;
-  color: rgba(205, 214, 244, 0.62);
-  font-size: 0.72rem;
-  font-weight: 820;
-}
-
-.deck-forward-enter-from {
-  opacity: 0;
-  transform: translateY(58px) rotateX(-6deg) scale(0.985);
-  filter: blur(10px);
-}
-
-.deck-forward-enter-active,
-.deck-forward-leave-active,
-.deck-backward-enter-active,
-.deck-backward-leave-active {
-  transition:
-    opacity 0.56s ease,
-    transform 0.56s cubic-bezier(0.18, 0.9, 0.1, 1.16),
-    filter 0.56s ease;
-}
-
-.deck-forward-leave-to {
-  opacity: 0;
-  transform: translateY(-58px) rotateX(6deg) scale(0.985);
-  filter: blur(10px);
-}
-
-.deck-backward-enter-from {
-  opacity: 0;
-  transform: translateY(-58px) rotateX(6deg) scale(0.985);
-  filter: blur(10px);
-}
-
-.deck-backward-leave-to {
-  opacity: 0;
-  transform: translateY(58px) rotateX(-6deg) scale(0.985);
-  filter: blur(10px);
-}
-
-@keyframes signature-trace {
-  0% {
-    clip-path: inset(0 100% 0 0);
-    opacity: 0.4;
+@media (max-width: 900px) {
+  .signature-hero {
+    min-height: calc(100svh - 68px);
   }
-  100% {
-    clip-path: inset(0 0 0 0);
-    opacity: 1;
-  }
-}
 
-@keyframes signature-fill {
-  0% {
-    clip-path: inset(0 100% 0 0);
-    opacity: 0;
-  }
-  100% {
-    clip-path: inset(0 0 0 0);
-    opacity: 1;
-  }
-}
-
-@keyframes signature-settle {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-0.25rem);
-  }
-}
-
-@media (max-width: 980px) {
-  .deck-slide {
+  .academic-shell {
     grid-template-columns: 1fr;
-    align-content: center;
-    gap: 1.25rem;
+    width: min(100% - 2rem, 1200px);
+    gap: 2rem;
   }
 
-  .deck-slide--profile .statement-stack,
-  .deck-slide--record .conference-board {
-    grid-column: auto;
+  .academic-nav {
+    position: sticky;
+    top: 68px;
+    z-index: 8;
+    display: flex;
+    overflow-x: auto;
+    gap: 0.35rem;
+    margin-inline: -1rem;
+    padding: 0.7rem 1rem;
+    border-block: 1px solid rgba(180, 190, 254, 0.1);
+    background: rgba(13, 14, 24, 0.9);
+    backdrop-filter: blur(12px);
+    scrollbar-width: thin;
   }
 
-  .slide-copy h1 {
-    font-size: clamp(2.8rem, 12vw, 5rem);
+  .academic-nav > p {
+    display: none;
+  }
+
+  .academic-nav a {
+    min-width: max-content;
+    grid-template-columns: auto 1fr;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid rgba(180, 190, 254, 0.12);
+    border-radius: 999px;
+    background: rgba(30, 30, 46, 0.62);
   }
 }
 
-@media (max-width: 680px) {
-  .academic-deck {
-    height: calc(100svh - 68px);
+@media (max-width: 720px) {
+  .signature-hero {
+    padding-top: 4rem;
   }
 
   .research-link {
-    min-height: 2.15rem;
-    font-size: 0.66rem;
-  }
-
-  .deck-slide {
-    padding: 4.4rem 1rem 5.4rem;
+    top: 0.8rem;
   }
 
   .signature-stage {
-    width: min(92vw, 520px);
+    width: min(92vw, 720px);
   }
 
-  .direction-board {
+  .section-heading--split,
+  .profile-layout,
+  .record-grid {
     grid-template-columns: 1fr;
   }
 
-  .direction-card,
-  .direction-card:nth-child(2n),
-  .direction-card:nth-last-child(-n + 2) {
-    min-height: auto;
-    border-right: 0;
-    border-bottom: 1px solid var(--deck-line);
+  .section-heading--split {
+    display: grid;
+    gap: 0.75rem;
   }
 
-  .direction-card:last-child {
-    border-bottom: 0;
+  .section-heading--split > span {
+    max-width: 34rem;
+    text-align: left;
   }
 
-  .timeline-item {
+  .interest-list,
+  .contact-grid {
     grid-template-columns: 1fr;
   }
 
-  .deck-controls {
-    grid-template-columns: auto minmax(7.5rem, 1fr) auto;
-    width: calc(100% - 1.5rem);
+  .work-document {
+    padding: 1rem;
   }
 
-  .deck-count {
-    display: none;
+  .work-document :deep(.markdown-body) {
+    font-size: 0.96rem;
   }
 }
 
 @media (max-width: 420px) {
-  .slide-lead,
-  .metric-item p,
-  .direction-card p,
-  .statement-stack p,
-  .timeline-item p {
-    font-size: 0.88rem;
-    line-height: 1.62;
+  .signature-copy > p:first-child {
+    font-size: 0.6rem;
   }
 
-  .deck-slide {
-    padding-top: 4.2rem;
+  .signature-role {
+    font-size: 0.65rem;
   }
 
-  .metric-board,
-  .direction-board,
-  .interest-board,
-  .publication-board,
-  .statement-stack,
-  .timeline-board,
-  .conference-board,
-  .link-board {
-    max-height: 44vh;
-    overflow-y: auto;
+  .academic-shell {
+    width: min(100% - 1.25rem, 1200px);
   }
 
-  .markdown-page-deck {
-    min-height: 46vh;
+  .academic-nav {
+    margin-inline: -0.625rem;
+    padding-inline: 0.625rem;
   }
 
-  .markdown-pager {
-    justify-content: center;
+  .section-heading h2 {
+    font-size: clamp(2rem, 12vw, 3rem);
+  }
+
+  .profile-statements p,
+  .identity-card div,
+  .record-grid > div {
+    padding-inline: 0.9rem;
+  }
+}
+
+@media (max-height: 620px) and (orientation: landscape) {
+  .signature-hero {
+    min-height: 34rem;
+    padding-block: 3.5rem;
+  }
+
+  .signature-stage {
+    width: min(60vw, 560px);
+    margin-block: 0.8rem 0.35rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .signature-outline,
-  .signature-fill,
-  .enter-deck,
-  .deck-forward-enter-active,
-  .deck-forward-leave-active,
-  .deck-backward-enter-active,
-  .deck-backward-leave-active,
-  .progress-node {
-    transition: none;
+  .signature-fill {
+    clip-path: none;
+    opacity: 1;
     animation: none;
   }
 
-  .signature-outline,
-  .signature-fill {
-    clip-path: inset(0 0 0 0);
-    opacity: 1;
+  .academic-status span,
+  .enter-profile,
+  .contact-grid a {
+    animation: none;
+    transition: none;
+  }
+
+  .enter-profile:hover,
+  .enter-profile:focus-visible,
+  .contact-grid a:hover,
+  .contact-grid a:focus-visible {
+    transform: none;
+  }
+}
+
+@media print {
+  .signature-hero {
+    min-height: auto;
+    padding-block: 2rem;
+  }
+
+  .academic-nav,
+  .research-link,
+  .enter-profile,
+  .academic-atmosphere {
+    display: none;
+  }
+
+  .academic-shell {
+    display: block;
+    width: 100%;
+  }
+
+  .academic-section {
+    content-visibility: visible;
+    break-inside: avoid;
   }
 }
 </style>
