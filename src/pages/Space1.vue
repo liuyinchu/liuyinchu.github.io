@@ -227,6 +227,14 @@ function handleOutsidePointer(event) {
               </RouterLink>
             </div>
           </div>
+
+          <RouterLink class="alternate-index" to="/space4">
+            <span aria-hidden="true">✦</span>
+            <span>
+              <strong>星穹文库</strong>
+              <small>另一种浏览</small>
+            </span>
+          </RouterLink>
         </div>
       </div>
     </section>
@@ -511,7 +519,7 @@ function handleOutsidePointer(event) {
 .hero-tools {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 0.9rem;
   min-width: 0;
 }
@@ -614,6 +622,50 @@ function handleOutsidePointer(event) {
   border-radius: 1.1rem;
   background: rgba(30, 30, 46, 0.97);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+}
+
+.alternate-index {
+  display: inline-flex;
+  min-height: 3.65rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(203, 166, 247, 0.2);
+  border-radius: 999px;
+  color: rgba(205, 214, 244, 0.86);
+  background: linear-gradient(135deg, rgba(203, 166, 247, 0.13), rgba(137, 180, 250, 0.08));
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.alternate-index > span:first-child {
+  color: #cba6f7;
+  transition: rotate 0.35s ease;
+}
+
+.alternate-index > span:last-child {
+  display: grid;
+  gap: 0.05rem;
+}
+
+.alternate-index strong {
+  font-size: 0.82rem;
+}
+
+.alternate-index small {
+  color: rgba(205, 214, 244, 0.48);
+  font-size: 0.64rem;
+}
+
+.alternate-index:hover,
+.alternate-index:focus-visible {
+  border-color: rgba(203, 166, 247, 0.46);
+  color: #f5f6ff;
+}
+
+.alternate-index:hover > span:first-child,
+.alternate-index:focus-visible > span:first-child {
+  rotate: 72deg;
 }
 
 .directory-link {
@@ -913,8 +965,13 @@ function handleOutsidePointer(event) {
   }
 
   .directory-wrap,
-  .directory-button {
+  .directory-button,
+  .alternate-index {
     width: 100%;
+  }
+
+  .alternate-index {
+    justify-content: center;
   }
 
   .directory-panel {
@@ -985,6 +1042,10 @@ function handleOutsidePointer(event) {
   .featured-card img,
   .side-card img,
   .latest-card img {
+    transition: none;
+  }
+
+  .alternate-index > span:first-child {
     transition: none;
   }
 }

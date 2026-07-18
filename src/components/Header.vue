@@ -73,7 +73,7 @@ const navItems = [
   {
     label: '随记',
     to: '/space1',
-    match: ['/space1'],
+    match: ['/space1', '/space4'],
   },
   {
     label: '资源链接',

@@ -7,6 +7,7 @@ import Resource from '../pages/Resource.vue'
 import Space1 from '../pages/Space1.vue'           
 import Space2 from '../pages/Space2.vue' 
 import Space3 from '../pages/Space3.vue'          
+import Space4 from '../pages/Space4.vue'
 import VisitorCenter from '../pages/VisitorCenter.vue'
 import ArticleView from '../pages/ArticleView.vue' 
 import About from '../pages/About.vue'
@@ -44,6 +45,7 @@ const routes = [
   { path: '/space1', component: Space1 },
   { path: '/space2', component: Space2 },
   { path: '/space3', component: Space3 },
+  { path: '/space4', component: Space4 },
   { path: '/visitor-center', component: VisitorCenter },
   { path: '/space1/:id', component: ArticleView },
   { path: '/about', component: About },
