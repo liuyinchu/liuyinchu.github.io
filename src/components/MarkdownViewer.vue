@@ -89,12 +89,26 @@ const md = new MarkdownIt({
   highlight: renderCodeBlock,
 })
 
+const headingAnchorIcon = `
+  <svg class="header-anchor-icon" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
+    stroke-linejoin="round" aria-hidden="true" focusable="false">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+  </svg>
+`
+
 md.use(mdAnchor, {
   level: [1, 2, 3],
-  permalink: mdAnchor.permalink.ariaHidden({
+  permalink: mdAnchor.permalink.linkInsideHeader({
     placement: 'before',
-    symbol: '#',
+    symbol: headingAnchorIcon,
     class: 'header-anchor',
+    ariaHidden: false,
+    renderAttrs: () => ({
+      'aria-label': '定位到此标题',
+      title: '定位到此标题',
+    }),
   }),
 })
   .use(markdownItAttrs)
@@ -518,18 +532,36 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body :deep(.header-anchor) {
-  margin-right: 0.45rem;
+  display: inline-grid;
+  width: 1.08em;
+  height: 1.08em;
+  margin-right: 0.42rem;
+  place-items: center;
   border: 0;
-  color: rgba(137, 180, 250, 0.72);
+  border-radius: 0.34em;
+  color: #89b4fa;
+  background: transparent;
+  box-shadow: none;
   text-decoration: none;
-  opacity: 1;
-  transition: color 0.2s ease;
+  opacity: 0.68;
+  transform: translateY(0.08em) scale(0.94);
+  transition: opacity 180ms ease, transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.markdown-body :deep(.header-anchor-icon) {
+  width: 0.9em;
+  height: 0.9em;
 }
 
 .markdown-body :deep(h1:hover .header-anchor),
 .markdown-body :deep(h2:hover .header-anchor),
-.markdown-body :deep(h3:hover .header-anchor) {
-  color: #89dceb;
+.markdown-body :deep(h3:hover .header-anchor),
+.markdown-body :deep(.header-anchor:focus-visible) {
+  color: #89b4fa;
+  opacity: 1;
+  transform: translateY(0.08em) scale(1);
+  background-color: rgba(137, 180, 250, 0.1);
+  box-shadow: 0 0 0 1px rgba(137, 180, 250, 0.2), 0 5px 16px rgba(137, 180, 250, 0.12);
 }
 
 .markdown-body :deep(.md-text-link) {

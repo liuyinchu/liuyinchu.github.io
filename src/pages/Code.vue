@@ -49,7 +49,7 @@
         </nav>
 
         <div class="search-box">
-          <i class="search-icon">🔍</i>
+          <SiteIcon name="search" class="search-icon" />
           <input
             v-model.trim="query"
             type="search"
@@ -96,6 +96,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import SiteIcon from '../components/common/SiteIcon.vue'
 
 /** 数据状态 */
 const loading = ref(true)
@@ -412,7 +413,8 @@ const filtered = computed(() => {
 .search-icon {
   position: absolute;
   left: 12px;
-  font-style: normal;
+  width: 1rem;
+  height: 1rem;
   opacity: 0.5;
   font-size: 0.9rem;
 }

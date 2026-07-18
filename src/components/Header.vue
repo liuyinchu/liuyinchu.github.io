@@ -22,7 +22,8 @@
           :to="item.to"
           :class="{ 'is-active': isActive(item) }"
         >
-          {{ item.label }}
+          <SiteIcon :name="item.icon" class="nav-icon" />
+          <span>{{ item.label }}</span>
         </RouterLink>
       </nav>
 
@@ -58,7 +59,8 @@
             :style="{ '--i': index + 1 }"
             @click="closeMenu"
           >
-            {{ item.label }}
+            <SiteIcon :name="item.icon" class="nav-icon" />
+            <span>{{ item.label }}</span>
           </RouterLink>
         </nav>
       </Transition>
@@ -69,20 +71,24 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import SiteIcon from './common/SiteIcon.vue'
 
 const navItems = [
   {
     label: '随记',
+    icon: 'journal',
     to: '/space1',
     match: ['/space1', '/space4'],
   },
   {
     label: '说说',
+    icon: 'talk',
     to: '/talk',
     match: ['/talk'],
   },
   {
     label: '资源链接',
+    icon: 'resources',
     to: '/rd',
     match: [
       '/rd',
@@ -97,6 +103,7 @@ const navItems = [
   },
   {
     label: '代码与项目',
+    icon: 'code',
     to: '/code',
     match: [
       '/code',
@@ -109,11 +116,13 @@ const navItems = [
   },
   {
     label: '赛博会客厅',
+    icon: 'lounge',
     to: '/space3',
     match: ['/space2', '/space3', '/visitor-center'],
   },
   {
     label: '关于',
+    icon: 'about',
     to: '/about',
     match: ['/about', '/credit', '/academic', '/research', '/academic-plot-guide'],
   },
@@ -359,6 +368,7 @@ onUnmounted(() => {
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 0.38rem;
   min-height: 42px;
   color: rgba(205, 214, 244, 0.72);
   font-family: 'LXGW WenKai', 'Inter', system-ui, sans-serif;
@@ -367,6 +377,20 @@ onUnmounted(() => {
   line-height: 1;
   text-decoration: none;
   transition: color 0.22s ease, text-shadow 0.22s ease;
+}
+
+.nav-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: rgba(137, 180, 250, 0.7);
+  transition: color 0.22s ease, transform 0.22s ease;
+}
+
+.desktop-menu a:hover .nav-icon,
+.desktop-menu a:focus-visible .nav-icon,
+.desktop-menu a.is-active .nav-icon {
+  color: #b4befe;
+  transform: translateY(-1px);
 }
 
 .desktop-menu a::after {
@@ -498,6 +522,9 @@ onUnmounted(() => {
 }
 
 .mobile-menu-container a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
   color: rgba(245, 246, 255, 0.78);
   font-family: 'LXGW WenKai', 'Inter', system-ui, sans-serif;
   font-size: clamp(1.55rem, 9vw, 2.25rem);
@@ -508,6 +535,11 @@ onUnmounted(() => {
   transform: translateY(18px);
   animation: mobileLinkIn 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   animation-delay: calc(var(--i) * 0.045s);
+}
+
+.mobile-menu-container .nav-icon {
+  width: 1.15em;
+  height: 1.15em;
 }
 
 .mobile-menu-container a.is-active,

@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import SiteIcon from '../common/SiteIcon.vue'
 
 defineProps({
   articles: { type: Array, default: () => [] },
@@ -54,7 +55,7 @@ function handleRailWheel(event) {
           :aria-pressed="isPaused.toString()"
           @click="isPaused = !isPaused"
         >
-          <span aria-hidden="true">{{ isPaused ? '▶' : 'Ⅱ' }}</span>
+          <SiteIcon :name="isPaused ? 'play' : 'pause'" class="rail-control-icon" />
           {{ isPaused ? '继续滚动' : '暂停滚动' }}
         </button>
       </div>
@@ -160,6 +161,11 @@ function handleRailWheel(event) {
 .rail-heading button:focus-visible {
   border-color: rgba(137, 180, 250, 0.46);
   color: #cdd6f4;
+}
+
+.rail-control-icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .rail-viewport {

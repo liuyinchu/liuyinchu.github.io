@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import SiteIcon from '../common/SiteIcon.vue'
 
 const ROTATION_INTERVAL = 7600
 const WHEEL_THRESHOLD = 24
@@ -164,7 +165,10 @@ onBeforeUnmount(() => {
     @pointerup="handlePointerUp"
     @pointercancel="pointerStartX = null"
   >
-    <span class="talk-ticker__label">说说</span>
+    <span class="talk-ticker__label">
+      <SiteIcon name="talk" />
+      说说
+    </span>
 
     <button
       class="talk-ticker__control"
@@ -172,7 +176,7 @@ onBeforeUnmount(() => {
       aria-label="上一条说说"
       @click="step(-1); restartRotation()"
     >
-      ‹
+      <SiteIcon name="chevron-left" />
     </button>
 
     <RouterLink class="talk-ticker__entry" to="/talk">
@@ -191,7 +195,7 @@ onBeforeUnmount(() => {
       aria-label="下一条说说"
       @click="step(1); restartRotation()"
     >
-      ›
+      <SiteIcon name="chevron-right" />
     </button>
   </section>
 </template>
@@ -227,10 +231,18 @@ onBeforeUnmount(() => {
 }
 
 .talk-ticker__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   color: #89b4fa;
   font-size: 0.72rem;
   font-weight: 780;
   letter-spacing: 0.14em;
+}
+
+.talk-ticker__label :deep(.site-icon) {
+  width: 1rem;
+  height: 1rem;
 }
 
 .talk-ticker__entry {
@@ -274,10 +286,14 @@ onBeforeUnmount(() => {
   color: rgba(205, 214, 244, 0.72);
   background: rgba(49, 50, 68, 0.52);
   font: inherit;
-  font-size: 1.55rem;
   line-height: 1;
   cursor: pointer;
   transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.talk-ticker__control :deep(.site-icon) {
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .talk-ticker__control:hover,

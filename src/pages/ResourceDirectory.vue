@@ -10,9 +10,7 @@
         
         <div class="search-container" :class="{ 'is-active': isSearchFocused || searchQuery }">
           <div class="search-input-wrapper">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <SiteIcon name="search" class="search-icon" />
             
             <input 
               type="text" 
@@ -73,7 +71,8 @@
         >
           <div class="card-header">
             <h2 class="card-title" @click="navigateToCategory(cat.routePath)">
-              <span class="icon-placeholder">#</span> {{ cat.label }}
+              <SiteIcon :name="cat.icon" class="category-icon" />
+              <span>{{ cat.label }}</span>
             </h2>
             <button class="more-btn" type="button" @click="navigateToCategory(cat.routePath)">
               View All
@@ -112,17 +111,18 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import SiteIcon from '../components/common/SiteIcon.vue';
 
 const router = useRouter();
 
 // --- 配置区域 ---
 const categoryConfig = [
-  { id: 'literature', label: '文献', file: 'literature.json', routePath: '/rliterature' },
-  { id: 'programming', label: '编程', file: 'programming.json', routePath: '/rprogramming' },
-  { id: 'computer', label: '计算机', file: 'computer.json', routePath: '/rcomputer' },
-  { id: 'materials', label: '资料', file: 'materials.json', routePath: '/rmaterials' },
-  { id: 'tools', label: '工具', file: 'tools.json', routePath: '/rtools' },
-  { id: 'files', label: '文件', file: 'files.json', routePath: '/rfiles' }
+  { id: 'literature', label: '文献', icon: 'literature', file: 'literature.json', routePath: '/rliterature' },
+  { id: 'programming', label: '编程', icon: 'programming', file: 'programming.json', routePath: '/rprogramming' },
+  { id: 'computer', label: '计算机', icon: 'computer', file: 'computer.json', routePath: '/rcomputer' },
+  { id: 'materials', label: '资料', icon: 'materials', file: 'materials.json', routePath: '/rmaterials' },
+  { id: 'tools', label: '工具', icon: 'tools', file: 'tools.json', routePath: '/rtools' },
+  { id: 'files', label: '文件', icon: 'files', file: 'files.json', routePath: '/rfiles' }
 ];
 
 // --- 响应式数据 ---
@@ -480,6 +480,9 @@ onMounted(() => {
 }
 
 .card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
   font-size: 1.4rem;
   margin: 0;
   color: var(--ctp-lavender);
@@ -490,10 +493,10 @@ onMounted(() => {
   color: var(--ctp-mauve);
 }
 
-.icon-placeholder {
-  color: var(--ctp-overlay0);
-  margin-right: 4px;
-  font-weight: normal;
+.category-icon {
+  width: 1.15em;
+  height: 1.15em;
+  color: var(--ctp-blue);
 }
 
 .more-btn {

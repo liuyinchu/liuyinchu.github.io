@@ -27,7 +27,8 @@
               class="footer-section"
             >
               <RouterLink class="footer-column-title" :to="group.to">
-                {{ group.title }}
+                <SiteIcon :name="group.icon" />
+                <span>{{ group.title }}</span>
               </RouterLink>
               <ul
                 v-if="group.links.length"
@@ -49,8 +50,14 @@
         <div class="footer-bottom">
           <p>&copy; 2024 - {{ currentYear }} LiuYinChu'Space. All Rights Reserved.</p>
           <div class="footer-contact" aria-label="Contact links">
-            <a href="https://github.com/pifuyuini" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <a href="mailto:mingchupifuyuini@gmail.com">Email</a>
+            <a href="https://github.com/pifuyuini" target="_blank" rel="noopener noreferrer">
+              <SiteIcon name="github" />
+              <span>GitHub</span>
+            </a>
+            <a href="mailto:mingchupifuyuini@gmail.com">
+              <SiteIcon name="mail" />
+              <span>Email</span>
+            </a>
           </div>
         </div>
       </div>
@@ -60,6 +67,7 @@
 
 <script setup>
 import { RouterLink, useRoute } from 'vue-router'
+import SiteIcon from './common/SiteIcon.vue'
 
 const currentYear = new Date().getFullYear()
 const route = useRoute()
@@ -69,6 +77,7 @@ const footerColumns = [
     groups: [
       {
         title: '随记',
+        icon: 'journal',
         to: '/space1',
         links: [
           { label: '说说', to: '/talk' },
@@ -77,6 +86,7 @@ const footerColumns = [
       },
       {
         title: '资源链接',
+        icon: 'resources',
         to: '/rd',
         links: [
           { label: '文献', to: '/rliterature' },
@@ -93,6 +103,7 @@ const footerColumns = [
     groups: [
       {
         title: '代码与项目',
+        icon: 'code',
         to: '/code',
         links: [
           { label: '生命树', to: '/life-tree' },
@@ -108,6 +119,7 @@ const footerColumns = [
     groups: [
       {
         title: '赛博会客厅',
+        icon: 'lounge',
         to: '/space3',
         links: [
           { label: '访客中心', to: '/visitor-center' },
@@ -116,6 +128,7 @@ const footerColumns = [
       },
       {
         title: '关于',
+        icon: 'about',
         to: '/about',
         links: [
           { label: '自我介绍', to: '/about/self' },
@@ -258,12 +271,20 @@ const footerColumns = [
 
 .footer-column-title {
   display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 1.1rem;
   color: #fff;
   text-decoration: none;
   font-size: 0.96rem;
   font-weight: 740;
   line-height: 1.25;
+}
+
+.footer-column-title :deep(.site-icon) {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: rgba(137, 180, 250, 0.76);
 }
 
 .footer-column-title:hover,
@@ -321,10 +342,19 @@ const footerColumns = [
 }
 
 .footer-contact a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   color: rgba(205, 214, 244, 0.72);
   text-decoration: none;
   font-weight: 650;
   transition: color 0.2s ease;
+}
+
+.footer-contact :deep(.site-icon) {
+  width: 1rem;
+  height: 1rem;
+  color: rgba(180, 190, 254, 0.76);
 }
 
 .footer-contact a:hover,
