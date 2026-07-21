@@ -493,7 +493,7 @@ onBeforeUnmount(() => {
 .markdown-body :deep(h6) {
   position: relative;
   color: var(--md-heading);
-  font-family: "TsangerJinKai02-W05", "仓耳今楷02 W05", "LXGW WenKai", "Cinzel", serif;
+  font-family: "TsangerJinKai02-W04", "仓耳今楷02 W04", "LXGW WenKai", "Cinzel", serif;
   font-weight: 760;
   letter-spacing: 0;
   line-height: 1.32;
