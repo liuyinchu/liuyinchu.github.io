@@ -27,7 +27,7 @@ onMounted(async () => {
       <img src="/bg/white_sweater.PNG" alt="" decoding="async">
       <div class="talk-hero__veil" aria-hidden="true"></div>
       <div class="talk-hero__content">
-        <h1 id="talk-title">主播的摸鱼日常</h1>
+        <h1 id="talk-title">时代正疾驰而过...</h1>
         <span>分享日常生活，偶尔发表各种想法与吐槽</span>
       </div>
     </header>
@@ -95,13 +95,13 @@ onMounted(async () => {
   z-index: 1;
   max-width: 56rem;
   padding: clamp(2rem, 5vw, 5rem);
+  font-family: "TsangerJinKai02-W04", "仓耳今楷02 W04", "LXGW WenKai", serif;
   text-shadow: 0 3px 24px rgba(0, 0, 0, 0.38);
 }
 
 .talk-hero__content h1 {
   margin: 0;
   color: #fff;
-  font-family: 'Noto Serif SC', 'Songti SC', serif;
   font-size: clamp(2.55rem, 6.2vw, 6rem);
   font-weight: 700;
   line-height: 1.06;
@@ -112,7 +112,6 @@ onMounted(async () => {
   display: block;
   margin-top: 1.45rem;
   color: rgba(245, 246, 255, 0.82);
-  font-family: 'LXGW WenKai', serif;
   font-size: clamp(1rem, 1.9vw, 1.35rem);
   line-height: 1.7;
 }

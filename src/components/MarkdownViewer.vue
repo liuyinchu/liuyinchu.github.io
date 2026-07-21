@@ -138,11 +138,15 @@ const defaultLinkOpen = md.renderer.rules.link_open || ((tokens, idx, options, e
 md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
   const token = tokens[idx]
   const href = token.attrGet('href') || ''
+  const isImageLink = tokens[idx + 1]?.type === 'image'
+    && tokens[idx + 2]?.type === 'link_close'
   const classNames = new Set(
     (token.attrGet('class') || '').split(/\s+/).filter(Boolean)
   )
 
-  if (!classNames.has('header-anchor') && !classNames.has('md-button')) {
+  if (isImageLink) {
+    token.attrJoin('class', 'md-image-link')
+  } else if (!classNames.has('header-anchor') && !classNames.has('md-button')) {
     token.attrJoin('class', 'md-text-link')
   }
 
@@ -155,14 +159,21 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
 
 md.renderer.rules.image = (tokens, idx) => {
   const token = tokens[idx]
+  const isLinkedImage = tokens[idx - 1]?.type === 'link_open'
+    && tokens[idx + 1]?.type === 'link_close'
   const src = escapeHtml(token.attrGet('src') || '')
   const alt = escapeHtml(token.content || token.attrGet('alt') || '')
   const title = token.attrGet('title')
   const imageClass = token.attrGet('class')
   const figureClass = imageClass ? ` ${escapeHtml(imageClass)}` : ''
   const titleAttr = title ? ` title="${escapeHtml(title)}"` : ''
+  const figureTag = isLinkedImage ? 'span' : 'figure'
+  const linkedClass = isLinkedImage ? ' md-linked-figure' : ''
+  const caption = alt
+    ? (isLinkedImage ? `<span class="md-figcaption">${alt}</span>` : `<figcaption>${alt}</figcaption>`)
+    : ''
 
-  return `<figure class="md-figure${figureClass}"><img src="${src}" alt="${alt}" loading="lazy"${titleAttr}>${alt ? `<figcaption>${alt}</figcaption>` : ''}</figure>`
+  return `<${figureTag} class="md-figure${linkedClass}${figureClass}"><img src="${src}" alt="${alt}" loading="lazy"${titleAttr}>${caption}</${figureTag}>`
 }
 
 function loadMathJax() {
@@ -430,7 +441,7 @@ onBeforeUnmount(() => {
   padding: 0 1rem;
   box-sizing: content-box;
   color: var(--md-text);
-  font-family: "TsangerJinKai02-W03", "仓耳今楷02 W03", "LXGW WenKai", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Inter", "Noto Serif SC", "Times New Roman", serif;
+  font-family: "LXGW WenKai", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Inter", "Noto Serif SC", "Times New Roman", serif;
   font-size: clamp(1.13rem, 1.08vw, 1.22rem);
   line-height: 2.02;
   -webkit-font-smoothing: auto;
@@ -458,7 +469,7 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body.use-cjk {
-  font-family: "TsangerJinKai02-W03", "仓耳今楷02 W03", "LXGW WenKai", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", serif;
+  font-family: "LXGW WenKai", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", serif;
 }
 
 .markdown-body :deep(::selection) {
@@ -478,7 +489,9 @@ onBeforeUnmount(() => {
 
 .markdown-body :deep(strong) {
   color: #89dceb;
-  font-weight: 780;
+  font-weight: 700;
+  -webkit-text-stroke: 0.012em currentColor;
+  paint-order: stroke fill;
 }
 
 .markdown-body :deep(em) {
@@ -493,7 +506,6 @@ onBeforeUnmount(() => {
 .markdown-body :deep(h6) {
   position: relative;
   color: var(--md-heading);
-  font-family: "TsangerJinKai02-W04", "仓耳今楷02 W04", "LXGW WenKai", "Cinzel", serif;
   font-weight: 760;
   letter-spacing: 0;
   line-height: 1.32;
@@ -504,6 +516,7 @@ onBeforeUnmount(() => {
 .markdown-body :deep(h1),
 .markdown-body :deep(h2),
 .markdown-body :deep(h3) {
+  font-family: "Cinzel", "TsangerJinKai02-W04", "仓耳今楷02 W04", "LXGW WenKai", serif;
   scroll-margin-top: calc(var(--site-header-height, 72px) + 1.25rem);
 }
 
@@ -586,6 +599,42 @@ onBeforeUnmount(() => {
   color: #181825;
   background-size: 100% 100%;
   box-shadow: 0 0.22em 0.65em rgba(180, 190, 254, 0.18);
+}
+
+.markdown-body :deep(.md-image-link) {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 2.2rem auto;
+  padding: 0;
+  border: 0;
+  border-radius: 1rem;
+  color: inherit;
+  line-height: 0;
+  text-decoration: none;
+  background: none;
+  box-shadow: none;
+}
+
+.markdown-body :deep(.md-image-link:hover) {
+  color: inherit;
+  background: none;
+  box-shadow: none;
+}
+
+.markdown-body :deep(.md-image-link:focus-visible) {
+  outline: 2px solid rgba(137, 180, 250, 0.88);
+  outline-offset: 0.35rem;
+}
+
+.markdown-body :deep(.md-image-link img) {
+  transition: filter 180ms ease, transform 210ms var(--motion-ease);
+}
+
+.markdown-body :deep(.md-image-link:hover img),
+.markdown-body :deep(.md-image-link:focus-visible img) {
+  filter: brightness(1.045);
+  transform: translateY(-2px);
 }
 
 .markdown-body :deep(ul),
@@ -774,6 +823,11 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
+.markdown-body :deep(.md-linked-figure) {
+  display: block;
+  margin: 0;
+}
+
 .markdown-body :deep(.md-figure img) {
   display: block;
   max-width: 100%;
@@ -801,7 +855,9 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 
-.markdown-body :deep(figcaption) {
+.markdown-body :deep(figcaption),
+.markdown-body :deep(.md-figcaption) {
+  display: block;
   margin-top: 0.72rem;
   color: rgba(205, 214, 244, 0.62);
   font-size: 0.92rem;

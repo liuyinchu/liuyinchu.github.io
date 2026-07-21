@@ -123,7 +123,7 @@ function onMarkdownLoaded(rawText) {
 .header-content h1 {
   margin: 0 0 1.25rem;
   color: #fff;
-  font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+  font-family: "Cinzel", "TsangerJinKai02-W04", "仓耳今楷02 W04", "LXGW WenKai", "Noto Serif SC", serif;
   font-size: clamp(2.4rem, 3.8vw, 3.7rem);
   font-weight: 700;
   line-height: 1.18;
@@ -136,7 +136,7 @@ function onMarkdownLoaded(rawText) {
   align-items: flex-start;
   gap: 0.38rem;
   color: rgba(255, 255, 255, 0.9);
-  font-family: "LXGW WenKai", "Noto Serif SC", serif;
+  font-family: "TsangerJinKai02-W03", "仓耳今楷02 W03", "LXGW WenKai", "Noto Serif SC", serif;
   font-size: 0.96rem;
   line-height: 1.55;
 }
