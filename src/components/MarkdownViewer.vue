@@ -430,7 +430,7 @@ onBeforeUnmount(() => {
   padding: 0 1rem;
   box-sizing: content-box;
   color: var(--md-text);
-  font-family: "TsangerJinKai02-W04", "仓耳今楷02 W04", "LXGW WenKai", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Inter", "Noto Serif SC", "Times New Roman", serif;
+  font-family: "TsangerJinKai02-W03", "仓耳今楷02 W03", "LXGW WenKai", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Inter", "Noto Serif SC", "Times New Roman", serif;
   font-size: clamp(1.13rem, 1.08vw, 1.22rem);
   line-height: 2.02;
   -webkit-font-smoothing: auto;
@@ -458,7 +458,7 @@ onBeforeUnmount(() => {
 }
 
 .markdown-body.use-cjk {
-  font-family: "TsangerJinKai02-W04", "仓耳今楷02 W04", "LXGW WenKai", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", serif;
+  font-family: "TsangerJinKai02-W03", "仓耳今楷02 W03", "LXGW WenKai", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", serif;
 }
 
 .markdown-body :deep(::selection) {
