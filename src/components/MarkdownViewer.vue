@@ -566,6 +566,7 @@ onBeforeUnmount(() => {
 
 .markdown-body :deep(.md-text-link) {
   padding-inline: 0.06em;
+  padding-bottom: 0.045em;
   border: 0;
   border-radius: 0.16em;
   color: var(--md-text);
@@ -730,6 +731,14 @@ onBeforeUnmount(() => {
   font-family: "Fira Code", "JetBrains Mono", monospace;
   font-size: 0.96rem;
   line-height: 1.75;
+}
+
+.markdown-body--article :deep(pre.code-block) {
+  background: #14141f;
+}
+
+.markdown-body--article :deep(.code-header) {
+  background: linear-gradient(180deg, rgba(43, 44, 61, 0.86), rgba(24, 24, 37, 0.9));
 }
 
 .markdown-body :deep(table) {

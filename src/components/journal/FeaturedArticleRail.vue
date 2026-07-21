@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import SiteIcon from '../common/SiteIcon.vue'
 
 defineProps({
@@ -7,8 +7,73 @@ defineProps({
 })
 
 const isPaused = ref(false)
+const isManualScrolling = ref(false)
 const railViewport = ref(null)
 const railTrack = ref(null)
+
+let wheelVelocity = 0
+let wheelFrame = 0
+let manualPauseTimer = 0
+let cachedLoopWidth = 0
+let cachedMaxOffset = 0
+
+function updateScrollGeometry() {
+  if (!railViewport.value || !railTrack.value) {
+    cachedLoopWidth = 0
+    cachedMaxOffset = 0
+    return
+  }
+
+  const duplicateSet = railTrack.value.children[1]
+  if (duplicateSet && getComputedStyle(duplicateSet).display !== 'none') {
+    const gap = Number.parseFloat(getComputedStyle(railTrack.value).gap) || 0
+    cachedLoopWidth = (railTrack.value.scrollWidth + gap) / 2
+    cachedMaxOffset = 0
+    return
+  }
+
+  cachedLoopWidth = 0
+  cachedMaxOffset = Math.max(
+    railViewport.value.scrollWidth - railViewport.value.clientWidth,
+    0,
+  )
+}
+
+function wrapScrollPosition(nextOffset) {
+  if (!railViewport.value) return 0
+  if (cachedLoopWidth > 0) {
+    return ((nextOffset % cachedLoopWidth) + cachedLoopWidth) % cachedLoopWidth
+  }
+  return Math.min(Math.max(nextOffset, 0), cachedMaxOffset)
+}
+
+function finishManualScroll() {
+  window.clearTimeout(manualPauseTimer)
+  manualPauseTimer = window.setTimeout(() => {
+    isManualScrolling.value = false
+  }, 260)
+}
+
+function runWheelMomentum() {
+  if (!railViewport.value) {
+    wheelFrame = 0
+    return
+  }
+
+  railViewport.value.scrollLeft = wrapScrollPosition(
+    railViewport.value.scrollLeft + wheelVelocity,
+  )
+  wheelVelocity *= 0.84
+
+  if (Math.abs(wheelVelocity) < 0.2) {
+    wheelVelocity = 0
+    wheelFrame = 0
+    finishManualScroll()
+    return
+  }
+
+  wheelFrame = window.requestAnimationFrame(runWheelMomentum)
+}
 
 function handleRailWheel(event) {
   if (!event.shiftKey || !railViewport.value || !railTrack.value) return
@@ -22,19 +87,32 @@ function handleRailWheel(event) {
     : event.deltaMode === 2
       ? railViewport.value.clientWidth
       : 1
-  const distance = rawDelta * deltaUnit * 1.8
-  const duplicateSet = railTrack.value.children[1]
+  const distance = rawDelta * deltaUnit
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  if (!duplicateSet || getComputedStyle(duplicateSet).display === 'none') {
-    railViewport.value.scrollLeft += distance
+  updateScrollGeometry()
+  isManualScrolling.value = true
+  window.clearTimeout(manualPauseTimer)
+
+  if (prefersReducedMotion) {
+    window.cancelAnimationFrame(wheelFrame)
+    wheelFrame = 0
+    wheelVelocity = 0
+    railViewport.value.scrollLeft = wrapScrollPosition(
+      railViewport.value.scrollLeft + distance * 1.35,
+    )
+    finishManualScroll()
     return
   }
 
-  const gap = Number.parseFloat(getComputedStyle(railTrack.value).gap) || 0
-  const loopWidth = (railTrack.value.scrollWidth + gap) / 2
-  const nextOffset = railViewport.value.scrollLeft + distance
-  railViewport.value.scrollLeft = ((nextOffset % loopWidth) + loopWidth) % loopWidth
+  wheelVelocity = Math.min(Math.max(wheelVelocity + distance * 0.32, -56), 56)
+  if (!wheelFrame) wheelFrame = window.requestAnimationFrame(runWheelMomentum)
 }
+
+onBeforeUnmount(() => {
+  window.cancelAnimationFrame(wheelFrame)
+  window.clearTimeout(manualPauseTimer)
+})
 </script>
 
 <template>
@@ -64,10 +142,15 @@ function handleRailWheel(event) {
     <div
       ref="railViewport"
       class="rail-viewport"
+      :class="{ 'is-manual': isManualScrolling }"
       aria-label="精选文章横向列表；按住 Shift 使用鼠标滚轮可快速浏览"
       @wheel="handleRailWheel"
     >
-      <div ref="railTrack" class="rail-track" :class="{ 'is-paused': isPaused }">
+      <div
+        ref="railTrack"
+        class="rail-track"
+        :class="{ 'is-paused': isPaused, 'is-manual': isManualScrolling }"
+      >
         <div
           v-for="copyIndex in 2"
           :key="copyIndex"
@@ -111,7 +194,7 @@ function handleRailWheel(event) {
   align-items: end;
   justify-content: space-between;
   gap: 1.5rem;
-  margin-bottom: 1.35rem;
+  margin-bottom: 1.05rem;
 }
 
 .rail-heading p {
@@ -176,6 +259,11 @@ function handleRailWheel(event) {
   scrollbar-width: none;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 2.4rem, #000 calc(100% - 2.4rem), transparent);
   mask-image: linear-gradient(90deg, transparent, #000 2.4rem, #000 calc(100% - 2.4rem), transparent);
+  transition: filter 240ms ease;
+}
+
+.rail-viewport.is-manual {
+  filter: brightness(1.04) saturate(1.035);
 }
 
 .rail-viewport::-webkit-scrollbar {
@@ -191,6 +279,7 @@ function handleRailWheel(event) {
 }
 
 .rail-track.is-paused,
+.rail-track.is-manual,
 .rail-viewport:hover .rail-track,
 .rail-viewport:focus-within .rail-track {
   animation-play-state: paused;
@@ -205,7 +294,7 @@ function handleRailWheel(event) {
   position: relative;
   display: grid;
   width: clamp(17rem, 28vw, 23rem);
-  min-height: 15.75rem;
+  min-height: 14.5rem;
   overflow: hidden;
   border: 1px solid rgba(180, 190, 254, 0.13);
   border-radius: 1rem;
@@ -236,12 +325,12 @@ function handleRailWheel(event) {
 
 .rail-card-copy {
   align-self: end;
-  padding: 1.15rem;
+  padding: 1rem;
 }
 
 .rail-card-copy p {
   width: fit-content;
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.5rem;
   padding: 0.2rem 0.5rem;
   border: 1px solid rgba(205, 214, 244, 0.2);
   border-radius: 999px;
@@ -261,7 +350,7 @@ function handleRailWheel(event) {
 
 .rail-card-copy span {
   display: block;
-  margin-top: 0.7rem;
+  margin-top: 0.55rem;
   color: rgba(205, 214, 244, 0.67);
   font-size: 0.78rem;
 }
@@ -283,7 +372,7 @@ function handleRailWheel(event) {
 
   .rail-card {
     width: clamp(20rem, 19vw, 28rem);
-    min-height: 18rem;
+    min-height: 16.5rem;
   }
 }
 
@@ -321,7 +410,7 @@ function handleRailWheel(event) {
 
   .rail-card {
     width: min(78vw, 20rem);
-    min-height: 14.5rem;
+    min-height: 13.75rem;
     scroll-snap-align: start;
   }
 }
@@ -343,6 +432,10 @@ function handleRailWheel(event) {
   }
 
   .rail-card img {
+    transition: none;
+  }
+
+  .rail-viewport {
     transition: none;
   }
 }

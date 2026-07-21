@@ -27,7 +27,6 @@ onMounted(async () => {
       <img src="/bg/white_sweater.PNG" alt="" decoding="async">
       <div class="talk-hero__veil" aria-hidden="true"></div>
       <div class="talk-hero__content">
-        <p>说说</p>
         <h1 id="talk-title">主播的摸鱼日常</h1>
         <span>分享日常生活，偶尔发表各种想法与吐槽</span>
       </div>
@@ -60,10 +59,9 @@ onMounted(async () => {
 .talk-hero {
   position: relative;
   display: flex;
-  width: min(100% - 3rem, 1320px);
-  min-height: clamp(21rem, 38vw, 31rem);
+  min-height: clamp(20rem, 35vw, 29rem);
   align-items: end;
-  margin: 0 auto clamp(3.5rem, 7vw, 6.5rem);
+  margin: 0 auto clamp(3rem, 6vw, 5.5rem);
   overflow: hidden;
   border: 1px solid rgba(180, 190, 254, 0.16);
   border-radius: 1.15rem;
@@ -100,19 +98,11 @@ onMounted(async () => {
   text-shadow: 0 3px 24px rgba(0, 0, 0, 0.38);
 }
 
-.talk-hero__content p {
-  margin: 0 0 0.85rem;
-  color: #89b4fa;
-  font-size: 0.76rem;
-  font-weight: 780;
-  letter-spacing: 0.18em;
-}
-
 .talk-hero__content h1 {
   margin: 0;
   color: #fff;
   font-family: 'Noto Serif SC', 'Songti SC', serif;
-  font-size: clamp(2.55rem, 6vw, 5.7rem);
+  font-size: clamp(2.55rem, 6.2vw, 6rem);
   font-weight: 700;
   line-height: 1.06;
   text-wrap: balance;
@@ -120,15 +110,28 @@ onMounted(async () => {
 
 .talk-hero__content span {
   display: block;
-  margin-top: 1.2rem;
+  margin-top: 1.45rem;
   color: rgba(245, 246, 255, 0.82);
   font-family: 'LXGW WenKai', serif;
-  font-size: clamp(1rem, 1.8vw, 1.28rem);
+  font-size: clamp(1rem, 1.9vw, 1.35rem);
   line-height: 1.7;
+}
+
+.talk-hero,
+.talk-content {
+  width: min(100% - 3rem, 1320px);
+  margin-inline: auto;
 }
 
 .talk-content {
   min-height: 18rem;
+}
+
+.talk-content :deep(.markdown-body--page) {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .talk-state {
@@ -139,9 +142,13 @@ onMounted(async () => {
 }
 
 @media (min-width: 1800px) {
-  .talk-hero {
+  .talk-hero,
+  .talk-content {
     width: min(100% - 6rem, 1760px);
-    min-height: 34rem;
+  }
+
+  .talk-hero {
+    min-height: 31.5rem;
   }
 
   .talk-hero__content {
@@ -156,10 +163,14 @@ onMounted(async () => {
   }
 
   .talk-hero {
-    width: min(100% - 2rem, 1320px);
-    min-height: 24rem;
+    min-height: 23rem;
     margin-bottom: 3.25rem;
     border-radius: 0.9rem;
+  }
+
+  .talk-hero,
+  .talk-content {
+    width: min(100% - 2rem, 1320px);
   }
 
   .talk-hero > img {
