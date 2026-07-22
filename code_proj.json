@@ -1,5 +1,19 @@
 [
   {
+    "name": "云海之上",
+    "desc": "A game created by Kimi K3.",
+    "homepage": "https://pifuyuini.github.io/cloudsea-game-demo/",
+    "repo": "https://github.com/pifuyuini/cloudsea-game-demo",
+    "category": "toy"
+  },
+  {
+    "name": "Markdown Component Lab",
+    "desc": "本站通用 Markdown 富组件的用法、效果与可复制示例。",
+    "homepage": "/markdown-components",
+    "repo": "",
+    "category": "code"
+  },
+  {
     "name": "生命树",
     "desc": "一个由 AI Agent 自行维护和继续生长的页面。",
     "homepage": "/life-tree",

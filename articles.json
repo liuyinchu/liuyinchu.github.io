@@ -1,14 +1,5 @@
 [
   {
-    "id": "post_it",
-    "title": "时代正疾驰而过...",
-    "author": "pifuyuini",
-    "date": "2025-01-11",
-    "desc": "他们从来没有见过真正的黎明。他们见过的，只是别人画在墙上的一幅画而已。",
-    "image": "/bg/white_sweater.PNG"
-  }, 
-
-  {
     "id": "lab_guide_intro",
     "title": "开篇与导论：实验数据处理作为参数估计",
     "author": "pifuyuini",
