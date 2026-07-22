@@ -490,7 +490,7 @@ onBeforeUnmount(() => {
 .markdown-body :deep(strong) {
   color: #89dceb;
   font-weight: 700;
-  -webkit-text-stroke: 0.012em currentColor;
+  -webkit-text-stroke: 0.014em currentColor;
   paint-order: stroke fill;
 }
 
@@ -506,6 +506,7 @@ onBeforeUnmount(() => {
 .markdown-body :deep(h6) {
   position: relative;
   color: var(--md-heading);
+  font-family: "TsangerJinKai02-W04", "仓耳今楷02 W04", "LXGW WenKai", serif;
   font-weight: 760;
   letter-spacing: 0;
   line-height: 1.32;
@@ -516,7 +517,6 @@ onBeforeUnmount(() => {
 .markdown-body :deep(h1),
 .markdown-body :deep(h2),
 .markdown-body :deep(h3) {
-  font-family: "Cinzel", "TsangerJinKai02-W04", "仓耳今楷02 W04", "LXGW WenKai", serif;
   scroll-margin-top: calc(var(--site-header-height, 72px) + 1.25rem);
 }
 
