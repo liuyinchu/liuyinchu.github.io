@@ -2,11 +2,6 @@
 
 ## Codex 小技巧
 
-最近熟悉了两个高级技巧，都十分强大，有机会分享一下：
-
-- :mark[Multi Agents Policy]
-- 上下级代理系统
-
 这个[网站](https://chatgpt.com/codex/cloud/settings/analytics)可用于检测 Codex 的模型使用情况。
 
 [注意 GPT-5.6 有审查会拖慢速度](https://help.openai.com/en/articles/20001326-additional-safety-checks-for-biological-and-cybersecurity-requests-in-chatgpt-codex-and-the-api)。
@@ -15,8 +10,8 @@
 
 - :tip[通用：Sol medium]{tip="搭配一些 Multi Agents 技巧也能有很好的效果。"}
 - 文献阅读等学术任务：Sol high
-- :tip[对于高智力需求的科研任务：Sol xhigh]{tip="思维链增长，适合深度推理任务。"}
-- :tip[大型复杂任务：Sol ultra]{tip="多子代理并行，很强，但是十分消耗额度。"}
+- :tip[对于高智能、数理逻辑需求的科研任务：Sol max]{tip="思维链增长，适合深度推理任务。这个模型需要在设置里专门开启才能使用。"}
+- :tip[大型复杂任务：Sol ultra]{tip="max 等级的多子代理并行，很强，但是十分消耗额度。网页版也可在设置里开启这个模式。"}
 
 ---
 
