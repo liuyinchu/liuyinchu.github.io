@@ -1,22 +1,22 @@
 [
   {
+    "id": "hinf_robust_control_tutorial",
+    "label": "科研相关"
+  },
+  {
     "id": "modernity_and_diet",
-    "label": "思想与生活"
+    "label": "生活思考"
   },
   {
     "id": "ai_agent_blog",
-    "label": "工具与协作"
+    "label": "AI 工具"
   },
   {
-    "id": "raman_ms_gate_note",
-    "label": "物理札记"
+    "id": "note_of_configure_server",
+    "label": "Linux 学习"
   },
   {
-    "id": "keyboard",
-    "label": "器物手账"
-  },
-  {
-    "id": "learn_rust",
-    "label": "编程学习"
+    "id": "learn_python_dev",
+    "label": "uv 技巧"
   }
 ]

@@ -27,7 +27,7 @@ onMounted(async () => {
       <img src="/bg/white_sweater.PNG" alt="" decoding="async">
       <div class="talk-hero__veil" aria-hidden="true"></div>
       <div class="talk-hero__content">
-        <h1 id="talk-title">时代正疾驰而过...</h1>
+        <h1 id="talk-title">时代正疾驰而过</h1>
         <span>分享日常生活，偶尔发表各种想法与吐槽</span>
       </div>
     </header>

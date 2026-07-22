@@ -13,6 +13,7 @@
 - 网站托管：本网站部署于 GitHub Pages
 - 颜色主题：[Catppuccin Mocha](https://catppuccin.com/)
 - 字体支持：[Google Fonts](https://fonts.google.com/) 和[霞鹜文楷](https://github.com/lxgw/LxgwWenKai)及其 [CDN](https://github.com/chawyehsu/lxgw-wenkai-webfont)
+- 本网站也支持[仓耳今楷](https://tsanger.cn/product?keyword=%E4%BB%93%E8%80%B3%E4%BB%8A%E6%A5%B7)（需要本地下载“仓耳今楷02”）
 
 **真的真的十分感谢以上的各个开源项目的支持！**
 
@@ -23,9 +24,12 @@
 首先，感谢[网络邻居](/space2)中的各位提供网站构思与设计灵感上的支持。
 
 同时，本网站的构思与设计也参考了这些网站：
+
 - [CXPLAY World](https://blog.cxplay.org/)
 - [AirTouch](https://xsl.im/)
 - [柳上川](https://kawayww.com/)
+- [纸鹿](https://blog.zhilu.site/theme)
+- [逸风亭](https://blog.fyz666.xyz/)
 - [Anthropic](https://www.anthropic.com/)
 - [OpenAI](https://openai.com/zh-Hans-CN/)
 - [SpaceX](https://www.spacex.com/)
@@ -34,6 +38,7 @@
 - [Vercel](https://vercel.com/)
 
 本网站采用了大量图片素材，其中有部分来自 PIXIV 和 BiliBili 的各位画师，他们是：
+
 - Osot-酒保（BiliBili）
 - Harukix（PIXIV）
 - Rafa（PIXIV）：[流萤的小裙子～](https://www.pixiv.net/artworks/118143641)、[午夜前的一刻](https://www.pixiv.net/artworks/115952605)
@@ -47,12 +52,12 @@
 
 ---
 
-
 ## 版权说明
 
 **首先，对于我使用的各种素材，如果您认为侵犯了您的版权，我诚恳地表达我所有的歉意，您可以通过页脚的联系方式告知我，我会第一时间删除相关资源并与您沟通后续处理事项。**
 
 接下来，关于这个网站的版权，基本按照 [MIT LICENSE](https://opensource.org/license/mit) 发布：
+
 - 前端代码：“Copyright (c) 2024 - 2026 LiuYinChu'Space 本软件可自由使用、复制、修改、分发，前提是保留原始版权声明。
 软件按‘原样’提供，不附带任何明示或暗示的担保。”
 - 原创图片：允许所有人以任意形式使用。
