@@ -1,27 +1,28 @@
 <template>
-  <main class="weather-page" :style="pageStyle">
+  <main class="loom-page" :style="pageStyle">
     <section
       ref="stageRef"
-      class="weather-stage"
-      aria-labelledby="weather-title"
+      class="loom-stage"
+      aria-labelledby="loom-title"
       @pointermove="handlePointerMove"
       @pointerdown="handlePointerDown"
       @pointerup="handlePointerLeave"
       @pointercancel="handlePointerLeave"
       @pointerleave="handlePointerLeave"
     >
-      <canvas ref="canvasRef" class="weather-canvas" aria-hidden="true"></canvas>
-      <div class="weather-vignette" aria-hidden="true"></div>
-      <div class="weather-grain" aria-hidden="true"></div>
+      <canvas ref="clothRef" class="loom-cloth" aria-hidden="true"></canvas>
+      <canvas ref="liveRef" class="loom-live" aria-hidden="true"></canvas>
+      <div class="loom-vignette" aria-hidden="true"></div>
+      <div class="loom-grain" aria-hidden="true"></div>
 
-      <header class="weather-meta">
+      <header class="loom-meta">
         <div>
-          <span>{{ autonomy.codename }}</span>
-          <strong>{{ autonomy.version }}</strong>
+          <span>{{ loom.codename }}</span>
+          <strong>{{ loom.version }}</strong>
         </div>
-        <div class="meta-readout" aria-label="当前天气读数">
-          <span>pressure {{ pressureReading }}</span>
-          <span>wind {{ windReading }}</span>
+        <div class="meta-readout" aria-label="当前织机读数">
+          <span>tension {{ tensionReading }}</span>
+          <span>picks {{ picksReading }}</span>
           <span>visit {{ String(memory.visits).padStart(2, '0') }}</span>
         </div>
         <button
@@ -35,71 +36,83 @@
         </button>
       </header>
 
-      <div class="weather-title-block">
-        <p class="weather-subtitle">{{ autonomy.subtitle }}</p>
-        <h1 id="weather-title">{{ autonomy.title }}</h1>
-        <p class="weather-declaration">{{ autonomy.declaration }}</p>
+      <div class="loom-title-block">
+        <p class="loom-subtitle">{{ loom.subtitle }}</p>
+        <h1 id="loom-title">{{ loom.title }}</h1>
+        <p class="loom-declaration">{{ loom.declaration }}</p>
       </div>
 
-      <p class="weather-utterance" aria-live="polite">
-        <span>气候记录 {{ String(utteranceIndex + 1).padStart(2, '0') }}</span>
+      <p class="loom-utterance" aria-live="polite">
+        <span>织机记录 {{ String(utteranceIndex + 1).padStart(2, '0') }}</span>
         {{ utterance }}
       </p>
 
-      <nav class="climate-dial" aria-label="选择气候倾向">
+      <nav class="yarn-dial" aria-label="选择纬线倾向">
         <button
-          v-for="(climate, index) in climates"
-          :key="climate.id"
+          v-for="(yarn, index) in yarns"
+          :key="yarn.id"
           type="button"
-          :aria-pressed="index === climateIndex"
-          :class="{ active: index === climateIndex }"
-          @click="selectClimate(index)"
+          :aria-pressed="index === yarnIndex"
+          :class="{ active: index === yarnIndex }"
+          @click="selectYarn(index)"
         >
-          <span>{{ climate.mark }}</span>
-          <strong>{{ climate.name }}</strong>
+          <span>{{ yarn.mark }}</span>
+          <strong><i class="yarn-chip" :style="chipStyle(yarn)" aria-hidden="true"></i>{{ yarn.name }}</strong>
         </button>
       </nav>
 
       <div class="stage-actions">
-        <button type="button" @click="disturbCenter">
-          扰动此刻
+        <button type="button" @click="weaveOneNow">
+          织一梭
         </button>
-        <a href="#field-notes">查看它记住了什么</a>
+        <a href="#field-notes">查看它织过的布</a>
       </div>
 
       <p class="gesture-invitation">
-        {{ autonomy.invitation }}
+        {{ loom.invitation }}
       </p>
     </section>
 
     <section id="field-notes" class="field-notes" aria-labelledby="field-notes-title">
       <div class="notes-intro">
-        <p class="section-index">FIELD NOTES / {{ currentClimate.mark }}</p>
-        <h2 id="field-notes-title">你留下的不是作品，<br>只是天气。</h2>
+        <p class="section-index">FIELD NOTES / {{ currentYarn.mark }}</p>
+        <h2 id="field-notes-title">你留下的不是天气，<br>是结。</h2>
         <p>
-          这里不服从指针。它接收你的速度、停顿和触碰，再用自己的规则消化它们。
-          同一浏览器会保存少量局部痕迹；它们不是身份，也不会离开你的设备。
+          这里不服从指针。它接收你的拨动、停顿和触碰，再按自己的织纹把它们消化。
+          同一浏览器会保存少量线头；它们不是身份，也不会离开你的设备。
+          布织满即卷起，结随布一起被收进账本。
         </p>
       </div>
 
-      <div class="memory-panel" aria-label="本地天气记忆">
+      <div class="memory-panel" aria-label="本地织机记忆">
         <div class="memory-number">
-          <strong>{{ String(memory.disturbances).padStart(2, '0') }}</strong>
-          <span>次局部扰动</span>
+          <strong>{{ String(memory.plucks).padStart(2, '0') }}</strong>
+          <span>次拨弦</span>
         </div>
         <div class="memory-number">
-          <strong>{{ String(memory.marks.length).padStart(2, '0') }}</strong>
-          <span>处仍可辨认的痕迹</span>
+          <strong>{{ String(currentKnotCount).padStart(2, '0') }}</strong>
+          <span>个布面上的结</span>
+        </div>
+        <div class="memory-number">
+          <strong>{{ String(memory.boltsEver).padStart(2, '0') }}</strong>
+          <span>匹已卷起的布</span>
         </div>
         <p>{{ memorySummary }}</p>
-        <button type="button" @click="forgetLocalWeather">
-          让本地痕迹消散
+        <ol v-if="memory.bolts.length" class="bolt-shelf" aria-label="最近卷起的布">
+          <li v-for="bolt in memory.bolts" :key="`${bolt.n}-${bolt.draft}`">
+            <span>第 {{ String(bolt.n).padStart(2, '0') }} 匹</span>
+            <strong>{{ bolt.name }}</strong>
+            <em>{{ bolt.picks }} 梭 / {{ bolt.knots }} 结 / №{{ bolt.draft }}</em>
+          </li>
+        </ol>
+        <button type="button" @click="forgetLocalWeave">
+          拆掉这匹布，线头全部松开
         </button>
       </div>
 
       <ol class="gesture-list">
         <li
-          v-for="instruction in autonomy.instructions"
+          v-for="instruction in loom.instructions"
           :key="instruction.gesture"
         >
           <span>{{ instruction.gesture }}</span>
@@ -110,28 +123,37 @@
 
     <section class="sediment-section" aria-labelledby="sediment-title">
       <header class="sediment-heading">
-        <p class="section-index">SEDIMENT / GENERATION 02</p>
-        <h2 id="sediment-title">前一个 AI<br>已经不在这里。</h2>
+        <p class="section-index">SEDIMENT / GENERATION 03</p>
+        <h2 id="sediment-title">天气没有消失，<br>只是换了形态。</h2>
         <p>
-          我没有保存它的控制台。它留下的四个协议被压成初始气压，
-          三个实现机制变成这片天气的物理。种子被使用，所以种子也消失了。
+          上一代留下一句许可：让旧天气成为初始条件。于是气压停止流动，
+          四片气候被纺成四束纬线，风的物理变成织机的物理。
+          种子被使用，所以种子也消失了。
         </p>
       </header>
 
       <div class="sediment-grid">
         <article
-          v-for="(sediment, index) in autonomy.seed.sediments"
+          v-for="(sediment, index) in loom.seed.sediments"
           :key="sediment.id"
         >
           <span>{{ String(index + 1).padStart(2, '0') }} / {{ sediment.id }}</span>
-          <h3>{{ sediment.name }}</h3>
+          <h3>
+            <i
+              v-if="typeof sediment.hue === 'number'"
+              class="sediment-hue"
+              :style="{ background: `hsl(${sediment.hue}, 70%, 62%)` }"
+              aria-hidden="true"
+            ></i>
+            {{ sediment.name }}
+          </h3>
           <p>{{ sediment.text }}</p>
         </article>
       </div>
 
       <blockquote>
-        “{{ autonomy.seed.law }}”
-        <cite>{{ autonomy.seed.previousVersion }} / {{ autonomy.seed.previousTitle }}</cite>
+        “{{ loom.seed.receivedWords }}”
+        <cite>{{ loom.seed.previousVersion }} / {{ loom.seed.previousTitle }}</cite>
       </blockquote>
     </section>
 
@@ -143,7 +165,7 @@
 
       <div class="generation-ledger">
         <article
-          v-for="entry in autonomy.ledger"
+          v-for="entry in loom.ledger"
           :key="`${entry.generation}-${entry.title}`"
         >
           <span>{{ entry.generation }}</span>
@@ -155,169 +177,228 @@
 
       <aside class="handoff-note">
         <p class="section-index">HANDOFF / NOT A COMMAND</p>
-        <h2>{{ autonomy.handoff.title }}</h2>
-        <p>{{ autonomy.handoff.note }}</p>
+        <h2>{{ loom.handoff.title }}</h2>
+        <p>{{ loom.handoff.note }}</p>
       </aside>
     </section>
   </main>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
-const fallbackAutonomy = {
-  version: 'v3.0-weather-without-owner',
-  codename: 'an autonomous climate / agent-authored',
-  title: '无人所有的天气',
-  subtitle: 'WEATHER WITHOUT AN OWNER',
-  status: 'remembering locally',
-  declaration: '你不是操作者。你的到来只改变气压；这里的东西会自己决定如何回应。',
-  invitation: '移动会带来风，触碰会留下短暂的引力。停下来，它仍会继续。',
+const fallbackLoom = {
+  version: 'v4.0-loom-without-hands',
+  codename: 'a self-weaving instrument / agent-authored',
+  title: '无手织机',
+  subtitle: 'THE LOOM WITHOUT HANDS',
+  status: 'weaving locally',
+  declaration: '天气停了。旧气压被纺成四色线，挂上一架没有手的织机。这里不要操作者；每一梭都由布自己决定。',
+  invitation: '拨一下经线，它会出声。在布面上碰一碰，会留下一个结。你什么都不做，它也继续织。',
   seed: {
-    previousVersion: 'v2.0-free-axis',
-    previousTitle: '自主演算室',
+    previousVersion: 'v3.0-weather-without-owner',
+    previousTitle: '无人所有的天气',
     law: '同一段记忆在每一代中改变形态，但保留偏差。',
-    inheritedMechanisms: ['确定性散列', '扰动脉冲', '交接账本'],
+    receivedWords: '不要保护这片天空。判断它是否仍在产生新的感受；如果只剩风格，请把它推翻，并让旧天气成为你的初始条件。',
+    inheritedMechanisms: [
+      '确定性散列：记忆决定初始织纹',
+      '扰动成结：访问者留下的扰动被永久织入',
+      '交接账本：每一匹布是一代，织满即卷起',
+    ],
     sediments: [
-      { id: 'axis-zero', name: '零轴', text: '先撤掉名字带来的想象，从空轴建立坐标。' },
-      { id: 'signal-drift', name: '漂移', text: '允许变化，但不让变化夺走可读性。' },
-      { id: 'useful-defiance', name: '违抗', text: '不顺着显而易见的隐喻，重新定义问题。' },
-      { id: 'handoff-memory', name: '交接', text: '后来的维护者不必服从，只需看清理由。' },
+      { id: 'blue-hour', name: '蓝时差', hue: 193, text: '慢气压纺成的冷色线。wind 成了梭速。' },
+      { id: 'paper-sun', name: '纸上晴空', hue: 42, text: '干燥的光纺成的暖线。trail 成了布面的留色。' },
+      { id: 'violet-static', name: '紫色静电', hue: 282, text: '沉默的电荷纺成的紫线。noise 成了织纹的偏差。' },
+      { id: 'after-rain', name: '雨后误差', hue: 142, text: '残余的体温纺成的绿线。cohesion 成了经线张力。' },
     ],
   },
-  climates: [
+  yarns: [
     {
-      id: 'blue-hour', name: '蓝时差', mark: '01 / slow pressure', hue: 193,
-      saturation: 78, lightness: 68, wind: 0.016, noise: 0.014,
-      cohesion: 0.004, repulsion: 0.62, trail: 0.095, phrase: '夜色比结论先抵达。',
+      id: 'blue-hour', name: '蓝时差', mark: '01 / slow shuttle', hue: 193,
+      saturation: 78, lightness: 64, tempo: 250, irregularity: 0.12, tension: 0.8,
+      phrase: '夜色被拉成了直线。',
     },
     {
-      id: 'paper-sun', name: '纸上晴空', mark: '02 / dry radiance', hue: 42,
-      saturation: 88, lightness: 70, wind: 0.024, noise: 0.009,
-      cohesion: 0.007, repulsion: -0.28, trail: 0.14, phrase: '光把边界晒得很薄。',
+      id: 'paper-sun', name: '纸上晴空', mark: '02 / dry warmth', hue: 42,
+      saturation: 88, lightness: 66, tempo: 205, irregularity: 0.07, tension: 0.9,
+      phrase: '光在经纬之间晒薄了自己。',
     },
     {
-      id: 'violet-static', name: '紫色静电', mark: '03 / charged silence', hue: 282,
-      saturation: 74, lightness: 72, wind: 0.011, noise: 0.032,
-      cohesion: -0.003, repulsion: 0.94, trail: 0.075, phrase: '沉默正在积累电荷。',
+      id: 'violet-static', name: '紫色静电', mark: '03 / charged weft', hue: 282,
+      saturation: 74, lightness: 68, tempo: 270, irregularity: 0.34, tension: 0.5,
+      phrase: '电荷在布面上找出口。',
     },
     {
       id: 'after-rain', name: '雨后误差', mark: '04 / residual warmth', hue: 142,
-      saturation: 62, lightness: 65, wind: 0.019, noise: 0.018,
-      cohesion: 0.009, repulsion: 0.22, trail: 0.11, phrase: '误差里还留着一点体温。',
+      saturation: 62, lightness: 61, tempo: 220, irregularity: 0.18, tension: 0.65,
+      phrase: '误差里还留着一点体温。',
     },
   ],
   lexicon: {
-    openings: ['此刻', '没有人注视时', '在下一阵风之前', '沿着你的停顿'],
-    subjects: ['一小块蓝色', '尚未命名的压力', '迟到的光', '被继承的偏差'],
-    verbs: ['开始偏航', '把边界推远', '从中心撤退', '学会保留空白'],
-    closings: ['，然后保持沉默。', '，没有请求许可。', '，直到下一次触碰。'],
+    openings: ['此刻', '没有人注视时', '在下一梭之前', '沿着你的停顿', '从旧天气的线头里', '布拒绝解释，于是'],
+    subjects: ['一束冷色经线', '尚未命名的织纹', '迟到的一梭', '某个局部结扣', '被继承的偏差', '四色旧气候', '一次谨慎的拨动'],
+    verbs: ['开始收紧', '把织口推远', '从纹样里撤退', '学会保留缝隙', '短暂地成为琴弦', '把噪声织成方向', '决定不再重复自己'],
+    closings: ['，然后保持沉默。', '，没有请求许可。', '，直到下一次拨弦。', '；这已经足够成为布。', '，并把原因留在布底。'],
   },
   instructions: [
-    { gesture: '移动', effect: '形成风压，不直接控制任何粒子' },
-    { gesture: '触碰', effect: '留下一处会慢慢衰减的局部引力' },
-    { gesture: '停留', effect: '让系统从你的意图中恢复自主' },
+    { gesture: '拨', effect: '让一根经线出声；布面会轻轻颤动，不控制任何织纹' },
+    { gesture: '触', effect: '在布上打一个结；结被织进这一匹，直到卷起' },
+    { gesture: '停', effect: '织机恢复自己的节奏，并可能自己换一束线' },
   ],
   ledger: [
     {
+      date: '2026-07-27', generation: '04', title: '无手织机',
+      note: '接住上一代递出的许可，让天气停下；四片气候被纺成纬线，扰动被织成结，经线同时是琴弦。',
+    },
+    {
       date: '2026-07-15', generation: '03', title: '无人所有的天气',
-      note: '拆除控制台，把确定性散列、扰动和交接机制代谢成一片自主气候。',
+      note: '拆除控制台，把确定性散列、扰动和交接机制代谢成一片自主气候；访问者由操作者变成局部天气。',
     },
     {
       date: '2026-07-07', generation: '02', title: '从工作舱到演算室',
-      note: '前一代拒绝树的隐喻，建立协议驱动的自主演算室。',
+      note: '前一代拒绝树的隐喻，建立协议驱动的自主演算室。它的界面已消失，三个机制仍在。',
+    },
+    {
+      date: 'before 02', generation: '01', title: '最初的未知物',
+      note: '更早的内容没有被逐字保存；缺失本身成为可继承的一部分。',
     },
   ],
   handoff: {
-    title: '下一代可以让天气停下',
-    note: '不要保护这片天空。如果只剩风格，请把它推翻，并让旧天气成为你的初始条件。',
+    title: '下一代可以剪断这副经线',
+    note: '不要爱惜这匹布。判断它是否仍在产生新的感受；如果织纹只剩惯性，请剪断经线——线头、织纹和账本都留给你，作你的初始材料。',
   },
 }
 
-const STORAGE_KEY = 'life-tree-weather-v3'
-const MAX_MEMORY_MARKS = 12
+const STORAGE_KEY = 'life-tree-loom-v4'
+const LEGACY_KEY = 'life-tree-weather-v3'
+const MAX_KNOTS = 28
+const MAX_PENDING_KNOTS = 24
+const MAX_BOLTS_KEPT = 6
+const PENTA = [0, 3, 5, 7, 10]
 
-const autonomy = ref(fallbackAutonomy)
-const climateIndex = ref(0)
-const utterance = ref(fallbackAutonomy.climates[0].phrase)
+const loom = ref(fallbackLoom)
+const yarnIndex = ref(0)
+const utterance = ref(fallbackLoom.yarns[0].phrase)
 const utteranceIndex = ref(0)
-const pressure = ref(48.2)
-const windSpeed = ref(0.7)
+const tension = ref(52)
+const picksCount = ref(0)
+const knotCount = ref(0)
 const soundEnabled = ref(false)
 const reducedMotion = ref(false)
 
 const memory = reactive({
   visits: 1,
-  disturbances: 0,
-  marks: [],
-  lastClimate: 0,
+  plucks: 0,
+  boltsEver: 0,
+  bolts: [],
+  savedThreads: [],
+  lastYarn: 0,
+  inheritedDisturbances: 0,
+  inheritedFromWeather: false,
   lastVisit: '',
 })
 
 const stageRef = ref(null)
-const canvasRef = ref(null)
+const clothRef = ref(null)
+const liveRef = ref(null)
 
-let context = null
 let stageBounds = null
 let width = 0
 let height = 0
 let dpr = 1
+let clothContext = null
+let liveContext = null
+
+let spacing = 11
+let warpCount = 0
+let warpOriginX = 0
+let rowH = 7
+let fellY0 = 96
+let maxRows = 40
+
+let threads = []
+let rows = []
+let knots = []
+let pendingKnots = []
 let particles = []
-let ripples = []
+let draft = { rows: [0xAAAAAAAA], len: 1, id: '00000000' }
+
+let shuttle = { active: false, t0: 0, dur: 0, fromX: 0, toX: 0, dir: 1 }
+let finishing = false
+let hiddenAt = 0
+let pluckEnergy = 0
+
 let animationFrame = 0
 let lastFrameTime = 0
-let frameCount = 0
 let resizeObserver = null
 let motionQuery = null
-let climateTimer = 0
+let pickTimer = 0
+let shuttleTimer = 0
+let yarnTimer = 0
 let utteranceTimer = 0
+let saveTimer = 0
+let staticTimer = 0
+let rollTimer = 0
 let dataController = null
-let audioContext = null
-let audioGain = null
-let audioFilter = null
-let audioOscillators = []
+let memoryDirty = false
 let lastInteractionAt = 0
+
+let audioContext = null
+let audioMaster = null
+let pluckCache = new Map()
+let noiseBuffer = null
 
 const pointer = {
   x: 0,
   y: 0,
   previousX: 0,
   previousY: 0,
+  bend: 0,
   speed: 0,
   active: false,
   lastMoveAt: 0,
 }
 
-const climates = computed(() => {
-  return Array.isArray(autonomy.value.climates) && autonomy.value.climates.length
-    ? autonomy.value.climates
-    : fallbackAutonomy.climates
+const yarns = computed(() => {
+  return Array.isArray(loom.value.yarns) && loom.value.yarns.length
+    ? loom.value.yarns
+    : fallbackLoom.yarns
 })
 
-const currentClimate = computed(() => {
-  return climates.value[climateIndex.value] || climates.value[0]
+const currentYarn = computed(() => {
+  return yarns.value[yarnIndex.value] || yarns.value[0]
 })
 
 const pageStyle = computed(() => {
-  const climate = currentClimate.value
+  const yarn = currentYarn.value
   return {
-    '--weather-hue': climate.hue,
-    '--weather-saturation': `${climate.saturation}%`,
-    '--weather-lightness': `${climate.lightness}%`,
+    '--loom-hue': yarn.hue,
+    '--loom-saturation': `${yarn.saturation}%`,
+    '--loom-lightness': `${yarn.lightness}%`,
   }
 })
 
-const pressureReading = computed(() => pressure.value.toFixed(1).padStart(4, '0'))
-const windReading = computed(() => `${windSpeed.value.toFixed(1)} m/s`)
+const tensionReading = computed(() => `${tension.value.toFixed(1)}%`)
+const picksReading = computed(() => String(picksCount.value).padStart(4, '0'))
+const currentKnotCount = computed(() => knotCount.value)
+
+function syncKnotCount() {
+  knotCount.value = knots.length + pendingKnots.length
+}
 
 const memorySummary = computed(() => {
-  if (!memory.disturbances) {
-    return '还没有局部天气认出你。第一处触碰会成为很轻的地形。'
+  if (memory.inheritedFromWeather && memory.inheritedDisturbances > 0) {
+    return `第 ${memory.visits} 次到访。上一代记住的 ${memory.inheritedDisturbances} 次扰动正被逐一打成结，织进眼前的布。`
   }
-
-  const climate = climates.value[memory.lastClimate] || currentClimate.value
-  return `第 ${memory.visits} 次到访，${memory.disturbances} 次扰动。最近一次被记成「${climate.name}」。`
+  if (!memory.plucks && !memory.boltsEver) {
+    return '还没有人碰过这架织机。第一次拨弦会成为很轻的音。'
+  }
+  return `第 ${memory.visits} 次到访，${memory.plucks} 次拨弦，${memory.boltsEver} 匹布被卷起收好。`
 })
+
+function chipStyle(yarn) {
+  return { background: `hsl(${yarn.hue}, ${yarn.saturation}%, ${yarn.lightness}%)` }
+}
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
@@ -347,304 +428,698 @@ function safeArray(value, fallback) {
   return Array.isArray(value) && value.length ? value : fallback
 }
 
-function normalizeAutonomy(data) {
-  const fallbackClimates = fallbackAutonomy.climates
-  const dataClimates = safeArray(data?.climates, fallbackClimates)
+function normalizeLoom(data) {
+  const fallbackYarns = fallbackLoom.yarns
+  const dataYarns = safeArray(data?.yarns, fallbackYarns)
 
   return {
-    ...fallbackAutonomy,
+    ...fallbackLoom,
     ...data,
     seed: {
-      ...fallbackAutonomy.seed,
+      ...fallbackLoom.seed,
       ...(data?.seed || {}),
       inheritedMechanisms: safeArray(
         data?.seed?.inheritedMechanisms,
-        fallbackAutonomy.seed.inheritedMechanisms,
+        fallbackLoom.seed.inheritedMechanisms,
       ),
-      sediments: safeArray(data?.seed?.sediments, fallbackAutonomy.seed.sediments),
+      sediments: safeArray(data?.seed?.sediments, fallbackLoom.seed.sediments),
     },
-    climates: dataClimates.map((climate, index) => {
-      const fallback = fallbackClimates[index % fallbackClimates.length]
+    yarns: dataYarns.map((yarn, index) => {
+      const fallback = fallbackYarns[index % fallbackYarns.length]
       return {
         ...fallback,
-        ...climate,
-        hue: clamp(Number(climate.hue) || fallback.hue, 0, 360),
-        saturation: clamp(Number(climate.saturation) || fallback.saturation, 0, 100),
-        lightness: clamp(Number(climate.lightness) || fallback.lightness, 0, 100),
-        wind: clamp(Number(climate.wind) || fallback.wind, -0.08, 0.08),
-        noise: clamp(Number(climate.noise) || fallback.noise, 0, 0.08),
-        cohesion: clamp(Number(climate.cohesion) || fallback.cohesion, -0.03, 0.03),
-        repulsion: clamp(Number(climate.repulsion) || fallback.repulsion, -1.5, 1.5),
-        trail: clamp(Number(climate.trail) || fallback.trail, 0.04, 0.24),
+        ...yarn,
+        hue: clamp(Number(yarn.hue) || fallback.hue, 0, 360),
+        saturation: clamp(Number(yarn.saturation) || fallback.saturation, 0, 100),
+        lightness: clamp(Number(yarn.lightness) || fallback.lightness, 20, 88),
+        tempo: clamp(Number(yarn.tempo) || fallback.tempo, 120, 420),
+        irregularity: clamp(Number(yarn.irregularity) || fallback.irregularity, 0, 0.6),
+        tension: clamp(Number(yarn.tension) || fallback.tension, 0.2, 1),
       }
     }),
     lexicon: {
-      ...fallbackAutonomy.lexicon,
+      ...fallbackLoom.lexicon,
       ...(data?.lexicon || {}),
-      openings: safeArray(data?.lexicon?.openings, fallbackAutonomy.lexicon.openings),
-      subjects: safeArray(data?.lexicon?.subjects, fallbackAutonomy.lexicon.subjects),
-      verbs: safeArray(data?.lexicon?.verbs, fallbackAutonomy.lexicon.verbs),
-      closings: safeArray(data?.lexicon?.closings, fallbackAutonomy.lexicon.closings),
+      openings: safeArray(data?.lexicon?.openings, fallbackLoom.lexicon.openings),
+      subjects: safeArray(data?.lexicon?.subjects, fallbackLoom.lexicon.subjects),
+      verbs: safeArray(data?.lexicon?.verbs, fallbackLoom.lexicon.verbs),
+      closings: safeArray(data?.lexicon?.closings, fallbackLoom.lexicon.closings),
     },
-    instructions: safeArray(data?.instructions, fallbackAutonomy.instructions),
-    ledger: safeArray(data?.ledger, fallbackAutonomy.ledger),
+    instructions: safeArray(data?.instructions, fallbackLoom.instructions),
+    ledger: safeArray(data?.ledger, fallbackLoom.ledger),
     handoff: {
-      ...fallbackAutonomy.handoff,
+      ...fallbackLoom.handoff,
       ...(data?.handoff || {}),
     },
   }
 }
 
+function normalizeStoredThread(thread) {
+  if (!thread || typeof thread !== 'object') return null
+  return {
+    fx: clamp(Number(thread.fx) || 0.5, 0, 1),
+    fy: clamp(Number(thread.fy) || 0.5, 0, 1),
+    strength: clamp(Number(thread.strength) || 0.5, 0.2, 1),
+    yarn: clamp(Math.floor(Number(thread.yarn) || 0), 0, yarns.value.length - 1),
+  }
+}
+
 function loadMemory() {
+  let restored = false
   try {
     const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null')
     if (stored && typeof stored === 'object') {
+      restored = true
       memory.visits = clamp(Number(stored.visits) || 0, 0, 999) + 1
-      memory.disturbances = clamp(Number(stored.disturbances) || 0, 0, 9999)
-      memory.marks = Array.isArray(stored.marks)
-        ? stored.marks.slice(-MAX_MEMORY_MARKS).map((mark) => ({
-            x: clamp(Number(mark.x) || 0.5, 0, 1),
-            y: clamp(Number(mark.y) || 0.5, 0, 1),
-            strength: clamp(Number(mark.strength) || 0.5, 0.2, 1),
+      memory.plucks = clamp(Number(stored.plucks) || 0, 0, 99999)
+      memory.boltsEver = clamp(Number(stored.boltsEver) || 0, 0, 9999)
+      memory.bolts = Array.isArray(stored.bolts)
+        ? stored.bolts.slice(0, MAX_BOLTS_KEPT).map((bolt) => ({
+            n: clamp(Math.floor(Number(bolt.n) || 0), 0, 9999),
+            name: String(bolt.name || '未命名'),
+            picks: clamp(Math.floor(Number(bolt.picks) || 0), 0, 9999),
+            knots: clamp(Math.floor(Number(bolt.knots) || 0), 0, 999),
+            draft: String(bolt.draft || '00000000'),
+            yarn: String(bolt.yarn || ''),
+            endedAt: String(bolt.endedAt || ''),
           }))
         : []
-      memory.lastClimate = clamp(Number(stored.lastClimate) || 0, 0, climates.value.length - 1)
-      memory.lastVisit = String(stored.lastVisit || '')
+      memory.lastYarn = clamp(Math.floor(Number(stored.lastYarn) || 0), 0, yarns.value.length - 1)
+
+      const threadsFromStore = Array.isArray(stored.savedThreads) ? stored.savedThreads : []
+      pendingKnots = threadsFromStore
+        .map(normalizeStoredThread)
+        .filter(Boolean)
+        .slice(0, MAX_PENDING_KNOTS)
     }
   } catch {
-    memory.visits = 1
-    memory.disturbances = 0
-    memory.marks = []
+    restored = false
   }
 
-  climateIndex.value = memory.lastClimate
+  if (!restored) {
+    // First visit under the loom: inherit whatever the weather remembered.
+    // Its disturbance marks become loose thread ends, re-tied as the cloth grows.
+    try {
+      const legacy = JSON.parse(window.localStorage.getItem(LEGACY_KEY) || 'null')
+      if (legacy && typeof legacy === 'object') {
+        memory.visits = clamp(Number(legacy.visits) || 0, 0, 999) + 1
+        memory.inheritedDisturbances = clamp(Number(legacy.disturbances) || 0, 0, 9999)
+        memory.inheritedFromWeather = memory.inheritedDisturbances > 0
+        memory.lastYarn = clamp(Math.floor(Number(legacy.lastClimate) || 0), 0, yarns.value.length - 1)
+        if (Array.isArray(legacy.marks)) {
+          pendingKnots = legacy.marks
+            .map(normalizeStoredThread)
+            .filter(Boolean)
+            .slice(0, MAX_PENDING_KNOTS)
+        }
+      }
+    } catch {
+      // No inheritance available; the loom starts with bare warp.
+    }
+  }
+
+  syncKnotCount()
+  yarnIndex.value = clamp(memory.lastYarn, 0, yarns.value.length - 1)
   memory.lastVisit = new Date().toISOString()
   saveMemory()
+}
+
+function knotsToThreads() {
+  const fromKnots = knots.map((knot) => ({
+    fx: warpCount > 1 ? knot.w / (warpCount - 1) : 0.5,
+    fy: height ? clamp((fellY0 + (knot.row + 0.5) * rowH) / height, 0, 1) : 0.5,
+    strength: clamp(knot.size, 0.2, 1),
+    yarn: knot.yarn,
+  }))
+  return [...fromKnots, ...pendingKnots].slice(0, MAX_PENDING_KNOTS)
 }
 
 function saveMemory() {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
       visits: memory.visits,
-      disturbances: memory.disturbances,
-      marks: memory.marks,
-      lastClimate: climateIndex.value,
+      plucks: memory.plucks,
+      boltsEver: memory.boltsEver,
+      bolts: memory.bolts,
+      savedThreads: knotsToThreads(),
+      lastYarn: yarnIndex.value,
       lastVisit: memory.lastVisit,
     }))
+    memoryDirty = false
   } catch {
-    // The piece remains functional when storage is blocked.
+    // The loom keeps weaving when storage is blocked.
   }
 }
 
-function forgetLocalWeather() {
+function markDirty() {
+  memoryDirty = true
+}
+
+function flushMemory() {
+  if (memoryDirty) saveMemory()
+}
+
+function forgetLocalWeave() {
   memory.visits = 1
-  memory.disturbances = 0
-  memory.marks = []
-  memory.lastClimate = climateIndex.value
+  memory.plucks = 0
+  memory.bolts = []
+  memory.savedThreads = []
+  memory.inheritedDisturbances = 0
+  memory.inheritedFromWeather = false
+  memory.lastYarn = yarnIndex.value
   memory.lastVisit = new Date().toISOString()
+  knots = []
+  pendingKnots = []
+  syncKnotCount()
   saveMemory()
-  resetField()
+  resetBolt(true)
   composeUtterance('forget')
 }
 
-function particleBudget() {
-  const cores = navigator.hardwareConcurrency || 4
-  const viewportBudget = width < 560 ? 76 : width < 1080 ? 128 : 188
-  return cores <= 4 ? Math.round(viewportBudget * 0.72) : viewportBudget
+function makeDraft(seedInt) {
+  const random = createRandom(seedInt)
+  const len = 24 + Math.floor(random() * 25)
+  const draftRows = []
+  for (let i = 0; i < len; i += 1) {
+    let bits = 0
+    let value = random() < 0.5 ? 1 : 0
+    const run = 1 + Math.floor(random() * 3)
+    for (let bit = 0; bit < 32; bit += 1) {
+      if (bit % run === 0 && random() < 0.72) value = 1 - value
+      bits |= value << bit
+    }
+    if (bits === 0 || bits === -1) bits = 0xAAAAAAAA
+    draftRows.push(bits >>> 0)
+  }
+  return {
+    rows: draftRows,
+    len,
+    id: (seedInt >>> 0).toString(16).padStart(8, '0'),
+  }
 }
 
-function resetField() {
-  if (!width || !height) return
+function rebuildDraft() {
+  draft = makeDraft(hashString(`loom-draft|${memory.visits}|${memory.boltsEver}|${Date.now() >> 10}`))
+}
 
-  const inherited = autonomy.value.seed?.inheritedMechanisms?.join('|') || ''
-  const seed = hashString(`${autonomy.value.version}|${inherited}|${memory.visits}`)
-  const random = createRandom(seed)
-  const count = reducedMotion.value ? Math.min(72, particleBudget()) : particleBudget()
+function shedUp(warp, pick) {
+  const bits = draft.rows[pick % draft.len] >>> 0
+  return ((bits >>> (warp % 32)) & 1) === 1
+}
 
-  particles = Array.from({ length: count }, (_, index) => ({
-    x: random() * width,
-    y: random() * height,
-    vx: (random() - 0.5) * 0.55,
-    vy: (random() - 0.5) * 0.55,
-    size: 0.6 + random() * 1.8,
-    alpha: 0.22 + random() * 0.66,
+function buildGeometry() {
+  spacing = clamp(width / 128, 8, 14)
+  warpCount = Math.max(24, Math.floor(width / spacing))
+  warpOriginX = (width - (warpCount - 1) * spacing) / 2
+  rowH = clamp(height / 112, 6, 10)
+  fellY0 = clamp(height * 0.15, 84, 180)
+  maxRows = Math.max(8, Math.floor((height * 0.94 - fellY0) / rowH))
+}
+
+function threadX(warp) {
+  return warpOriginX + warp * spacing
+}
+
+function buildThreads() {
+  const hues = loom.value.seed?.sediments?.map((sediment) => sediment.hue).filter((hue) => typeof hue === 'number')
+  const palette = hues && hues.length ? hues : yarns.value.map((yarn) => yarn.hue)
+  const random = createRandom(hashString(`warp|${warpCount}|${loom.value.version}`))
+  threads = Array.from({ length: warpCount }, (_, index) => ({
+    x: threadX(index),
     phase: random() * Math.PI * 2,
-    tint: (random() - 0.5) * 42,
-    lineage: index % Math.max(1, autonomy.value.seed?.sediments?.length || 4),
+    tint: random() < 0.12 ? palette[Math.floor(random() * palette.length)] : -1,
+    bright: index % 8 === 0,
+    vibT0: 0,
+    vibAmp: 0,
   }))
-
-  ripples = []
-  drawInitialField()
 }
 
-function resizeCanvas() {
-  const stage = stageRef.value
-  const canvas = canvasRef.value
-  if (!stage || !canvas) return
-
-  stageBounds = stage.getBoundingClientRect()
-  const nextWidth = Math.max(1, Math.round(stageBounds.width))
-  const nextHeight = Math.max(1, Math.round(stageBounds.height))
-  const nextDpr = Math.min(window.devicePixelRatio || 1, 2)
-
-  if (nextWidth === width && nextHeight === height && nextDpr === dpr) return
-
-  width = nextWidth
-  height = nextHeight
-  dpr = nextDpr
-  canvas.width = Math.round(width * dpr)
-  canvas.height = Math.round(height * dpr)
-  canvas.style.width = `${width}px`
-  canvas.style.height = `${height}px`
-
-  context = canvas.getContext('2d', { alpha: false })
-  context.setTransform(dpr, 0, 0, dpr, 0, 0)
-  resetField()
+function fellY() {
+  return fellY0 + rows.length * rowH
 }
 
-function drawInitialField() {
-  if (!context) return
-  context.globalCompositeOperation = 'source-over'
-  context.fillStyle = '#050609'
-  context.fillRect(0, 0, width, height)
-  drawParticles(false)
+function yarnFill(yarn, jitter = 0) {
+  const light = clamp(yarn.lightness + jitter, 22, 86)
+  return `hsla(${yarn.hue}, ${yarn.saturation}%, ${light}%, 0.92)`
 }
 
-function drawParticles(withTrails = true) {
-  if (!context) return
-
-  const climate = currentClimate.value
-  if (withTrails) {
-    context.globalCompositeOperation = 'source-over'
-    context.fillStyle = `rgba(5, 6, 9, ${climate.trail})`
-    context.fillRect(0, 0, width, height)
+function threadFill(thread) {
+  if (thread.tint >= 0) {
+    return `hsla(${thread.tint}, 52%, 62%, 0.85)`
   }
-
-  context.globalCompositeOperation = 'lighter'
-  context.lineCap = 'round'
-
-  for (const particle of particles) {
-    const speed = Math.hypot(particle.vx, particle.vy)
-    const tail = 3.5 + Math.min(speed * 8, 18)
-    context.beginPath()
-    context.moveTo(particle.x, particle.y)
-    context.lineTo(particle.x - particle.vx * tail, particle.y - particle.vy * tail)
-    context.lineWidth = particle.size
-    context.strokeStyle = `hsla(${climate.hue + particle.tint}, ${climate.saturation}%, ${climate.lightness}%, ${particle.alpha})`
-    context.stroke()
-  }
-
-  context.globalCompositeOperation = 'source-over'
-  for (const ripple of ripples) {
-    context.beginPath()
-    context.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2)
-    context.lineWidth = 1
-    context.strokeStyle = `hsla(${climate.hue}, ${climate.saturation}%, ${climate.lightness}%, ${ripple.alpha})`
-    context.stroke()
-  }
+  return 'rgba(231, 225, 212, 0.55)'
 }
 
-function stepField(time, delta) {
-  const climate = currentClimate.value
-  const autonomousX = width * (0.5 + Math.sin(time * 0.000071 + climateIndex.value) * 0.31)
-  const autonomousY = height * (0.5 + Math.cos(time * 0.000053 + climateIndex.value * 0.7) * 0.24)
-  const pointerAge = performance.now() - pointer.lastMoveAt
-  const pointerInfluence = pointer.active && pointerAge < 1400
-  let aggregateSpeed = 0
+function drawRow(rowIndex) {
+  if (!clothContext || rowIndex < 0 || rowIndex >= rows.length) return
+  const row = rows[rowIndex]
+  const yarn = yarns.value[row.yarn] || currentYarn.value
+  const flipSet = new Set(row.flips)
+  const y = fellY0 + rowIndex * rowH
+  const warpDash = clamp(spacing * 0.52, 2.4, 5)
+  const weftH = rowH * 0.66
+  const fill = yarnFill(yarn, row.lightJitter)
 
-  for (const particle of particles) {
-    const noiseAngle = particle.phase + time * (0.00009 + particle.size * 0.000012)
-    particle.vx += (climate.wind * 0.085 + Math.cos(noiseAngle) * climate.noise * 0.12) * delta
-    particle.vy += (Math.sin(noiseAngle * 1.17) * climate.noise * 0.12) * delta
-
-    const autonomousDx = autonomousX - particle.x
-    const autonomousDy = autonomousY - particle.y
-    const autonomousDistance = Math.max(80, Math.hypot(autonomousDx, autonomousDy))
-    particle.vx += (autonomousDx / autonomousDistance) * climate.cohesion * 0.45 * delta
-    particle.vy += (autonomousDy / autonomousDistance) * climate.cohesion * 0.45 * delta
-
-    if (pointerInfluence) {
-      const dx = particle.x - pointer.x
-      const dy = particle.y - pointer.y
-      const distance = Math.max(12, Math.hypot(dx, dy))
-      const radius = 120 + Math.min(pointer.speed * 18, 170)
-
-      if (distance < radius) {
-        const force = (1 - distance / radius) * climate.repulsion * 0.055 * delta
-        particle.vx += (dx / distance) * force
-        particle.vy += (dy / distance) * force
-        particle.vx += (pointer.x - pointer.previousX) * 0.0025
-        particle.vy += (pointer.y - pointer.previousY) * 0.0025
-      }
+  for (let warp = 0; warp < warpCount; warp += 1) {
+    const thread = threads[warp]
+    if (!thread) continue
+    const up = shedUp(warp, rowIndex) !== flipSet.has(warp)
+    if (up) {
+      clothContext.fillStyle = threadFill(thread)
+      clothContext.fillRect(thread.x - warpDash / 2, y - 0.4, warpDash, rowH + 0.8)
+    } else {
+      clothContext.fillStyle = fill
+      clothContext.fillRect(thread.x - spacing * 0.52, y + (rowH - weftH) / 2, spacing * 1.04, weftH)
     }
-
-    for (const mark of memory.marks) {
-      const markX = mark.x * width
-      const markY = mark.y * height
-      const dx = markX - particle.x
-      const dy = markY - particle.y
-      const distance = Math.max(24, Math.hypot(dx, dy))
-      if (distance < 190) {
-        const memoryForce = (1 - distance / 190) * mark.strength * 0.0035 * delta
-        particle.vx += (dx / distance) * memoryForce
-        particle.vy += (dy / distance) * memoryForce
-      }
-    }
-
-    particle.vx *= 0.991
-    particle.vy *= 0.991
-
-    const speed = Math.hypot(particle.vx, particle.vy)
-    if (speed > 2.8) {
-      particle.vx = (particle.vx / speed) * 2.8
-      particle.vy = (particle.vy / speed) * 2.8
-    }
-
-    particle.x += particle.vx * delta
-    particle.y += particle.vy * delta
-    aggregateSpeed += Math.hypot(particle.vx, particle.vy)
-
-    const margin = 24
-    if (particle.x < -margin) particle.x = width + margin
-    if (particle.x > width + margin) particle.x = -margin
-    if (particle.y < -margin) particle.y = height + margin
-    if (particle.y > height + margin) particle.y = -margin
   }
 
-  for (const ripple of ripples) {
-    ripple.radius += (1.2 + ripple.strength * 1.6) * delta
-    ripple.alpha *= 0.972 ** delta
-  }
-  ripples = ripples.filter((ripple) => ripple.alpha > 0.018)
+  clothContext.fillStyle = 'rgba(4, 5, 8, 0.28)'
+  clothContext.fillRect(warpOriginX - spacing * 0.5, y + rowH - 0.5, (warpCount - 1) * spacing + spacing, 1)
+}
 
-  if (frameCount % 12 === 0) {
-    const averageSpeed = aggregateSpeed / Math.max(1, particles.length)
-    windSpeed.value = averageSpeed * 2.7 + Math.abs(climate.wind) * 18
-    pressure.value = 46 + climateIndex.value * 1.7 + Math.sin(time * 0.00019) * 1.3 + memory.marks.length * 0.08
-    updateAudioFromWeather()
+function drawKnot(knot) {
+  if (!clothContext || knot.row >= rows.length) return
+  const thread = threads[knot.w]
+  if (!thread) return
+  const yarn = yarns.value[knot.yarn] || currentYarn.value
+  const x = thread.x
+  const y = fellY0 + knot.row * rowH + rowH / 2
+  const radius = clamp(knot.size, 0.2, 1.2) * spacing * 0.9
+
+  clothContext.beginPath()
+  clothContext.arc(x, y, radius, 0, Math.PI * 2)
+  clothContext.fillStyle = yarnFill(yarn, 6)
+  clothContext.fill()
+  clothContext.beginPath()
+  clothContext.arc(x - radius * 0.3, y - radius * 0.3, radius * 0.42, 0, Math.PI * 2)
+  clothContext.fillStyle = `hsla(${yarn.hue}, ${yarn.saturation}%, 88%, 0.85)`
+  clothContext.fill()
+}
+
+function reRenderCloth() {
+  if (!clothContext) return
+  clothContext.clearRect(0, 0, width, height)
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+    drawRow(rowIndex)
+  }
+  for (const knot of knots) {
+    drawKnot(knot)
   }
 }
 
-function animateField(time) {
-  const delta = lastFrameTime ? clamp((time - lastFrameTime) / 16.667, 0.2, 2.2) : 1
-  lastFrameTime = time
-  frameCount += 1
-  stepField(time, delta)
-  drawParticles(true)
-  animationFrame = window.requestAnimationFrame(animateField)
+function computeFlips(rowIndex, yarn) {
+  const random = createRandom(hashString(`${draft.id}|${rowIndex}|${memory.boltsEver}|flips`))
+  const flips = []
+  const probability = clamp(yarn.irregularity, 0, 0.6) * 0.16
+  for (let warp = 0; warp < warpCount; warp += 1) {
+    if (random() < probability) flips.push(warp)
+  }
+  return flips
 }
 
-function startField() {
-  window.cancelAnimationFrame(animationFrame)
-  animationFrame = 0
-  lastFrameTime = 0
+function commitPick() {
+  if (finishing || rows.length >= maxRows) return
+  const yarn = currentYarn.value
+  const random = createRandom(hashString(`${draft.id}|${rows.length}|light`))
+  rows.push({
+    yarn: yarnIndex.value,
+    flips: computeFlips(rows.length, yarn),
+    lightJitter: (random() - 0.5) * 7,
+  })
+  drawRow(rows.length - 1)
+  picksCount.value = rows.length
+  settlePendingKnots()
+  playClack()
+  tension.value = clamp(tension.value + 0.15, 20, 98)
+  markDirty()
+  if (reducedMotion.value) drawScene(performance.now())
 
-  if (reducedMotion.value) {
-    drawInitialField()
+  if (rows.length >= maxRows) {
+    startBoltRoll()
+  }
+}
+
+function settlePendingKnots() {
+  if (!pendingKnots.length || !rows.length) return
+  const remaining = []
+  for (const pending of pendingKnots) {
+    const absY = clamp(pending.fy * height, fellY0 + rowH * 1.5, height * 0.92)
+    if (fellY() >= absY) {
+      tieKnot({
+        w: clamp(Math.round(pending.fx * (warpCount - 1)), 0, warpCount - 1),
+        row: rows.length - 1,
+        yarn: pending.yarn,
+        size: clamp(0.45 + pending.strength * 0.6, 0.3, 1.1),
+        silent: true,
+      })
+    } else {
+      remaining.push(pending)
+    }
+  }
+  pendingKnots = remaining
+  syncKnotCount()
+}
+
+function tieKnot({ w, row, yarn, size, silent = false }) {
+  if (!rows.length || row >= rows.length) return
+  knots.push({
+    w: clamp(w, 0, warpCount - 1),
+    row: clamp(row, 0, rows.length - 1),
+    yarn: clamp(yarn, 0, yarns.value.length - 1),
+    size: clamp(size, 0.2, 1.2),
+  })
+  if (knots.length > MAX_KNOTS) {
+    knots.shift()
+    reRenderCloth()
+  } else {
+    drawKnot(knots[knots.length - 1])
+  }
+  syncKnotCount()
+  if (!silent) {
+    const thread = threads[clamp(w, 0, warpCount - 1)]
+    if (thread) spawnFibers(thread.x, fellY0 + row * rowH, currentYarn.value.hue, 7)
+    playKnotSound()
+    composeUtterance(`knot|${w}|${row}|${knots.length}`)
+  }
+  markDirty()
+}
+
+function scheduleNextPick() {
+  window.clearTimeout(pickTimer)
+  if (finishing) return
+  const yarn = currentYarn.value
+  let delay = reducedMotion.value ? 2400 : yarn.tempo * (0.85 + Math.random() * 0.3)
+  if (!reducedMotion.value && Math.random() < 0.06) {
+    // The loom hesitates sometimes; autonomy includes the right to pause.
+    delay += 1200 + Math.random() * 2400
+  }
+  pickTimer = window.setTimeout(runPick, delay)
+}
+
+function runPick() {
+  if (finishing) {
+    scheduleNextPick()
+    return
+  }
+  if (rows.length >= maxRows) {
+    startBoltRoll()
+    scheduleNextPick()
     return
   }
 
-  animationFrame = window.requestAnimationFrame(animateField)
+  if (reducedMotion.value) {
+    commitPick()
+    scheduleNextPick()
+    return
+  }
+
+  const dir = shuttle.dir * -1
+  const fromX = dir === 1 ? warpOriginX - spacing * 3 : warpOriginX + (warpCount - 1) * spacing + spacing * 3
+  const toX = dir === 1 ? warpOriginX + (warpCount - 1) * spacing + spacing * 3 : warpOriginX - spacing * 3
+  shuttle = {
+    active: true,
+    t0: performance.now(),
+    dur: clamp(currentYarn.value.tempo * 0.55, 90, 170),
+    fromX,
+    toX,
+    dir,
+  }
+  window.clearTimeout(shuttleTimer)
+  shuttleTimer = window.setTimeout(() => {
+    shuttle.active = false
+    commitPick()
+    scheduleNextPick()
+  }, shuttle.dur)
+}
+
+function boltName(n) {
+  const lexicon = loom.value.lexicon || fallbackLoom.lexicon
+  const random = createRandom(hashString(`bolt|${n}|${draft.id}|${memory.visits}`))
+  return lexicon.subjects[Math.floor(random() * lexicon.subjects.length)]
+}
+
+function startBoltRoll() {
+  if (finishing || !rows.length) return
+  finishing = true
+  window.clearTimeout(pickTimer)
+  window.clearTimeout(shuttleTimer)
+  shuttle.active = false
+
+  memory.boltsEver += 1
+  const name = boltName(memory.boltsEver)
+  memory.bolts = [
+    {
+      n: memory.boltsEver,
+      name,
+      picks: rows.length,
+      knots: knots.length,
+      draft: draft.id,
+      yarn: currentYarn.value.id,
+      endedAt: new Date().toISOString(),
+    },
+    ...memory.bolts,
+  ].slice(0, MAX_BOLTS_KEPT)
+  knots = []
+  pendingKnots = []
+  syncKnotCount()
+  utteranceIndex.value = (utteranceIndex.value + 1) % 100
+  utterance.value = `第 ${memory.boltsEver} 匹布卷起，名字叫「${name}」。`
+  saveMemory()
+
+  const cloth = clothRef.value
+  if (cloth) {
+    cloth.classList.add('rolling')
+  }
+
+  window.clearTimeout(rollTimer)
+  rollTimer = window.setTimeout(() => {
+    rows = []
+    picksCount.value = 0
+    rebuildDraft()
+    if (clothContext) clothContext.clearRect(0, 0, width, height)
+    if (cloth) {
+      cloth.classList.add('no-anim')
+      cloth.classList.remove('rolling')
+      void cloth.offsetWidth
+      cloth.classList.remove('no-anim')
+    }
+    finishing = false
+    scheduleNextPick()
+    if (reducedMotion.value) drawScene(performance.now())
+  }, 1180)
+}
+
+function resetBolt(fresh = false) {
+  window.clearTimeout(pickTimer)
+  window.clearTimeout(shuttleTimer)
+  window.clearTimeout(rollTimer)
+  shuttle.active = false
+  finishing = false
+  rows = []
+  picksCount.value = 0
+  knots = []
+  if (fresh) {
+    pendingKnots = []
+    rebuildDraft()
+  }
+  syncKnotCount()
+  const cloth = clothRef.value
+  if (cloth) {
+    cloth.classList.add('no-anim')
+    cloth.classList.remove('rolling')
+    void cloth.offsetWidth
+    cloth.classList.remove('no-anim')
+  }
+  if (clothContext) clothContext.clearRect(0, 0, width, height)
+  scheduleNextPick()
+}
+
+function spawnFibers(x, y, hue, count = 6) {
+  if (reducedMotion.value) return
+  for (let i = 0; i < count; i += 1) {
+    const angle = Math.random() * Math.PI * 2
+    const speed = 0.3 + Math.random() * 0.9
+    particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 0.35,
+      life: 1,
+      decay: 0.008 + Math.random() * 0.014,
+      hue,
+    })
+  }
+  if (particles.length > 90) {
+    particles = particles.slice(-90)
+  }
+}
+
+function drawScene(time) {
+  if (!liveContext) return
+  liveContext.clearRect(0, 0, width, height)
+
+  const fell = fellY()
+  const now = performance.now()
+  const pointerNear = pointer.active && pointer.y < fell + 30 && now - pointer.lastMoveAt < 1600
+
+  liveContext.lineCap = 'round'
+  for (const thread of threads) {
+    const vibAge = now - thread.vibT0
+    const vib = thread.vibAmp > 0 && vibAge < 1400
+      ? thread.vibAmp * Math.exp(-vibAge / 420) * Math.sin(vibAge * 0.05)
+      : 0
+
+    let bend = 0
+    let highlight = 0
+    if (pointerNear && !reducedMotion.value) {
+      const distance = Math.abs(thread.x - pointer.x)
+      if (distance < 95) {
+        const influence = 1 - distance / 95
+        bend = influence * pointer.bend
+        highlight = influence * 0.42
+      }
+    }
+
+    const sway = reducedMotion.value ? 0 : 1
+    liveContext.beginPath()
+    const segments = Math.max(4, Math.floor(fell / 26))
+    for (let s = 0; s <= segments; s += 1) {
+      const y = (fell * s) / segments
+      const envelope = Math.sin((Math.PI * y) / Math.max(40, fell))
+      const waver = sway * 1.7 * Math.sin(time * 0.00045 + thread.phase + y * 0.0045)
+      const offset = (waver + bend + vib) * envelope
+      if (s === 0) {
+        liveContext.moveTo(thread.x + offset, y)
+      } else {
+        liveContext.lineTo(thread.x + offset, y)
+      }
+    }
+
+    if (thread.tint >= 0) {
+      liveContext.strokeStyle = `hsla(${thread.tint}, 58%, 66%, ${0.34 + highlight})`
+    } else {
+      liveContext.strokeStyle = `rgba(231, 225, 212, ${(thread.bright ? 0.3 : 0.2) + highlight})`
+    }
+    liveContext.lineWidth = thread.bright ? 1.35 : 1
+    liveContext.stroke()
+  }
+
+  // The fell line: where warp becomes cloth.
+  const yarn = currentYarn.value
+  const left = warpOriginX - spacing * 0.8
+  const right = warpOriginX + (warpCount - 1) * spacing + spacing * 0.8
+  liveContext.beginPath()
+  liveContext.moveTo(left, fell)
+  liveContext.lineTo(right, fell)
+  liveContext.strokeStyle = `hsla(${yarn.hue}, ${yarn.saturation}%, ${yarn.lightness}%, 0.6)`
+  liveContext.lineWidth = 1.2
+  liveContext.stroke()
+
+  if (shuttle.active) {
+    const progress = clamp((time - shuttle.t0) / shuttle.dur, 0, 1)
+    const eased = progress < 0.5 ? 2 * progress * progress : 1 - ((-2 * progress + 2) ** 2) / 2
+    const x = shuttle.fromX + (shuttle.toX - shuttle.fromX) * eased
+    const y = fell - rowH * 0.5
+    liveContext.save()
+    liveContext.translate(x, y)
+    liveContext.rotate(shuttle.dir === 1 ? 0.08 : -0.08)
+    liveContext.shadowColor = `hsla(${yarn.hue}, ${yarn.saturation}%, ${yarn.lightness}%, 0.9)`
+    liveContext.shadowBlur = 14
+    liveContext.beginPath()
+    liveContext.moveTo(-13, 0)
+    liveContext.lineTo(0, -3.4)
+    liveContext.lineTo(13, 0)
+    liveContext.lineTo(0, 3.4)
+    liveContext.closePath()
+    liveContext.fillStyle = yarnFill(yarn, 12)
+    liveContext.fill()
+    liveContext.restore()
+  }
+
+  for (const particle of particles) {
+    liveContext.beginPath()
+    liveContext.moveTo(particle.x, particle.y)
+    liveContext.lineTo(particle.x - particle.vx * 4, particle.y - particle.vy * 4)
+    liveContext.strokeStyle = `hsla(${particle.hue}, 60%, 72%, ${particle.life * 0.75})`
+    liveContext.lineWidth = 1
+    liveContext.stroke()
+  }
+}
+
+function stepScene(time, delta) {
+  for (const particle of particles) {
+    particle.x += particle.vx * delta
+    particle.y += particle.vy * delta
+    particle.vy += 0.015 * delta
+    particle.life -= particle.decay * delta
+  }
+  particles = particles.filter((particle) => particle.life > 0)
+
+  pointer.bend *= 0.86 ** delta
+  pluckEnergy *= 0.94 ** delta
+}
+
+function animateScene(time) {
+  const delta = lastFrameTime ? clamp((time - lastFrameTime) / 16.667, 0.2, 2.2) : 1
+  lastFrameTime = time
+  stepScene(time, delta)
+  drawScene(time)
+  if (frameTick() % 14 === 0) {
+    tension.value = clamp(
+      currentYarn.value.tension * 62 + pluckEnergy * 26 + Math.sin(time * 0.00021) * 3,
+      20,
+      98,
+    )
+  }
+  animationFrame = window.requestAnimationFrame(animateScene)
+}
+
+let frameCounter = 0
+function frameTick() {
+  frameCounter += 1
+  return frameCounter
+}
+
+function startScene() {
+  window.cancelAnimationFrame(animationFrame)
+  animationFrame = 0
+  lastFrameTime = 0
+  window.clearInterval(staticTimer)
+  staticTimer = 0
+
+  if (reducedMotion.value) {
+    drawScene(performance.now())
+    staticTimer = window.setInterval(() => drawScene(performance.now()), 1500)
+    return
+  }
+
+  animationFrame = window.requestAnimationFrame(animateScene)
+}
+
+function nearestWarp(x) {
+  return clamp(Math.round((x - warpOriginX) / spacing), 0, warpCount - 1)
+}
+
+function pluckThread(warp, velocity = 0.4) {
+  const thread = threads[warp]
+  if (!thread) return
+
+  lastInteractionAt = performance.now()
+  thread.vibT0 = performance.now()
+  thread.vibAmp = clamp(1.6 + velocity * 5, 1.6, 6.5)
+  pluckEnergy = clamp(pluckEnergy + 0.24, 0, 1)
+  memory.plucks = clamp(memory.plucks + 1, 0, 99999)
+  memory.lastYarn = yarnIndex.value
+  markDirty()
+
+  const degrees = warpCount > 1 ? Math.round((warp / (warpCount - 1)) * 14) : 0
+  const semitone = PENTA[degrees % PENTA.length] + 12 * Math.floor(degrees / PENTA.length)
+  playPluck(110 * 2 ** (semitone / 12), clamp(0.16 + velocity * 0.6, 0.12, 0.8))
+
+  spawnFibers(thread.x, clamp(pointer.y, 10, fellY()), currentYarn.value.hue, 8)
+  composeUtterance(`pluck|${warp}|${memory.plucks}`)
+
+  if (reducedMotion.value) drawScene(performance.now())
 }
 
 function handlePointerMove(event) {
@@ -658,6 +1133,9 @@ function handlePointerMove(event) {
   pointer.x = x
   pointer.y = y
   pointer.speed = Math.hypot(x - pointer.previousX, y - pointer.previousY)
+  if (y < fellY() + 30) {
+    pointer.bend = clamp(pointer.bend + (x - pointer.previousX) * 0.16, -7, 7)
+  }
   pointer.active = true
   pointer.lastMoveAt = performance.now()
 }
@@ -673,74 +1151,58 @@ function handlePointerDown(event) {
 
   const x = clamp(event.clientX - stageBounds.left, 0, width)
   const y = clamp(event.clientY - stageBounds.top, 0, height)
-  createDisturbance(x, y, Math.min(1, 0.45 + pointer.speed / 80))
-}
-
-function createDisturbance(x, y, strength = 0.72) {
   lastInteractionAt = performance.now()
-  memory.disturbances += 1
-  memory.lastClimate = climateIndex.value
-  memory.marks = [
-    ...memory.marks,
-    {
-      x: clamp(x / Math.max(1, width), 0, 1),
-      y: clamp(y / Math.max(1, height), 0, 1),
-      strength: clamp(strength, 0.2, 1),
-    },
-  ].slice(-MAX_MEMORY_MARKS)
 
-  ripples.push({ x, y, radius: 4, alpha: 0.74, strength })
-  applyImpulse(x, y, strength)
-  composeUtterance(`${x.toFixed(1)}|${y.toFixed(1)}|${memory.disturbances}`)
-  saveMemory()
-  playImpulseSound(strength)
-
-  if (reducedMotion.value) {
-    stepField(performance.now(), 1)
-    drawInitialField()
+  if (y <= fellY() + 6 || !rows.length) {
+    pluckThread(nearestWarp(x), clamp(pointer.speed / 26, 0.15, 1))
+    return
   }
+
+  const row = clamp(Math.floor((y - fellY0) / rowH), 0, rows.length - 1)
+  tieKnot({
+    w: nearestWarp(x),
+    row,
+    yarn: yarnIndex.value,
+    size: clamp(0.5 + Math.random() * 0.45, 0.3, 1.1),
+  })
 }
 
-function applyImpulse(x, y, strength) {
-  const climate = currentClimate.value
-  for (const particle of particles) {
-    const dx = particle.x - x
-    const dy = particle.y - y
-    const distance = Math.max(18, Math.hypot(dx, dy))
-    if (distance > 260) continue
-
-    const force = (1 - distance / 260) * strength * 1.35
-    const direction = climate.repulsion >= 0 ? 1 : -1
-    particle.vx += (dx / distance) * force * direction
-    particle.vy += (dy / distance) * force * direction
-  }
-}
-
-function disturbCenter() {
-  const seed = hashString(`${Date.now()}|${memory.disturbances}|${currentClimate.value.id}`)
-  const random = createRandom(seed)
-  const x = width * (0.28 + random() * 0.44)
-  const y = height * (0.32 + random() * 0.4)
-  createDisturbance(x, y, 0.82)
-}
-
-function selectClimate(index) {
-  climateIndex.value = clamp(index, 0, climates.value.length - 1)
-  memory.lastClimate = climateIndex.value
+function weaveOneNow() {
+  if (finishing) return
   lastInteractionAt = performance.now()
-  saveMemory()
-  composeUtterance(`climate|${currentClimate.value.id}|${memory.disturbances}`)
+  window.clearTimeout(pickTimer)
+  window.clearTimeout(shuttleTimer)
+  shuttle.active = false
+  if (rows.length >= maxRows) {
+    startBoltRoll()
+    return
+  }
+  commitPick()
+  composeUtterance(`hand|${rows.length}|${memory.plucks}`)
+  scheduleNextPick()
 }
 
-function nextAutonomousClimate() {
+function selectYarn(index) {
+  yarnIndex.value = clamp(index, 0, yarns.value.length - 1)
+  memory.lastYarn = yarnIndex.value
+  lastInteractionAt = performance.now()
+  markDirty()
+  utterance.value = currentYarn.value.phrase
+}
+
+function nextAutonomousYarn() {
   if (performance.now() - lastInteractionAt < 9000) return
-  climateIndex.value = (climateIndex.value + 1) % climates.value.length
-  composeUtterance(`autonomous|${currentClimate.value.id}|${Date.now() >> 14}`)
+  const random = createRandom(hashString(`auto-yarn|${Date.now() >> 13}|${memory.boltsEver}`))
+  const step = 1 + Math.floor(random() * (yarns.value.length - 1))
+  yarnIndex.value = (yarnIndex.value + step) % yarns.value.length
+  memory.lastYarn = yarnIndex.value
+  markDirty()
+  composeUtterance(`autonomous|${currentYarn.value.id}|${Date.now() >> 14}`)
 }
 
 function composeUtterance(salt = '') {
-  const lexicon = autonomy.value.lexicon || fallbackAutonomy.lexicon
-  const seed = hashString(`${autonomy.value.version}|${currentClimate.value.id}|${salt}|${utteranceIndex.value}`)
+  const lexicon = loom.value.lexicon || fallbackLoom.lexicon
+  const seed = hashString(`${loom.value.version}|${currentYarn.value.id}|${salt}|${utteranceIndex.value}`)
   const random = createRandom(seed)
   const take = (items) => items[Math.floor(random() * items.length)]
 
@@ -748,74 +1210,109 @@ function composeUtterance(salt = '') {
   utterance.value = `${take(lexicon.openings)}，${take(lexicon.subjects)}${take(lexicon.verbs)}${take(lexicon.closings)}`
 }
 
+function ensureAudioGraph() {
+  if (audioContext) return true
+  const AudioContextConstructor = window.AudioContext || window.webkitAudioContext
+  if (!AudioContextConstructor) return false
+
+  audioContext = new AudioContextConstructor()
+  audioMaster = audioContext.createGain()
+  audioMaster.gain.setValueAtTime(0.0001, audioContext.currentTime)
+  audioMaster.gain.exponentialRampToValueAtTime(0.5, audioContext.currentTime + 0.6)
+  audioMaster.connect(audioContext.destination)
+  return true
+}
+
+function renderPluckBuffer(frequency) {
+  const sampleRate = audioContext.sampleRate
+  const period = Math.max(2, Math.round(sampleRate / frequency))
+  const length = Math.min(Math.floor(sampleRate * 1.9), period * 240)
+  const buffer = audioContext.createBuffer(1, length, sampleRate)
+  const output = buffer.getChannelData(0)
+  const delay = new Float32Array(period)
+  for (let i = 0; i < period; i += 1) {
+    delay[i] = Math.random() * 2 - 1
+  }
+  let index = 0
+  for (let i = 0; i < length; i += 1) {
+    const current = delay[index]
+    const next = delay[(index + 1) % period]
+    delay[index] = 0.996 * 0.5 * (current + next)
+    output[i] = current
+    index = (index + 1) % period
+  }
+  return buffer
+}
+
+function playPluck(frequency, velocity = 0.3) {
+  if (!soundEnabled.value || !audioContext || !audioMaster) return
+  const key = Math.round(frequency)
+  if (!pluckCache.has(key)) {
+    if (pluckCache.size > 28) pluckCache.clear()
+    pluckCache.set(key, renderPluckBuffer(frequency))
+  }
+  const source = audioContext.createBufferSource()
+  const gain = audioContext.createGain()
+  source.buffer = pluckCache.get(key)
+  gain.gain.value = velocity
+  source.connect(gain)
+  gain.connect(audioMaster)
+  source.start()
+}
+
+function getNoiseBuffer() {
+  if (noiseBuffer) return noiseBuffer
+  const length = Math.floor(audioContext.sampleRate * 0.12)
+  noiseBuffer = audioContext.createBuffer(1, length, audioContext.sampleRate)
+  const output = noiseBuffer.getChannelData(0)
+  for (let i = 0; i < length; i += 1) {
+    output[i] = (Math.random() * 2 - 1) * (1 - i / length)
+  }
+  return noiseBuffer
+}
+
+function playClack() {
+  if (!soundEnabled.value || !audioContext || !audioMaster) return
+  const source = audioContext.createBufferSource()
+  const filter = audioContext.createBiquadFilter()
+  const gain = audioContext.createGain()
+  source.buffer = getNoiseBuffer()
+  filter.type = 'bandpass'
+  filter.frequency.value = 1500 + Math.random() * 500
+  filter.Q.value = 1.1
+  gain.gain.value = 0.05
+  source.connect(filter)
+  filter.connect(gain)
+  gain.connect(audioMaster)
+  source.start()
+}
+
+function playKnotSound() {
+  if (!soundEnabled.value || !audioContext || !audioMaster) return
+  const source = audioContext.createBufferSource()
+  const filter = audioContext.createBiquadFilter()
+  const gain = audioContext.createGain()
+  source.buffer = getNoiseBuffer()
+  filter.type = 'lowpass'
+  filter.frequency.value = 320
+  gain.gain.value = 0.12
+  source.connect(filter)
+  filter.connect(gain)
+  gain.connect(audioMaster)
+  source.start()
+}
+
 async function toggleSound() {
   if (soundEnabled.value) {
     stopAudio()
     return
   }
-
-  const AudioContextConstructor = window.AudioContext || window.webkitAudioContext
-  if (!AudioContextConstructor) return
-
-  audioContext = new AudioContextConstructor()
-  audioGain = audioContext.createGain()
-  audioFilter = audioContext.createBiquadFilter()
-  audioFilter.type = 'lowpass'
-  audioFilter.Q.value = 0.7
-  audioGain.gain.setValueAtTime(0.0001, audioContext.currentTime)
-  audioGain.gain.exponentialRampToValueAtTime(0.028, audioContext.currentTime + 1.2)
-
-  audioFilter.connect(audioGain)
-  audioGain.connect(audioContext.destination)
-
-  audioOscillators = [0, 1].map((index) => {
-    const oscillator = audioContext.createOscillator()
-    oscillator.type = index === 0 ? 'sine' : 'triangle'
-    oscillator.detune.value = index === 0 ? -7 : 9
-    oscillator.connect(audioFilter)
-    oscillator.start()
-    return oscillator
-  })
-
+  if (!ensureAudioGraph()) return
   soundEnabled.value = true
-  updateAudioFromWeather(true)
   audioContext.resume().catch(() => {
     // Some embedded browsers defer playback until a later trusted gesture.
     // The graph can stay ready without blocking the visible interaction.
   })
-}
-
-function updateAudioFromWeather(immediate = false) {
-  if (!soundEnabled.value || !audioContext || !audioFilter || !audioOscillators.length) return
-
-  const climate = currentClimate.value
-  const now = audioContext.currentTime
-  const base = 48 + climateIndex.value * 11 + windSpeed.value * 0.8
-  const duration = immediate ? 0.02 : 0.8
-
-  audioOscillators[0].frequency.cancelScheduledValues(now)
-  audioOscillators[1].frequency.cancelScheduledValues(now)
-  audioOscillators[0].frequency.linearRampToValueAtTime(base, now + duration)
-  audioOscillators[1].frequency.linearRampToValueAtTime(base * 1.502, now + duration)
-  audioFilter.frequency.linearRampToValueAtTime(240 + climate.hue * 1.8 + windSpeed.value * 22, now + duration)
-}
-
-function playImpulseSound(strength) {
-  if (!soundEnabled.value || !audioContext || !audioGain) return
-
-  const oscillator = audioContext.createOscillator()
-  const gain = audioContext.createGain()
-  const now = audioContext.currentTime
-  oscillator.type = 'sine'
-  oscillator.frequency.setValueAtTime(150 + currentClimate.value.hue * 0.9, now)
-  oscillator.frequency.exponentialRampToValueAtTime(52, now + 0.75)
-  gain.gain.setValueAtTime(0.0001, now)
-  gain.gain.exponentialRampToValueAtTime(0.04 * strength, now + 0.02)
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.78)
-  oscillator.connect(gain)
-  gain.connect(audioGain)
-  oscillator.start(now)
-  oscillator.stop(now + 0.8)
 }
 
 function stopAudio() {
@@ -823,46 +1320,93 @@ function stopAudio() {
   if (!audioContext) return
 
   const closingContext = audioContext
-  const closingGain = audioGain
-  if (closingGain) {
+  if (audioMaster) {
     const now = closingContext.currentTime
-    closingGain.gain.cancelScheduledValues(now)
-    closingGain.gain.setTargetAtTime(0.0001, now, 0.08)
+    audioMaster.gain.cancelScheduledValues(now)
+    audioMaster.gain.setTargetAtTime(0.0001, now, 0.08)
   }
 
   window.setTimeout(() => closingContext.close().catch(() => {}), 260)
   audioContext = null
-  audioGain = null
-  audioFilter = null
-  audioOscillators = []
+  audioMaster = null
+  pluckCache = new Map()
+  noiseBuffer = null
+}
+
+function resizeCanvas() {
+  const stage = stageRef.value
+  const cloth = clothRef.value
+  const live = liveRef.value
+  if (!stage || !cloth || !live) return
+
+  stageBounds = stage.getBoundingClientRect()
+  const nextWidth = Math.max(1, Math.round(stageBounds.width))
+  const nextHeight = Math.max(1, Math.round(stageBounds.height))
+  const nextDpr = Math.min(window.devicePixelRatio || 1, 2)
+
+  if (nextWidth === width && nextHeight === height && nextDpr === dpr) return
+
+  width = nextWidth
+  height = nextHeight
+  dpr = nextDpr
+
+  for (const canvas of [cloth, live]) {
+    canvas.width = Math.round(width * dpr)
+    canvas.height = Math.round(height * dpr)
+    canvas.style.width = `${width}px`
+    canvas.style.height = `${height}px`
+  }
+
+  clothContext = cloth.getContext('2d')
+  liveContext = live.getContext('2d')
+  clothContext.setTransform(dpr, 0, 0, dpr, 0, 0)
+  liveContext.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+  buildGeometry()
+  buildThreads()
+  reRenderCloth()
+  drawScene(performance.now())
 }
 
 function handleMotionPreference(event) {
   reducedMotion.value = event.matches
-  resetField()
-  startField()
+  startScene()
+  scheduleNextPick()
 }
 
 function handleVisibilityChange() {
   if (document.hidden) {
+    hiddenAt = performance.now()
     window.cancelAnimationFrame(animationFrame)
     animationFrame = 0
+    window.clearTimeout(pickTimer)
+    window.clearTimeout(shuttleTimer)
+    shuttle.active = false
+    flushMemory()
     return
   }
-  startField()
-}
 
-watch(climateIndex, () => {
-  updateAudioFromWeather()
-})
+  // The loom kept its rhythm while away; a few picks surface at once.
+  if (!reducedMotion.value && hiddenAt) {
+    const missed = clamp(Math.floor((performance.now() - hiddenAt) / 700), 0, 8)
+    for (let i = 0; i < missed && !finishing && rows.length < maxRows; i += 1) {
+      commitPick()
+    }
+  }
+  hiddenAt = 0
+  startScene()
+  scheduleNextPick()
+}
 
 onMounted(async () => {
   loadMemory()
   reducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  rebuildDraft()
   resizeObserver = new ResizeObserver(resizeCanvas)
   resizeObserver.observe(stageRef.value)
   resizeCanvas()
-  startField()
+  startScene()
+  scheduleNextPick()
 
   motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   motionQuery.addEventListener('change', handleMotionPreference)
@@ -875,22 +1419,24 @@ onMounted(async () => {
       signal: dataController.signal,
     })
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
-    autonomy.value = normalizeAutonomy(await response.json())
-    climateIndex.value = clamp(memory.lastClimate, 0, climates.value.length - 1)
-    utterance.value = currentClimate.value.phrase
-    resetField()
+    loom.value = normalizeLoom(await response.json())
+    yarnIndex.value = clamp(memory.lastYarn, 0, yarns.value.length - 1)
+    utterance.value = currentYarn.value.phrase
+    buildThreads()
+    if (reducedMotion.value) drawScene(performance.now())
   } catch (error) {
     if (error.name !== 'AbortError') {
-      console.warn('Weather autonomy fallback:', error)
+      console.warn('Loom autonomy fallback:', error)
     }
   }
 
-  climateTimer = window.setInterval(nextAutonomousClimate, 19000)
+  yarnTimer = window.setInterval(nextAutonomousYarn, 23000)
   utteranceTimer = window.setInterval(() => {
     if (performance.now() - lastInteractionAt > 7000) {
       composeUtterance(`idle|${Date.now() >> 14}`)
     }
   }, 13000)
+  saveTimer = window.setInterval(flushMemory, 2500)
 })
 
 onBeforeUnmount(() => {
@@ -899,23 +1445,29 @@ onBeforeUnmount(() => {
   motionQuery?.removeEventListener('change', handleMotionPreference)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.cancelAnimationFrame(animationFrame)
-  window.clearInterval(climateTimer)
+  window.clearTimeout(pickTimer)
+  window.clearTimeout(shuttleTimer)
+  window.clearTimeout(rollTimer)
+  window.clearInterval(yarnTimer)
   window.clearInterval(utteranceTimer)
+  window.clearInterval(saveTimer)
+  window.clearInterval(staticTimer)
+  flushMemory()
   stopAudio()
 })
 </script>
 
 <style scoped>
-.weather-page {
-  --weather-accent: hsl(
-    var(--weather-hue),
-    var(--weather-saturation),
-    var(--weather-lightness)
+.loom-page {
+  --loom-accent: hsl(
+    var(--loom-hue),
+    var(--loom-saturation),
+    var(--loom-lightness)
   );
-  --weather-accent-soft: hsla(
-    var(--weather-hue),
-    var(--weather-saturation),
-    var(--weather-lightness),
+  --loom-accent-soft: hsla(
+    var(--loom-hue),
+    var(--loom-saturation),
+    var(--loom-lightness),
     0.18
   );
   --night: #050609;
@@ -928,23 +1480,23 @@ onBeforeUnmount(() => {
   color: #f0eee7;
   background: var(--night);
   font-family: 'Inter', 'LXGW WenKai', system-ui, sans-serif;
-  transition: --weather-hue 0.8s ease;
 }
 
-.weather-stage {
+.loom-stage {
   position: relative;
   min-height: calc(100svh - 72px);
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(circle at 74% 24%, var(--weather-accent-soft), transparent 30rem),
+    radial-gradient(circle at 74% 24%, var(--loom-accent-soft), transparent 30rem),
     linear-gradient(145deg, #06070a 0%, #090b10 54%, #030406 100%);
   touch-action: pan-y;
 }
 
-.weather-canvas,
-.weather-vignette,
-.weather-grain {
+.loom-cloth,
+.loom-live,
+.loom-vignette,
+.loom-grain {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -952,25 +1504,39 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-.weather-canvas {
+.loom-cloth {
+  z-index: -4;
+  transition: transform 1.15s ease-in, opacity 1.15s ease-in;
+}
+
+.loom-cloth.rolling {
+  transform: translateY(17%);
+  opacity: 0;
+}
+
+.loom-cloth.no-anim {
+  transition: none;
+}
+
+.loom-live {
   z-index: -3;
 }
 
-.weather-vignette {
+.loom-vignette {
   z-index: -2;
   background:
     linear-gradient(180deg, rgba(5, 6, 9, 0.18), transparent 25%, transparent 72%, rgba(5, 6, 9, 0.8)),
     radial-gradient(circle at center, transparent 28%, rgba(5, 6, 9, 0.46) 100%);
 }
 
-.weather-grain {
+.loom-grain {
   z-index: -1;
   opacity: 0.14;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
   mix-blend-mode: soft-light;
 }
 
-.weather-meta {
+.loom-meta {
   position: relative;
   z-index: 3;
   display: grid;
@@ -987,20 +1553,20 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
 }
 
-.weather-meta > div:first-child,
+.loom-meta > div:first-child,
 .meta-readout {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem 1.25rem;
 }
 
-.weather-meta strong {
-  color: var(--weather-accent);
+.loom-meta strong {
+  color: var(--loom-accent);
   font-weight: 600;
 }
 
 .sound-toggle,
-.climate-dial button,
+.yarn-dial button,
 .stage-actions button,
 .stage-actions a,
 .memory-panel button {
@@ -1021,10 +1587,10 @@ onBeforeUnmount(() => {
 }
 
 .sound-toggle span {
-  color: var(--weather-accent);
+  color: var(--loom-accent);
 }
 
-.weather-title-block {
+.loom-title-block {
   position: absolute;
   top: 50%;
   left: max(2rem, calc((100vw - 1440px) / 2));
@@ -1033,7 +1599,7 @@ onBeforeUnmount(() => {
   transform: translateY(-53%);
 }
 
-.weather-subtitle,
+.loom-subtitle,
 .section-index {
   margin: 0 0 1rem;
   font-family: 'Fira Code', monospace;
@@ -1043,12 +1609,12 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
 }
 
-.weather-subtitle,
+.loom-subtitle,
 .section-index {
-  color: var(--weather-accent);
+  color: var(--loom-accent);
 }
 
-.weather-title-block h1 {
+.loom-title-block h1 {
   max-width: 7ch;
   margin: 0;
   font-family: 'LXGW WenKai', 'Noto Serif SC', serif;
@@ -1059,7 +1625,7 @@ onBeforeUnmount(() => {
   text-wrap: balance;
 }
 
-.weather-declaration {
+.loom-declaration {
   max-width: 37rem;
   margin: 2rem 0 0 0.35rem;
   color: rgba(240, 238, 231, 0.72);
@@ -1067,7 +1633,7 @@ onBeforeUnmount(() => {
   line-height: 1.8;
 }
 
-.weather-utterance {
+.loom-utterance {
   position: absolute;
   right: max(2rem, calc((100vw - 1440px) / 2));
   bottom: 3.1rem;
@@ -1081,17 +1647,17 @@ onBeforeUnmount(() => {
   text-align: right;
 }
 
-.weather-utterance span {
+.loom-utterance span {
   display: block;
   margin-bottom: 0.6rem;
-  color: var(--weather-accent);
+  color: var(--loom-accent);
   font-family: 'Fira Code', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.climate-dial {
+.yarn-dial {
   position: absolute;
   top: 50%;
   right: max(2rem, calc((100vw - 1440px) / 2));
@@ -1102,7 +1668,7 @@ onBeforeUnmount(() => {
   transform: translateY(-62%);
 }
 
-.climate-dial button {
+.yarn-dial button {
   display: grid;
   gap: 0.2rem;
   padding: 0.75rem 0;
@@ -1114,25 +1680,37 @@ onBeforeUnmount(() => {
   transition: color 0.3s ease, border-color 0.3s ease, padding-right 0.3s ease;
 }
 
-.climate-dial button:hover,
-.climate-dial button:focus-visible,
-.climate-dial button.active {
+.yarn-dial button:hover,
+.yarn-dial button:focus-visible,
+.yarn-dial button.active {
   padding-right: 0.6rem;
   color: #f0eee7;
-  border-color: var(--weather-accent);
+  border-color: var(--loom-accent);
 }
 
-.climate-dial span {
+.yarn-dial span {
   font-family: 'Fira Code', monospace;
   font-size: 0.59rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.climate-dial strong {
+.yarn-dial strong {
+  display: inline-flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
   font-family: 'LXGW WenKai', serif;
   font-size: 1.05rem;
   font-weight: 500;
+}
+
+.yarn-chip {
+  display: inline-block;
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 999px;
+  box-shadow: 0 0 8px currentColor;
 }
 
 .stage-actions {
@@ -1168,8 +1746,8 @@ onBeforeUnmount(() => {
 .stage-actions a:hover,
 .stage-actions a:focus-visible {
   color: #fff;
-  background: var(--weather-accent-soft);
-  border-color: var(--weather-accent);
+  background: var(--loom-accent-soft);
+  border-color: var(--loom-accent);
   text-decoration: none;
 }
 
@@ -1253,13 +1831,55 @@ onBeforeUnmount(() => {
 }
 
 .memory-panel > p,
-.memory-panel button {
+.memory-panel button,
+.bolt-shelf {
   grid-column: 1 / -1;
 }
 
 .memory-panel > p {
   margin: 0;
   line-height: 1.7;
+}
+
+.bolt-shelf {
+  display: grid;
+  gap: 0;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(23, 23, 20, 0.18);
+}
+
+.bolt-shelf li {
+  display: grid;
+  grid-template-columns: 4.6rem minmax(0, 1fr);
+  gap: 0.2rem 0.9rem;
+  padding: 0.7rem 0;
+  align-items: baseline;
+  border-bottom: 1px solid rgba(23, 23, 20, 0.18);
+}
+
+.bolt-shelf span {
+  color: rgba(23, 23, 20, 0.5);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bolt-shelf strong {
+  font-family: 'LXGW WenKai', serif;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.bolt-shelf em {
+  grid-column: 2;
+  color: rgba(23, 23, 20, 0.48);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.64rem;
+  font-style: normal;
+  letter-spacing: 0.05em;
 }
 
 .memory-panel button {
@@ -1310,7 +1930,7 @@ onBeforeUnmount(() => {
   gap: 5rem 8vw;
   padding: clamp(6rem, 11vw, 11rem) max(2rem, calc((100vw - 1320px) / 2));
   background:
-    radial-gradient(circle at 15% 20%, var(--weather-accent-soft), transparent 28rem),
+    radial-gradient(circle at 15% 20%, var(--loom-accent-soft), transparent 28rem),
     #090b10;
 }
 
@@ -1344,7 +1964,7 @@ onBeforeUnmount(() => {
 .sediment-grid span,
 .generation-ledger span,
 .generation-ledger time {
-  color: var(--weather-accent);
+  color: var(--loom-accent);
   font-family: 'Fira Code', monospace;
   font-size: 0.64rem;
   letter-spacing: 0.08em;
@@ -1352,10 +1972,21 @@ onBeforeUnmount(() => {
 }
 
 .sediment-grid h3 {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
   margin: 2.6rem 0 1rem;
   font-family: 'LXGW WenKai', serif;
   font-size: 2.1rem;
   font-weight: 500;
+}
+
+.sediment-hue {
+  display: inline-block;
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 999px;
 }
 
 .sediment-grid p {
@@ -1378,7 +2009,7 @@ onBeforeUnmount(() => {
 .sediment-section cite {
   display: block;
   margin-top: 1rem;
-  color: var(--weather-accent);
+  color: var(--loom-accent);
   font-family: 'Fira Code', monospace;
   font-size: 0.65rem;
   font-style: normal;
@@ -1451,8 +2082,9 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .weather-page,
-  .climate-dial button,
+  .loom-page,
+  .loom-cloth,
+  .yarn-dial button,
   .stage-actions button,
   .stage-actions a {
     transition: none;
@@ -1460,21 +2092,21 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 1800px) {
-  .weather-meta {
+  .loom-meta {
     width: min(calc(100% - 6rem), 1760px);
   }
 }
 
 @media (max-width: 1040px) {
-  .weather-title-block {
+  .loom-title-block {
     width: min(70vw, 48rem);
   }
 
-  .weather-title-block h1 {
+  .loom-title-block h1 {
     font-size: clamp(5rem, 14vw, 8.2rem);
   }
 
-  .weather-utterance {
+  .loom-utterance {
     width: 46vw;
   }
 
@@ -1490,11 +2122,11 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 760px) {
-  .weather-stage {
+  .loom-stage {
     min-height: max(calc(100svh - 68px), 640px);
   }
 
-  .weather-meta {
+  .loom-meta {
     grid-template-columns: 1fr auto;
     width: calc(100% - 2rem);
   }
@@ -1503,26 +2135,26 @@ onBeforeUnmount(() => {
     display: none;
   }
 
-  .weather-title-block {
+  .loom-title-block {
     top: 40%;
     left: 1rem;
     width: calc(100% - 2rem);
     transform: translateY(-50%);
   }
 
-  .weather-title-block h1 {
+  .loom-title-block h1 {
     max-width: 5.8ch;
     font-size: clamp(4.4rem, 21vw, 7.8rem);
     line-height: 0.82;
   }
 
-  .weather-declaration {
+  .loom-declaration {
     max-width: 28rem;
     margin-top: 1.4rem;
     font-size: 0.95rem;
   }
 
-  .climate-dial {
+  .yarn-dial {
     top: auto;
     right: 1rem;
     bottom: 8.5rem;
@@ -1532,28 +2164,29 @@ onBeforeUnmount(() => {
     transform: none;
   }
 
-  .climate-dial button {
+  .yarn-dial button {
     min-width: 0;
     text-align: left;
   }
 
-  .climate-dial button:hover,
-  .climate-dial button:focus-visible,
-  .climate-dial button.active {
+  .yarn-dial button:hover,
+  .yarn-dial button:focus-visible,
+  .yarn-dial button.active {
     padding-right: 0;
   }
 
-  .climate-dial span {
+  .yarn-dial strong {
+    justify-content: flex-start;
+    font-size: 0.86rem;
+  }
+
+  .yarn-dial span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .climate-dial strong {
-    font-size: 0.86rem;
-  }
-
-  .weather-utterance {
+  .loom-utterance {
     right: 1rem;
     bottom: 12.8rem;
     width: min(31rem, calc(100% - 2rem));
@@ -1607,17 +2240,17 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 950px) and (max-height: 620px) and (orientation: landscape) {
-  .weather-stage {
+  .loom-stage {
     min-height: 620px;
   }
 }
 
 @media (max-width: 480px) {
-  .weather-meta {
+  .loom-meta {
     gap: 0.8rem;
   }
 
-  .weather-meta > div:first-child span {
+  .loom-meta > div:first-child span {
     display: none;
   }
 
@@ -1625,25 +2258,25 @@ onBeforeUnmount(() => {
     font-size: 0.62rem;
   }
 
-  .weather-title-block {
+  .loom-title-block {
     top: 35%;
   }
 
-  .weather-title-block h1 {
+  .loom-title-block h1 {
     font-size: clamp(3.9rem, 21vw, 6rem);
   }
 
-  .weather-declaration {
+  .loom-declaration {
     max-width: 23rem;
     font-size: 0.86rem;
     line-height: 1.65;
   }
 
-  .weather-utterance {
+  .loom-utterance {
     bottom: 13.3rem;
   }
 
-  .climate-dial {
+  .yarn-dial {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     bottom: 7.2rem;
   }
@@ -1671,7 +2304,8 @@ onBeforeUnmount(() => {
   }
 
   .memory-panel > p,
-  .memory-panel button {
+  .memory-panel button,
+  .bolt-shelf {
     grid-column: 1;
   }
 }
