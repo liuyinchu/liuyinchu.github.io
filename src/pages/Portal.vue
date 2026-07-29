@@ -1,13 +1,13 @@
 <script setup>
 import APlayer from 'aplayer'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import Calendar from '../components/Calendar.vue'
 import ToDoList from '../components/ToDoList.vue'
 import Weather from '../components/Weather.vue'
 
 const wallpaper = '/bg/Firefly_Paper_Airplane.png'
-const router = useRouter()
+const chatGptUrl = 'https://chat.openai.com/'
+const ipInfoUrl = 'https://ipinfo.io/what-is-my-ip'
 
 const topApps = [
   {
@@ -60,7 +60,7 @@ const bottomApps = [
 ]
 
 const quickLinks = [
-  { name: 'ChatGPT', url: 'https://chat.openai.com/' },
+  { name: 'ChatGPT', url: chatGptUrl },
   { name: 'Claude', url: 'https://claude.ai/' },
   { name: 'Gemini', url: 'https://gemini.google.com/' },
   { name: 'GitHub', url: 'https://github.com/' },
@@ -68,7 +68,7 @@ const quickLinks = [
   { name: 'Translate', url: 'https://translate.google.com/' },
   { name: 'Gmail', url: 'https://mail.google.com/' },
   { name: 'Drive', url: 'https://drive.google.com/drive/home' },
-  { name: 'ipinfo', url: 'https://ipinfo.io/what-is-my-ip' },
+  { name: 'ipinfo', url: ipInfoUrl },
 ]
 
 const resourceSearchSources = [
@@ -289,7 +289,11 @@ const activeWindowApp = computed(() => topApps.find((app) => app.id === activeWi
 const activeOverlayApp = computed(() => bottomApps.find((app) => app.id === activeOverlay.value))
 const activeApp = computed(() => activeOverlayApp.value || activeWindowApp.value)
 const minimizedApp = computed(() => allWindowApps.value.find((app) => app.id === minimizedWindow.value))
-const dockWindowApps = computed(() => [bottomApps[0], ...topApps, bottomApps[1]])
+const dockWindowApps = computed(() => [
+  bottomApps[0],
+  ...topApps.filter((app) => app.id !== 'todo'),
+  bottomApps[1],
+])
 const normalizedSearchItems = computed(() => {
   const source = searchItems.value.length ? searchItems.value : fallbackSearchItems
   return source.map(normalizeSearchItem).filter((item) => item.name && item.path)
@@ -870,13 +874,8 @@ function handleWindowBodyScroll(event) {
 
 async function activateSpotlightResult(item) {
   if (!item) return
-  if (item.external) {
-    window.open(item.path, '_blank', 'noopener,noreferrer')
-    await closeWindow()
-  } else {
-    await closeWindow()
-    await router.push(item.path)
-  }
+  window.open(item.path, '_blank', 'noopener,noreferrer')
+  await closeWindow()
 }
 
 async function revealSelectedSpotlightResult() {
@@ -1079,11 +1078,21 @@ onBeforeUnmount(() => {
         </RouterLink>
         <strong class="menu-current-app">{{ activeApp?.title ?? 'Finder' }}</strong>
         <nav class="menu-commands" aria-label="Application menus">
-          <span>File</span>
-          <span>Edit</span>
-          <span>View</span>
-          <span>Window</span>
-          <span>Help</span>
+          <button class="menu-command" type="button" @click="openWindow('dock')">File</button>
+          <a
+            class="menu-command"
+            href="/space1"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Edit</a>
+          <button class="menu-command" type="button" @click="openWindow('music')">Music</button>
+          <button class="menu-command" type="button" @click="openWindow('weather')">Weather</button>
+          <a
+            class="menu-command"
+            :href="chatGptUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Help</a>
         </nav>
       </div>
 
@@ -1101,23 +1110,34 @@ onBeforeUnmount(() => {
             <path d="m12.6 12.6 4.1 4.1"></path>
           </svg>
         </button>
-        <span
-          class="menu-status-glyph control-center-glyph"
-          aria-label="Control Center"
-          title="Control Center"
+        <button
+          class="menu-glyph-button control-center-glyph"
+          type="button"
+          :class="{ 'is-active': activeWindow === 'todo' && minimizedWindow !== 'todo' }"
+          aria-label="Open TODO List"
+          aria-haspopup="dialog"
+          title="TODO List"
+          @click="openWindow('todo')"
         >
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path d="M3 5.25h14M3 14.75h14"></path>
             <circle cx="7" cy="5.25" r="2"></circle>
             <circle cx="13" cy="14.75" r="2"></circle>
           </svg>
-        </span>
-        <span class="menu-status-glyph" aria-label="Wi-Fi connected" title="Wi-Fi">
+        </button>
+        <a
+          class="menu-status-glyph menu-status-action"
+          :href="ipInfoUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open IP information"
+          title="IP information"
+        >
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path d="M2.6 7.2a11 11 0 0 1 14.8 0M5.2 10.1a7.1 7.1 0 0 1 9.6 0M8 13a3 3 0 0 1 4 0"></path>
             <circle cx="10" cy="16" r="1"></circle>
           </svg>
-        </span>
+        </a>
         <span class="menu-status-glyph battery-glyph" aria-label="Battery charged" title="Battery">
           <svg viewBox="0 0 24 20" aria-hidden="true">
             <rect x="2" y="5" width="18" height="10" rx="2"></rect>
@@ -1125,7 +1145,15 @@ onBeforeUnmount(() => {
             <rect class="battery-level" x="4" y="7" width="13.5" height="6" rx="1"></rect>
           </svg>
         </span>
-        <span class="menu-clock">{{ menuTime }}</span>
+        <button
+          class="menu-clock menu-clock-action"
+          type="button"
+          :class="{ 'is-active': activeWindow === 'calendar' && minimizedWindow !== 'calendar' }"
+          aria-label="Open Calendar"
+          aria-haspopup="dialog"
+          title="Calendar"
+          @click="openWindow('calendar')"
+        >{{ menuTime }}</button>
       </div>
     </header>
 
@@ -1186,7 +1214,19 @@ onBeforeUnmount(() => {
             ></button>
           </div>
           <div class="window-title">
+            <svg
+              v-if="activeWindow === 'todo'"
+              class="window-title-glyph"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
+              <circle cx="4.25" cy="5" r="1.25"></circle>
+              <circle cx="4.25" cy="10" r="1.25"></circle>
+              <circle cx="4.25" cy="15" r="1.25"></circle>
+              <path d="M7.5 5h8M7.5 10h8M7.5 15h8"></path>
+            </svg>
             <img
+              v-else
               :src="activeWindowApp.icon"
               alt=""
               @error="handleIconError($event, activeWindowApp.title)"
@@ -1212,6 +1252,19 @@ onBeforeUnmount(() => {
           </section>
 
           <section v-else-if="activeWindow === 'todo'" class="mac-app-content widget-shell todo-shell">
+            <header class="todo-overview">
+              <div>
+                <p>REMINDERS</p>
+                <h2>My Tasks</h2>
+                <span>Keep the next thing clear and close at hand.</span>
+              </div>
+              <span class="todo-overview-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path d="m8.2 12.2 2.4 2.4 5.4-5.5"></path>
+                </svg>
+              </span>
+            </header>
             <ToDoList class="portal-widget todo-widget" />
           </section>
         </div>
@@ -1246,6 +1299,7 @@ onBeforeUnmount(() => {
               aria-label="Search LiuYinChu's Space"
               aria-autocomplete="list"
               aria-controls="portal-spotlight-results"
+              aria-describedby="portal-spotlight-help"
               aria-expanded="true"
               :aria-activedescendant="spotlightFlatLinks.length
                 ? `spotlight-result-${spotlightSelectedIndex}`
@@ -1278,6 +1332,7 @@ onBeforeUnmount(() => {
                 type="button"
                 role="option"
                 tabindex="-1"
+                :aria-label="`${link.name}，${link.hint || link.category}，在新标签页打开`"
                 :aria-selected="spotlightSelectedIndex === link.resultIndex"
                 @mouseenter="spotlightSelectedIndex = link.resultIndex"
                 @click="activateSpotlightResult(link)"
@@ -1296,13 +1351,26 @@ onBeforeUnmount(() => {
                   <strong>{{ link.name }}</strong>
                   <small>{{ link.hint }}</small>
                 </span>
-                <span class="spotlight-result-category">{{ link.category }}</span>
+                <span class="spotlight-result-meta" aria-hidden="true">
+                  <span class="spotlight-result-category">{{ link.category }}</span>
+                  <span class="spotlight-result-open">↗</span>
+                </span>
               </button>
             </section>
             <p v-if="!spotlightFlatLinks.length" class="spotlight-empty" role="status">
               没有找到对应入口
             </p>
           </div>
+          <footer class="spotlight-footer">
+            <span role="status" aria-live="polite">{{ spotlightFlatLinks.length }} 个结果</span>
+            <span id="portal-spotlight-help" class="spotlight-help">
+              <kbd>↑</kbd><kbd>↓</kbd> 选择
+              <span aria-hidden="true">·</span>
+              <kbd>↵</kbd> 新标签页打开
+              <span aria-hidden="true">·</span>
+              <kbd>esc</kbd> 关闭
+            </span>
+          </footer>
         </section>
       </div>
     </Transition>
@@ -1433,6 +1501,7 @@ onBeforeUnmount(() => {
         <button
           class="launcher-item minimized-window-preview"
           type="button"
+          :data-app-id="minimizedApp.id"
           :aria-label="`Restore ${minimizedApp.title}`"
           @click="restoreMinimizedWindow"
         >
@@ -2216,12 +2285,21 @@ onBeforeUnmount(() => {
   font-weight: var(--portal-fw-regular);
 }
 
-.menu-commands span {
+.menu-command {
   padding: 2px 7px;
+  border: 0;
   border-radius: 5px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.menu-commands span:hover {
+.menu-command:hover,
+.menu-command:focus-visible,
+.menu-command.is-active {
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -2243,7 +2321,26 @@ onBeforeUnmount(() => {
   height: 22px;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
   color: var(--portal-text-primary);
+  background: transparent;
+  text-decoration: none;
+}
+
+.menu-status-action,
+.menu-clock-action {
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.menu-status-action:hover,
+.menu-status-action:focus-visible,
+.menu-clock-action:hover,
+.menu-clock-action:focus-visible,
+.menu-clock-action.is-active {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .battery-glyph {
@@ -2261,9 +2358,15 @@ onBeforeUnmount(() => {
 
 .menu-clock {
   margin-left: 3px;
+  padding: 2px 5px;
+  border: 0;
+  border-radius: 5px;
   color: var(--portal-text-primary);
+  background: transparent;
+  font-family: inherit;
   font-size: 13px;
   font-weight: var(--portal-fw-regular);
+  line-height: 1.2;
 }
 
 .mac-window {
@@ -2401,6 +2504,15 @@ onBeforeUnmount(() => {
   object-fit: cover;
 }
 
+.window-title-glyph {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+}
+
 .window-body {
   padding: 14px;
   scrollbar-color: rgba(255, 255, 255, 0.26) transparent;
@@ -2493,6 +2605,317 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 
+.window-todo {
+  min-height: 470px;
+}
+
+.window-todo .window-body {
+  padding: 18px;
+  background:
+    radial-gradient(circle at 92% 4%, rgba(10, 132, 255, 0.13), transparent 260px),
+    radial-gradient(circle at 10% 100%, rgba(94, 92, 230, 0.11), transparent 280px),
+    rgba(12, 14, 22, 0.12);
+}
+
+.todo-shell {
+  align-content: start;
+  gap: 14px;
+  min-height: 390px;
+}
+
+.todo-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px;
+}
+
+.todo-overview p,
+.todo-overview h2 {
+  margin: 0;
+}
+
+.todo-overview p {
+  color: rgba(100, 210, 255, 0.84);
+  font-size: 10px;
+  font-weight: var(--portal-fw-semibold);
+  letter-spacing: 0.14em;
+}
+
+.todo-overview h2 {
+  margin-top: 2px;
+  color: var(--portal-text-primary);
+  font-size: 25px;
+  font-weight: var(--portal-fw-semibold);
+  letter-spacing: -0.025em;
+}
+
+.todo-overview div > span {
+  display: block;
+  margin-top: 3px;
+  color: var(--portal-text-secondary);
+  font-size: 12px;
+}
+
+.todo-overview-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 0.5px solid rgba(100, 210, 255, 0.28);
+  border-radius: 13px;
+  color: rgba(151, 220, 255, 0.94);
+  background: linear-gradient(145deg, rgba(10, 132, 255, 0.22), rgba(94, 92, 230, 0.14));
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16);
+}
+
+.todo-overview-mark svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.todo-shell :deep(.todo-list-container),
+.todo-shell :deep(.todo-container) {
+  width: 100%;
+  min-height: 300px;
+  height: auto;
+  padding: 16px;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 15px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(18, 21, 32, 0.55);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.14),
+    0 16px 36px rgba(0, 0, 0, 0.14);
+  box-sizing: border-box;
+}
+
+.todo-shell :deep(.mode-switch) {
+  width: fit-content;
+  min-height: 34px;
+  align-items: center;
+  gap: 3px;
+  margin: 0 0 14px;
+  padding: 3px;
+  border: 0.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.todo-shell :deep(.mode-btn) {
+  min-width: 104px;
+  min-height: 28px;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--portal-text-secondary);
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: var(--portal-fw-medium);
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.todo-shell :deep(.mode-btn:hover) {
+  color: var(--portal-text-primary);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.todo-shell :deep(.mode-btn.active) {
+  color: var(--portal-text-primary);
+  border: 0.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.2),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.13);
+  font-weight: var(--portal-fw-semibold);
+}
+
+.todo-shell :deep(.current-day-chip) {
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--portal-text-primary);
+  background: rgba(10, 132, 255, 0.24);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: var(--portal-fw-medium);
+}
+
+.todo-shell :deep(.input-section) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 8px;
+  margin-bottom: 0;
+  padding: 6px;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 13px;
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+}
+
+.todo-shell :deep(.task-input) {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--portal-text-primary);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.todo-shell :deep(.task-input::placeholder) {
+  color: var(--portal-text-tertiary);
+}
+
+.todo-shell :deep(.task-input:focus),
+.todo-shell :deep(.task-input:focus-visible) {
+  box-shadow:
+    inset 0 0 0 1.5px var(--portal-text-accent),
+    0 0 0 3px rgba(10, 132, 255, 0.16);
+}
+
+.todo-shell :deep(.add-button) {
+  width: 44px;
+  height: 44px;
+  padding: 0 0 2px;
+  border: 0;
+  border-radius: 10px;
+  color: white;
+  background: linear-gradient(145deg, #35a2ff, #0a72df);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.34),
+    0 5px 14px rgba(0, 102, 204, 0.26);
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: var(--portal-fw-regular);
+  line-height: 1;
+}
+
+.todo-shell :deep(.add-button:hover) {
+  background: linear-gradient(145deg, #52b1ff, #1484f2);
+  transform: translateY(-1px);
+}
+
+.todo-shell :deep(.task-list) {
+  display: flex;
+  min-height: 170px;
+  max-height: 250px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin: 14px 0 0;
+  padding: 0 4px 0 0;
+  overflow-y: auto;
+}
+
+.todo-shell :deep(.task-list:empty) {
+  align-items: center;
+  justify-content: center;
+  border: 0.5px dashed rgba(255, 255, 255, 0.11);
+  border-radius: 13px;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(10, 132, 255, 0.09), transparent 150px),
+    rgba(255, 255, 255, 0.018);
+}
+
+.todo-shell :deep(.task-list:empty::before) {
+  content: '✓';
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 10px;
+  place-items: center;
+  border: 1px solid rgba(100, 210, 255, 0.36);
+  border-radius: 50%;
+  color: rgba(151, 220, 255, 0.9);
+  background: rgba(10, 132, 255, 0.1);
+  font-size: 22px;
+}
+
+.todo-shell :deep(.task-list:empty::after) {
+  content: 'No reminders yet\A Add one above when something comes to mind.';
+  color: var(--portal-text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: center;
+  white-space: pre;
+}
+
+.todo-shell :deep(.task-item) {
+  min-height: 50px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.07);
+}
+
+.todo-shell :deep(.task-item:hover) {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.075);
+}
+
+.todo-shell :deep(.task-item.completed) {
+  border-color: rgba(48, 209, 88, 0.26);
+  background: rgba(48, 209, 88, 0.07);
+  opacity: 0.72;
+}
+
+.todo-shell :deep(.custom-checkbox) {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.34);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.todo-shell :deep(.hidden-checkbox:checked ~ .custom-checkbox) {
+  border-color: #30d158;
+  background: #30d158;
+}
+
+.todo-shell :deep(.task-text) {
+  margin-left: 10px;
+  color: var(--portal-text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--portal-fw-regular);
+}
+
+.todo-shell :deep(.task-meta),
+.todo-shell :deep(.date-chip) {
+  color: var(--portal-text-tertiary);
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.todo-shell :deep(.delete-button) {
+  min-width: 32px;
+  min-height: 32px;
+  margin-left: 8px;
+  padding: 6px;
+  border-radius: 8px;
+  color: #ff6961;
+}
+
+.todo-shell :deep(.delete-button:hover) {
+  color: #ff8a84;
+  background: rgba(255, 105, 97, 0.12);
+  transform: none;
+}
+
 .portal-loading,
 .portal-error {
   color: var(--portal-text-secondary);
@@ -2534,35 +2957,65 @@ onBeforeUnmount(() => {
 
 .spotlight-overlay {
   z-index: 40;
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(5, 8, 18, 0.24);
+  -webkit-backdrop-filter: blur(7px) saturate(112%);
+  backdrop-filter: blur(7px) saturate(112%);
 }
 
 .spotlight-panel {
   position: absolute;
-  top: 24%;
+  top: clamp(72px, 14vh, 118px);
   left: 50%;
   display: grid;
-  width: min(680px, calc(100vw - 32px));
-  max-height: min(560px, calc(100dvh - 150px));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(620px, calc(100dvh - 150px));
   overflow: hidden;
-  border: 0.5px solid var(--portal-hairline);
-  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
   color: var(--portal-text-primary);
-  background: rgba(38, 38, 42, 0.82);
-  box-shadow: var(--portal-shadow-window);
+  background:
+    linear-gradient(145deg, rgba(56, 59, 76, 0.91), rgba(27, 29, 41, 0.87)),
+    rgba(31, 32, 40, 0.88);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.18),
+    0 32px 92px rgba(0, 0, 0, 0.48),
+    0 8px 26px rgba(0, 0, 0, 0.3);
   transform: translateX(-50%);
   -webkit-backdrop-filter: saturate(180%) blur(34px);
   backdrop-filter: saturate(180%) blur(34px);
 }
 
 .spotlight-search {
-  min-height: 64px;
-  padding: 0 18px;
+  position: relative;
+  min-height: 72px;
+  padding: 0 20px;
   border: 0;
   border-radius: 0;
   border-bottom: 0.5px solid var(--portal-hairline);
-  background: rgba(0, 0, 0, 0.12);
+  background:
+    radial-gradient(circle at 6% 0%, rgba(100, 210, 255, 0.09), transparent 180px),
+    rgba(0, 0, 0, 0.12);
   box-shadow: none;
+}
+
+.spotlight-search::after {
+  content: '';
+  position: absolute;
+  right: 20px;
+  bottom: -0.5px;
+  left: 20px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0a84ff, #5e5ce6);
+  opacity: 0;
+  transform: scaleX(0.92);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.spotlight-search:focus-within::after {
+  opacity: 1;
+  transform: scaleX(1);
 }
 
 .spotlight-magnifier::before {
@@ -2584,12 +3037,15 @@ onBeforeUnmount(() => {
 }
 
 .spotlight-results {
-  max-height: 420px;
+  min-height: 0;
+  max-height: 466px;
+  padding: 6px 7px 10px;
   overflow-y: auto;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  overscroll-behavior: contain;
 }
 
 .spotlight-group {
@@ -2597,52 +3053,68 @@ onBeforeUnmount(() => {
 }
 
 .spotlight-group + .spotlight-group {
-  border-top: 0.5px solid var(--portal-hairline);
+  margin-top: 2px;
 }
 
 .spotlight-group h2 {
   margin: 0;
-  padding: 9px 14px 5px;
+  padding: 9px 10px 6px;
   color: var(--portal-text-tertiary);
   font-size: 11px;
-  font-weight: var(--portal-fw-medium);
-  letter-spacing: 0;
+  font-weight: var(--portal-fw-semibold);
+  letter-spacing: 0.035em;
   text-transform: none;
 }
 
 .spotlight-result {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   width: 100%;
-  min-height: 50px;
-  padding: 6px 14px;
+  min-height: 56px;
+  padding: 7px 10px;
   border: 0;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.055);
-  border-radius: 0;
+  border-radius: 10px;
   color: var(--portal-text-primary);
   background: transparent;
   font: inherit;
   text-align: left;
-  cursor: default;
+  cursor: pointer;
   box-shadow: none;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
 }
 
 .spotlight-result:hover,
-.spotlight-result:focus-visible,
+.spotlight-result:focus-visible {
+  background: rgba(255, 255, 255, 0.075);
+}
+
 .spotlight-result.is-selected {
-  background: rgba(10, 132, 255, 0.34);
-  box-shadow: none;
+  background:
+    linear-gradient(90deg, rgba(10, 132, 255, 0.55), rgba(94, 92, 230, 0.34));
+  box-shadow:
+    inset 0 0 0 0.5px rgba(174, 219, 255, 0.24),
+    0 4px 14px rgba(0, 70, 160, 0.13);
 }
 
 .spotlight-result-icon {
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   place-items: center;
-  border: 0.5px solid var(--portal-hairline);
-  border-radius: 7px;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
   color: var(--portal-text-secondary);
-  background: rgba(255, 255, 255, 0.07);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.12);
+}
+
+.spotlight-result.is-selected .spotlight-result-icon {
+  color: rgba(255, 255, 255, 0.94);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .spotlight-result-icon svg {
@@ -2661,7 +3133,7 @@ onBeforeUnmount(() => {
 
 .spotlight-result-copy strong {
   color: var(--portal-text-primary);
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: var(--portal-fw-medium);
 }
 
@@ -2671,16 +3143,77 @@ onBeforeUnmount(() => {
 }
 
 .spotlight-result-category {
-  max-width: 130px;
+  max-width: 120px;
   overflow: hidden;
-  color: var(--portal-text-tertiary);
+  padding: 3px 7px;
+  border: 0.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  color: var(--portal-text-secondary);
+  background: rgba(0, 0, 0, 0.12);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.spotlight-result-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.spotlight-result-open {
+  color: var(--portal-text-tertiary);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.spotlight-result.is-selected .spotlight-result-category {
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.spotlight-result.is-selected .spotlight-result-open {
+  color: rgba(255, 255, 255, 0.82);
+}
+
 .spotlight-empty {
   color: var(--portal-text-secondary);
+}
+
+.spotlight-footer {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  border-top: 0.5px solid var(--portal-hairline);
+  color: var(--portal-text-tertiary);
+  background: rgba(0, 0, 0, 0.14);
+  font-size: 11px;
+}
+
+.spotlight-help {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.spotlight-help kbd {
+  display: inline-grid;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  place-items: center;
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 5px;
+  color: var(--portal-text-secondary);
+  background: rgba(255, 255, 255, 0.065);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1;
 }
 
 .spotlight-shell-enter-active,
@@ -2985,8 +3518,10 @@ onBeforeUnmount(() => {
 .portal-desktop :is(
   .menu-home-link,
   .menu-glyph-button,
+  .menu-command,
+  .menu-status-action,
+  .menu-clock-action,
   .traffic-light,
-  .spotlight-input,
   .spotlight-result,
   .launchpad-close,
   .launchpad-search input,
@@ -3124,10 +3659,10 @@ onBeforeUnmount(() => {
   .spotlight-panel {
     top: calc(44px + env(safe-area-inset-top) + 8px);
     right: 8px;
-    bottom: calc(66px + max(8px, env(safe-area-inset-bottom)));
+    bottom: auto;
     left: 8px;
     width: auto;
-    max-height: none;
+    max-height: calc(100dvh - 130px - env(safe-area-inset-top));
     transform: none;
   }
 
@@ -3142,10 +3677,65 @@ onBeforeUnmount(() => {
 
   .spotlight-result {
     grid-template-columns: 32px minmax(0, 1fr);
+    min-height: 54px;
   }
 
-  .spotlight-result-category {
+  .spotlight-result-meta {
     display: none;
+  }
+
+  .spotlight-footer {
+    min-height: 34px;
+  }
+
+  .spotlight-help {
+    display: none;
+  }
+
+  .window-todo .window-body {
+    padding: 10px;
+  }
+
+  .todo-shell {
+    min-height: 0;
+  }
+
+  .todo-overview {
+    padding-inline: 2px;
+  }
+
+  .todo-overview h2 {
+    font-size: 22px;
+  }
+
+  .todo-overview div > span {
+    max-width: 230px;
+  }
+
+  .todo-shell :deep(.todo-list-container),
+  .todo-shell :deep(.todo-container) {
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .todo-shell :deep(.mode-switch) {
+    width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
+  }
+
+  .todo-shell :deep(.mode-btn) {
+    min-width: 0;
+    min-height: 44px;
+    flex: 1 0 96px;
+  }
+
+  .todo-shell :deep(.current-day-chip) {
+    min-height: 44px;
+  }
+
+  .todo-shell :deep(.task-list) {
+    min-height: 132px;
   }
 
   .spotlight-shell-enter-from .spotlight-panel,
@@ -3220,6 +3810,15 @@ onBeforeUnmount(() => {
     display: none;
   }
 
+  .todo-overview-mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .todo-overview div > span {
+    display: none;
+  }
+
   .launchpad-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -3242,6 +3841,7 @@ onBeforeUnmount(() => {
   .portal-menu-bar,
   .mac-window,
   .spotlight-panel,
+  .spotlight-overlay,
   .bottom-launcher,
   .launchpad-overlay,
   .launcher-tooltip {
@@ -3256,6 +3856,15 @@ onBeforeUnmount(() => {
   .mac-window,
   .spotlight-panel {
     background: rgb(43, 43, 47);
+  }
+
+  .spotlight-overlay {
+    background: rgba(20, 20, 24, 0.92);
+  }
+
+  .todo-shell :deep(.todo-list-container),
+  .todo-shell :deep(.todo-container) {
+    background: rgb(35, 36, 44);
   }
 
   .bottom-launcher {
@@ -3287,7 +3896,13 @@ onBeforeUnmount(() => {
   .launcher-item img,
   .launcher-tooltip,
   .menu-glyph-button,
+  .menu-command,
+  .menu-status-action,
+  .menu-clock-action,
   .spotlight-result,
+  .spotlight-search::after,
+  .todo-shell :deep(.mode-btn),
+  .todo-shell :deep(.add-button),
   .launchpad-tile {
     animation: none !important;
     transition: none !important;
