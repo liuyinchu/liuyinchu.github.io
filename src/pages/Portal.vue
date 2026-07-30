@@ -6358,6 +6358,101 @@ onBeforeUnmount(() => {
   background: transparent;
 }
 
+/* Keep the media information layer stable over the refractive window. */
+.window-music :deep(.aplayer) {
+  border-color: rgba(255, 255, 255, 0.16);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), transparent 38%),
+    rgba(8, 14, 24, 0.32);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.14),
+    0 10px 28px rgba(2, 7, 14, 0.12);
+}
+
+.window-music :deep(.aplayer-body) {
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+
+.window-music :deep(.aplayer-pic) {
+  border-right: 0.5px solid rgba(255, 255, 255, 0.12);
+}
+
+.window-music :deep(.aplayer-info) {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.065), transparent 54%),
+    rgba(12, 19, 31, 0.28);
+}
+
+.window-music :deep(.aplayer-list) {
+  border-top: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 30%),
+    rgba(5, 11, 20, 0.27);
+}
+
+.window-music :deep(.aplayer-list ol li) {
+  border-top-color: rgba(255, 255, 255, 0.085);
+  color: rgba(255, 255, 255, 0.76);
+  background: transparent;
+}
+
+.window-music :deep(.aplayer-list ol li:hover) {
+  color: rgba(255, 255, 255, 0.96) !important;
+  background: rgba(255, 255, 255, 0.075) !important;
+}
+
+.window-music :deep(.aplayer-list-light) {
+  color: rgba(255, 255, 255, 0.98) !important;
+  background:
+    linear-gradient(90deg, rgba(76, 154, 255, 0.32), rgba(76, 154, 255, 0.14))
+    !important;
+}
+
+.window-music :deep(.aplayer-music .aplayer-title),
+.window-music :deep(.aplayer-list-title) {
+  color: rgba(255, 255, 255, 0.94) !important;
+}
+
+.window-music :deep(.aplayer-music .aplayer-author),
+.window-music :deep(.aplayer-list-author),
+.window-music :deep(.aplayer-list-index) {
+  color: rgba(255, 255, 255, 0.62) !important;
+}
+
+.window-music :deep(.aplayer-list-light .aplayer-list-title),
+.window-music :deep(.aplayer-list-light .aplayer-list-author),
+.window-music :deep(.aplayer-list-light .aplayer-list-index) {
+  color: rgba(255, 255, 255, 0.98) !important;
+}
+
+.window-music :deep(.aplayer-time) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.window-music :deep(.aplayer-icon path) {
+  fill: rgba(255, 255, 255, 0.76) !important;
+  transition: fill 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.window-music :deep(.aplayer-icon:hover path) {
+  fill: rgba(255, 255, 255, 0.98) !important;
+}
+
+.window-music :deep(.aplayer-play) {
+  border: 0.5px solid rgba(255, 255, 255, 0.24);
+  background: rgba(5, 10, 18, 0.48);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.window-music :deep(.aplayer .aplayer-controller .aplayer-bar-wrap .aplayer-bar),
+.window-music :deep(.aplayer .aplayer-volume-bar-wrap .aplayer-volume-bar) {
+  background: rgba(2, 7, 14, 0.42);
+}
+
+.window-music :deep(.aplayer .aplayer-controller .aplayer-bar-wrap .aplayer-loaded) {
+  background: rgba(255, 255, 255, 0.24);
+}
+
 .spotlight-overlay {
   background:
     radial-gradient(
