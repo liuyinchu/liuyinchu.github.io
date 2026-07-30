@@ -282,7 +282,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 0.82,
     shininess: 76,
     adaptivity: 0.34,
-    softness: 0.45,
+    softness: 0.6,
     tintColor: [0.055, 0.105, 0.17],
   },
   window: {
@@ -298,7 +298,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.06,
     shininess: 72,
     adaptivity: 0.76,
-    softness: 0.95,
+    softness: 1.3,
     tintColor: [0.035, 0.065, 0.105],
   },
   panel: {
@@ -314,7 +314,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.12,
     shininess: 66,
     adaptivity: 0.86,
-    softness: 1.1,
+    softness: 1.5,
     tintColor: [0.035, 0.06, 0.1],
   },
   dock: {
@@ -330,7 +330,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.38,
     shininess: 92,
     adaptivity: 0.48,
-    softness: 0.72,
+    softness: 0.95,
     tintColor: [0.045, 0.075, 0.12],
   },
   search: {
@@ -346,7 +346,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.28,
     shininess: 86,
     adaptivity: 0.56,
-    softness: 0.58,
+    softness: 0.78,
     tintColor: [0.045, 0.075, 0.12],
   },
   circle: {
@@ -362,7 +362,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.44,
     shininess: 96,
     adaptivity: 0.5,
-    softness: 0.52,
+    softness: 0.7,
     tintColor: [0.045, 0.075, 0.12],
   },
 })
@@ -491,7 +491,7 @@ vec3 sampleSoftenedRefraction(
     + srgbToLinear(sampleWallpaper(screenPosition + secondAxis))
     + srgbToLinear(sampleWallpaper(screenPosition - secondAxis))
   ) * 0.25;
-  float softnessMix = mix(0.22, 0.07, edge) * materialization;
+  float softnessMix = mix(0.26, 0.08, edge) * materialization;
   return mix(crisp, softened, softnessMix);
 }
 
