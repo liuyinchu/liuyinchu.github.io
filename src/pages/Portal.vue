@@ -1726,24 +1726,33 @@ function adaptLiquidSurfaceForeground(surface, kind, statistics) {
   if (!statistics || !['strip', 'search', 'circle'].includes(kind)) return
 
   const currentTone = surface.dataset.liquidForeground
-  const nextTone = 'dark'
+  const useDarkForeground = currentTone === 'dark'
+    ? statistics.mean > 0.54
+    : statistics.mean > 0.64
+  const nextTone = useDarkForeground ? 'dark' : 'light'
   if (currentTone === nextTone) return
 
   surface.dataset.liquidForeground = nextTone
   surface.style.setProperty(
     '--liquid-foreground',
-    'var(--portal-text-primary)',
+    useDarkForeground
+      ? 'rgba(17, 24, 33, 0.9)'
+      : 'rgba(255, 255, 255, 0.94)',
   )
   surface.style.setProperty(
     '--liquid-foreground-muted',
-    'var(--portal-text-tertiary)',
+    useDarkForeground
+      ? 'rgba(17, 24, 33, 0.58)'
+      : 'rgba(255, 255, 255, 0.62)',
   )
   surface.style.setProperty(
     '--liquid-foreground-shadow',
-    `0 1px 1px rgba(255, 255, 255, ${Math.min(
-      0.72,
-      0.42 + statistics.contrast * 1.8,
-    ).toFixed(3)}), 0 0 8px rgba(255, 255, 255, 0.18)`,
+    useDarkForeground
+      ? '0 1px 1px rgba(255, 255, 255, 0.16)'
+      : `0 1px 2px rgba(0, 0, 0, ${Math.min(
+        0.52,
+        0.26 + statistics.contrast * 1.8,
+      ).toFixed(3)})`,
   )
 }
 
@@ -2932,9 +2941,9 @@ onBeforeUnmount(() => {
   --lg-control-filter: saturate(155%);
   --portal-hairline: rgba(255, 255, 255, 0.13);
   --portal-stroke-outer: rgba(0, 0, 0, 0.35);
-  --portal-text-primary: rgba(12, 17, 24, 0.92);
-  --portal-text-secondary: rgba(12, 17, 24, 0.68);
-  --portal-text-tertiary: rgba(12, 17, 24, 0.5);
+  --portal-text-primary: rgba(255, 255, 255, 0.92);
+  --portal-text-secondary: rgba(255, 255, 255, 0.8);
+  --portal-text-tertiary: rgba(255, 255, 255, 0.64);
   --portal-text-accent: #0a84ff;
   --portal-shadow-window:
     0 0 0 0.5px var(--portal-stroke-outer),
@@ -4047,7 +4056,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   border: 0.5px solid var(--portal-hairline);
   border-radius: var(--portal-radius-control);
-  color: var(--portal-text-primary);
+  color: #f5f5f7;
   background: rgba(255, 255, 255, 0.055);
   box-shadow: none;
 }
@@ -4279,7 +4288,7 @@ onBeforeUnmount(() => {
   padding: 0 0 2px;
   border: 0;
   border-radius: 10px;
-  color: var(--portal-text-primary);
+  color: white;
   background: linear-gradient(145deg, #35a2ff, #0a72df);
   box-shadow:
     inset 0 0.5px 0 rgba(255, 255, 255, 0.34),
@@ -4593,12 +4602,6 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.spotlight-result.is-selected .spotlight-result-copy strong,
-.spotlight-result.is-selected .spotlight-result-copy small {
-  color: rgba(255, 255, 255, 0.96);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.24);
-}
-
 .spotlight-result-icon svg {
   width: 17px;
   height: 17px;
@@ -4867,9 +4870,7 @@ onBeforeUnmount(() => {
   color: var(--portal-text-primary);
   font-size: 12px;
   font-weight: var(--portal-fw-regular);
-  text-shadow:
-    0 1px 1px rgba(255, 255, 255, 0.68),
-    0 0 8px rgba(255, 255, 255, 0.22);
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.48);
 }
 
 .launchpad-empty {
@@ -5156,7 +5157,7 @@ onBeforeUnmount(() => {
 
 .weather-shell :deep(.highlight-city),
 .weather-shell :deep(.highlight-desc) {
-  color: var(--portal-text-primary);
+  color: rgba(255, 255, 255, 0.96);
 }
 
 .weather-shell :deep(.highlight-temp) {
@@ -5230,7 +5231,7 @@ onBeforeUnmount(() => {
   padding: 3px 8px;
   border: 0.5px solid var(--lg-border-soft);
   border-radius: 999px;
-  color: var(--portal-text-primary);
+  color: rgba(255, 255, 255, 0.9);
   background: var(--lg-control-fill);
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16);
 }
@@ -5450,7 +5451,7 @@ onBeforeUnmount(() => {
 
 .todo-shell :deep(.add-button) {
   border: 0.5px solid rgba(136, 206, 255, 0.5);
-  color: var(--portal-text-primary);
+  color: white;
   background:
     linear-gradient(145deg, rgba(89, 185, 255, 0.92), rgba(9, 106, 211, 0.78)),
     rgba(10, 132, 255, 0.56);
@@ -5495,7 +5496,7 @@ onBeforeUnmount(() => {
 
 :deep(.aplayer-music .aplayer-title),
 :deep(.aplayer-list-title) {
-  color: var(--portal-text-primary) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
 }
 
 :deep(.aplayer-music .aplayer-author),
@@ -6188,9 +6189,7 @@ onBeforeUnmount(() => {
   box-shadow:
     0 0.5px 0 rgba(0, 0, 0, 0.12),
     0 7px 22px rgba(7, 16, 28, 0.07);
-  text-shadow:
-    0 1px 1px rgba(255, 255, 255, 0.72),
-    0 0 7px rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
 }
 
 .portal-menu-bar.liquid-surface::before {
@@ -6235,8 +6234,8 @@ onBeforeUnmount(() => {
     rgba(5, 11, 19, 0.135);
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.055);
   text-shadow:
-    0 1px 1px rgba(255, 255, 255, 0.68),
-    0 0 8px rgba(255, 255, 255, 0.18);
+    0 1px 2px rgba(0, 0, 0, 0.42),
+    0 0 8px rgba(0, 0, 0, 0.08);
 }
 
 .widget-shell :deep(.weather-container),
@@ -6258,7 +6257,6 @@ onBeforeUnmount(() => {
 
 .weather-shell :deep(.summary-text) {
   border-color: rgba(255, 255, 255, 0.075);
-  color: var(--portal-text-primary);
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.04), transparent),
     rgba(6, 13, 22, 0.035);
@@ -6277,7 +6275,7 @@ onBeforeUnmount(() => {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: var(--portal-text-secondary);
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .weather-shell :deep(.details-list li:hover) {
@@ -6326,7 +6324,7 @@ onBeforeUnmount(() => {
 
 .calendar-shell :deep(.mark-btn[aria-label='Unmark red']) {
   border-color: rgba(255, 111, 139, 0.78);
-  color: rgba(12, 17, 24, 0.92);
+  color: #fff;
   background: linear-gradient(135deg, #e95f79, #f38ba8);
   box-shadow:
     inset 0 0.5px 0 rgba(255, 255, 255, 0.32),
@@ -6401,97 +6399,97 @@ onBeforeUnmount(() => {
 
 /* Keep the media information layer stable over the refractive window. */
 .window-music :deep(.aplayer) {
-  border-color: rgba(12, 17, 24, 0.14);
+  border-color: rgba(255, 255, 255, 0.16);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.26), transparent 42%),
-    rgba(255, 255, 255, 0.2);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), transparent 38%),
+    rgba(8, 14, 24, 0.32);
   box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.46),
-    0 10px 28px rgba(2, 7, 14, 0.1);
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.14),
+    0 10px 28px rgba(2, 7, 14, 0.12);
 }
 
 .window-music :deep(.aplayer-body) {
-  border-bottom: 0.5px solid rgba(12, 17, 24, 0.1);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
 }
 
 .window-music :deep(.aplayer-pic) {
-  border-right: 0.5px solid rgba(12, 17, 24, 0.12);
+  border-right: 0.5px solid rgba(255, 255, 255, 0.12);
 }
 
 .window-music :deep(.aplayer-info) {
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.3), transparent 56%),
-    rgba(255, 255, 255, 0.16);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.065), transparent 54%),
+    rgba(12, 19, 31, 0.28);
 }
 
 .window-music :deep(.aplayer-list) {
   border-top: 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 30%),
-    rgba(255, 255, 255, 0.17);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 30%),
+    rgba(5, 11, 20, 0.27);
 }
 
 .window-music :deep(.aplayer-list ol li) {
-  border-top-color: rgba(12, 17, 24, 0.09);
-  color: var(--portal-text-secondary);
+  border-top-color: rgba(255, 255, 255, 0.085);
+  color: rgba(255, 255, 255, 0.76);
   background: transparent;
 }
 
 .window-music :deep(.aplayer-list ol li:hover) {
-  color: var(--portal-text-primary) !important;
-  background: rgba(255, 255, 255, 0.22) !important;
+  color: rgba(255, 255, 255, 0.96) !important;
+  background: rgba(255, 255, 255, 0.075) !important;
 }
 
 .window-music :deep(.aplayer-list-light) {
-  color: var(--portal-text-primary) !important;
+  color: rgba(255, 255, 255, 0.98) !important;
   background:
-    linear-gradient(90deg, rgba(76, 154, 255, 0.38), rgba(76, 154, 255, 0.2))
+    linear-gradient(90deg, rgba(76, 154, 255, 0.32), rgba(76, 154, 255, 0.14))
     !important;
 }
 
 .window-music :deep(.aplayer-music .aplayer-title),
 .window-music :deep(.aplayer-list-title) {
-  color: var(--portal-text-primary) !important;
+  color: rgba(255, 255, 255, 0.94) !important;
 }
 
 .window-music :deep(.aplayer-music .aplayer-author),
 .window-music :deep(.aplayer-list-author),
 .window-music :deep(.aplayer-list-index) {
-  color: var(--portal-text-secondary) !important;
+  color: rgba(255, 255, 255, 0.62) !important;
 }
 
 .window-music :deep(.aplayer-list-light .aplayer-list-title),
 .window-music :deep(.aplayer-list-light .aplayer-list-author),
 .window-music :deep(.aplayer-list-light .aplayer-list-index) {
-  color: var(--portal-text-primary) !important;
+  color: rgba(255, 255, 255, 0.98) !important;
 }
 
 .window-music :deep(.aplayer-time) {
-  color: var(--portal-text-secondary);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .window-music :deep(.aplayer-icon path) {
-  fill: rgba(12, 17, 24, 0.72) !important;
+  fill: rgba(255, 255, 255, 0.76) !important;
   transition: fill 160ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .window-music :deep(.aplayer-icon:hover path) {
-  fill: rgba(12, 17, 24, 0.96) !important;
+  fill: rgba(255, 255, 255, 0.98) !important;
 }
 
 .window-music :deep(.aplayer-play) {
-  border: 0.5px solid rgba(12, 17, 24, 0.16);
-  background: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  border: 0.5px solid rgba(255, 255, 255, 0.24);
+  background: rgba(5, 10, 18, 0.48);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 .window-music :deep(.aplayer .aplayer-controller .aplayer-bar-wrap .aplayer-bar),
 .window-music :deep(.aplayer .aplayer-volume-bar-wrap .aplayer-volume-bar) {
-  background: rgba(12, 17, 24, 0.18);
+  background: rgba(2, 7, 14, 0.42);
 }
 
 .window-music :deep(.aplayer .aplayer-controller .aplayer-bar-wrap .aplayer-loaded) {
-  background: rgba(12, 17, 24, 0.16);
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .spotlight-overlay {
@@ -6999,12 +6997,6 @@ onBeforeUnmount(() => {
 }
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .portal-desktop {
-    --portal-text-primary: rgba(255, 255, 255, 0.96);
-    --portal-text-secondary: rgba(255, 255, 255, 0.82);
-    --portal-text-tertiary: rgba(255, 255, 255, 0.66);
-  }
-
   .liquid-surface::before {
     background: rgba(35, 40, 50, 0.96);
     filter: none !important;
@@ -7188,12 +7180,6 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .portal-desktop {
-    --portal-text-primary: rgba(255, 255, 255, 0.96);
-    --portal-text-secondary: rgba(255, 255, 255, 0.82);
-    --portal-text-tertiary: rgba(255, 255, 255, 0.66);
-  }
-
   .liquid-surface::before {
     background: rgb(43, 43, 47);
     filter: none !important;
