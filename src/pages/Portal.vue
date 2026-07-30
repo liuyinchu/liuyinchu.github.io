@@ -8,233 +8,6 @@ import Weather from '../components/Weather.vue'
 const wallpaper = '/bg/Firefly_Paper_Airplane.png'
 const chatGptUrl = 'https://chat.openai.com/'
 const ipInfoUrl = 'https://ipinfo.io/what-is-my-ip'
-const MAX_LIQUID_SURFACES = 12
-const LIQUID_GLASS_PIXEL_BUDGET = 2_400_000
-
-const liquidGlassVertexShader = `#version 300 es
-void main() {
-  vec2 position = vec2(
-    float((gl_VertexID << 1) & 2),
-    float(gl_VertexID & 2)
-  );
-  gl_Position = vec4(position * 2.0 - 1.0, 0.0, 1.0);
-}`
-
-const liquidGlassFragmentShader = `#version 300 es
-precision highp float;
-
-#define MAX_SURFACES 12
-
-uniform sampler2D uWallpaper;
-uniform vec2 uResolution;
-uniform vec2 uImageSize;
-uniform vec3 uPointer;
-uniform float uPointerRadius;
-uniform float uDpr;
-uniform float uWallpaperZoom;
-uniform int uSurfaceCount;
-uniform vec4 uRects[MAX_SURFACES];
-uniform vec4 uSurface[MAX_SURFACES];
-uniform float uLayers[MAX_SURFACES];
-
-out vec4 fragColor;
-
-float sdRoundBox(vec2 point, vec2 halfSize, float radius) {
-  radius = min(radius, min(halfSize.x, halfSize.y));
-  vec2 q = abs(point) - halfSize + radius;
-  return min(max(q.x, q.y), 0.0)
-    + length(max(q, 0.0))
-    - radius;
-}
-
-float smoothUnion(float firstDistance, float secondDistance, float amount) {
-  if (amount <= 0.01) return min(firstDistance, secondDistance);
-  float blend = clamp(
-    0.5 + 0.5 * (secondDistance - firstDistance) / amount,
-    0.0,
-    1.0
-  );
-  return mix(secondDistance, firstDistance, blend)
-    - amount * blend * (1.0 - blend);
-}
-
-float coverageSdf(vec2 point) {
-  float sceneDistance = 1e6;
-  float groupDistance = 1e6;
-
-  for (int index = 0; index < MAX_SURFACES; ++index) {
-    if (index >= uSurfaceCount) break;
-    if (uLayers[index] > 0.5) continue;
-
-    vec4 rect = uRects[index];
-    vec4 material = uSurface[index];
-    float distance = sdRoundBox(point - rect.xy, rect.zw, material.x);
-
-    if (material.w > 0.5) {
-      sceneDistance = min(sceneDistance, groupDistance);
-      groupDistance = distance;
-    } else {
-      groupDistance = smoothUnion(groupDistance, distance, material.z);
-    }
-  }
-
-  return min(sceneDistance, groupDistance);
-}
-
-float detailSdf(vec2 point, out float selectedDepth) {
-  float selectedDistance = 1e6;
-  float selectedScore = -1e6;
-  selectedDepth = 1.0;
-
-  for (int index = 0; index < MAX_SURFACES; ++index) {
-    if (index >= uSurfaceCount) break;
-
-    float distance = sdRoundBox(
-      point - uRects[index].xy,
-      uRects[index].zw,
-      uSurface[index].x
-    );
-    float layer = uLayers[index];
-    float influenceBand = layer > 0.5 ? 12.0 * uDpr : 1e6;
-    float score = layer * 10000.0 - abs(distance);
-
-    if (distance <= influenceBand && score > selectedScore) {
-      selectedDistance = distance;
-      selectedDepth = uSurface[index].y;
-      selectedScore = score;
-    }
-  }
-
-  if (uPointer.z > 0.001) {
-    float pointerDistance = length(point - uPointer.xy) - uPointerRadius;
-    selectedDistance = smoothUnion(
-      selectedDistance,
-      pointerDistance,
-      14.0 * uDpr * uPointer.z
-    );
-    selectedDepth = max(selectedDepth, 0.92 * uPointer.z);
-  }
-
-  return selectedDistance;
-}
-
-vec2 coverUv(vec2 viewportUv) {
-  vec2 uv = (viewportUv - 0.5) / uWallpaperZoom + 0.5;
-  float viewportAspect = uResolution.x / uResolution.y;
-  float imageAspect = uImageSize.x / uImageSize.y;
-
-  if (imageAspect > viewportAspect) {
-    uv.x = (uv.x - 0.5) * (viewportAspect / imageAspect) + 0.5;
-  } else {
-    uv.y = (uv.y - 0.5) * (imageAspect / viewportAspect) + 0.5;
-  }
-
-  return clamp(uv, 0.001, 0.999);
-}
-
-void main() {
-  vec2 point = gl_FragCoord.xy;
-  float coverageDistance = coverageSdf(point);
-  float antialiasing = max(fwidth(coverageDistance), 0.75 * uDpr);
-  float mask = 1.0 - smoothstep(
-    -antialiasing,
-    antialiasing,
-    coverageDistance
-  );
-
-  if (mask <= 0.001) {
-    fragColor = vec4(0.0);
-    return;
-  }
-
-  float depth;
-  float detailDistance = detailSdf(point, depth);
-  float epsilon = max(0.75, uDpr);
-  float depthRight;
-  float depthLeft;
-  float depthTop;
-  float depthBottom;
-  vec2 gradient = vec2(
-    detailSdf(point + vec2(epsilon, 0.0), depthRight)
-      - detailSdf(point - vec2(epsilon, 0.0), depthLeft),
-    detailSdf(point + vec2(0.0, epsilon), depthTop)
-      - detailSdf(point - vec2(0.0, epsilon), depthBottom)
-  ) / (2.0 * epsilon);
-  gradient = clamp(gradient, vec2(-2.0), vec2(2.0));
-
-  float edgeInfluence = exp(
-    -abs(detailDistance) / max(10.0 * uDpr, 1.0)
-  );
-  vec3 normal = normalize(vec3(
-    gradient * edgeInfluence * (1.15 + 0.34 * depth),
-    1.0
-  ));
-
-  vec2 refractedPixels = normal.xy
-    * edgeInfluence
-    * (3.0 + 4.2 * depth)
-    * uDpr;
-  float normalLength = length(normal.xy);
-  vec2 dispersionAxis = normalLength > 0.001
-    ? normal.xy / normalLength
-    : vec2(0.0);
-  float dispersion = edgeInfluence
-    * (0.42 + 0.38 * depth)
-    * uDpr;
-
-  vec2 redUv = coverUv(
-    (point + refractedPixels + dispersionAxis * dispersion) / uResolution
-  );
-  vec2 greenUv = coverUv(
-    (point + refractedPixels) / uResolution
-  );
-  vec2 blueUv = coverUv(
-    (point + refractedPixels - dispersionAxis * dispersion) / uResolution
-  );
-
-  vec3 glassColor = vec3(
-    texture(uWallpaper, redUv).r,
-    texture(uWallpaper, greenUv).g,
-    texture(uWallpaper, blueUv).b
-  );
-
-  vec2 lightDelta = (uPointer.xy - point)
-    / max(min(uResolution.x, uResolution.y), 1.0);
-  vec3 lightDirection = normalize(vec3(lightDelta * 1.8, 0.72));
-  vec3 halfVector = normalize(lightDirection + vec3(0.0, 0.0, 1.0));
-  float specular = pow(max(dot(normal, halfVector), 0.0), 54.0)
-    * edgeInfluence
-    * (0.22 + 0.14 * depth);
-  float fresnel = pow(
-    1.0 - clamp(normal.z, 0.0, 1.0),
-    3.0
-  ) * edgeInfluence;
-
-  float luminance = dot(glassColor, vec3(0.2126, 0.7152, 0.0722));
-  vec3 adaptiveTint = luminance > 0.58
-    ? vec3(0.035, 0.04, 0.055)
-    : vec3(0.88, 0.93, 1.0);
-  glassColor = mix(
-    glassColor,
-    adaptiveTint,
-    0.022 + 0.014 * depth
-  );
-
-  vec3 dispersionGlow = vec3(
-    0.06 * max(normal.x, 0.0),
-    0.018,
-    0.075 * max(-normal.x, 0.0)
-  ) * edgeInfluence;
-  glassColor += specular * vec3(1.0, 0.985, 0.96)
-    + fresnel * vec3(0.10, 0.13, 0.18)
-    + dispersionGlow;
-
-  float outputAlpha = mask * 0.94;
-  fragColor = vec4(
-    clamp(glassColor, 0.0, 1.0) * outputAlpha,
-    outputAlpha
-  );
-}`
 
 const topApps = [
   {
@@ -489,7 +262,6 @@ const searchItems = ref([])
 const loadingData = ref(true)
 const dataError = ref('')
 const portalDesktopRef = ref(null)
-const liquidGlassCanvas = ref(null)
 const windowRef = ref(null)
 const spotlightInput = ref(null)
 const launchpadInput = ref(null)
@@ -504,7 +276,6 @@ const dragging = ref(false)
 const compactLayout = ref(false)
 const isMinimizing = ref(false)
 const desktopFocused = ref(true)
-const liquidGlassReady = ref(false)
 const lastFocusedElement = ref(null)
 const overlayReturnFocus = ref(null)
 let clockTimer
@@ -515,30 +286,6 @@ let dragStart = { pointerX: 0, pointerY: 0, originX: 0, originY: 0 }
 let dockAnimationFrame
 let dockSettleTimer
 let minimizeTimer
-let liquidGlassRuntime
-let liquidGlassAnimationFrame
-let liquidGlassResizeObserver
-let liquidGlassMutationObserver
-let liquidGlassReducedMotionQuery
-let liquidGlassReducedTransparencyQuery
-let liquidGlassForcedColorsQuery
-let liquidGlassGeneration = 0
-let liquidGlassAnimateUntil = 0
-let liquidGlassGeometryDirty = true
-let liquidGlassLastFrameTime = 0
-let liquidGlassContextLost = false
-let liquidGlassSurfaceNodes = []
-const liquidGlassLight = {
-  x: 0,
-  y: 0,
-  targetX: 0,
-  targetY: 0,
-  velocityX: 0,
-  velocityY: 0,
-  energy: 0,
-  targetEnergy: 0,
-  velocityEnergy: 0,
-}
 
 const allWindowApps = computed(() => [...topApps, ...bottomApps])
 const activeWindowApp = computed(() => topApps.find((app) => app.id === activeWindow.value))
@@ -846,678 +593,6 @@ async function restorePreviousFocus(target = lastFocusedElement) {
   }
 }
 
-function shouldDisableLiquidGlass() {
-  return (
-    liquidGlassReducedTransparencyQuery?.matches
-    || liquidGlassForcedColorsQuery?.matches
-    || !(
-      CSS.supports('backdrop-filter', 'blur(1px)')
-      || CSS.supports('-webkit-backdrop-filter', 'blur(1px)')
-    )
-  )
-}
-
-function compileLiquidGlassShader(gl, type, source) {
-  const shader = gl.createShader(type)
-  if (!shader) throw new Error('Unable to create Liquid Glass shader')
-
-  gl.shaderSource(shader, source)
-  gl.compileShader(shader)
-
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    const log = gl.getShaderInfoLog(shader) || 'Unknown shader compilation error'
-    gl.deleteShader(shader)
-    throw new Error(log)
-  }
-
-  return shader
-}
-
-function createLiquidGlassProgram(gl) {
-  const vertexShader = compileLiquidGlassShader(
-    gl,
-    gl.VERTEX_SHADER,
-    liquidGlassVertexShader,
-  )
-  let fragmentShader
-
-  try {
-    fragmentShader = compileLiquidGlassShader(
-      gl,
-      gl.FRAGMENT_SHADER,
-      liquidGlassFragmentShader,
-    )
-  } catch (error) {
-    gl.deleteShader(vertexShader)
-    throw error
-  }
-
-  const program = gl.createProgram()
-
-  if (!program) {
-    gl.deleteShader(vertexShader)
-    gl.deleteShader(fragmentShader)
-    throw new Error('Unable to create Liquid Glass program')
-  }
-
-  gl.attachShader(program, vertexShader)
-  gl.attachShader(program, fragmentShader)
-  gl.linkProgram(program)
-  gl.deleteShader(vertexShader)
-  gl.deleteShader(fragmentShader)
-
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    const log = gl.getProgramInfoLog(program) || 'Unknown program link error'
-    gl.deleteProgram(program)
-    throw new Error(log)
-  }
-
-  return program
-}
-
-function cancelLiquidGlassFrame() {
-  window.cancelAnimationFrame(liquidGlassAnimationFrame)
-  liquidGlassAnimationFrame = undefined
-}
-
-function destroyLiquidGlassRuntime({ skipGlCleanup = false } = {}) {
-  liquidGlassGeneration += 1
-  cancelLiquidGlassFrame()
-  liquidGlassAnimateUntil = 0
-  liquidGlassLastFrameTime = 0
-  liquidGlassReady.value = false
-
-  if (!liquidGlassRuntime) return
-
-  const {
-    gl,
-    program,
-    texture,
-    vertexArray,
-    image,
-  } = liquidGlassRuntime
-
-  if (image) {
-    image.onload = null
-    image.onerror = null
-  }
-
-  if (!skipGlCleanup && !liquidGlassContextLost) {
-    gl.deleteTexture(texture)
-    gl.deleteVertexArray(vertexArray)
-    gl.deleteProgram(program)
-  }
-
-  liquidGlassRuntime = undefined
-}
-
-function refreshLiquidGlassSurfaceNodes() {
-  const root = portalDesktopRef.value
-  if (!root) {
-    liquidGlassSurfaceNodes = []
-    return
-  }
-
-  liquidGlassSurfaceNodes = Array.from(
-    root.querySelectorAll('[data-liquid-surface]'),
-  )
-    .sort(
-      (first, second) => Number(first.dataset.liquidGroup || 0)
-        - Number(second.dataset.liquidGroup || 0),
-    )
-    .slice(0, MAX_LIQUID_SURFACES)
-
-  if (liquidGlassResizeObserver) {
-    liquidGlassResizeObserver.disconnect()
-    liquidGlassResizeObserver.observe(root)
-    liquidGlassSurfaceNodes.forEach((node) => {
-      liquidGlassResizeObserver.observe(node)
-    })
-  }
-}
-
-function resizeLiquidGlassCanvas() {
-  const runtime = liquidGlassRuntime
-  const canvas = liquidGlassCanvas.value
-  if (!runtime || !canvas) return false
-
-  const cssWidth = Math.max(1, window.innerWidth)
-  const cssHeight = Math.max(1, window.innerHeight)
-  const compactOptics = window.matchMedia(
-    '(max-width: 700px), (pointer: coarse)',
-  ).matches
-  const desiredScale = Math.min(
-    window.devicePixelRatio || 1,
-    compactOptics ? 1 : 1.35,
-  )
-  const pixelBudget = compactOptics
-    ? Math.min(LIQUID_GLASS_PIXEL_BUDGET, 1_200_000)
-    : LIQUID_GLASS_PIXEL_BUDGET
-  const budgetScale = Math.sqrt(
-    pixelBudget / (cssWidth * cssHeight),
-  )
-  const renderScale = Math.min(desiredScale, budgetScale)
-  const width = Math.max(1, Math.round(cssWidth * renderScale))
-  const height = Math.max(1, Math.round(cssHeight * renderScale))
-  const resized = canvas.width !== width || canvas.height !== height
-
-  runtime.cssWidth = cssWidth
-  runtime.cssHeight = cssHeight
-  runtime.renderScale = renderScale
-
-  if (resized) {
-    canvas.width = width
-    canvas.height = height
-    runtime.gl.viewport(0, 0, width, height)
-    liquidGlassGeometryDirty = true
-  }
-
-  return resized
-}
-
-function measureLiquidGlassSurfaces() {
-  const runtime = liquidGlassRuntime
-  if (!runtime) return
-
-  const visibleSurfaces = liquidGlassSurfaceNodes
-    .map((node) => ({ node, rect: node.getBoundingClientRect() }))
-    .filter(({ node, rect }) => (
-      node.getClientRects().length
-      && rect.width > 0
-      && rect.height > 0
-    ))
-    .slice(0, MAX_LIQUID_SURFACES)
-  const scale = runtime.renderScale
-  let previousGroup = null
-
-  runtime.rects.fill(0)
-  runtime.surfaceMaterials.fill(0)
-  runtime.surfaceLayers.fill(0)
-
-  visibleSurfaces.forEach(({ node, rect }, index) => {
-    const group = Number(node.dataset.liquidGroup || index + 1)
-    const configuredRadius = Number(node.dataset.liquidRadius || 12)
-    const radius = Math.min(
-      configuredRadius,
-      rect.width / 2,
-      rect.height / 2,
-    )
-    const depth = Number(node.dataset.liquidDepth || 1)
-    const layer = Number(node.dataset.liquidLayer || 0)
-    const startsNewGroup = previousGroup === null || previousGroup !== group
-    const rectOffset = index * 4
-
-    runtime.rects[rectOffset] = (rect.left + rect.width / 2) * scale
-    runtime.rects[rectOffset + 1] = (
-      runtime.cssHeight - rect.top - rect.height / 2
-    ) * scale
-    runtime.rects[rectOffset + 2] = rect.width / 2 * scale
-    runtime.rects[rectOffset + 3] = rect.height / 2 * scale
-    runtime.surfaceMaterials[rectOffset] = radius * scale
-    runtime.surfaceMaterials[rectOffset + 1] = depth
-    runtime.surfaceMaterials[rectOffset + 2] = startsNewGroup
-      ? 0
-      : Math.min(radius * 0.72, 18) * scale
-    runtime.surfaceMaterials[rectOffset + 3] = startsNewGroup ? 1 : 0
-    runtime.surfaceLayers[index] = layer
-
-    previousGroup = group
-  })
-
-  runtime.surfaceCount = visibleSurfaces.length
-  liquidGlassGeometryDirty = false
-}
-
-function drawLiquidGlass() {
-  const runtime = liquidGlassRuntime
-  if (!runtime?.textureReady || document.hidden) return
-
-  const {
-    gl,
-    program,
-    uniforms,
-    texture,
-    vertexArray,
-  } = runtime
-  const scale = runtime.renderScale
-  const lightX = liquidGlassLight.x * scale
-  const lightY = (runtime.cssHeight - liquidGlassLight.y) * scale
-  const pointerEnergy = liquidGlassReducedMotionQuery?.matches
-    ? 0
-    : Math.min(1, Math.max(0, liquidGlassLight.energy))
-  const root = portalDesktopRef.value
-
-  if (root) {
-    root.style.setProperty(
-      '--lg-light-x',
-      `${Math.round(liquidGlassLight.x)}px`,
-    )
-    root.style.setProperty(
-      '--lg-light-y',
-      `${Math.round(liquidGlassLight.y)}px`,
-    )
-    root.style.setProperty(
-      '--lg-light-alpha',
-      (0.055 + pointerEnergy * 0.085).toFixed(3),
-    )
-    root.style.setProperty(
-      '--lg-light-alpha-soft',
-      (0.038 + pointerEnergy * 0.056).toFixed(3),
-    )
-  }
-
-  gl.clear(gl.COLOR_BUFFER_BIT)
-  gl.useProgram(program)
-  gl.bindVertexArray(vertexArray)
-  gl.activeTexture(gl.TEXTURE0)
-  gl.bindTexture(gl.TEXTURE_2D, texture)
-  gl.uniform1i(uniforms.wallpaper, 0)
-  gl.uniform2f(uniforms.resolution, gl.drawingBufferWidth, gl.drawingBufferHeight)
-  gl.uniform2f(uniforms.imageSize, runtime.imageWidth, runtime.imageHeight)
-  gl.uniform3f(uniforms.pointer, lightX, lightY, pointerEnergy)
-  gl.uniform1f(uniforms.pointerRadius, 25 * scale)
-  gl.uniform1f(uniforms.dpr, scale)
-  gl.uniform1f(uniforms.wallpaperZoom, 1.02)
-  gl.uniform1i(uniforms.surfaceCount, runtime.surfaceCount)
-  gl.uniform4fv(uniforms.rects, runtime.rects)
-  gl.uniform4fv(uniforms.surfaceMaterials, runtime.surfaceMaterials)
-  gl.uniform1fv(uniforms.surfaceLayers, runtime.surfaceLayers)
-  gl.drawArrays(gl.TRIANGLES, 0, 3)
-}
-
-function integrateLiquidGlassSpring(deltaTime) {
-  if (liquidGlassReducedMotionQuery?.matches) {
-    liquidGlassLight.x = window.innerWidth * 0.24
-    liquidGlassLight.y = 46
-    liquidGlassLight.targetX = liquidGlassLight.x
-    liquidGlassLight.targetY = liquidGlassLight.y
-    liquidGlassLight.velocityX = 0
-    liquidGlassLight.velocityY = 0
-    liquidGlassLight.energy = 0
-    liquidGlassLight.targetEnergy = 0
-    liquidGlassLight.velocityEnergy = 0
-    return false
-  }
-
-  const stiffness = 300
-  const damping = 22
-  const updateAxis = (value, target, velocity) => {
-    const acceleration = (target - value) * stiffness - velocity * damping
-    const nextVelocity = velocity + acceleration * deltaTime
-    const nextValue = value + nextVelocity * deltaTime
-    const settled = Math.abs(target - nextValue) < 0.04
-      && Math.abs(nextVelocity) < 0.04
-
-    return settled
-      ? { value: target, velocity: 0, moving: false }
-      : { value: nextValue, velocity: nextVelocity, moving: true }
-  }
-  const horizontal = updateAxis(
-    liquidGlassLight.x,
-    liquidGlassLight.targetX,
-    liquidGlassLight.velocityX,
-  )
-  const vertical = updateAxis(
-    liquidGlassLight.y,
-    liquidGlassLight.targetY,
-    liquidGlassLight.velocityY,
-  )
-  const energy = updateAxis(
-    liquidGlassLight.energy,
-    liquidGlassLight.targetEnergy,
-    liquidGlassLight.velocityEnergy,
-  )
-
-  liquidGlassLight.x = horizontal.value
-  liquidGlassLight.velocityX = horizontal.velocity
-  liquidGlassLight.y = vertical.value
-  liquidGlassLight.velocityY = vertical.velocity
-  liquidGlassLight.energy = energy.value
-  liquidGlassLight.velocityEnergy = energy.velocity
-
-  return horizontal.moving || vertical.moving || energy.moving
-}
-
-function renderLiquidGlassFrame(timestamp) {
-  liquidGlassAnimationFrame = undefined
-  if (!liquidGlassRuntime?.textureReady || document.hidden) return
-
-  resizeLiquidGlassCanvas()
-  const deltaTime = liquidGlassLastFrameTime
-    ? Math.min(1 / 30, Math.max(1 / 240, (timestamp - liquidGlassLastFrameTime) / 1000))
-    : 1 / 60
-  liquidGlassLastFrameTime = timestamp
-  const geometryAnimating = (
-    timestamp < liquidGlassAnimateUntil
-    || dragging.value
-  )
-
-  if (liquidGlassGeometryDirty || geometryAnimating) {
-    measureLiquidGlassSurfaces()
-  }
-
-  const lightMoving = integrateLiquidGlassSpring(deltaTime)
-  drawLiquidGlass()
-
-  if (lightMoving || geometryAnimating) {
-    liquidGlassAnimationFrame = window.requestAnimationFrame(
-      renderLiquidGlassFrame,
-    )
-  } else {
-    liquidGlassLastFrameTime = 0
-  }
-}
-
-function scheduleLiquidGlassRender({ geometry = false, duration = 0 } = {}) {
-  if (geometry) liquidGlassGeometryDirty = true
-  if (liquidGlassReducedMotionQuery?.matches) duration = 0
-  liquidGlassAnimateUntil = Math.max(
-    liquidGlassAnimateUntil,
-    performance.now() + duration,
-  )
-
-  if (
-    !liquidGlassRuntime?.textureReady
-    || liquidGlassAnimationFrame
-    || document.hidden
-  ) return
-
-  liquidGlassAnimationFrame = window.requestAnimationFrame(
-    renderLiquidGlassFrame,
-  )
-}
-
-function initializeLiquidGlass() {
-  destroyLiquidGlassRuntime()
-  if (shouldDisableLiquidGlass() || !liquidGlassCanvas.value) return
-
-  const canvas = liquidGlassCanvas.value
-  const gl = canvas.getContext('webgl2', {
-    alpha: true,
-    antialias: false,
-    depth: false,
-    stencil: false,
-    premultipliedAlpha: true,
-    preserveDrawingBuffer: false,
-    powerPreference: 'low-power',
-  })
-
-  if (!gl) return
-
-  try {
-    const program = createLiquidGlassProgram(gl)
-    const vertexArray = gl.createVertexArray()
-    const texture = gl.createTexture()
-
-    if (!vertexArray || !texture) {
-      gl.deleteProgram(program)
-      throw new Error('Unable to allocate Liquid Glass GPU resources')
-    }
-
-    const generation = liquidGlassGeneration
-    const image = new Image()
-    liquidGlassRuntime = {
-      gl,
-      program,
-      vertexArray,
-      texture,
-      image,
-      textureReady: false,
-      imageWidth: 1,
-      imageHeight: 1,
-      cssWidth: 1,
-      cssHeight: 1,
-      renderScale: 1,
-      surfaceCount: 0,
-      rects: new Float32Array(MAX_LIQUID_SURFACES * 4),
-      surfaceMaterials: new Float32Array(MAX_LIQUID_SURFACES * 4),
-      surfaceLayers: new Float32Array(MAX_LIQUID_SURFACES),
-      uniforms: {
-        wallpaper: gl.getUniformLocation(program, 'uWallpaper'),
-        resolution: gl.getUniformLocation(program, 'uResolution'),
-        imageSize: gl.getUniformLocation(program, 'uImageSize'),
-        pointer: gl.getUniformLocation(program, 'uPointer'),
-        pointerRadius: gl.getUniformLocation(program, 'uPointerRadius'),
-        dpr: gl.getUniformLocation(program, 'uDpr'),
-        wallpaperZoom: gl.getUniformLocation(program, 'uWallpaperZoom'),
-        surfaceCount: gl.getUniformLocation(program, 'uSurfaceCount'),
-        rects: gl.getUniformLocation(program, 'uRects[0]'),
-        surfaceMaterials: gl.getUniformLocation(program, 'uSurface[0]'),
-        surfaceLayers: gl.getUniformLocation(program, 'uLayers[0]'),
-      },
-    }
-
-    gl.disable(gl.DEPTH_TEST)
-    gl.disable(gl.STENCIL_TEST)
-    gl.disable(gl.CULL_FACE)
-    gl.disable(gl.BLEND)
-    gl.clearColor(0, 0, 0, 0)
-    gl.bindVertexArray(vertexArray)
-    gl.bindTexture(gl.TEXTURE_2D, texture)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      1,
-      1,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      new Uint8Array([0, 0, 0, 0]),
-    )
-
-    image.decoding = 'async'
-    image.onload = () => {
-      if (
-        generation !== liquidGlassGeneration
-        || !liquidGlassRuntime
-        || liquidGlassContextLost
-      ) return
-
-      gl.bindTexture(gl.TEXTURE_2D, texture)
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        image,
-      )
-      liquidGlassRuntime.imageWidth = image.naturalWidth
-      liquidGlassRuntime.imageHeight = image.naturalHeight
-      liquidGlassRuntime.textureReady = true
-      liquidGlassReady.value = true
-      liquidGlassGeometryDirty = true
-      resizeLiquidGlassCanvas()
-      refreshLiquidGlassSurfaceNodes()
-      liquidGlassLight.x = window.innerWidth * 0.24
-      liquidGlassLight.y = 46
-      liquidGlassLight.targetX = liquidGlassLight.x
-      liquidGlassLight.targetY = liquidGlassLight.y
-      scheduleLiquidGlassRender({ geometry: true })
-    }
-    image.onerror = () => {
-      if (generation === liquidGlassGeneration) {
-        destroyLiquidGlassRuntime()
-      }
-    }
-    image.src = wallpaper
-  } catch (error) {
-    console.warn('Liquid Glass renderer unavailable:', error)
-    destroyLiquidGlassRuntime()
-  }
-}
-
-function handleLiquidGlassPointerMove(event) {
-  if (
-    liquidGlassReducedMotionQuery?.matches
-    || event.pointerType === 'touch'
-    || !window.matchMedia('(hover: hover) and (pointer: fine)').matches
-  ) return
-
-  const interactiveSurface = event.target instanceof Element
-    ? event.target.closest('[data-liquid-interactive]')
-    : null
-
-  if (!interactiveSurface) {
-    liquidGlassLight.targetX = window.innerWidth * 0.24
-    liquidGlassLight.targetY = 46
-    liquidGlassLight.targetEnergy = 0
-    scheduleLiquidGlassRender({ duration: 220 })
-    return
-  }
-
-  liquidGlassLight.targetX = event.clientX
-  liquidGlassLight.targetY = event.clientY
-  liquidGlassLight.targetEnergy = 0.82
-  scheduleLiquidGlassRender({ duration: 240 })
-}
-
-function handleLiquidGlassPointerLeave() {
-  liquidGlassLight.targetX = window.innerWidth * 0.24
-  liquidGlassLight.targetY = 46
-  liquidGlassLight.targetEnergy = 0
-  scheduleLiquidGlassRender({ duration: 240 })
-}
-
-function isLiquidGlassGeometryTransition(event) {
-  return event.target instanceof Element && event.target.matches(
-    '[data-liquid-surface], .launchpad-panel, .mac-window, .spotlight-panel',
-  )
-}
-
-function handleLiquidGlassTransitionRun(event) {
-  if (!isLiquidGlassGeometryTransition(event)) return
-  scheduleLiquidGlassRender({ geometry: true, duration: 300 })
-}
-
-function handleLiquidGlassTransitionEnd(event) {
-  if (!isLiquidGlassGeometryTransition(event)) return
-  scheduleLiquidGlassRender({ geometry: true })
-}
-
-function handleLiquidGlassVisibilityChange() {
-  if (document.hidden) {
-    cancelLiquidGlassFrame()
-    return
-  }
-
-  liquidGlassLastFrameTime = 0
-  scheduleLiquidGlassRender({ geometry: true })
-}
-
-function handleLiquidGlassPreferenceChange() {
-  if (shouldDisableLiquidGlass()) {
-    destroyLiquidGlassRuntime()
-    return
-  }
-
-  if (!liquidGlassRuntime) {
-    initializeLiquidGlass()
-    return
-  }
-
-  liquidGlassLight.targetEnergy = 0
-  scheduleLiquidGlassRender({ geometry: true })
-}
-
-function handleLiquidGlassContextLost(event) {
-  event.preventDefault()
-  liquidGlassContextLost = true
-  destroyLiquidGlassRuntime({ skipGlCleanup: true })
-}
-
-function handleLiquidGlassContextRestored() {
-  liquidGlassContextLost = false
-  initializeLiquidGlass()
-}
-
-function mountLiquidGlass() {
-  const root = portalDesktopRef.value
-  const canvas = liquidGlassCanvas.value
-  if (!root || !canvas) return
-
-  liquidGlassReducedMotionQuery = window.matchMedia(
-    '(prefers-reduced-motion: reduce)',
-  )
-  liquidGlassReducedTransparencyQuery = window.matchMedia(
-    '(prefers-reduced-transparency: reduce)',
-  )
-  liquidGlassForcedColorsQuery = window.matchMedia('(forced-colors: active)')
-
-  ;[
-    liquidGlassReducedMotionQuery,
-    liquidGlassReducedTransparencyQuery,
-    liquidGlassForcedColorsQuery,
-  ].forEach((query) => {
-    query.addEventListener('change', handleLiquidGlassPreferenceChange)
-  })
-
-  canvas.addEventListener('webglcontextlost', handleLiquidGlassContextLost)
-  canvas.addEventListener(
-    'webglcontextrestored',
-    handleLiquidGlassContextRestored,
-  )
-  root.addEventListener('transitionrun', handleLiquidGlassTransitionRun)
-  root.addEventListener('transitionend', handleLiquidGlassTransitionEnd)
-  document.addEventListener(
-    'visibilitychange',
-    handleLiquidGlassVisibilityChange,
-  )
-
-  liquidGlassResizeObserver = new ResizeObserver(() => {
-    scheduleLiquidGlassRender({ geometry: true })
-  })
-  liquidGlassResizeObserver.observe(root)
-  liquidGlassMutationObserver = new MutationObserver(() => {
-    refreshLiquidGlassSurfaceNodes()
-    scheduleLiquidGlassRender({ geometry: true, duration: 300 })
-  })
-  liquidGlassMutationObserver.observe(root, {
-    childList: true,
-    subtree: true,
-  })
-
-  refreshLiquidGlassSurfaceNodes()
-  initializeLiquidGlass()
-}
-
-function unmountLiquidGlass() {
-  const root = portalDesktopRef.value
-  const canvas = liquidGlassCanvas.value
-
-  liquidGlassResizeObserver?.disconnect()
-  liquidGlassMutationObserver?.disconnect()
-  liquidGlassResizeObserver = undefined
-  liquidGlassMutationObserver = undefined
-
-  ;[
-    liquidGlassReducedMotionQuery,
-    liquidGlassReducedTransparencyQuery,
-    liquidGlassForcedColorsQuery,
-  ].forEach((query) => {
-    query?.removeEventListener('change', handleLiquidGlassPreferenceChange)
-  })
-
-  root?.removeEventListener('transitionrun', handleLiquidGlassTransitionRun)
-  root?.removeEventListener('transitionend', handleLiquidGlassTransitionEnd)
-  canvas?.removeEventListener('webglcontextlost', handleLiquidGlassContextLost)
-  canvas?.removeEventListener(
-    'webglcontextrestored',
-    handleLiquidGlassContextRestored,
-  )
-  document.removeEventListener(
-    'visibilitychange',
-    handleLiquidGlassVisibilityChange,
-  )
-  liquidGlassSurfaceNodes = []
-  destroyLiquidGlassRuntime()
-}
 
 function updateCompactLayout() {
   compactLayout.value = window.matchMedia(
@@ -1632,8 +707,6 @@ async function handleDesktopPointerDown() {
   }
 
   desktopFocused.value = false
-  liquidGlassLight.targetEnergy = 0
-  scheduleLiquidGlassRender({ duration: 220 })
 }
 
 function activateWindowSurface() {
@@ -1669,7 +742,6 @@ function toggleMaximizeWindow() {
   if (windowMaximized.value) {
     windowMaximized.value = false
     windowPos.value = { ...restoreWindowPos.value }
-    scheduleLiquidGlassRender({ geometry: true, duration: 240 })
     return
   }
 
@@ -1680,7 +752,6 @@ function toggleMaximizeWindow() {
     windowPositioned.value = true
   }
   windowMaximized.value = true
-  scheduleLiquidGlassRender({ geometry: true, duration: 240 })
 }
 
 function startWindowDrag(event) {
@@ -1728,7 +799,6 @@ function moveWindowDrag(event) {
     x: proposed.x - dragStart.originX,
     y: proposed.y - dragStart.originY,
   }
-  scheduleLiquidGlassRender({ geometry: true })
 }
 
 function endWindowDrag(event) {
@@ -1749,7 +819,6 @@ function endWindowDrag(event) {
   if (captureTarget?.hasPointerCapture(completedPointerId)) {
     captureTarget.releasePointerCapture(completedPointerId)
   }
-  scheduleLiquidGlassRender({ geometry: true })
 }
 
 function removeWindowDragListeners() {
@@ -1777,7 +846,6 @@ function cancelWindowDrag() {
 
 function handleViewportResize() {
   updateCompactLayout()
-  scheduleLiquidGlassRender({ geometry: true })
   if (window.innerWidth <= 900) resetDockMagnification()
   if (
     compactLayout.value
@@ -1905,19 +973,19 @@ function handleDockPointerMove(event) {
       const itemCenter = dockRect.left + item.offsetLeft - dock.scrollLeft + item.offsetWidth / 2
       const signedDistance = itemCenter - pointerX
       const distance = Math.abs(signedDistance)
-      const radius = 112
+      const radius = 90
       const influence = distance >= radius
         ? 0
         : (Math.cos(Math.PI * distance / radius) + 1) / 2
-      const scale = 1 + influence * 0.58
+      const scale = 1 + influence * 0.28
       const direction = Math.sign(signedDistance)
       const horizontalInfluence = Math.min(1, distance / 52)
       item.style.setProperty('--dock-scale', scale.toFixed(3))
       item.style.setProperty(
         '--dock-shift',
-        `${direction * influence * horizontalInfluence * 11}px`,
+        `${direction * influence * horizontalInfluence * 6}px`,
       )
-      item.style.setProperty('--dock-lift', `${influence * -24}px`)
+      item.style.setProperty('--dock-lift', `${influence * -10}px`)
     })
   })
 }
@@ -2008,25 +1076,9 @@ watch(spotlightFlatLinks, (links) => {
   )
 })
 
-watch(
-  [
-    activeWindow,
-    activeOverlay,
-    minimizedWindow,
-    windowMaximized,
-    compactLayout,
-  ],
-  async () => {
-    await nextTick()
-    refreshLiquidGlassSurfaceNodes()
-    scheduleLiquidGlassRender({ geometry: true, duration: 300 })
-  },
-)
-
 onMounted(() => {
   loadPortalData()
   updateCompactLayout()
-  mountLiquidGlass()
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('resize', handleViewportResize)
   clockTimer = window.setInterval(() => {
@@ -2041,7 +1093,6 @@ onBeforeUnmount(() => {
   window.clearTimeout(minimizeTimer)
   window.clearTimeout(dockSettleTimer)
   window.cancelAnimationFrame(dockAnimationFrame)
-  unmountLiquidGlass()
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('resize', handleViewportResize)
 })
@@ -2052,31 +1103,18 @@ onBeforeUnmount(() => {
     ref="portalDesktopRef"
     class="portal-desktop"
     :class="{
-      'has-liquid-glass': liquidGlassReady,
       'has-active-overlay': Boolean(activeOverlay),
       'is-desktop-focused': desktopFocused,
     }"
     :style="{ '--portal-wallpaper': `url(${wallpaper})` }"
     @pointerdown.self="handleDesktopPointerDown"
-    @pointermove.passive="handleLiquidGlassPointerMove"
-    @pointerleave="handleLiquidGlassPointerLeave"
   >
     <div class="wallpaper" aria-hidden="true"></div>
-    <canvas
-      ref="liquidGlassCanvas"
-      class="liquid-glass-optics"
-      aria-hidden="true"
-    ></canvas>
     <div class="desktop-vignette" aria-hidden="true"></div>
 
     <header
       class="portal-menu-bar"
       aria-label="Portal menu bar"
-      data-liquid-surface
-      data-liquid-interactive
-      data-liquid-group="1"
-      data-liquid-radius="0"
-      data-liquid-depth="0.62"
     >
       <div class="menu-left">
         <RouterLink to="/" class="menu-home-link" aria-label="Back to home">
@@ -2186,10 +1224,6 @@ onBeforeUnmount(() => {
         aria-modal="false"
         :aria-hidden="activeOverlay ? 'true' : undefined"
         :inert="Boolean(activeOverlay)"
-        data-liquid-surface
-        data-liquid-group="2"
-        data-liquid-radius="14"
-        data-liquid-depth="1.18"
         tabindex="-1"
         @pointerdown.stop="activateWindowSurface"
         @keydown="handleDialogKeydown"
@@ -2197,12 +1231,6 @@ onBeforeUnmount(() => {
         <div
           class="window-titlebar"
           :class="{ 'has-scrolled-divider': windowBodyScrolled }"
-          data-liquid-surface
-          data-liquid-interactive
-          data-liquid-group="21"
-          data-liquid-radius="13"
-          data-liquid-depth="0.56"
-          data-liquid-layer="1"
           @pointerdown="startWindowDrag"
           @lostpointercapture="endWindowDrag"
           @dblclick="toggleMaximizeWindow"
@@ -2254,12 +1282,6 @@ onBeforeUnmount(() => {
 
         <div
           class="window-body"
-          data-liquid-surface
-          data-liquid-interactive
-          data-liquid-group="22"
-          data-liquid-radius="13"
-          data-liquid-depth="0.48"
-          data-liquid-layer="1"
           @scroll.passive="handleWindowBodyScroll"
         >
           <div v-if="dataError" class="portal-error" role="alert">{{ dataError }}</div>
@@ -2267,11 +1289,6 @@ onBeforeUnmount(() => {
           <section
             v-if="activeWindow === 'music'"
             class="mac-app-content music-app"
-            data-liquid-surface
-            data-liquid-group="23"
-            data-liquid-radius="12"
-            data-liquid-depth="0.64"
-            data-liquid-layer="2"
           >
             <div v-if="loadingData" class="portal-loading" role="status">Loading music library...</div>
             <div v-else ref="aplayerContainer" class="aplayer-mount"></div>
@@ -2280,33 +1297,18 @@ onBeforeUnmount(() => {
           <section v-else-if="activeWindow === 'weather'" class="mac-app-content widget-shell weather-shell">
             <Weather
               class="portal-widget weather-widget"
-              data-liquid-surface
-              data-liquid-group="23"
-              data-liquid-radius="12"
-              data-liquid-depth="0.64"
-              data-liquid-layer="2"
             />
           </section>
 
           <section v-else-if="activeWindow === 'calendar'" class="mac-app-content widget-shell calendar-shell">
             <Calendar
               class="portal-widget calendar-widget"
-              data-liquid-surface
-              data-liquid-group="23"
-              data-liquid-radius="12"
-              data-liquid-depth="0.64"
-              data-liquid-layer="2"
             />
           </section>
 
           <section v-else-if="activeWindow === 'todo'" class="mac-app-content widget-shell todo-shell">
             <header
               class="todo-overview"
-              data-liquid-surface
-              data-liquid-group="23"
-              data-liquid-radius="14"
-              data-liquid-depth="0.66"
-              data-liquid-layer="2"
             >
               <div>
                 <p>REMINDERS</p>
@@ -2322,11 +1324,6 @@ onBeforeUnmount(() => {
             </header>
             <ToDoList
               class="portal-widget todo-widget"
-              data-liquid-surface
-              data-liquid-group="24"
-              data-liquid-radius="15"
-              data-liquid-depth="0.7"
-              data-liquid-layer="2"
             />
           </section>
         </div>
@@ -2344,22 +1341,12 @@ onBeforeUnmount(() => {
           aria-label="Spotlight"
           role="dialog"
           aria-modal="true"
-          data-liquid-surface
-          data-liquid-interactive
-          data-liquid-group="3"
-          data-liquid-radius="22"
-          data-liquid-depth="1.08"
           tabindex="-1"
           @pointerdown.stop
           @keydown="handleDialogKeydown"
         >
           <label
             class="spotlight-search"
-            data-liquid-surface
-            data-liquid-group="31"
-            data-liquid-radius="21"
-            data-liquid-depth="0.6"
-            data-liquid-layer="1"
           >
             <span class="spotlight-magnifier" aria-hidden="true"></span>
             <input
@@ -2387,11 +1374,6 @@ onBeforeUnmount(() => {
             class="spotlight-results"
             role="listbox"
             aria-label="Site search results"
-            data-liquid-surface
-            data-liquid-group="32"
-            data-liquid-radius="18"
-            data-liquid-depth="0.56"
-            data-liquid-layer="1"
           >
             <section
               v-for="(group, groupIndex) in spotlightGroups"
@@ -2442,11 +1424,6 @@ onBeforeUnmount(() => {
           </div>
           <footer
             class="spotlight-footer"
-            data-liquid-surface
-            data-liquid-group="33"
-            data-liquid-radius="18"
-            data-liquid-depth="0.52"
-            data-liquid-layer="1"
           >
             <span role="status" aria-live="polite">{{ spotlightFlatLinks.length }} 个结果</span>
             <span id="portal-spotlight-help" class="spotlight-help">
@@ -2480,22 +1457,12 @@ onBeforeUnmount(() => {
             class="launchpad-close"
             type="button"
             aria-label="Close Launchpad"
-            data-liquid-surface
-            data-liquid-interactive
-            data-liquid-group="4"
-            data-liquid-radius="999"
-            data-liquid-depth="0.8"
             @click="closeWindow"
           >
             ×
           </button>
           <label
             class="launchpad-search"
-            data-liquid-surface
-            data-liquid-interactive
-            data-liquid-group="4"
-            data-liquid-radius="999"
-            data-liquid-depth="0.82"
           >
             <span class="spotlight-magnifier" aria-hidden="true"></span>
             <input
@@ -2513,12 +1480,6 @@ onBeforeUnmount(() => {
           <div
             v-else
             class="launchpad-groups"
-            data-liquid-surface
-            data-liquid-interactive
-            data-liquid-group="42"
-            data-liquid-radius="28"
-            data-liquid-depth="0.58"
-            data-liquid-layer="1"
             @click.self="closeWindow"
           >
             <section
@@ -2559,11 +1520,6 @@ onBeforeUnmount(() => {
       ref="dockRef"
       class="bottom-launcher"
       aria-label="Portal Dock"
-      data-liquid-surface
-      data-liquid-interactive
-      data-liquid-group="5"
-      data-liquid-radius="24"
-      data-liquid-depth="1.28"
       tabindex="-1"
       @pointerdown.stop
       @pointermove="handleDockPointerMove"
@@ -2642,9 +1598,9 @@ onBeforeUnmount(() => {
   --portal-material-content: rgba(28, 29, 34, 0.78);
   --portal-material-dock: rgba(32, 35, 43, 0.32);
   --portal-material-blur: saturate(175%) blur(22px);
-  --lg-shell-fill: rgba(18, 24, 33, 0.24);
-  --lg-pane-fill: rgba(12, 18, 27, 0.34);
-  --lg-pane-fill-strong: rgba(10, 15, 23, 0.46);
+  --lg-shell-fill: rgba(30, 34, 44, 0.55);
+  --lg-pane-fill: rgba(18, 23, 32, 0.5);
+  --lg-pane-fill-strong: rgba(14, 18, 26, 0.6);
   --lg-control-fill: rgba(255, 255, 255, 0.09);
   --lg-control-hover: rgba(255, 255, 255, 0.15);
   --lg-border: rgba(255, 255, 255, 0.2);
@@ -2653,12 +1609,8 @@ onBeforeUnmount(() => {
     inset 0 0.5px 0 rgba(255, 255, 255, 0.3),
     inset 0 0 0 0.5px rgba(255, 255, 255, 0.055);
   --lg-edge-low: inset 0 -0.5px 0 rgba(0, 0, 0, 0.26);
-  --lg-pane-filter: saturate(148%) contrast(1.04) blur(9px);
-  --lg-control-filter: saturate(172%) contrast(1.05) blur(13px);
-  --lg-light-x: 24vw;
-  --lg-light-y: 46px;
-  --lg-light-alpha: 0.055;
-  --lg-light-alpha-soft: 0.038;
+  --lg-pane-filter: saturate(160%) blur(20px);
+  --lg-control-filter: saturate(170%) blur(14px);
   --portal-hairline: rgba(255, 255, 255, 0.13);
   --portal-stroke-outer: rgba(0, 0, 0, 0.35);
   --portal-text-primary: rgba(255, 255, 255, 0.92);
@@ -2698,8 +1650,7 @@ onBeforeUnmount(() => {
 }
 
 .wallpaper,
-.desktop-vignette,
-.liquid-glass-optics {
+.desktop-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -2711,19 +1662,6 @@ onBeforeUnmount(() => {
   background-size: cover;
   background-position: center;
   transform: scale(1.02);
-}
-
-.liquid-glass-optics {
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  contain: strict;
-  transition: opacity 180ms ease-out;
-}
-
-.has-liquid-glass .liquid-glass-optics {
-  opacity: 1;
 }
 
 .desktop-vignette {
@@ -2901,13 +1839,6 @@ onBeforeUnmount(() => {
 
 .window-music .window-body {
   padding-bottom: 1.1rem;
-}
-
-.window-music .window-body {
-  background:
-    radial-gradient(circle at 18% 10%, rgba(137, 180, 250, 0.12), transparent 17rem),
-    radial-gradient(circle at 88% 94%, rgba(245, 194, 231, 0.08), transparent 16rem),
-    linear-gradient(145deg, rgba(57, 68, 96, 0.32), rgba(18, 24, 39, 0.22));
 }
 
 .portal-loading,
@@ -3236,16 +2167,6 @@ onBeforeUnmount(() => {
   outline: none;
 }
 
-.launcher-item.is-active::after {
-  content: '';
-  position: absolute;
-  bottom: -0.1rem;
-  width: 0.26rem;
-  height: 0.26rem;
-  border-radius: 50%;
-  background: rgba(245, 246, 255, 0.88);
-}
-
 .launcher-item img {
   width: clamp(2.45rem, 4vw, 3rem);
   height: clamp(2.45rem, 4vw, 3rem);
@@ -3407,14 +2328,6 @@ onBeforeUnmount(() => {
   backdrop-filter: var(--portal-material-blur);
 }
 
-.has-liquid-glass .portal-menu-bar {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(6, 11, 18, 0.08)),
-    rgba(20, 26, 35, 0.26);
-  -webkit-backdrop-filter: saturate(155%) blur(13px);
-  backdrop-filter: saturate(155%) blur(13px);
-}
-
 .menu-left,
 .menu-right {
   gap: 4px;
@@ -3559,23 +2472,16 @@ onBeforeUnmount(() => {
   border-radius: var(--portal-radius-window);
   color: var(--portal-text-primary);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.035)),
-    var(--portal-material-window);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(0, 0, 0, 0.025)),
+    rgba(28, 32, 40, 0.62);
   box-shadow: var(--portal-shadow-window);
-  -webkit-backdrop-filter: var(--portal-material-blur);
-  backdrop-filter: var(--portal-material-blur);
+  -webkit-backdrop-filter: saturate(170%) blur(24px);
+  backdrop-filter: saturate(170%) blur(24px);
   transform-origin: center center;
   transition:
     filter 220ms cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 220ms cubic-bezier(0.4, 0, 0.2, 1),
     border-color 220ms cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform, opacity, filter;
-}
-
-.has-liquid-glass .mac-window {
-  background: rgba(29, 31, 37, 0.3);
-  -webkit-backdrop-filter: saturate(150%) blur(15px);
-  backdrop-filter: saturate(150%) blur(15px);
 }
 
 .mac-window.is-positioned {
@@ -4173,33 +3079,30 @@ onBeforeUnmount(() => {
 
 .window-shell-enter-active {
   transition:
-    opacity 210ms ease-out,
-    transform 240ms var(--portal-spring-settle),
-    filter 210ms ease-out;
+    opacity 180ms ease-out,
+    transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .window-shell-leave-active {
   transition:
-    opacity 160ms ease-in,
-    transform 160ms ease-in,
-    filter 150ms ease-in;
+    opacity 140ms ease-in,
+    transform 140ms ease-in;
 }
 
 .mac-window.window-shell-enter-from,
 .mac-window.window-shell-leave-to {
   opacity: 0;
-  filter: blur(5px) saturate(0.88);
-  transform: translate(-50%, -50%) translateY(8px) scale(0.975);
+  transform: translate(-50%, -50%) scale(0.96);
 }
 
 .mac-window.is-positioned.window-shell-enter-from,
 .mac-window.is-positioned.window-shell-leave-to {
-  transform: translateY(8px) scale(0.975);
+  transform: scale(0.96);
 }
 
 .mac-window.is-positioned.is-minimizing.window-shell-leave-to {
   opacity: 0;
-  transform: translate3d(0, 52vh, 0) scale(0.18);
+  transform: translate3d(0, 52vh, 0) scale(0.2);
 }
 
 .spotlight-overlay,
@@ -4246,12 +3149,6 @@ onBeforeUnmount(() => {
   backdrop-filter: saturate(165%) blur(24px);
 }
 
-.has-liquid-glass .spotlight-panel {
-  background: rgba(28, 31, 38, 0.38);
-  -webkit-backdrop-filter: saturate(150%) blur(16px);
-  backdrop-filter: saturate(150%) blur(16px);
-}
-
 .spotlight-search {
   position: relative;
   min-height: 60px;
@@ -4261,27 +3158,6 @@ onBeforeUnmount(() => {
   border-bottom: 0.5px solid var(--portal-hairline);
   background: rgba(5, 8, 14, 0.13);
   box-shadow: none;
-}
-
-.spotlight-search::after {
-  content: '';
-  position: absolute;
-  right: 18px;
-  bottom: -0.5px;
-  left: 18px;
-  height: 1.5px;
-  border-radius: 999px;
-  background: #0a84ff;
-  opacity: 0;
-  transform: scaleX(0.92);
-  transition:
-    opacity 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.spotlight-search:focus-within::after {
-  opacity: 1;
-  transform: scaleX(1);
 }
 
 .spotlight-magnifier::before {
@@ -4489,15 +3365,11 @@ onBeforeUnmount(() => {
 }
 
 .spotlight-shell-enter-active .spotlight-panel {
-  transition:
-    transform 240ms var(--portal-spring-settle),
-    filter 200ms ease-out;
+  transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .spotlight-shell-leave-active .spotlight-panel {
-  transition:
-    transform 150ms ease-in,
-    filter 140ms ease-in;
+  transition: transform 140ms ease-in;
 }
 
 .spotlight-shell-enter-from,
@@ -4507,8 +3379,7 @@ onBeforeUnmount(() => {
 
 .spotlight-shell-enter-from .spotlight-panel,
 .spotlight-shell-leave-to .spotlight-panel {
-  filter: blur(5px);
-  transform: translateX(-50%) translateY(7px) scale(0.975);
+  transform: translateX(-50%) scale(0.97);
 }
 
 .launchpad-overlay {
@@ -4564,13 +3435,6 @@ onBeforeUnmount(() => {
   box-shadow:
     inset 0 0.5px 0 rgba(255, 255, 255, 0.16),
     0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.has-liquid-glass .launchpad-search,
-.has-liquid-glass .launchpad-close {
-  background: rgba(20, 24, 31, 0.16);
-  -webkit-backdrop-filter: saturate(160%) blur(12px);
-  backdrop-filter: saturate(160%) blur(12px);
 }
 
 .launchpad-search .spotlight-magnifier {
@@ -4680,15 +3544,11 @@ onBeforeUnmount(() => {
 }
 
 .launchpad-shell-enter-active .launchpad-panel {
-  transition:
-    transform 240ms var(--portal-spring-settle),
-    filter 210ms ease-out;
+  transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .launchpad-shell-leave-active .launchpad-panel {
-  transition:
-    transform 160ms ease-in,
-    filter 150ms ease-in;
+  transition: transform 150ms ease-in;
 }
 
 .launchpad-shell-enter-from,
@@ -4698,18 +3558,16 @@ onBeforeUnmount(() => {
 
 .launchpad-shell-enter-from .launchpad-panel,
 .launchpad-shell-leave-to .launchpad-panel {
-  filter: blur(4px);
-  transform: scale(0.985);
+  transform: scale(1.04);
 }
 
 .bottom-launcher {
   bottom: max(12px, env(safe-area-inset-bottom));
-  gap: 4px;
-  min-height: 64px;
-  padding: 7px 9px 5px;
+  gap: 3px;
+  padding: 6px 10px;
   overflow: visible;
   border: 0.5px solid rgba(255, 255, 255, 0.22);
-  border-radius: 24px;
+  border-radius: 19px;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.012)),
     var(--portal-material-dock);
@@ -4721,21 +3579,13 @@ onBeforeUnmount(() => {
   backdrop-filter: saturate(175%) blur(24px);
 }
 
-.has-liquid-glass .bottom-launcher {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.075), transparent),
-    rgba(26, 31, 40, 0.11);
-  -webkit-backdrop-filter: saturate(155%) blur(13px);
-  backdrop-filter: saturate(155%) blur(13px);
-}
-
 .launcher-item {
   --dock-scale: 1;
   --dock-shift: 0px;
   --dock-lift: 0px;
   display: flex;
-  width: 52px;
-  height: 56px;
+  width: 46px;
+  height: 52px;
   align-items: end;
   justify-content: center;
   overflow: visible;
@@ -4758,8 +3608,8 @@ onBeforeUnmount(() => {
 }
 
 .launcher-item img {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border: 0.5px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--portal-radius-icon);
   object-fit: cover;
@@ -4777,7 +3627,7 @@ onBeforeUnmount(() => {
 
 .launcher-tooltip {
   position: absolute;
-  bottom: calc(100% + 16px);
+  bottom: calc(100% + 10px);
   left: 50%;
   display: block;
   max-width: 150px;
@@ -4821,24 +3671,19 @@ onBeforeUnmount(() => {
   transition-timing-function: ease-out;
 }
 
-.launcher-item.is-running::after {
+.launcher-item.is-running::after,
+.launcher-item.is-active::after {
   content: '';
   position: absolute;
-  bottom: -1px;
+  bottom: 1px;
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.launcher-item.is-active::after {
-  bottom: -1px;
-  width: 4px;
-  height: 4px;
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .launcher-divider {
-  height: 48px;
+  height: 40px;
   margin: 0 3px;
   background: rgba(255, 255, 255, 0.2);
   box-shadow: 1px 0 0 rgba(0, 0, 0, 0.18);
@@ -4852,59 +3697,25 @@ onBeforeUnmount(() => {
     0 8px 20px rgba(0, 0, 0, 0.32);
 }
 
-/* Full-surface Liquid Glass */
-.has-liquid-glass .portal-menu-bar,
-.has-liquid-glass .mac-window,
-.has-liquid-glass .spotlight-panel,
-.has-liquid-glass .bottom-launcher,
-.has-liquid-glass .launchpad-search,
-.has-liquid-glass .launchpad-close {
+/* Shared shell glass */
+.spotlight-panel,
+.bottom-launcher,
+.launchpad-search,
+.launchpad-close {
   border-color: var(--lg-border);
   background:
-    radial-gradient(
-      440px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha)),
-      transparent 68%
-    ) fixed,
     linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(0, 0, 0, 0.045)),
     var(--lg-shell-fill);
   box-shadow:
     var(--lg-edge-high),
     var(--lg-edge-low),
     0 24px 68px rgba(0, 0, 0, 0.25);
-  -webkit-backdrop-filter: saturate(158%) contrast(1.03) blur(6px);
-  backdrop-filter: saturate(158%) contrast(1.03) blur(6px);
-}
-
-.has-liquid-glass .portal-menu-bar {
-  border-width: 0 0 0.5px;
-  border-style: solid;
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -0.5px 0 rgba(0, 0, 0, 0.24),
-    0 1px 16px rgba(0, 0, 0, 0.1);
-}
-
-.has-liquid-glass .mac-window {
-  background:
-    radial-gradient(
-      520px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha)),
-      transparent 70%
-    ) fixed,
-    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(0, 0, 0, 0.025)),
-    rgba(15, 21, 30, 0.12);
-  -webkit-backdrop-filter: saturate(148%) contrast(1.035) blur(4px);
-  backdrop-filter: saturate(148%) contrast(1.035) blur(4px);
+  -webkit-backdrop-filter: saturate(170%) blur(22px);
+  backdrop-filter: saturate(170%) blur(22px);
 }
 
 .window-titlebar {
   background:
-    radial-gradient(
-      360px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 72%
-    ) fixed,
     linear-gradient(180deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.018)),
     rgba(18, 24, 33, 0.18);
   box-shadow:
@@ -4925,11 +3736,6 @@ onBeforeUnmount(() => {
 .todo-shell :deep(.todo-container) {
   border-color: var(--lg-border-soft);
   background:
-    radial-gradient(
-      460px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 72%
-    ) fixed,
     linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.025)),
     var(--lg-pane-fill);
   box-shadow:
@@ -4941,39 +3747,11 @@ onBeforeUnmount(() => {
 
 .window-body {
   background:
-    radial-gradient(
-      520px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 74%
-    ) fixed,
     linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.035)),
     var(--lg-pane-fill-strong);
   box-shadow:
     inset 0 0.5px 0 rgba(255, 255, 255, 0.16),
     inset 0 0 0 0.5px rgba(255, 255, 255, 0.04);
-}
-
-.has-liquid-glass .window-body {
-  background:
-    radial-gradient(
-      520px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 74%
-    ) fixed,
-    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(0, 0, 0, 0.026)),
-    rgba(11, 17, 25, 0.38);
-}
-
-.window-todo .window-body,
-.window-music .window-body {
-  background:
-    radial-gradient(
-      520px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 74%
-    ) fixed,
-    linear-gradient(145deg, rgba(255, 255, 255, 0.036), rgba(0, 0, 0, 0.03)),
-    rgba(11, 17, 25, 0.4);
 }
 
 .mac-window.is-receded :is(.window-titlebar, .window-body) {
@@ -5024,11 +3802,6 @@ onBeforeUnmount(() => {
   border: 0.5px solid var(--lg-border-soft);
   border-radius: 13px;
   background:
-    radial-gradient(
-      300px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 74%
-    ) fixed,
     linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
     rgba(8, 14, 22, 0.22);
   box-shadow:
@@ -5182,15 +3955,15 @@ onBeforeUnmount(() => {
 }
 
 .calendar-shell :deep(.today-btn) {
-  border-color: rgba(106, 191, 255, 0.44);
-  color: white;
-  background:
-    linear-gradient(145deg, rgba(73, 171, 255, 0.88), rgba(10, 113, 222, 0.74)),
-    rgba(10, 132, 255, 0.5);
+  border-color: rgba(166, 227, 161, 0.6);
+  color: #1e1e2e;
+  background: linear-gradient(135deg, #a6e3a1, #89dceb);
 }
 
 .calendar-shell :deep(.mark-btn) {
-  color: var(--portal-text-secondary);
+  border-color: rgba(243, 139, 168, 0.55);
+  color: #1e1e2e;
+  background: linear-gradient(135deg, #f38ba8, #f5c2e7);
 }
 
 .calendar-shell :deep(.calendar-grid) {
@@ -5229,16 +4002,26 @@ onBeforeUnmount(() => {
   transform: scale(1.04);
 }
 
-.calendar-shell :deep(.calendar-cell.today),
-.calendar-shell :deep(.calendar-cell.selected) {
-  border-color: rgba(142, 207, 255, 0.55);
-  color: white;
-  background:
-    linear-gradient(145deg, rgba(93, 188, 255, 0.82), rgba(10, 113, 222, 0.62)),
-    rgba(10, 132, 255, 0.44);
+.calendar-shell :deep(.calendar-cell.is-red) {
+  border-color: rgba(243, 139, 168, 0.45);
+  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.1);
+}
+
+.calendar-shell :deep(.calendar-cell.selected:not(.today)) {
+  border-color: #b4befe;
+  color: #1e1e2e;
+  background: #b4befe;
+  box-shadow: 0 4px 14px rgba(180, 190, 254, 0.25);
+}
+
+.calendar-shell :deep(.calendar-cell.today) {
+  border-color: rgba(166, 227, 161, 0.7);
+  color: #1e1e2e;
+  background: linear-gradient(135deg, #a6e3a1, #89dceb);
   box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.34),
-    0 5px 16px rgba(0, 88, 180, 0.18);
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.4),
+    0 4px 14px rgba(137, 220, 235, 0.25);
 }
 
 .calendar-shell :deep(.calendar-cell.out-this-month) {
@@ -5252,10 +4035,9 @@ onBeforeUnmount(() => {
 }
 
 .calendar-shell :deep(.red-pill) {
-  color: #ffb5c5;
-  background:
-    linear-gradient(145deg, rgba(255, 123, 156, 0.12), rgba(255, 255, 255, 0.025)),
-    var(--lg-control-fill);
+  border-color: rgba(243, 139, 168, 0.55);
+  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.08);
 }
 
 /* TODO */
@@ -5264,11 +4046,6 @@ onBeforeUnmount(() => {
   border: 0.5px solid var(--lg-border-soft);
   border-radius: 14px;
   background:
-    radial-gradient(
-      320px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 72%
-    ) fixed,
     linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018)),
     rgba(8, 14, 22, 0.16);
   box-shadow:
@@ -5293,11 +4070,6 @@ onBeforeUnmount(() => {
 .todo-shell :deep(.todo-container) {
   border-color: var(--lg-border-soft);
   background:
-    radial-gradient(
-      420px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 74%
-    ) fixed,
     linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.025)),
     rgba(7, 12, 20, 0.2);
   box-shadow:
@@ -5367,11 +4139,6 @@ onBeforeUnmount(() => {
   border-color: var(--lg-border);
   border-radius: 12px;
   background:
-    radial-gradient(
-      460px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 72%
-    ) fixed,
     linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(0, 0, 0, 0.025)),
     rgba(7, 12, 20, 0.2);
 }
@@ -5417,17 +4184,6 @@ onBeforeUnmount(() => {
 }
 
 /* Spotlight */
-.has-liquid-glass .spotlight-panel {
-  background:
-    radial-gradient(
-      520px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha)),
-      transparent 72%
-    ) fixed,
-    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.025)),
-    rgba(11, 17, 25, 0.14);
-}
-
 .spotlight-search {
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
@@ -5436,11 +4192,6 @@ onBeforeUnmount(() => {
 
 .spotlight-results {
   background:
-    radial-gradient(
-      480px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 74%
-    ) fixed,
     linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.025)),
     rgba(7, 12, 20, 0.3);
 }
@@ -5494,11 +4245,6 @@ onBeforeUnmount(() => {
   border: 0.5px solid var(--lg-border-soft);
   border-radius: 28px;
   background:
-    radial-gradient(
-      620px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
-      transparent 74%
-    ) fixed,
     linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.02)),
     rgba(8, 14, 22, 0.18);
   box-shadow:
@@ -5545,24 +4291,6 @@ onBeforeUnmount(() => {
   border-color: var(--lg-border);
   opacity: 1;
   transform: scale(1);
-}
-
-.has-liquid-glass .bottom-launcher {
-  background:
-    radial-gradient(
-      420px circle at var(--lg-light-x) var(--lg-light-y),
-      rgba(255, 255, 255, var(--lg-light-alpha)),
-      transparent 66%
-    ) fixed,
-    linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.012)),
-    rgba(13, 20, 29, 0.14);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -0.5px 0 rgba(0, 0, 0, 0.22),
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.045),
-    0 18px 54px rgba(0, 0, 0, 0.24);
-  -webkit-backdrop-filter: saturate(172%) contrast(1.04) blur(7px);
-  backdrop-filter: saturate(172%) contrast(1.04) blur(7px);
 }
 
 .launcher-tooltip,
@@ -6040,10 +4768,6 @@ onBeforeUnmount(() => {
 }
 
 @media (forced-colors: active) {
-  .liquid-glass-optics {
-    display: none;
-  }
-
   .portal-desktop,
   .portal-menu-bar,
   .mac-window,
@@ -6099,10 +4823,6 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .liquid-glass-optics {
-    display: none;
-  }
-
   .portal-menu-bar,
   .mac-window,
   .spotlight-panel,
@@ -6175,7 +4895,6 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .liquid-glass-optics,
   .window-shell-enter-active,
   .window-shell-leave-active,
   .spotlight-shell-enter-active,
@@ -6194,7 +4913,6 @@ onBeforeUnmount(() => {
   .menu-status-action,
   .menu-clock-action,
   .spotlight-result,
-  .spotlight-search::after,
   .todo-shell :deep(.mode-btn),
   .todo-shell :deep(.add-button),
   .launchpad-tile,
