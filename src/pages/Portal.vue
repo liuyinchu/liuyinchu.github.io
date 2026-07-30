@@ -282,6 +282,7 @@ let dragPointerId = null
 let dragCaptureTarget = null
 let dragStart = { pointerX: 0, pointerY: 0, originX: 0, originY: 0 }
 let dockAnimationFrame
+let glassAnimationFrame
 let minimizeTimer
 
 const allWindowApps = computed(() => [...topApps, ...bottomApps])
@@ -972,6 +973,25 @@ function resetDockMagnification() {
   })
 }
 
+function handleGlassPointerMove(event) {
+  if (
+    compactLayout.value
+    || event.pointerType === 'touch'
+    || !window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    || window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) return
+
+  const root = event.currentTarget
+  const lightX = `${(event.clientX / window.innerWidth * 100).toFixed(2)}%`
+  const lightY = `${(event.clientY / window.innerHeight * 100).toFixed(2)}%`
+
+  window.cancelAnimationFrame(glassAnimationFrame)
+  glassAnimationFrame = window.requestAnimationFrame(() => {
+    root.style.setProperty('--glass-light-x', lightX)
+    root.style.setProperty('--glass-light-y', lightY)
+  })
+}
+
 async function loadPortalData() {
   loadingData.value = true
   dataError.value = ''
@@ -1057,6 +1077,7 @@ onBeforeUnmount(() => {
   window.clearInterval(clockTimer)
   window.clearTimeout(minimizeTimer)
   window.cancelAnimationFrame(dockAnimationFrame)
+  window.cancelAnimationFrame(glassAnimationFrame)
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('resize', handleViewportResize)
 })
@@ -1066,6 +1087,7 @@ onBeforeUnmount(() => {
   <main
     class="portal-desktop"
     :style="{ '--portal-wallpaper': `url(${wallpaper})` }"
+    @pointermove="handleGlassPointerMove"
     @pointerdown.self="closeWindow"
   >
     <div class="wallpaper" aria-hidden="true"></div>
@@ -1412,6 +1434,10 @@ onBeforeUnmount(() => {
               v-for="group in filteredDockGroups"
               :key="group.name"
               class="link-group"
+              :class="{
+                'is-featured': group.links.length >= 8 && group.links.length < 10,
+                'is-wide': group.links.length >= 10,
+              }"
               @click.self="closeWindow"
             >
               <h2>{{ group.name }}</h2>
@@ -1523,6 +1549,12 @@ onBeforeUnmount(() => {
   --portal-material-window: rgba(36, 36, 40, 0.78);
   --portal-material-dock: rgba(40, 40, 44, 0.45);
   --portal-material-blur: saturate(180%) blur(24px);
+  --portal-material-content: rgb(31, 32, 40);
+  --portal-material-raised: rgb(37, 38, 48);
+  --portal-material-toolbar: rgba(48, 49, 60, 0.68);
+  --portal-material-control: rgba(61, 63, 76, 0.58);
+  --portal-material-popover: rgba(43, 44, 54, 0.82);
+  --portal-glass-filter: blur(22px) saturate(175%);
   --portal-hairline: rgba(255, 255, 255, 0.09);
   --portal-stroke-outer: rgba(0, 0, 0, 0.35);
   --portal-text-primary: rgba(255, 255, 255, 0.92);
@@ -1541,6 +1573,20 @@ onBeforeUnmount(() => {
   --portal-fw-semibold: 600;
   --portal-text: var(--portal-text-primary);
   --portal-muted: var(--portal-text-secondary);
+  --portal-ease-standard: cubic-bezier(.4, 0, .2, 1);
+  --portal-ease-enter: ease-out;
+  --portal-ease-leave: ease-in;
+  --portal-spring-soft: linear(
+    0,
+    .44 12%,
+    .82 24%,
+    1.03 42%,
+    .985 58%,
+    1.006 74%,
+    1
+  );
+  --glass-light-x: 50%;
+  --glass-light-y: 0%;
 
   position: relative;
   width: 100vw;
@@ -1628,7 +1674,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border-radius: 0.32rem;
-  transition: background-color 0.16s ease;
+  transition: background-color 180ms var(--portal-ease-standard);
 }
 
 .menu-home-link:hover,
@@ -1795,7 +1841,9 @@ onBeforeUnmount(() => {
   border-top-color: rgba(180, 190, 254, 0.1);
   color: #cdd6f4;
   background: transparent;
-  transition: background-color 0.16s ease, color 0.16s ease;
+  transition:
+    background-color 180ms var(--portal-ease-standard),
+    color 180ms var(--portal-ease-standard);
 }
 
 :deep(.aplayer-list ol li:hover),
@@ -1913,7 +1961,9 @@ onBeforeUnmount(() => {
   color: rgba(245, 246, 255, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   text-decoration: none;
-  transition: background-color 0.16s ease, box-shadow 0.16s ease;
+  transition:
+    background-color 180ms var(--portal-ease-standard),
+    box-shadow 180ms var(--portal-ease-standard);
 }
 
 .spotlight-result:last-child {
@@ -1986,7 +2036,10 @@ onBeforeUnmount(() => {
   background: transparent;
   text-align: center;
   text-decoration: none;
-  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+  transition:
+    transform 220ms var(--portal-spring-soft),
+    background-color 180ms var(--portal-ease-standard),
+    border-color 180ms var(--portal-ease-standard);
 }
 
 .launchpad-tile:hover,
@@ -2061,7 +2114,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   text-align: center;
   text-decoration: none;
-  transition: transform 0.18s ease;
+  transition: transform 220ms var(--portal-spring-soft);
 }
 
 .launcher-item:hover,
@@ -2259,7 +2312,7 @@ onBeforeUnmount(() => {
   color: var(--portal-text-primary);
   background: transparent;
   cursor: pointer;
-  transition: background-color 120ms ease;
+  transition: background-color 180ms var(--portal-ease-standard);
 }
 
 .menu-home-link:hover,
@@ -2332,7 +2385,7 @@ onBeforeUnmount(() => {
 .menu-status-action,
 .menu-clock-action {
   cursor: pointer;
-  transition: background-color 120ms ease;
+  transition: background-color 180ms var(--portal-ease-standard);
 }
 
 .menu-status-action:hover,
@@ -2422,7 +2475,7 @@ onBeforeUnmount(() => {
   border-bottom: 0.5px solid transparent;
   cursor: grab;
   touch-action: none;
-  transition: border-color 120ms ease;
+  transition: border-color 180ms var(--portal-ease-standard);
 }
 
 .window-titlebar.has-scrolled-divider {
@@ -2468,7 +2521,7 @@ onBeforeUnmount(() => {
   font-weight: var(--portal-fw-semibold);
   line-height: 12px;
   opacity: 0;
-  transition: opacity 90ms ease;
+  transition: opacity 150ms var(--portal-ease-leave);
 }
 
 .traffic-light.close::after {
@@ -2929,8 +2982,8 @@ onBeforeUnmount(() => {
 .window-shell-enter-active,
 .window-shell-leave-active {
   transition:
-    opacity 180ms cubic-bezier(0.32, 0.72, 0, 1),
-    transform 180ms cubic-bezier(0.32, 0.72, 0, 1);
+    opacity 180ms var(--portal-ease-standard),
+    transform 220ms var(--portal-ease-standard);
 }
 
 .mac-window.window-shell-enter-from,
@@ -3010,7 +3063,9 @@ onBeforeUnmount(() => {
   background: linear-gradient(90deg, #0a84ff, #5e5ce6);
   opacity: 0;
   transform: scaleX(0.92);
-  transition: opacity 140ms ease, transform 140ms ease;
+  transition:
+    opacity 180ms var(--portal-ease-standard),
+    transform 180ms var(--portal-ease-standard);
 }
 
 .spotlight-search:focus-within::after {
@@ -3081,9 +3136,9 @@ onBeforeUnmount(() => {
   cursor: pointer;
   box-shadow: none;
   transition:
-    background-color 120ms ease,
-    box-shadow 120ms ease,
-    transform 120ms ease;
+    background-color 180ms var(--portal-ease-standard),
+    box-shadow 180ms var(--portal-ease-standard),
+    transform 220ms var(--portal-spring-soft);
 }
 
 .spotlight-result:hover,
@@ -3218,12 +3273,12 @@ onBeforeUnmount(() => {
 
 .spotlight-shell-enter-active,
 .spotlight-shell-leave-active {
-  transition: opacity 160ms ease;
+  transition: opacity 180ms var(--portal-ease-standard);
 }
 
 .spotlight-shell-enter-active .spotlight-panel,
 .spotlight-shell-leave-active .spotlight-panel {
-  transition: transform 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 240ms var(--portal-spring-soft);
 }
 
 .spotlight-shell-enter-from,
@@ -3338,7 +3393,7 @@ onBeforeUnmount(() => {
   border-radius: 10px;
   color: var(--portal-text-primary);
   background: transparent;
-  transition: transform 160ms ease;
+  transition: transform 220ms var(--portal-spring-soft);
 }
 
 .launchpad-tile:hover,
@@ -3370,12 +3425,12 @@ onBeforeUnmount(() => {
 
 .launchpad-shell-enter-active,
 .launchpad-shell-leave-active {
-  transition: opacity 180ms ease;
+  transition: opacity 180ms var(--portal-ease-standard);
 }
 
 .launchpad-shell-enter-active .launchpad-panel,
 .launchpad-shell-leave-active .launchpad-panel {
-  transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 240ms var(--portal-spring-soft);
 }
 
 .launchpad-shell-enter-from,
@@ -3418,7 +3473,7 @@ onBeforeUnmount(() => {
   transform:
     translateX(var(--dock-shift))
     translateY(var(--dock-lift));
-  transition: transform 90ms linear;
+  transition: transform 180ms var(--portal-spring-soft);
   will-change: transform;
 }
 
@@ -3438,7 +3493,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.27);
   transform: scale(var(--dock-scale));
   transform-origin: center bottom;
-  transition: transform 90ms linear;
+  transition: transform 180ms var(--portal-spring-soft);
   will-change: transform;
 }
 
@@ -3460,7 +3515,9 @@ onBeforeUnmount(() => {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 5px);
-  transition: opacity 120ms ease, transform 120ms ease;
+  transition:
+    opacity 150ms var(--portal-ease-leave),
+    transform 150ms var(--portal-ease-leave);
   white-space: nowrap;
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
@@ -3515,6 +3572,783 @@ onBeforeUnmount(() => {
     0 8px 20px rgba(0, 0, 0, 0.32);
 }
 
+/* Apple design refinement: opaque content, floating glass controls */
+.mac-window {
+  background: var(--portal-material-content);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.window-body {
+  background: var(--portal-material-content);
+}
+
+.spotlight-overlay,
+.launchpad-overlay {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.spotlight-overlay {
+  background: rgba(7, 9, 16, 0.38);
+}
+
+.spotlight-panel {
+  background: var(--portal-material-raised);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.launchpad-overlay {
+  background: rgba(9, 11, 18, 0.58);
+}
+
+.portal-menu-bar,
+.window-titlebar,
+.bottom-launcher,
+.spotlight-search,
+.spotlight-footer,
+.launchpad-search,
+.launchpad-close,
+.launcher-tooltip {
+  background:
+    radial-gradient(
+      circle at var(--glass-light-x) var(--glass-light-y),
+      rgba(255, 255, 255, 0.16),
+      transparent 42%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.095),
+      transparent 42%,
+      rgba(130, 164, 255, 0.035)
+    ),
+    var(--portal-glass-tint, var(--portal-material-toolbar));
+  -webkit-backdrop-filter: var(--portal-glass-filter);
+  backdrop-filter: var(--portal-glass-filter);
+}
+
+.portal-menu-bar {
+  --portal-glass-tint: rgba(27, 29, 38, 0.68);
+  box-shadow:
+    inset 0 -0.5px 0 rgba(112, 151, 255, 0.07),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.2),
+    0 1px 12px rgba(0, 0, 0, 0.14);
+}
+
+.window-titlebar {
+  --portal-glass-tint: rgba(49, 50, 61, 0.72);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.16),
+    inset 0.5px 0 0 rgba(255, 102, 125, 0.045),
+    inset -0.5px 0 0 rgba(91, 143, 255, 0.055);
+}
+
+.bottom-launcher {
+  --portal-glass-tint: rgba(39, 41, 52, 0.52);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.24),
+    inset 0.5px 0 0 rgba(255, 105, 130, 0.045),
+    inset -0.5px 0 0 rgba(100, 148, 255, 0.055),
+    0 16px 46px rgba(0, 0, 0, 0.28);
+}
+
+.spotlight-search,
+.spotlight-footer,
+.launchpad-search,
+.launchpad-close,
+.launcher-tooltip {
+  --portal-glass-tint: var(--portal-material-popover);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.16),
+    inset 0.5px 0 0 rgba(255, 105, 130, 0.04),
+    inset -0.5px 0 0 rgba(100, 148, 255, 0.05);
+}
+
+.spotlight-search:focus-within,
+.launchpad-search:focus-within {
+  box-shadow:
+    inset 0 0 0 1.5px var(--portal-text-accent),
+    0 0 0 3px rgba(10, 132, 255, 0.18);
+}
+
+.widget-shell :deep(.weather-container),
+.widget-shell :deep(.calendar),
+.widget-shell :deep(.calendar-container) {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Weather: one information surface, one accent, uniform SVG metrics */
+.window-weather {
+  width: min(580px, calc(100vw - 48px));
+  min-height: 0;
+}
+
+.window-weather .window-body {
+  padding: 18px;
+}
+
+.weather-shell {
+  min-height: 0;
+}
+
+.weather-shell :deep(.weather-container) {
+  width: 100%;
+  padding: 0 !important;
+}
+
+.weather-shell :deep(.weather-content) {
+  display: grid;
+  gap: 16px;
+}
+
+.weather-shell :deep(.summary-text) {
+  margin: 0 !important;
+  padding: 3px 4px 17px;
+  border-bottom: 0.5px solid var(--portal-hairline);
+  color: var(--portal-text-secondary) !important;
+  font-family: inherit !important;
+  font-size: 17px !important;
+  font-weight: var(--portal-fw-regular) !important;
+  letter-spacing: -0.012em;
+  line-height: 1.55 !important;
+  text-align: left !important;
+}
+
+.weather-shell :deep(.highlight-city),
+.weather-shell :deep(.highlight-desc) {
+  color: var(--portal-text-primary) !important;
+  font-weight: var(--portal-fw-semibold) !important;
+}
+
+.weather-shell :deep(.highlight-temp) {
+  display: inline-block;
+  margin-inline: 3px;
+  color: rgba(144, 200, 255, 0.98) !important;
+  font-size: 25px !important;
+  font-weight: var(--portal-fw-semibold) !important;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+}
+
+.weather-shell :deep(.details-list) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  border: 0.5px solid var(--portal-hairline);
+  border-radius: 13px;
+  background: var(--portal-hairline);
+  list-style: none;
+}
+
+.weather-shell :deep(.details-list li) {
+  position: relative;
+  display: flex !important;
+  min-width: 0;
+  min-height: 54px;
+  align-items: center;
+  gap: 9px;
+  margin: 0 !important;
+  padding: 10px 12px 10px 40px !important;
+  border: 0 !important;
+  color: var(--portal-text-secondary) !important;
+  background: var(--portal-material-raised);
+  font-size: 0 !important;
+  box-sizing: border-box;
+}
+
+.weather-shell :deep(.details-list li:last-child) {
+  grid-column: span 2;
+}
+
+.weather-shell :deep(.details-list li::before) {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--portal-text-secondary);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: var(--portal-fw-regular);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weather-shell :deep(.details-list li:nth-child(1)::before) { content: 'Feels like'; }
+.weather-shell :deep(.details-list li:nth-child(2)::before) { content: 'Wind'; }
+.weather-shell :deep(.details-list li:nth-child(3)::before) { content: 'Humidity'; }
+.weather-shell :deep(.details-list li:nth-child(4)::before) { content: 'Pressure'; }
+.weather-shell :deep(.details-list li:nth-child(5)::before) { content: 'Visibility'; }
+
+.weather-shell :deep(.bullet) {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  display: block !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: rgba(151, 205, 255, 0.92);
+  background: currentColor !important;
+  font-size: 0 !important;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  transform: translateY(-50%);
+}
+
+.weather-shell :deep(.details-list li:nth-child(1) .bullet) {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 14.8V5a4 4 0 0 0-8 0v9.8a6 6 0 1 0 8 0Z'/%3E%3Cpath d='M10 9v7'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 14.8V5a4 4 0 0 0-8 0v9.8a6 6 0 1 0 8 0Z'/%3E%3Cpath d='M10 9v7'/%3E%3C/svg%3E");
+}
+
+.weather-shell :deep(.details-list li:nth-child(2) .bullet) {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 8h11a3 3 0 1 0-3-3'/%3E%3Cpath d='M3 12h16a3 3 0 1 1-3 3'/%3E%3Cpath d='M3 16h7'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 8h11a3 3 0 1 0-3-3'/%3E%3Cpath d='M3 12h16a3 3 0 1 1-3 3'/%3E%3Cpath d='M3 16h7'/%3E%3C/svg%3E");
+}
+
+.weather-shell :deep(.details-list li:nth-child(3) .bullet) {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Cpath d='M12 3s6 6.3 6 11a6 6 0 0 1-12 0c0-4.7 6-11 6-11Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Cpath d='M12 3s6 6.3 6 11a6 6 0 0 1-12 0c0-4.7 6-11 6-11Z'/%3E%3C/svg%3E");
+}
+
+.weather-shell :deep(.details-list li:nth-child(4) .bullet) {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M5 17a8 8 0 1 1 14 0'/%3E%3Cpath d='m12 13 3-3'/%3E%3Cpath d='M7 17h10'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M5 17a8 8 0 1 1 14 0'/%3E%3Cpath d='m12 13 3-3'/%3E%3Cpath d='M7 17h10'/%3E%3C/svg%3E");
+}
+
+.weather-shell :deep(.details-list li:nth-child(5) .bullet) {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.8 12s3.2-5 9.2-5 9.2 5 9.2 5-3.2 5-9.2 5-9.2-5-9.2-5Z'/%3E%3Ccircle cx='12' cy='12' r='2.5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.8 12s3.2-5 9.2-5 9.2 5 9.2 5-3.2 5-9.2 5-9.2-5-9.2-5Z'/%3E%3Ccircle cx='12' cy='12' r='2.5'/%3E%3C/svg%3E");
+}
+
+.weather-shell :deep(.detail-value) {
+  margin-left: auto;
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--portal-text-primary) !important;
+  background: transparent !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: var(--portal-fw-semibold) !important;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Calendar: familiar date grid with a restrained glass toolbar */
+.window-calendar {
+  width: min(600px, calc(100vw - 48px));
+  min-height: 0;
+}
+
+.window-calendar .window-body {
+  padding: 16px;
+}
+
+.calendar-shell {
+  min-height: 0;
+}
+
+.calendar-shell :deep(.calendar) {
+  width: 100%;
+  padding: 0 !important;
+  color: var(--portal-text-primary) !important;
+}
+
+.calendar-shell :deep(.calendar-header) {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) 34px auto auto;
+  min-height: 44px;
+  align-items: center;
+  gap: 6px !important;
+  margin: 0 0 12px !important;
+  padding: 5px !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      circle at var(--glass-light-x) var(--glass-light-y),
+      rgba(255, 255, 255, 0.14),
+      transparent 46%
+    ),
+    var(--portal-material-control) !important;
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.17),
+    inset 0.5px 0 0 rgba(255, 105, 130, 0.04),
+    inset -0.5px 0 0 rgba(100, 148, 255, 0.05);
+  -webkit-backdrop-filter: blur(16px) saturate(165%);
+  backdrop-filter: blur(16px) saturate(165%);
+  box-sizing: border-box;
+}
+
+.calendar-shell :deep(.nav-btn),
+.calendar-shell :deep(.today-btn),
+.calendar-shell :deep(.mark-btn) {
+  display: inline-flex !important;
+  min-width: 34px;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 0.5px solid transparent !important;
+  border-radius: 10px !important;
+  color: var(--portal-text-secondary) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  font-weight: var(--portal-fw-medium) !important;
+  line-height: 1;
+  transition:
+    color 180ms var(--portal-ease-standard),
+    background-color 180ms var(--portal-ease-standard),
+    transform 220ms var(--portal-spring-soft) !important;
+}
+
+.calendar-shell :deep(.nav-btn) {
+  padding: 0 !important;
+  font-size: 0 !important;
+}
+
+.calendar-shell :deep(.nav-btn::before),
+.calendar-shell :deep(.today-btn::before),
+.calendar-shell :deep(.mark-btn::before) {
+  content: '';
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  background: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.calendar-shell :deep(.nav-btn[aria-label='Previous month']::before) {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12.5 4.5-5 5 5 5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12.5 4.5-5 5 5 5'/%3E%3C/svg%3E");
+}
+
+.calendar-shell :deep(.nav-btn[aria-label='Next month']::before) {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7.5 4.5 5 5-5 5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7.5 4.5 5 5-5 5'/%3E%3C/svg%3E");
+}
+
+.calendar-shell :deep(.today-btn::before) {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4.5' width='14' height='12' rx='2'/%3E%3Cpath d='M6 2.8v3M14 2.8v3M3 8h14'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4.5' width='14' height='12' rx='2'/%3E%3Cpath d='M6 2.8v3M14 2.8v3M3 8h14'/%3E%3C/svg%3E");
+}
+
+.calendar-shell :deep(.mark-btn::before) {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 17V4.5a1.5 1.5 0 0 1 1.5-1.5H16l-2.2 3L16 9H6.5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 17V4.5a1.5 1.5 0 0 1 1.5-1.5H16l-2.2 3L16 9H6.5'/%3E%3C/svg%3E");
+}
+
+.calendar-shell :deep(.nav-btn:hover),
+.calendar-shell :deep(.nav-btn:focus-visible),
+.calendar-shell :deep(.today-btn:hover),
+.calendar-shell :deep(.today-btn:focus-visible),
+.calendar-shell :deep(.mark-btn:hover),
+.calendar-shell :deep(.mark-btn:focus-visible) {
+  color: var(--portal-text-primary) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  outline: none;
+}
+
+.calendar-shell :deep(.nav-btn:active),
+.calendar-shell :deep(.today-btn:active),
+.calendar-shell :deep(.mark-btn:active) {
+  transform: scale(0.96);
+}
+
+.calendar-shell :deep(.today-btn) {
+  color: rgba(177, 217, 255, 0.98) !important;
+  background: rgba(10, 132, 255, 0.14) !important;
+}
+
+.calendar-shell :deep(.mark-btn) {
+  color: rgba(255, 179, 190, 0.94) !important;
+}
+
+.calendar-shell :deep(.month-title) {
+  min-width: 0;
+  color: var(--portal-text-primary) !important;
+  background: transparent !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: var(--portal-fw-semibold) !important;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.calendar-shell :deep(.calendar-grid) {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 4px 2px !important;
+  padding: 6px 4px 4px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.calendar-shell :deep(.calendar-day) {
+  display: grid;
+  min-height: 28px;
+  place-items: center;
+  color: var(--portal-text-tertiary) !important;
+  font-family: inherit !important;
+  font-size: 11px !important;
+  font-weight: var(--portal-fw-medium) !important;
+}
+
+.calendar-shell :deep(.calendar-cell) {
+  position: relative;
+  width: 36px !important;
+  height: 34px !important;
+  min-width: 36px;
+  min-height: 34px;
+  justify-self: center;
+  padding: 0 !important;
+  border: 0.5px solid transparent !important;
+  border-radius: 11px !important;
+  color: var(--portal-text-secondary) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  font-weight: var(--portal-fw-regular) !important;
+  transition:
+    color 180ms var(--portal-ease-standard),
+    background-color 180ms var(--portal-ease-standard),
+    border-color 180ms var(--portal-ease-standard),
+    transform 220ms var(--portal-spring-soft) !important;
+}
+
+.calendar-shell :deep(.calendar-cell:hover),
+.calendar-shell :deep(.calendar-cell:focus-visible) {
+  color: var(--portal-text-primary) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  outline: none;
+}
+
+.calendar-shell :deep(.calendar-cell:active) {
+  transform: scale(0.94);
+}
+
+.calendar-shell :deep(.calendar-cell.out-this-month) {
+  color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.calendar-shell :deep(.calendar-cell.today) {
+  color: rgba(174, 218, 255, 0.98) !important;
+  border-color: rgba(94, 181, 255, 0.38) !important;
+}
+
+.calendar-shell :deep(.calendar-cell.selected) {
+  color: white !important;
+  border-color: rgba(137, 202, 255, 0.55) !important;
+  background: rgba(10, 132, 255, 0.72) !important;
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.24) !important;
+  font-weight: var(--portal-fw-semibold) !important;
+}
+
+.calendar-shell :deep(.calendar-cell.is-red::after) {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ff7085;
+  box-shadow: 0 0 0 1px rgba(31, 32, 40, 0.78);
+}
+
+.calendar-shell :deep(.red-dates) {
+  margin: 10px 4px 0 !important;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--portal-hairline);
+}
+
+.calendar-shell :deep(.red-list) {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px !important;
+}
+
+.calendar-shell :deep(.red-pill) {
+  min-height: 28px;
+  padding: 4px 10px 4px 9px !important;
+  border: 0.5px solid rgba(255, 112, 133, 0.28) !important;
+  border-radius: 999px !important;
+  color: rgba(255, 183, 194, 0.9) !important;
+  background: rgba(255, 112, 133, 0.08) !important;
+  font-family: inherit !important;
+  font-size: 11px !important;
+  font-weight: var(--portal-fw-medium) !important;
+  transition:
+    color 180ms var(--portal-ease-standard),
+    background-color 180ms var(--portal-ease-standard),
+    transform 220ms var(--portal-spring-soft) !important;
+}
+
+.calendar-shell :deep(.red-pill::before) {
+  content: '•';
+  margin-right: 5px;
+}
+
+.calendar-shell :deep(.red-pill:hover),
+.calendar-shell :deep(.red-pill:focus-visible) {
+  color: rgba(255, 222, 227, 0.98) !important;
+  background: rgba(255, 112, 133, 0.14) !important;
+  outline: none;
+}
+
+.calendar-shell :deep(.nav-btn:focus-visible),
+.calendar-shell :deep(.today-btn:focus-visible),
+.calendar-shell :deep(.mark-btn:focus-visible),
+.calendar-shell :deep(.calendar-cell:focus-visible),
+.calendar-shell :deep(.red-pill:focus-visible) {
+  box-shadow: 0 0 0 2px var(--portal-text-accent) !important;
+}
+
+/* Bento is reserved for the parallel, scannable Launchpad categories. */
+.launchpad-groups {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  grid-auto-rows: minmax(198px, auto);
+  gap: 14px;
+  max-width: 1240px;
+}
+
+.link-group {
+  grid-column: span 2;
+  align-content: start;
+  gap: 10px;
+  padding: 14px;
+  overflow: hidden;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: var(--portal-material-raised);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.1),
+    0 16px 38px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+.link-group.is-featured {
+  grid-column: span 2;
+  grid-row: span 2;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.link-group.is-wide {
+  grid-column: span 4;
+  grid-row: span 1;
+}
+
+.link-group h2 {
+  display: flex;
+  min-height: 22px;
+  align-items: center;
+  gap: 8px;
+  color: var(--portal-text-primary);
+  font-size: 13px;
+  font-weight: var(--portal-fw-semibold);
+}
+
+.link-group h2::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(151, 205, 255, 0.72);
+  border-radius: 50%;
+  background: rgba(10, 132, 255, 0.16);
+}
+
+.link-group .launchpad-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
+  gap: 10px;
+}
+
+.link-group.is-featured .launchpad-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  height: 100%;
+  align-content: space-evenly;
+}
+
+.link-group.is-wide .launchpad-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.link-group .launchpad-tile {
+  min-height: 68px;
+  gap: 5px;
+  padding: 3px 2px;
+  border-radius: 12px;
+  transition:
+    background-color 180ms var(--portal-ease-standard),
+    transform 240ms var(--portal-spring-soft);
+}
+
+.link-group .launchpad-tile:hover,
+.link-group .launchpad-tile:focus-visible {
+  background: rgba(255, 255, 255, 0.055);
+  transform: translateY(-2px) scale(1.025);
+}
+
+.link-group .launchpad-tile:active {
+  transform: scale(0.97);
+}
+
+.link-group .launchpad-tile img {
+  width: 46px;
+  height: 46px;
+}
+
+.link-group.is-featured .launchpad-tile img {
+  width: 60px;
+  height: 60px;
+}
+
+.link-group .launchpad-tile span {
+  font-size: 11px;
+}
+
+/* Explicit, reversible motion: fast response with a soft landing. */
+.menu-home-link,
+.menu-glyph-button,
+.menu-command,
+.menu-status-action,
+.menu-clock-action,
+.launchpad-close,
+.todo-shell :deep(.mode-btn),
+.todo-shell :deep(.add-button),
+.todo-shell :deep(.task-item),
+.todo-shell :deep(.custom-checkbox),
+.todo-shell :deep(.delete-button) {
+  transition:
+    color 180ms var(--portal-ease-standard),
+    background-color 180ms var(--portal-ease-standard),
+    border-color 180ms var(--portal-ease-standard),
+    box-shadow 180ms var(--portal-ease-standard),
+    transform 220ms var(--portal-spring-soft);
+}
+
+.menu-home-link:active,
+.menu-glyph-button:active,
+.menu-command:active,
+.menu-status-action:active,
+.menu-clock-action:active,
+.launchpad-close:active,
+.todo-shell :deep(.mode-btn:active),
+.todo-shell :deep(.add-button:active) {
+  transform: scale(0.96);
+}
+
+.window-titlebar {
+  transition: border-color 180ms var(--portal-ease-standard);
+}
+
+.traffic-light::after {
+  transition: opacity 150ms var(--portal-ease-leave);
+}
+
+.traffic-lights:hover .traffic-light::after,
+.traffic-light:focus-visible::after {
+  transition-timing-function: var(--portal-ease-enter);
+}
+
+.spotlight-search::after {
+  transition:
+    opacity 180ms var(--portal-ease-standard),
+    transform 180ms var(--portal-ease-standard);
+}
+
+.spotlight-result {
+  transition:
+    background-color 180ms var(--portal-ease-standard),
+    box-shadow 180ms var(--portal-ease-standard),
+    transform 220ms var(--portal-spring-soft);
+}
+
+.spotlight-result-icon,
+.spotlight-result-category,
+.spotlight-result-open {
+  transition:
+    color 180ms var(--portal-ease-standard),
+    background-color 180ms var(--portal-ease-standard),
+    border-color 180ms var(--portal-ease-standard),
+    transform 220ms var(--portal-spring-soft);
+}
+
+.window-shell-enter-active {
+  transition:
+    opacity 180ms var(--portal-ease-enter),
+    transform 260ms var(--portal-spring-soft);
+}
+
+.window-shell-leave-active {
+  transition:
+    opacity 180ms var(--portal-ease-leave),
+    transform 220ms var(--portal-ease-leave);
+}
+
+.spotlight-shell-enter-active,
+.launchpad-shell-enter-active {
+  transition: opacity 180ms var(--portal-ease-enter);
+}
+
+.spotlight-shell-leave-active,
+.launchpad-shell-leave-active {
+  transition: opacity 160ms var(--portal-ease-leave);
+}
+
+.spotlight-shell-enter-active .spotlight-panel,
+.launchpad-shell-enter-active .launchpad-panel {
+  transition: transform 260ms var(--portal-spring-soft);
+}
+
+.spotlight-shell-leave-active .spotlight-panel,
+.launchpad-shell-leave-active .launchpad-panel {
+  transition: transform 200ms var(--portal-ease-leave);
+}
+
+.launcher-item,
+.launcher-item img {
+  transition: transform 180ms var(--portal-spring-soft);
+}
+
+.launcher-tooltip {
+  transition:
+    opacity 150ms var(--portal-ease-leave),
+    transform 150ms var(--portal-ease-leave);
+}
+
+.launcher-item:hover .launcher-tooltip,
+.launcher-item:focus-visible .launcher-tooltip {
+  transition-duration: 180ms;
+  transition-timing-function: var(--portal-ease-enter);
+}
+
 .portal-desktop :is(
   .menu-home-link,
   .menu-glyph-button,
@@ -3534,6 +4368,22 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1100px) and (min-width: 701px) {
+  .launchpad-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .link-group {
+    grid-column: span 1;
+  }
+
+  .link-group.is-featured {
+    grid-column: span 2;
+  }
+
+  .link-group.is-wide {
+    grid-column: span 2;
+  }
+
   .launchpad-grid {
     grid-template-columns: repeat(7, minmax(0, 1fr));
   }
@@ -3758,12 +4608,31 @@ onBeforeUnmount(() => {
   }
 
   .launchpad-groups {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: auto;
     gap: 28px;
   }
 
-  .launchpad-grid {
+  .link-group,
+  .link-group.is-featured,
+  .link-group.is-wide {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+
+  .link-group .launchpad-grid,
+  .link-group.is-featured .launchpad-grid,
+  .link-group.is-wide .launchpad-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 24px 10px;
+  }
+
+  .weather-shell :deep(.details-list) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .weather-shell :deep(.details-list li:last-child) {
+    grid-column: span 1;
   }
 
   .launchpad-tile img {
@@ -3819,8 +4688,39 @@ onBeforeUnmount(() => {
     display: none;
   }
 
-  .launchpad-grid {
+  .link-group .launchpad-grid,
+  .link-group.is-featured .launchpad-grid,
+  .link-group.is-wide .launchpad-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .calendar-shell :deep(.calendar-header) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .calendar-shell :deep(.nav-btn[aria-label='Previous month']) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .calendar-shell :deep(.month-title) {
+    grid-column: 2 / 6;
+    grid-row: 1;
+  }
+
+  .calendar-shell :deep(.nav-btn[aria-label='Next month']) {
+    grid-column: 6;
+    grid-row: 1;
+  }
+
+  .calendar-shell :deep(.today-btn) {
+    grid-column: 1 / 4;
+    grid-row: 2;
+  }
+
+  .calendar-shell :deep(.mark-btn) {
+    grid-column: 4 / 7;
+    grid-row: 2;
   }
 }
 
@@ -3840,10 +4740,16 @@ onBeforeUnmount(() => {
 @media (prefers-reduced-transparency: reduce) {
   .portal-menu-bar,
   .mac-window,
+  .window-titlebar,
   .spotlight-panel,
   .spotlight-overlay,
+  .spotlight-search,
+  .spotlight-footer,
   .bottom-launcher,
   .launchpad-overlay,
+  .launchpad-search,
+  .launchpad-close,
+  .calendar-shell :deep(.calendar-header),
   .launcher-tooltip {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -3856,6 +4762,15 @@ onBeforeUnmount(() => {
   .mac-window,
   .spotlight-panel {
     background: rgb(43, 43, 47);
+  }
+
+  .window-titlebar,
+  .spotlight-search,
+  .spotlight-footer,
+  .launchpad-search,
+  .launchpad-close,
+  .calendar-shell :deep(.calendar-header) {
+    background: rgb(51, 52, 61) !important;
   }
 
   .spotlight-overlay {
@@ -3882,6 +4797,11 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .portal-desktop {
+    --glass-light-x: 50%;
+    --glass-light-y: 0%;
+  }
+
   .window-shell-enter-active,
   .window-shell-leave-active,
   .spotlight-shell-enter-active,
@@ -3903,7 +4823,12 @@ onBeforeUnmount(() => {
   .spotlight-search::after,
   .todo-shell :deep(.mode-btn),
   .todo-shell :deep(.add-button),
-  .launchpad-tile {
+  .launchpad-tile,
+  .calendar-shell :deep(.nav-btn),
+  .calendar-shell :deep(.today-btn),
+  .calendar-shell :deep(.mark-btn),
+  .calendar-shell :deep(.calendar-cell),
+  .calendar-shell :deep(.red-pill) {
     animation: none !important;
     transition: none !important;
   }
@@ -3918,6 +4843,45 @@ onBeforeUnmount(() => {
   .launchpad-shell-enter-from .launchpad-panel,
   .launchpad-shell-leave-to .launchpad-panel {
     transform: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .portal-menu-bar,
+  .window-titlebar,
+  .bottom-launcher,
+  .spotlight-search,
+  .spotlight-footer,
+  .launchpad-search,
+  .launchpad-close,
+  .calendar-shell :deep(.calendar-header) {
+    border-color: rgba(255, 255, 255, 0.52) !important;
+    background: rgba(24, 25, 31, 0.94) !important;
+  }
+
+  .mac-window,
+  .spotlight-panel,
+  .link-group,
+  .weather-shell :deep(.details-list),
+  .calendar-shell :deep(.calendar) {
+    border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .portal-menu-bar,
+  .window-titlebar,
+  .bottom-launcher,
+  .spotlight-search,
+  .spotlight-footer,
+  .launchpad-search,
+  .launchpad-close,
+  .calendar-shell :deep(.calendar-header) {
+    border: 1px solid CanvasText !important;
+    color: CanvasText !important;
+    background: Canvas !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 </style>
