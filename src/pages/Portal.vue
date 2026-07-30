@@ -2605,6 +2605,524 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 
+.window-weather {
+  width: min(700px, calc(100vw - 48px));
+  min-height: 500px;
+}
+
+.window-weather .window-body {
+  padding: 18px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(100, 210, 255, 0.16), transparent 280px),
+    radial-gradient(circle at 96% 100%, rgba(94, 92, 230, 0.14), transparent 320px),
+    rgba(10, 14, 24, 0.14);
+}
+
+.weather-shell {
+  min-height: 410px;
+}
+
+.weather-shell :deep(.weather-container) {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  min-height: 410px;
+  height: auto;
+  margin: 0;
+  padding: 24px !important;
+  overflow: hidden;
+  border: 0.5px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 18px !important;
+  background:
+    radial-gradient(circle at 92% -8%, rgba(100, 210, 255, 0.22), transparent 250px),
+    radial-gradient(circle at 4% 110%, rgba(94, 92, 230, 0.16), transparent 280px),
+    linear-gradient(145deg, rgba(38, 75, 112, 0.5), rgba(32, 41, 70, 0.4) 55%, rgba(46, 37, 76, 0.42)) !important;
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.16),
+    0 18px 42px rgba(3, 9, 22, 0.18) !important;
+  box-sizing: border-box;
+}
+
+.weather-shell :deep(.weather-content) {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: stretch;
+  justify-content: stretch;
+  gap: 22px;
+  width: 100%;
+  min-height: 100%;
+}
+
+.weather-shell :deep(.summary-text) {
+  max-width: 610px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 19px;
+  font-weight: var(--portal-fw-regular);
+  line-height: 1.45;
+  letter-spacing: -0.018em;
+}
+
+.weather-shell :deep(.summary-text::before) {
+  content: 'CURRENT CONDITIONS';
+  display: block;
+  margin-bottom: 9px;
+  color: rgba(100, 210, 255, 0.82);
+  font-size: 10px;
+  font-weight: var(--portal-fw-semibold);
+  letter-spacing: 0.14em;
+}
+
+.weather-shell :deep(.highlight-city),
+.weather-shell :deep(.highlight-desc) {
+  padding: 0 2px;
+  color: rgba(255, 255, 255, 0.96);
+  font-weight: var(--portal-fw-semibold);
+}
+
+.weather-shell :deep(.highlight-temp) {
+  display: inline-block;
+  width: fit-content;
+  margin: 12px 0 0;
+  padding: 0;
+  color: #80c7ff;
+  font-size: 56px;
+  font-weight: var(--portal-fw-semibold);
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  text-shadow: 0 5px 22px rgba(45, 150, 255, 0.24);
+  transform: translateY(7px);
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.weather-shell :deep(.details-list) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: stretch;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  color: var(--portal-text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  list-style: none;
+}
+
+.weather-shell :deep(.details-list li) {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 60px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 0.5px solid rgba(255, 255, 255, 0.11);
+  border-radius: 13px;
+  color: rgba(255, 255, 255, 0.66);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.065);
+  box-sizing: border-box;
+}
+
+.weather-shell :deep(.details-list li:last-child:nth-child(odd)) {
+  grid-column: 1 / -1;
+}
+
+.weather-shell :deep(.bullet) {
+  position: static;
+  width: 7px;
+  height: 7px;
+  margin: 0;
+  border-radius: 50%;
+  background: #64d2ff;
+  box-shadow:
+    0 0 0 4px rgba(100, 210, 255, 0.1),
+    0 0 12px rgba(100, 210, 255, 0.38);
+}
+
+.weather-shell :deep(.details-list li:nth-child(2) .bullet) {
+  background: #5ac8fa;
+}
+
+.weather-shell :deep(.details-list li:nth-child(3) .bullet) {
+  background: #30d158;
+  box-shadow:
+    0 0 0 4px rgba(48, 209, 88, 0.1),
+    0 0 12px rgba(48, 209, 88, 0.28);
+}
+
+.weather-shell :deep(.details-list li:nth-child(4) .bullet) {
+  background: #bf5af2;
+  box-shadow:
+    0 0 0 4px rgba(191, 90, 242, 0.1),
+    0 0 12px rgba(191, 90, 242, 0.28);
+}
+
+.weather-shell :deep(.details-list li:nth-child(5) .bullet) {
+  background: #ffd60a;
+  box-shadow:
+    0 0 0 4px rgba(255, 214, 10, 0.1),
+    0 0 12px rgba(255, 214, 10, 0.24);
+}
+
+.weather-shell :deep(.detail-value) {
+  position: static;
+  justify-self: end;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 8px;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(11, 27, 48, 0.28);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--portal-fw-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.window-calendar {
+  width: min(720px, calc(100vw - 48px));
+  min-height: 560px;
+}
+
+.window-calendar .window-body {
+  padding: 18px;
+  background:
+    radial-gradient(circle at 94% 4%, rgba(191, 90, 242, 0.13), transparent 290px),
+    radial-gradient(circle at 4% 96%, rgba(10, 132, 255, 0.13), transparent 310px),
+    rgba(11, 13, 22, 0.13);
+}
+
+.calendar-shell {
+  min-height: 470px;
+}
+
+.calendar-shell :deep(.calendar) {
+  width: 100%;
+  min-height: 470px;
+  margin: 0;
+  padding: 18px;
+  gap: 14px;
+  border: 0.5px solid rgba(255, 255, 255, 0.13);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 0 0, rgba(10, 132, 255, 0.09), transparent 240px),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(18, 20, 31, 0.58);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.15),
+    0 18px 42px rgba(0, 0, 0, 0.16);
+  box-sizing: border-box;
+}
+
+.calendar-shell :deep(.calendar-header) {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px auto auto;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+}
+
+.calendar-shell :deep(.nav-btn),
+.calendar-shell :deep(.today-btn),
+.calendar-shell :deep(.mark-btn) {
+  height: 40px;
+  padding: 0 13px;
+  border: 0.5px solid rgba(255, 255, 255, 0.11);
+  border-radius: 11px;
+  color: var(--portal-text-primary);
+  background: rgba(255, 255, 255, 0.065);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: var(--portal-fw-medium);
+  line-height: 1;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease,
+    transform 120ms ease;
+}
+
+.calendar-shell :deep(.nav-btn) {
+  width: 40px;
+  padding: 0;
+  color: var(--portal-text-secondary);
+  font-size: 0;
+}
+
+.calendar-shell :deep(.nav-btn::before) {
+  display: block;
+  font-size: 24px;
+  font-weight: var(--portal-fw-regular);
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.calendar-shell :deep(.nav-btn:first-child::before) {
+  content: '‹';
+}
+
+.calendar-shell :deep(.month-title + .nav-btn::before) {
+  content: '›';
+}
+
+.calendar-shell :deep(.nav-btn:hover),
+.calendar-shell :deep(.today-btn:hover),
+.calendar-shell :deep(.mark-btn:hover) {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.calendar-shell :deep(.nav-btn:active),
+.calendar-shell :deep(.today-btn:active),
+.calendar-shell :deep(.mark-btn:active) {
+  transform: scale(0.97);
+}
+
+.calendar-shell :deep(.month-title) {
+  display: flex;
+  min-width: 0;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 11px;
+  color: var(--portal-text-primary);
+  background: rgba(0, 0, 0, 0.16);
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: var(--portal-fw-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  box-sizing: border-box;
+}
+
+.calendar-shell :deep(.today-btn) {
+  margin-left: 0;
+  border-color: rgba(100, 210, 255, 0.22);
+  color: rgba(207, 239, 255, 0.96);
+  background: rgba(10, 132, 255, 0.2);
+}
+
+.calendar-shell :deep(.mark-btn) {
+  border-color: rgba(255, 105, 97, 0.22);
+  color: rgba(255, 193, 188, 0.94);
+  background: rgba(255, 105, 97, 0.12);
+}
+
+.calendar-shell :deep(.mark-btn[aria-label='Unmark red']) {
+  border-color: rgba(255, 105, 97, 0.36);
+  color: white;
+  background: rgba(255, 105, 97, 0.34);
+}
+
+.calendar-shell :deep(.calendar-grid) {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: 28px repeat(6, minmax(46px, 1fr));
+  min-height: 0;
+  flex: 1 1 auto;
+  gap: 6px;
+  padding: 12px;
+  border: 0.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.14);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+}
+
+.calendar-shell :deep(.calendar-day) {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  color: var(--portal-text-tertiary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: var(--portal-fw-semibold);
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.calendar-shell :deep(.calendar-day:first-child),
+.calendar-shell :deep(.calendar-day:nth-child(7)) {
+  color: rgba(255, 159, 154, 0.72);
+}
+
+.calendar-shell :deep(.calendar-cell) {
+  position: relative;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0;
+  border: 0.5px solid transparent;
+  border-radius: 11px;
+  color: var(--portal-text-secondary);
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--portal-fw-medium);
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease,
+    background-color 120ms ease,
+    transform 120ms ease;
+}
+
+.calendar-shell :deep(.calendar-cell:hover) {
+  border-color: rgba(255, 255, 255, 0.09);
+  color: var(--portal-text-primary);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.calendar-shell :deep(.calendar-cell:active) {
+  transform: scale(0.96);
+}
+
+.calendar-shell :deep(.calendar-cell.out-this-month) {
+  color: rgba(255, 255, 255, 0.24);
+  opacity: 1;
+}
+
+.calendar-shell :deep(.calendar-cell.today) {
+  border-color: rgba(100, 210, 255, 0.5);
+  color: #8bd8ff;
+  background: rgba(10, 132, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(100, 210, 255, 0.13);
+}
+
+.calendar-shell :deep(.calendar-cell.selected:not(.today)) {
+  border-color: rgba(120, 183, 255, 0.5);
+  color: white;
+  background: linear-gradient(145deg, rgba(10, 132, 255, 0.78), rgba(94, 92, 230, 0.66));
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.25),
+    0 5px 15px rgba(0, 74, 173, 0.22);
+}
+
+.calendar-shell :deep(.calendar-cell.is-red:not(.selected):not(.today)) {
+  border-color: rgba(255, 105, 97, 0.16);
+  color: rgba(255, 174, 168, 0.95);
+  background: rgba(255, 105, 97, 0.06);
+}
+
+.calendar-shell :deep(.calendar-cell.is-red::after) {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ff6961;
+  box-shadow: 0 0 7px rgba(255, 105, 97, 0.4);
+}
+
+.calendar-shell :deep(.calendar-cell.selected.is-red::after),
+.calendar-shell :deep(.calendar-cell.today.is-red::after) {
+  background: #ffd4d1;
+}
+
+.calendar-shell :deep(.red-dates) {
+  margin-top: 0;
+  padding: 12px;
+  border: 0.5px solid rgba(255, 105, 97, 0.14);
+  border-radius: 13px;
+  background: rgba(255, 105, 97, 0.055);
+}
+
+.calendar-shell :deep(.red-title) {
+  color: var(--portal-text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: var(--portal-fw-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.calendar-shell :deep(.red-list) {
+  display: flex;
+  max-height: 88px;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+  overflow-y: auto;
+}
+
+.calendar-shell :deep(.red-pill) {
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 0.5px solid rgba(255, 105, 97, 0.3);
+  border-radius: 999px;
+  color: rgba(255, 193, 188, 0.96);
+  background: rgba(255, 105, 97, 0.1);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: var(--portal-fw-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-shell :deep(button:focus-visible) {
+  outline: 2px solid var(--portal-text-accent);
+  outline-offset: 2px;
+}
+
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .window-weather {
+    width: min(760px, calc(100vw - 64px));
+    min-height: 540px;
+  }
+
+  .weather-shell {
+    min-height: 450px;
+  }
+
+  .weather-shell :deep(.weather-container) {
+    min-height: 450px;
+    padding: 28px !important;
+  }
+
+  .weather-shell :deep(.summary-text) {
+    font-size: 21px;
+  }
+
+  .weather-shell :deep(.highlight-temp) {
+    font-size: 62px;
+  }
+
+  .weather-shell :deep(.details-list li) {
+    min-height: 66px;
+  }
+
+  .window-calendar {
+    width: min(780px, calc(100vw - 64px));
+    min-height: 600px;
+  }
+
+  .calendar-shell {
+    min-height: 510px;
+  }
+
+  .calendar-shell :deep(.calendar) {
+    min-height: 510px;
+    padding: 22px;
+  }
+
+  .calendar-shell :deep(.calendar-grid) {
+    grid-template-rows: 30px repeat(6, minmax(50px, 1fr));
+  }
+
+  .calendar-shell :deep(.calendar-cell) {
+    min-height: 50px;
+  }
+}
+
 .window-todo {
   min-height: 470px;
 }
@@ -3692,6 +4210,119 @@ onBeforeUnmount(() => {
     display: none;
   }
 
+  .window-weather .window-body,
+  .window-calendar .window-body {
+    padding: 10px;
+  }
+
+  .weather-shell,
+  .calendar-shell {
+    min-height: 0;
+  }
+
+  .weather-shell :deep(.weather-container) {
+    min-height: 0;
+    padding: 16px !important;
+    border-radius: 15px !important;
+  }
+
+  .weather-shell :deep(.weather-content) {
+    gap: 18px;
+  }
+
+  .weather-shell :deep(.summary-text) {
+    max-width: none;
+    font-size: 17px;
+  }
+
+  .weather-shell :deep(.highlight-temp) {
+    margin-top: 10px;
+    font-size: 42px;
+  }
+
+  .weather-shell :deep(.details-list) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .weather-shell :deep(.details-list li),
+  .weather-shell :deep(.details-list li:last-child:nth-child(odd)) {
+    grid-column: auto;
+    min-height: 54px;
+    padding: 0 12px;
+  }
+
+  .calendar-shell :deep(.calendar) {
+    min-height: 0;
+    padding: 10px;
+    gap: 10px;
+    border-radius: 15px;
+  }
+
+  .calendar-shell :deep(.calendar-header) {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-areas:
+      'previous month next'
+      'today mark mark';
+    gap: 7px;
+  }
+
+  .calendar-shell :deep(.nav-btn),
+  .calendar-shell :deep(.today-btn),
+  .calendar-shell :deep(.mark-btn),
+  .calendar-shell :deep(.month-title) {
+    height: 44px;
+  }
+
+  .calendar-shell :deep(.nav-btn:first-child) {
+    grid-area: previous;
+  }
+
+  .calendar-shell :deep(.month-title) {
+    grid-area: month;
+    padding-inline: 8px;
+    font-size: 17px;
+  }
+
+  .calendar-shell :deep(.month-title + .nav-btn) {
+    grid-area: next;
+  }
+
+  .calendar-shell :deep(.today-btn) {
+    grid-area: today;
+    padding: 0;
+  }
+
+  .calendar-shell :deep(.mark-btn) {
+    grid-area: mark;
+  }
+
+  .calendar-shell :deep(.calendar-grid) {
+    grid-template-rows: 24px repeat(6, minmax(42px, 1fr));
+    gap: 2px;
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .calendar-shell :deep(.calendar-day) {
+    font-size: 10px;
+  }
+
+  .calendar-shell :deep(.calendar-cell) {
+    min-height: 42px;
+    border-radius: 9px;
+    font-size: 12px;
+  }
+
+  .calendar-shell :deep(.red-dates) {
+    padding: 10px;
+  }
+
+  .calendar-shell :deep(.red-list) {
+    max-height: 78px;
+  }
+
   .window-todo .window-body {
     padding: 10px;
   }
@@ -3810,6 +4441,34 @@ onBeforeUnmount(() => {
     display: none;
   }
 
+  .weather-shell :deep(.weather-container) {
+    padding: 14px !important;
+  }
+
+  .weather-shell :deep(.summary-text) {
+    font-size: 16px;
+  }
+
+  .weather-shell :deep(.highlight-temp) {
+    font-size: 38px;
+  }
+
+  .weather-shell :deep(.details-list li) {
+    min-height: 52px;
+  }
+
+  .calendar-shell :deep(.calendar) {
+    padding: 8px;
+  }
+
+  .calendar-shell :deep(.calendar-grid) {
+    grid-template-rows: 22px repeat(6, minmax(39px, 1fr));
+  }
+
+  .calendar-shell :deep(.calendar-cell) {
+    min-height: 39px;
+  }
+
   .todo-overview-mark {
     width: 38px;
     height: 38px;
@@ -3867,6 +4526,18 @@ onBeforeUnmount(() => {
     background: rgb(35, 36, 44);
   }
 
+  .weather-shell :deep(.weather-container) {
+    background: rgb(30, 46, 64) !important;
+  }
+
+  .calendar-shell :deep(.calendar) {
+    background: rgb(35, 36, 44);
+  }
+
+  .calendar-shell :deep(.calendar-grid) {
+    background: rgb(28, 29, 36);
+  }
+
   .bottom-launcher {
     background: rgb(52, 52, 56);
   }
@@ -3903,6 +4574,10 @@ onBeforeUnmount(() => {
   .spotlight-search::after,
   .todo-shell :deep(.mode-btn),
   .todo-shell :deep(.add-button),
+  .calendar-shell :deep(.nav-btn),
+  .calendar-shell :deep(.today-btn),
+  .calendar-shell :deep(.mark-btn),
+  .calendar-shell :deep(.calendar-cell),
   .launchpad-tile {
     animation: none !important;
     transition: none !important;
