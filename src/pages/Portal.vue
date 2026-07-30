@@ -35,6 +35,7 @@ uniform float uWallpaperZoom;
 uniform int uSurfaceCount;
 uniform vec4 uRects[MAX_SURFACES];
 uniform vec4 uSurface[MAX_SURFACES];
+uniform float uLayers[MAX_SURFACES];
 
 out vec4 fragColor;
 
@@ -57,12 +58,13 @@ float smoothUnion(float firstDistance, float secondDistance, float amount) {
     - amount * blend * (1.0 - blend);
 }
 
-float sceneSdf(vec2 point) {
+float coverageSdf(vec2 point) {
   float sceneDistance = 1e6;
   float groupDistance = 1e6;
 
   for (int index = 0; index < MAX_SURFACES; ++index) {
     if (index >= uSurfaceCount) break;
+    if (uLayers[index] > 0.5) continue;
 
     vec4 rect = uRects[index];
     vec4 material = uSurface[index];
@@ -76,40 +78,44 @@ float sceneSdf(vec2 point) {
     }
   }
 
-  sceneDistance = min(sceneDistance, groupDistance);
-
-  if (uPointer.z > 0.001) {
-    float pointerDistance = length(point - uPointer.xy) - uPointerRadius;
-    sceneDistance = smoothUnion(
-      sceneDistance,
-      pointerDistance,
-      14.0 * uDpr * uPointer.z
-    );
-  }
-
-  return sceneDistance;
+  return min(sceneDistance, groupDistance);
 }
 
-float nearestDepth(vec2 point) {
-  float nearestDistance = 1e6;
-  float nearestMaterialDepth = 1.0;
+float detailSdf(vec2 point, out float selectedDepth) {
+  float selectedDistance = 1e6;
+  float selectedScore = -1e6;
+  selectedDepth = 1.0;
 
   for (int index = 0; index < MAX_SURFACES; ++index) {
     if (index >= uSurfaceCount) break;
 
-    float distance = abs(sdRoundBox(
+    float distance = sdRoundBox(
       point - uRects[index].xy,
       uRects[index].zw,
       uSurface[index].x
-    ));
+    );
+    float layer = uLayers[index];
+    float influenceBand = layer > 0.5 ? 12.0 * uDpr : 1e6;
+    float score = layer * 10000.0 - abs(distance);
 
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
-      nearestMaterialDepth = uSurface[index].y;
+    if (distance <= influenceBand && score > selectedScore) {
+      selectedDistance = distance;
+      selectedDepth = uSurface[index].y;
+      selectedScore = score;
     }
   }
 
-  return nearestMaterialDepth;
+  if (uPointer.z > 0.001) {
+    float pointerDistance = length(point - uPointer.xy) - uPointerRadius;
+    selectedDistance = smoothUnion(
+      selectedDistance,
+      pointerDistance,
+      14.0 * uDpr * uPointer.z
+    );
+    selectedDepth = max(selectedDepth, 0.92 * uPointer.z);
+  }
+
+  return selectedDistance;
 }
 
 vec2 coverUv(vec2 viewportUv) {
@@ -128,26 +134,36 @@ vec2 coverUv(vec2 viewportUv) {
 
 void main() {
   vec2 point = gl_FragCoord.xy;
-  float distance = sceneSdf(point);
-  float antialiasing = max(fwidth(distance), 0.75 * uDpr);
-  float mask = 1.0 - smoothstep(-antialiasing, antialiasing, distance);
+  float coverageDistance = coverageSdf(point);
+  float antialiasing = max(fwidth(coverageDistance), 0.75 * uDpr);
+  float mask = 1.0 - smoothstep(
+    -antialiasing,
+    antialiasing,
+    coverageDistance
+  );
 
   if (mask <= 0.001) {
     fragColor = vec4(0.0);
     return;
   }
 
+  float depth;
+  float detailDistance = detailSdf(point, depth);
   float epsilon = max(0.75, uDpr);
+  float depthRight;
+  float depthLeft;
+  float depthTop;
+  float depthBottom;
   vec2 gradient = vec2(
-    sceneSdf(point + vec2(epsilon, 0.0))
-      - sceneSdf(point - vec2(epsilon, 0.0)),
-    sceneSdf(point + vec2(0.0, epsilon))
-      - sceneSdf(point - vec2(0.0, epsilon))
+    detailSdf(point + vec2(epsilon, 0.0), depthRight)
+      - detailSdf(point - vec2(epsilon, 0.0), depthLeft),
+    detailSdf(point + vec2(0.0, epsilon), depthTop)
+      - detailSdf(point - vec2(0.0, epsilon), depthBottom)
   ) / (2.0 * epsilon);
+  gradient = clamp(gradient, vec2(-2.0), vec2(2.0));
 
-  float depth = nearestDepth(point);
   float edgeInfluence = exp(
-    -max(-distance, 0.0) / max(10.0 * uDpr, 1.0)
+    -abs(detailDistance) / max(10.0 * uDpr, 1.0)
   );
   vec3 normal = normalize(vec3(
     gradient * edgeInfluence * (1.15 + 0.34 * depth),
@@ -834,6 +850,10 @@ function shouldDisableLiquidGlass() {
   return (
     liquidGlassReducedTransparencyQuery?.matches
     || liquidGlassForcedColorsQuery?.matches
+    || !(
+      CSS.supports('backdrop-filter', 'blur(1px)')
+      || CSS.supports('-webkit-backdrop-filter', 'blur(1px)')
+    )
   )
 }
 
@@ -963,14 +983,20 @@ function resizeLiquidGlassCanvas() {
 
   const cssWidth = Math.max(1, window.innerWidth)
   const cssHeight = Math.max(1, window.innerHeight)
-  const desiredScale = Math.min(window.devicePixelRatio || 1, 1.35)
+  const compactOptics = window.matchMedia(
+    '(max-width: 700px), (pointer: coarse)',
+  ).matches
+  const desiredScale = Math.min(
+    window.devicePixelRatio || 1,
+    compactOptics ? 1 : 1.35,
+  )
+  const pixelBudget = compactOptics
+    ? Math.min(LIQUID_GLASS_PIXEL_BUDGET, 1_200_000)
+    : LIQUID_GLASS_PIXEL_BUDGET
   const budgetScale = Math.sqrt(
-    LIQUID_GLASS_PIXEL_BUDGET / (cssWidth * cssHeight),
+    pixelBudget / (cssWidth * cssHeight),
   )
-  const renderScale = Math.max(
-    0.65,
-    Math.min(desiredScale, budgetScale),
-  )
+  const renderScale = Math.min(desiredScale, budgetScale)
   const width = Math.max(1, Math.round(cssWidth * renderScale))
   const height = Math.max(1, Math.round(cssHeight * renderScale))
   const resized = canvas.width !== width || canvas.height !== height
@@ -1006,6 +1032,7 @@ function measureLiquidGlassSurfaces() {
 
   runtime.rects.fill(0)
   runtime.surfaceMaterials.fill(0)
+  runtime.surfaceLayers.fill(0)
 
   visibleSurfaces.forEach(({ node, rect }, index) => {
     const group = Number(node.dataset.liquidGroup || index + 1)
@@ -1016,6 +1043,7 @@ function measureLiquidGlassSurfaces() {
       rect.height / 2,
     )
     const depth = Number(node.dataset.liquidDepth || 1)
+    const layer = Number(node.dataset.liquidLayer || 0)
     const startsNewGroup = previousGroup === null || previousGroup !== group
     const rectOffset = index * 4
 
@@ -1031,6 +1059,7 @@ function measureLiquidGlassSurfaces() {
       ? 0
       : Math.min(radius * 0.72, 18) * scale
     runtime.surfaceMaterials[rectOffset + 3] = startsNewGroup ? 1 : 0
+    runtime.surfaceLayers[index] = layer
 
     previousGroup = group
   })
@@ -1056,6 +1085,26 @@ function drawLiquidGlass() {
   const pointerEnergy = liquidGlassReducedMotionQuery?.matches
     ? 0
     : Math.min(1, Math.max(0, liquidGlassLight.energy))
+  const root = portalDesktopRef.value
+
+  if (root) {
+    root.style.setProperty(
+      '--lg-light-x',
+      `${Math.round(liquidGlassLight.x)}px`,
+    )
+    root.style.setProperty(
+      '--lg-light-y',
+      `${Math.round(liquidGlassLight.y)}px`,
+    )
+    root.style.setProperty(
+      '--lg-light-alpha',
+      (0.055 + pointerEnergy * 0.085).toFixed(3),
+    )
+    root.style.setProperty(
+      '--lg-light-alpha-soft',
+      (0.038 + pointerEnergy * 0.056).toFixed(3),
+    )
+  }
 
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.useProgram(program)
@@ -1072,6 +1121,7 @@ function drawLiquidGlass() {
   gl.uniform1i(uniforms.surfaceCount, runtime.surfaceCount)
   gl.uniform4fv(uniforms.rects, runtime.rects)
   gl.uniform4fv(uniforms.surfaceMaterials, runtime.surfaceMaterials)
+  gl.uniform1fv(uniforms.surfaceLayers, runtime.surfaceLayers)
   gl.drawArrays(gl.TRIANGLES, 0, 3)
 }
 
@@ -1221,6 +1271,7 @@ function initializeLiquidGlass() {
       surfaceCount: 0,
       rects: new Float32Array(MAX_LIQUID_SURFACES * 4),
       surfaceMaterials: new Float32Array(MAX_LIQUID_SURFACES * 4),
+      surfaceLayers: new Float32Array(MAX_LIQUID_SURFACES),
       uniforms: {
         wallpaper: gl.getUniformLocation(program, 'uWallpaper'),
         resolution: gl.getUniformLocation(program, 'uResolution'),
@@ -1232,6 +1283,7 @@ function initializeLiquidGlass() {
         surfaceCount: gl.getUniformLocation(program, 'uSurfaceCount'),
         rects: gl.getUniformLocation(program, 'uRects[0]'),
         surfaceMaterials: gl.getUniformLocation(program, 'uSurface[0]'),
+        surfaceLayers: gl.getUniformLocation(program, 'uLayers[0]'),
       },
     }
 
@@ -2145,7 +2197,12 @@ onBeforeUnmount(() => {
         <div
           class="window-titlebar"
           :class="{ 'has-scrolled-divider': windowBodyScrolled }"
+          data-liquid-surface
           data-liquid-interactive
+          data-liquid-group="21"
+          data-liquid-radius="13"
+          data-liquid-depth="0.56"
+          data-liquid-layer="1"
           @pointerdown="startWindowDrag"
           @lostpointercapture="endWindowDrag"
           @dblclick="toggleMaximizeWindow"
@@ -2195,24 +2252,62 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="window-body" @scroll.passive="handleWindowBodyScroll">
+        <div
+          class="window-body"
+          data-liquid-surface
+          data-liquid-interactive
+          data-liquid-group="22"
+          data-liquid-radius="13"
+          data-liquid-depth="0.48"
+          data-liquid-layer="1"
+          @scroll.passive="handleWindowBodyScroll"
+        >
           <div v-if="dataError" class="portal-error" role="alert">{{ dataError }}</div>
 
-          <section v-if="activeWindow === 'music'" class="mac-app-content music-app">
+          <section
+            v-if="activeWindow === 'music'"
+            class="mac-app-content music-app"
+            data-liquid-surface
+            data-liquid-group="23"
+            data-liquid-radius="12"
+            data-liquid-depth="0.64"
+            data-liquid-layer="2"
+          >
             <div v-if="loadingData" class="portal-loading" role="status">Loading music library...</div>
             <div v-else ref="aplayerContainer" class="aplayer-mount"></div>
           </section>
 
           <section v-else-if="activeWindow === 'weather'" class="mac-app-content widget-shell weather-shell">
-            <Weather class="portal-widget weather-widget" />
+            <Weather
+              class="portal-widget weather-widget"
+              data-liquid-surface
+              data-liquid-group="23"
+              data-liquid-radius="12"
+              data-liquid-depth="0.64"
+              data-liquid-layer="2"
+            />
           </section>
 
           <section v-else-if="activeWindow === 'calendar'" class="mac-app-content widget-shell calendar-shell">
-            <Calendar class="portal-widget calendar-widget" />
+            <Calendar
+              class="portal-widget calendar-widget"
+              data-liquid-surface
+              data-liquid-group="23"
+              data-liquid-radius="12"
+              data-liquid-depth="0.64"
+              data-liquid-layer="2"
+            />
           </section>
 
           <section v-else-if="activeWindow === 'todo'" class="mac-app-content widget-shell todo-shell">
-            <header class="todo-overview">
+            <header
+              class="todo-overview"
+              data-liquid-surface
+              data-liquid-group="23"
+              data-liquid-radius="14"
+              data-liquid-depth="0.66"
+              data-liquid-layer="2"
+            >
               <div>
                 <p>REMINDERS</p>
                 <h2>My Tasks</h2>
@@ -2225,7 +2320,14 @@ onBeforeUnmount(() => {
                 </svg>
               </span>
             </header>
-            <ToDoList class="portal-widget todo-widget" />
+            <ToDoList
+              class="portal-widget todo-widget"
+              data-liquid-surface
+              data-liquid-group="24"
+              data-liquid-radius="15"
+              data-liquid-depth="0.7"
+              data-liquid-layer="2"
+            />
           </section>
         </div>
       </section>
@@ -2251,7 +2353,14 @@ onBeforeUnmount(() => {
           @pointerdown.stop
           @keydown="handleDialogKeydown"
         >
-          <label class="spotlight-search">
+          <label
+            class="spotlight-search"
+            data-liquid-surface
+            data-liquid-group="31"
+            data-liquid-radius="21"
+            data-liquid-depth="0.6"
+            data-liquid-layer="1"
+          >
             <span class="spotlight-magnifier" aria-hidden="true"></span>
             <input
               ref="spotlightInput"
@@ -2278,6 +2387,11 @@ onBeforeUnmount(() => {
             class="spotlight-results"
             role="listbox"
             aria-label="Site search results"
+            data-liquid-surface
+            data-liquid-group="32"
+            data-liquid-radius="18"
+            data-liquid-depth="0.56"
+            data-liquid-layer="1"
           >
             <section
               v-for="(group, groupIndex) in spotlightGroups"
@@ -2326,7 +2440,14 @@ onBeforeUnmount(() => {
               没有找到对应入口
             </p>
           </div>
-          <footer class="spotlight-footer">
+          <footer
+            class="spotlight-footer"
+            data-liquid-surface
+            data-liquid-group="33"
+            data-liquid-radius="18"
+            data-liquid-depth="0.52"
+            data-liquid-layer="1"
+          >
             <span role="status" aria-live="polite">{{ spotlightFlatLinks.length }} 个结果</span>
             <span id="portal-spotlight-help" class="spotlight-help">
               <kbd>↑</kbd><kbd>↓</kbd> 选择
@@ -2389,7 +2510,17 @@ onBeforeUnmount(() => {
 
           <div v-if="dataError" class="portal-error" role="alert">{{ dataError }}</div>
           <div v-else-if="loadingData" class="portal-loading" role="status">Loading Launchpad...</div>
-          <div v-else class="launchpad-groups" @click.self="closeWindow">
+          <div
+            v-else
+            class="launchpad-groups"
+            data-liquid-surface
+            data-liquid-interactive
+            data-liquid-group="42"
+            data-liquid-radius="28"
+            data-liquid-depth="0.58"
+            data-liquid-layer="1"
+            @click.self="closeWindow"
+          >
             <section
               v-for="group in filteredDockGroups"
               :key="group.name"
@@ -2511,11 +2642,28 @@ onBeforeUnmount(() => {
   --portal-material-content: rgba(28, 29, 34, 0.78);
   --portal-material-dock: rgba(32, 35, 43, 0.32);
   --portal-material-blur: saturate(175%) blur(22px);
+  --lg-shell-fill: rgba(18, 24, 33, 0.24);
+  --lg-pane-fill: rgba(12, 18, 27, 0.34);
+  --lg-pane-fill-strong: rgba(10, 15, 23, 0.46);
+  --lg-control-fill: rgba(255, 255, 255, 0.09);
+  --lg-control-hover: rgba(255, 255, 255, 0.15);
+  --lg-border: rgba(255, 255, 255, 0.2);
+  --lg-border-soft: rgba(255, 255, 255, 0.12);
+  --lg-edge-high:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.3),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.055);
+  --lg-edge-low: inset 0 -0.5px 0 rgba(0, 0, 0, 0.26);
+  --lg-pane-filter: saturate(148%) contrast(1.04) blur(9px);
+  --lg-control-filter: saturate(172%) contrast(1.05) blur(13px);
+  --lg-light-x: 24vw;
+  --lg-light-y: 46px;
+  --lg-light-alpha: 0.055;
+  --lg-light-alpha-soft: 0.038;
   --portal-hairline: rgba(255, 255, 255, 0.13);
   --portal-stroke-outer: rgba(0, 0, 0, 0.35);
   --portal-text-primary: rgba(255, 255, 255, 0.92);
-  --portal-text-secondary: rgba(255, 255, 255, 0.7);
-  --portal-text-tertiary: rgba(255, 255, 255, 0.52);
+  --portal-text-secondary: rgba(255, 255, 255, 0.8);
+  --portal-text-tertiary: rgba(255, 255, 255, 0.64);
   --portal-text-accent: #0a84ff;
   --portal-shadow-window:
     0 0 0 0.5px var(--portal-stroke-outer),
@@ -4704,6 +4852,728 @@ onBeforeUnmount(() => {
     0 8px 20px rgba(0, 0, 0, 0.32);
 }
 
+/* Full-surface Liquid Glass */
+.has-liquid-glass .portal-menu-bar,
+.has-liquid-glass .mac-window,
+.has-liquid-glass .spotlight-panel,
+.has-liquid-glass .bottom-launcher,
+.has-liquid-glass .launchpad-search,
+.has-liquid-glass .launchpad-close {
+  border-color: var(--lg-border);
+  background:
+    radial-gradient(
+      440px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha)),
+      transparent 68%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(0, 0, 0, 0.045)),
+    var(--lg-shell-fill);
+  box-shadow:
+    var(--lg-edge-high),
+    var(--lg-edge-low),
+    0 24px 68px rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: saturate(158%) contrast(1.03) blur(6px);
+  backdrop-filter: saturate(158%) contrast(1.03) blur(6px);
+}
+
+.has-liquid-glass .portal-menu-bar {
+  border-width: 0 0 0.5px;
+  border-style: solid;
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.24),
+    0 1px 16px rgba(0, 0, 0, 0.1);
+}
+
+.has-liquid-glass .mac-window {
+  background:
+    radial-gradient(
+      520px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha)),
+      transparent 70%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(0, 0, 0, 0.025)),
+    rgba(15, 21, 30, 0.12);
+  -webkit-backdrop-filter: saturate(148%) contrast(1.035) blur(4px);
+  backdrop-filter: saturate(148%) contrast(1.035) blur(4px);
+}
+
+.window-titlebar {
+  background:
+    radial-gradient(
+      360px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 72%
+    ) fixed,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.018)),
+    rgba(18, 24, 33, 0.18);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.16);
+}
+
+.window-body,
+.spotlight-search,
+.spotlight-results,
+.spotlight-footer,
+.launchpad-groups,
+:deep(.aplayer),
+.widget-shell :deep(.weather-container),
+.widget-shell :deep(.calendar),
+.widget-shell :deep(.calendar-container),
+.todo-shell :deep(.todo-list-container),
+.todo-shell :deep(.todo-container) {
+  border-color: var(--lg-border-soft);
+  background:
+    radial-gradient(
+      460px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 72%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.025)),
+    var(--lg-pane-fill);
+  box-shadow:
+    var(--lg-edge-high),
+    var(--lg-edge-low);
+  -webkit-backdrop-filter: var(--lg-pane-filter);
+  backdrop-filter: var(--lg-pane-filter);
+}
+
+.window-body {
+  background:
+    radial-gradient(
+      520px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 74%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.035)),
+    var(--lg-pane-fill-strong);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.04);
+}
+
+.has-liquid-glass .window-body {
+  background:
+    radial-gradient(
+      520px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 74%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(0, 0, 0, 0.026)),
+    rgba(11, 17, 25, 0.38);
+}
+
+.window-todo .window-body,
+.window-music .window-body {
+  background:
+    radial-gradient(
+      520px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 74%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.036), rgba(0, 0, 0, 0.03)),
+    rgba(11, 17, 25, 0.4);
+}
+
+.mac-window.is-receded :is(.window-titlebar, .window-body) {
+  filter: saturate(0.72) brightness(0.82);
+}
+
+.menu-home-link:hover,
+.menu-home-link:focus-visible,
+.menu-glyph-button:hover,
+.menu-glyph-button.is-active,
+.menu-command:hover,
+.menu-command:focus-visible,
+.menu-command.is-active,
+.menu-status-action:hover,
+.menu-status-action:focus-visible,
+.menu-clock-action:hover,
+.menu-clock-action:focus-visible,
+.menu-clock-action.is-active {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.055)),
+    var(--lg-control-fill);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.16);
+  -webkit-backdrop-filter: var(--lg-control-filter);
+  backdrop-filter: var(--lg-control-filter);
+}
+
+/* Weather */
+.weather-shell :deep(.weather-container) {
+  overflow: hidden;
+  padding: 12px;
+  border-width: 0.5px;
+  border-style: solid;
+  border-radius: 12px;
+}
+
+.weather-shell :deep(.weather-content) {
+  display: grid;
+  grid-template-rows: auto auto;
+  align-content: start;
+  gap: 10px;
+}
+
+.weather-shell :deep(.summary-text) {
+  margin: 0;
+  padding: 16px 18px;
+  border: 0.5px solid var(--lg-border-soft);
+  border-radius: 13px;
+  background:
+    radial-gradient(
+      300px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 74%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(8, 14, 22, 0.22);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.2);
+  line-height: 1.48;
+}
+
+.weather-shell :deep(.highlight-city),
+.weather-shell :deep(.highlight-desc) {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.weather-shell :deep(.highlight-temp) {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  margin-left: 5px;
+  padding: 2px 11px;
+  border: 0.5px solid rgba(142, 203, 255, 0.36);
+  border-radius: 999px;
+  color: #a8d7ff;
+  background:
+    linear-gradient(145deg, rgba(102, 187, 255, 0.22), rgba(10, 132, 255, 0.08)),
+    var(--lg-control-fill);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.28),
+    0 4px 18px rgba(0, 88, 175, 0.12);
+}
+
+.weather-shell :deep(.details-list) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.weather-shell :deep(.details-list li) {
+  display: grid;
+  min-height: 46px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 0.5px solid var(--lg-border-soft);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018)),
+    rgba(8, 14, 22, 0.18);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.15);
+  transition:
+    background-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.weather-shell :deep(.details-list li:last-child) {
+  grid-column: 1 / -1;
+}
+
+.weather-shell :deep(.details-list li:hover) {
+  border-color: var(--lg-border);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.025)),
+    rgba(8, 14, 22, 0.22);
+  transform: translateY(-1px);
+}
+
+.weather-shell :deep(.bullet) {
+  width: 7px;
+  height: 7px;
+  overflow: hidden;
+  border: 0.5px solid rgba(184, 225, 255, 0.62);
+  border-radius: 50%;
+  color: transparent;
+  background: rgba(101, 195, 255, 0.84);
+  box-shadow: 0 0 10px rgba(87, 181, 255, 0.38);
+}
+
+.weather-shell :deep(.detail-value) {
+  padding: 3px 8px;
+  border: 0.5px solid var(--lg-border-soft);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.9);
+  background: var(--lg-control-fill);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* Calendar */
+.calendar-shell :deep(.calendar) {
+  padding: 12px;
+  border-width: 0.5px;
+  border-style: solid;
+  border-radius: 12px;
+}
+
+.calendar-shell :deep(.calendar-header) {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px auto auto;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 9px;
+  padding: 6px;
+  border: 0.5px solid var(--lg-border-soft);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018)),
+    rgba(8, 14, 22, 0.18);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.16);
+}
+
+.calendar-shell :deep(.month-title),
+.calendar-shell :deep(.nav-btn),
+.calendar-shell :deep(.today-btn),
+.calendar-shell :deep(.mark-btn),
+.calendar-shell :deep(.red-pill) {
+  border: 0.5px solid var(--lg-border-soft);
+  color: var(--portal-text-primary);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025)),
+    var(--lg-control-fill);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+  -webkit-backdrop-filter: var(--lg-control-filter);
+  backdrop-filter: var(--lg-control-filter);
+}
+
+.calendar-shell :deep(.month-title) {
+  min-width: 0;
+  height: 32px;
+  border-radius: 9px;
+  line-height: 31px;
+  text-align: center;
+}
+
+.calendar-shell :deep(.nav-btn) {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.calendar-shell :deep(.today-btn),
+.calendar-shell :deep(.mark-btn) {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+}
+
+.calendar-shell :deep(.today-btn) {
+  border-color: rgba(106, 191, 255, 0.44);
+  color: white;
+  background:
+    linear-gradient(145deg, rgba(73, 171, 255, 0.88), rgba(10, 113, 222, 0.74)),
+    rgba(10, 132, 255, 0.5);
+}
+
+.calendar-shell :deep(.mark-btn) {
+  color: var(--portal-text-secondary);
+}
+
+.calendar-shell :deep(.calendar-grid) {
+  padding: 8px;
+  border: 0.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent),
+    rgba(5, 10, 17, 0.12);
+}
+
+.calendar-shell :deep(.calendar-day) {
+  color: var(--portal-text-secondary);
+  font-weight: var(--portal-fw-medium);
+}
+
+.calendar-shell :deep(.calendar-cell) {
+  min-height: 34px;
+  border: 0.5px solid transparent;
+  border-radius: 999px;
+  color: var(--portal-text-primary);
+  background: transparent;
+  transition:
+    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 180ms var(--portal-spring-settle);
+}
+
+.calendar-shell :deep(.calendar-cell:hover),
+.calendar-shell :deep(.calendar-cell:focus-visible) {
+  border-color: var(--lg-border);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035)),
+    var(--lg-control-fill);
+  transform: scale(1.04);
+}
+
+.calendar-shell :deep(.calendar-cell.today),
+.calendar-shell :deep(.calendar-cell.selected) {
+  border-color: rgba(142, 207, 255, 0.55);
+  color: white;
+  background:
+    linear-gradient(145deg, rgba(93, 188, 255, 0.82), rgba(10, 113, 222, 0.62)),
+    rgba(10, 132, 255, 0.44);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.34),
+    0 5px 16px rgba(0, 88, 180, 0.18);
+}
+
+.calendar-shell :deep(.calendar-cell.out-this-month) {
+  color: var(--portal-text-tertiary);
+}
+
+.calendar-shell :deep(.red-dates) {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 0.5px solid var(--lg-border-soft);
+}
+
+.calendar-shell :deep(.red-pill) {
+  color: #ffb5c5;
+  background:
+    linear-gradient(145deg, rgba(255, 123, 156, 0.12), rgba(255, 255, 255, 0.025)),
+    var(--lg-control-fill);
+}
+
+/* TODO */
+.todo-overview {
+  padding: 12px 14px;
+  border: 0.5px solid var(--lg-border-soft);
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      320px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 72%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018)),
+    rgba(8, 14, 22, 0.16);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.18);
+}
+
+.todo-overview-mark {
+  border-color: var(--lg-border);
+  color: #9ed5ff;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025)),
+    var(--lg-control-fill);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.16);
+  -webkit-backdrop-filter: var(--lg-control-filter);
+  backdrop-filter: var(--lg-control-filter);
+}
+
+.todo-shell :deep(.todo-list-container),
+.todo-shell :deep(.todo-container) {
+  border-color: var(--lg-border-soft);
+  background:
+    radial-gradient(
+      420px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 74%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.025)),
+    rgba(7, 12, 20, 0.2);
+  box-shadow:
+    var(--lg-edge-high),
+    var(--lg-edge-low);
+}
+
+.todo-shell :deep(.mode-switch),
+.todo-shell :deep(.input-section),
+.todo-shell :deep(.current-day-chip),
+.todo-shell :deep(.add-button) {
+  border-color: var(--lg-border-soft);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    var(--lg-control-fill);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.17);
+  -webkit-backdrop-filter: var(--lg-control-filter);
+  backdrop-filter: var(--lg-control-filter);
+}
+
+.todo-shell :deep(.mode-btn.active) {
+  border-color: var(--lg-border);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.055)),
+    var(--lg-control-fill);
+}
+
+.todo-shell :deep(.task-input) {
+  background: rgba(5, 10, 17, 0.16);
+  box-shadow: none;
+}
+
+.todo-shell :deep(.add-button) {
+  border: 0.5px solid rgba(136, 206, 255, 0.5);
+  color: white;
+  background:
+    linear-gradient(145deg, rgba(89, 185, 255, 0.92), rgba(9, 106, 211, 0.78)),
+    rgba(10, 132, 255, 0.56);
+}
+
+.todo-shell :deep(.task-list:empty) {
+  border-style: solid;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent),
+    rgba(5, 10, 17, 0.1);
+}
+
+.todo-shell :deep(.task-item) {
+  border-color: var(--lg-border-soft);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018)),
+    rgba(8, 14, 22, 0.16);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.14);
+}
+
+.todo-shell :deep(.task-item:hover) {
+  border-color: var(--lg-border);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
+    rgba(8, 14, 22, 0.2);
+}
+
+/* Music */
+:deep(.aplayer) {
+  border-color: var(--lg-border);
+  border-radius: 12px;
+  background:
+    radial-gradient(
+      460px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 72%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(0, 0, 0, 0.025)),
+    rgba(7, 12, 20, 0.2);
+}
+
+:deep(.aplayer-info) {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent),
+    rgba(8, 14, 22, 0.14);
+}
+
+:deep(.aplayer-music .aplayer-title),
+:deep(.aplayer-list-title) {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+:deep(.aplayer-music .aplayer-author),
+:deep(.aplayer-list-author) {
+  color: var(--portal-text-secondary) !important;
+  opacity: 1 !important;
+}
+
+:deep(.aplayer-list-index) {
+  color: var(--portal-text-tertiary) !important;
+}
+
+:deep(.aplayer-list) {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.025), transparent),
+    rgba(4, 9, 16, 0.18);
+  -webkit-backdrop-filter: var(--lg-pane-filter);
+  backdrop-filter: var(--lg-pane-filter);
+}
+
+:deep(.aplayer-button) {
+  border-radius: 50%;
+  background: var(--lg-control-fill);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
+}
+
+:deep(.aplayer .aplayer-controller .aplayer-bar-wrap .aplayer-played),
+:deep(.aplayer .aplayer-volume-bar-wrap .aplayer-volume) {
+  background: var(--portal-text-accent) !important;
+}
+
+/* Spotlight */
+.has-liquid-glass .spotlight-panel {
+  background:
+    radial-gradient(
+      520px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha)),
+      transparent 72%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.025)),
+    rgba(11, 17, 25, 0.14);
+}
+
+.spotlight-search {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+    rgba(8, 14, 22, 0.2);
+}
+
+.spotlight-results {
+  background:
+    radial-gradient(
+      480px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 74%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.025)),
+    rgba(7, 12, 20, 0.3);
+}
+
+.spotlight-footer {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.014)),
+    rgba(7, 12, 20, 0.3);
+}
+
+.spotlight-result:hover,
+.spotlight-result:focus-visible {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035)),
+    var(--lg-control-fill);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
+}
+
+.spotlight-result.is-selected {
+  background:
+    linear-gradient(145deg, rgba(73, 171, 255, 0.8), rgba(7, 100, 205, 0.58)),
+    rgba(10, 132, 255, 0.46);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -0.5px 0 rgba(0, 42, 93, 0.22),
+    0 6px 18px rgba(0, 72, 150, 0.16);
+}
+
+.spotlight-result-icon,
+.spotlight-help kbd {
+  border: 0.5px solid var(--lg-border-soft);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025)),
+    var(--lg-control-fill);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.14);
+}
+
+/* Launchpad */
+.launchpad-overlay {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.055), transparent 42rem),
+    rgba(7, 12, 20, 0.16);
+  -webkit-backdrop-filter: blur(18px) brightness(0.78) saturate(145%);
+  backdrop-filter: blur(18px) brightness(0.78) saturate(145%);
+}
+
+.launchpad-groups {
+  padding: 24px;
+  border: 0.5px solid var(--lg-border-soft);
+  border-radius: 28px;
+  background:
+    radial-gradient(
+      620px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha-soft)),
+      transparent 74%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.02)),
+    rgba(8, 14, 22, 0.18);
+  box-shadow:
+    var(--lg-edge-high),
+    var(--lg-edge-low),
+    0 24px 64px rgba(0, 0, 0, 0.12);
+}
+
+.link-group + .link-group {
+  padding-top: 24px;
+  border-top: 0.5px solid var(--lg-border-soft);
+}
+
+.launchpad-tile {
+  position: relative;
+  isolation: isolate;
+}
+
+.launchpad-tile::before {
+  content: '';
+  position: absolute;
+  inset: -8px -4px;
+  z-index: -1;
+  border: 0.5px solid transparent;
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.025)),
+    var(--lg-control-fill);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
+    0 10px 28px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 160ms ease-out,
+    transform 220ms var(--portal-spring-settle),
+    border-color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-backdrop-filter: var(--lg-control-filter);
+  backdrop-filter: var(--lg-control-filter);
+}
+
+.launchpad-tile:hover::before,
+.launchpad-tile:focus-visible::before {
+  border-color: var(--lg-border);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.has-liquid-glass .bottom-launcher {
+  background:
+    radial-gradient(
+      420px circle at var(--lg-light-x) var(--lg-light-y),
+      rgba(255, 255, 255, var(--lg-light-alpha)),
+      transparent 66%
+    ) fixed,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.012)),
+    rgba(13, 20, 29, 0.14);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.22),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.045),
+    0 18px 54px rgba(0, 0, 0, 0.24);
+  -webkit-backdrop-filter: saturate(172%) contrast(1.04) blur(7px);
+  backdrop-filter: saturate(172%) contrast(1.04) blur(7px);
+}
+
+.launcher-tooltip,
+.launcher-tooltip::after {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.025)),
+    rgba(15, 21, 30, 0.54);
+  -webkit-backdrop-filter: var(--lg-control-filter);
+  backdrop-filter: var(--lg-control-filter);
+}
+
 .portal-desktop :is(
   .menu-home-link,
   .menu-glyph-button,
@@ -4852,6 +5722,43 @@ onBeforeUnmount(() => {
     box-sizing: border-box;
   }
 
+  .weather-shell :deep(.details-list) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .weather-shell :deep(.details-list li:last-child) {
+    grid-column: auto;
+  }
+
+  .calendar-shell :deep(.calendar-header) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .calendar-shell :deep(.calendar-header > .nav-btn:first-child) {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .calendar-shell :deep(.month-title) {
+    grid-row: 1;
+    grid-column: 2 / span 4;
+  }
+
+  .calendar-shell :deep(.calendar-header > .nav-btn:nth-of-type(2)) {
+    grid-row: 1;
+    grid-column: 6;
+  }
+
+  .calendar-shell :deep(.today-btn) {
+    grid-row: 2;
+    grid-column: 1 / span 3;
+  }
+
+  .calendar-shell :deep(.mark-btn) {
+    grid-row: 2;
+    grid-column: 4 / span 3;
+  }
+
   .spotlight-overlay {
     background: rgba(0, 0, 0, 0.24);
   }
@@ -4951,6 +5858,8 @@ onBeforeUnmount(() => {
   .launchpad-close {
     top: calc(52px + env(safe-area-inset-top));
     right: 12px;
+    width: 44px;
+    height: 44px;
   }
 
   .launchpad-search {
@@ -4959,6 +5868,8 @@ onBeforeUnmount(() => {
 
   .launchpad-groups {
     gap: 28px;
+    padding: 16px;
+    border-radius: 22px;
   }
 
   .launchpad-grid {
@@ -5048,9 +5959,24 @@ onBeforeUnmount(() => {
   }
 
   .window-body,
+  .window-todo .window-body,
+  .window-music .window-body,
   .spotlight-results,
-  .spotlight-footer {
+  .spotlight-footer,
+  .launchpad-groups,
+  .todo-overview,
+  :deep(.aplayer),
+  :deep(.aplayer-list),
+  .widget-shell :deep(.weather-container),
+  .widget-shell :deep(.calendar),
+  .widget-shell :deep(.calendar-container),
+  .todo-shell :deep(.todo-list-container),
+  .todo-shell :deep(.todo-container) {
     background: rgba(26, 28, 34, 0.98);
+  }
+
+  .launchpad-overlay {
+    background: rgba(25, 27, 33, 0.98);
   }
 
   .bottom-launcher,
@@ -5080,9 +6006,19 @@ onBeforeUnmount(() => {
   }
 
   .window-body,
+  .window-todo .window-body,
+  .window-music .window-body,
   .spotlight-results,
-  .spotlight-footer {
-    background-color: rgba(20, 22, 27, 0.9);
+  .spotlight-footer,
+  .launchpad-groups,
+  .todo-overview,
+  :deep(.aplayer),
+  .widget-shell :deep(.weather-container),
+  .widget-shell :deep(.calendar),
+  .widget-shell :deep(.calendar-container),
+  .todo-shell :deep(.todo-list-container),
+  .todo-shell :deep(.todo-container) {
+    background: rgba(20, 22, 27, 0.9);
   }
 
   .portal-desktop :is(
@@ -5113,17 +6049,30 @@ onBeforeUnmount(() => {
   .mac-window,
   .window-titlebar,
   .window-body,
+  .window-todo .window-body,
+  .window-music .window-body,
   .spotlight-overlay,
   .spotlight-panel,
   .spotlight-search,
   .spotlight-results,
   .spotlight-footer,
   .launchpad-overlay,
+  .launchpad-groups,
   .launchpad-search,
   .launchpad-close,
   .bottom-launcher,
   .launcher-tooltip,
-  .launcher-tooltip::after {
+  .launcher-tooltip::after,
+  .todo-overview,
+  :deep(.aplayer),
+  :deep(.aplayer-list),
+  .widget-shell :deep(.weather-container),
+  .widget-shell :deep(.calendar),
+  .widget-shell :deep(.calendar-container),
+  .todo-shell :deep(.todo-list-container),
+  .todo-shell :deep(.todo-container),
+  .todo-shell :deep(.mode-switch),
+  .todo-shell :deep(.input-section) {
     color: CanvasText;
     border-color: CanvasText;
     background: Canvas;
@@ -5160,7 +6109,18 @@ onBeforeUnmount(() => {
   .spotlight-overlay,
   .bottom-launcher,
   .launchpad-overlay,
-  .launcher-tooltip {
+  .launcher-tooltip,
+  .launchpad-groups,
+  .todo-overview,
+  :deep(.aplayer),
+  :deep(.aplayer-list),
+  .widget-shell :deep(.weather-container),
+  .widget-shell :deep(.calendar),
+  .widget-shell :deep(.calendar-container),
+  .todo-shell :deep(.todo-list-container),
+  .todo-shell :deep(.todo-container),
+  .todo-shell :deep(.mode-switch),
+  .todo-shell :deep(.input-section) {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -5175,8 +6135,19 @@ onBeforeUnmount(() => {
   }
 
   .window-body,
+  .window-todo .window-body,
+  .window-music .window-body,
   .spotlight-results,
-  .spotlight-footer {
+  .spotlight-footer,
+  .launchpad-groups,
+  .todo-overview,
+  :deep(.aplayer),
+  :deep(.aplayer-list),
+  .widget-shell :deep(.weather-container),
+  .widget-shell :deep(.calendar),
+  .widget-shell :deep(.calendar-container),
+  .todo-shell :deep(.todo-list-container),
+  .todo-shell :deep(.todo-container) {
     background: rgb(31, 32, 37);
   }
 
@@ -5226,7 +6197,10 @@ onBeforeUnmount(() => {
   .spotlight-search::after,
   .todo-shell :deep(.mode-btn),
   .todo-shell :deep(.add-button),
-  .launchpad-tile {
+  .launchpad-tile,
+  .launchpad-tile::before,
+  .weather-shell :deep(.details-list li),
+  .calendar-shell :deep(.calendar-cell) {
     animation: none !important;
     transition: none !important;
   }
