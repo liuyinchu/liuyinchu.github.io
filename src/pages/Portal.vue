@@ -5861,10 +5861,7 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 
-.calendar-shell :deep(.nav-btn),
-.calendar-shell :deep(.today-btn),
-.calendar-shell :deep(.mark-btn),
-.calendar-shell :deep(.red-pill) {
+.calendar-shell :deep(.nav-btn) {
   border-color: rgba(255, 255, 255, 0.13);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.025)),
@@ -5874,19 +5871,13 @@ onBeforeUnmount(() => {
   backdrop-filter: none;
 }
 
-.calendar-shell :deep(.today-btn),
-.calendar-shell :deep(.calendar-cell.today),
-.calendar-shell :deep(.calendar-cell.selected:not(.today)) {
-  border-color: rgba(70, 166, 255, 0.82);
-  color: white;
-  background: linear-gradient(180deg, #319cff, #087eea);
+.calendar-shell :deep(.mark-btn[aria-label='Unmark red']) {
+  border-color: rgba(255, 111, 139, 0.78);
+  color: #fff;
+  background: linear-gradient(135deg, #e95f79, #f38ba8);
   box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.35),
-    0 3px 12px rgba(0, 104, 211, 0.22);
-}
-
-.calendar-shell :deep(.mark-btn) {
-  color: rgba(255, 207, 222, 0.95);
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.32),
+    0 3px 12px rgba(233, 95, 121, 0.24);
 }
 
 .calendar-shell :deep(.calendar-grid) {
@@ -5894,8 +5885,8 @@ onBeforeUnmount(() => {
   background: transparent;
 }
 
-.calendar-shell :deep(.calendar-cell:hover),
-.calendar-shell :deep(.calendar-cell:focus-visible) {
+.calendar-shell :deep(.calendar-cell:not(.today):not(.selected):not(.is-red):hover),
+.calendar-shell :deep(.calendar-cell:not(.today):not(.selected):not(.is-red):focus-visible) {
   border-color: rgba(255, 255, 255, 0.13);
   background: rgba(255, 255, 255, 0.075);
   transform: scale(1.03);
