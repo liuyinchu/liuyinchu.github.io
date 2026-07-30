@@ -282,6 +282,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 0.82,
     shininess: 76,
     adaptivity: 0.34,
+    softness: 0.45,
     tintColor: [0.055, 0.105, 0.17],
   },
   window: {
@@ -297,6 +298,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.06,
     shininess: 72,
     adaptivity: 0.76,
+    softness: 0.95,
     tintColor: [0.035, 0.065, 0.105],
   },
   panel: {
@@ -312,6 +314,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.12,
     shininess: 66,
     adaptivity: 0.86,
+    softness: 1.1,
     tintColor: [0.035, 0.06, 0.1],
   },
   dock: {
@@ -327,6 +330,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.38,
     shininess: 92,
     adaptivity: 0.48,
+    softness: 0.72,
     tintColor: [0.045, 0.075, 0.12],
   },
   search: {
@@ -342,6 +346,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.28,
     shininess: 86,
     adaptivity: 0.56,
+    softness: 0.58,
     tintColor: [0.045, 0.075, 0.12],
   },
   circle: {
@@ -357,6 +362,7 @@ const liquidMaterialPresets = Object.freeze({
     normalStrength: 1.44,
     shininess: 96,
     adaptivity: 0.5,
+    softness: 0.52,
     tintColor: [0.045, 0.075, 0.12],
   },
 })
@@ -395,6 +401,7 @@ uniform vec4 uOptics;
 uniform vec3 uTintColor;
 uniform float uBrightness;
 uniform float uPixelScale;
+uniform float uSoftness;
 
 in vec2 vLocal;
 in vec2 vScreen;
@@ -461,6 +468,31 @@ vec3 sampleRefractedWallpaper(vec2 screenPosition, vec2 axis, float dispersion) 
     texture(uWallpaper, greenUv).g,
     texture(uWallpaper, blueUv).b
   );
+}
+
+vec3 sampleSoftenedRefraction(
+  vec2 screenPosition,
+  vec2 dispersionAxis,
+  float dispersion,
+  float softness,
+  float edge,
+  float materialization
+) {
+  vec3 crisp = srgbToLinear(sampleRefractedWallpaper(
+    screenPosition,
+    dispersionAxis,
+    dispersion
+  ));
+  vec2 firstAxis = vec2(0.8660254, 0.5) * softness;
+  vec2 secondAxis = vec2(-0.5, 0.8660254) * softness;
+  vec3 softened = (
+    srgbToLinear(sampleWallpaper(screenPosition + firstAxis))
+    + srgbToLinear(sampleWallpaper(screenPosition - firstAxis))
+    + srgbToLinear(sampleWallpaper(screenPosition + secondAxis))
+    + srgbToLinear(sampleWallpaper(screenPosition - secondAxis))
+  ) * 0.25;
+  float softnessMix = mix(0.22, 0.07, edge) * materialization;
+  return mix(crisp, softened, softnessMix);
 }
 
 float glassHeight(
@@ -587,12 +619,14 @@ void main() {
   vec2 dispersionAxis = safeNormalize(
     normal.xy + displacement * 0.001
   );
-  vec3 refractedSrgb = sampleRefractedWallpaper(
+  vec3 refracted = sampleSoftenedRefraction(
     vScreen + displacement,
     dispersionAxis,
-    uShape.w * edge * materialization
+    uShape.w * edge * materialization,
+    uSoftness,
+    edge,
+    materialization
   );
-  vec3 refracted = srgbToLinear(refractedSrgb);
 
   float statisticRadius = mix(3.0, 6.0, sizeFactor) * uPixelScale;
   vec2 sampleCenter = vScreen + displacement;
@@ -1883,6 +1917,10 @@ function drawLiquidGlass(renderer) {
     gl.uniform3fv(uniforms.tintColor, preset.tintColor)
     gl.uniform1f(uniforms.brightness, brightness)
     gl.uniform1f(uniforms.pixelScale, scale)
+    gl.uniform1f(
+      uniforms.softness,
+      preset.softness * scale * (contrastMode ? 0.55 : 1),
+    )
     gl.drawArrays(gl.TRIANGLES, 0, 6)
   })
 
@@ -2087,6 +2125,7 @@ async function initializeLiquidGlassRenderer() {
       tintColor: uniform('uTintColor'),
       brightness: uniform('uBrightness'),
       pixelScale: uniform('uPixelScale'),
+      softness: uniform('uSoftness'),
     }
 
     const handleContextLost = (event) => {
