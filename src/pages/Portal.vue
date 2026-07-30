@@ -8,6 +8,217 @@ import Weather from '../components/Weather.vue'
 const wallpaper = '/bg/Firefly_Paper_Airplane.png'
 const chatGptUrl = 'https://chat.openai.com/'
 const ipInfoUrl = 'https://ipinfo.io/what-is-my-ip'
+const MAX_LIQUID_SURFACES = 12
+const LIQUID_GLASS_PIXEL_BUDGET = 2_400_000
+
+const liquidGlassVertexShader = `#version 300 es
+void main() {
+  vec2 position = vec2(
+    float((gl_VertexID << 1) & 2),
+    float(gl_VertexID & 2)
+  );
+  gl_Position = vec4(position * 2.0 - 1.0, 0.0, 1.0);
+}`
+
+const liquidGlassFragmentShader = `#version 300 es
+precision highp float;
+
+#define MAX_SURFACES 12
+
+uniform sampler2D uWallpaper;
+uniform vec2 uResolution;
+uniform vec2 uImageSize;
+uniform vec3 uPointer;
+uniform float uPointerRadius;
+uniform float uDpr;
+uniform float uWallpaperZoom;
+uniform int uSurfaceCount;
+uniform vec4 uRects[MAX_SURFACES];
+uniform vec4 uSurface[MAX_SURFACES];
+
+out vec4 fragColor;
+
+float sdRoundBox(vec2 point, vec2 halfSize, float radius) {
+  radius = min(radius, min(halfSize.x, halfSize.y));
+  vec2 q = abs(point) - halfSize + radius;
+  return min(max(q.x, q.y), 0.0)
+    + length(max(q, 0.0))
+    - radius;
+}
+
+float smoothUnion(float firstDistance, float secondDistance, float amount) {
+  if (amount <= 0.01) return min(firstDistance, secondDistance);
+  float blend = clamp(
+    0.5 + 0.5 * (secondDistance - firstDistance) / amount,
+    0.0,
+    1.0
+  );
+  return mix(secondDistance, firstDistance, blend)
+    - amount * blend * (1.0 - blend);
+}
+
+float sceneSdf(vec2 point) {
+  float sceneDistance = 1e6;
+  float groupDistance = 1e6;
+
+  for (int index = 0; index < MAX_SURFACES; ++index) {
+    if (index >= uSurfaceCount) break;
+
+    vec4 rect = uRects[index];
+    vec4 material = uSurface[index];
+    float distance = sdRoundBox(point - rect.xy, rect.zw, material.x);
+
+    if (material.w > 0.5) {
+      sceneDistance = min(sceneDistance, groupDistance);
+      groupDistance = distance;
+    } else {
+      groupDistance = smoothUnion(groupDistance, distance, material.z);
+    }
+  }
+
+  sceneDistance = min(sceneDistance, groupDistance);
+
+  if (uPointer.z > 0.001) {
+    float pointerDistance = length(point - uPointer.xy) - uPointerRadius;
+    sceneDistance = smoothUnion(
+      sceneDistance,
+      pointerDistance,
+      14.0 * uDpr * uPointer.z
+    );
+  }
+
+  return sceneDistance;
+}
+
+float nearestDepth(vec2 point) {
+  float nearestDistance = 1e6;
+  float nearestMaterialDepth = 1.0;
+
+  for (int index = 0; index < MAX_SURFACES; ++index) {
+    if (index >= uSurfaceCount) break;
+
+    float distance = abs(sdRoundBox(
+      point - uRects[index].xy,
+      uRects[index].zw,
+      uSurface[index].x
+    ));
+
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestMaterialDepth = uSurface[index].y;
+    }
+  }
+
+  return nearestMaterialDepth;
+}
+
+vec2 coverUv(vec2 viewportUv) {
+  vec2 uv = (viewportUv - 0.5) / uWallpaperZoom + 0.5;
+  float viewportAspect = uResolution.x / uResolution.y;
+  float imageAspect = uImageSize.x / uImageSize.y;
+
+  if (imageAspect > viewportAspect) {
+    uv.x = (uv.x - 0.5) * (viewportAspect / imageAspect) + 0.5;
+  } else {
+    uv.y = (uv.y - 0.5) * (imageAspect / viewportAspect) + 0.5;
+  }
+
+  return clamp(uv, 0.001, 0.999);
+}
+
+void main() {
+  vec2 point = gl_FragCoord.xy;
+  float distance = sceneSdf(point);
+  float antialiasing = max(fwidth(distance), 0.75 * uDpr);
+  float mask = 1.0 - smoothstep(-antialiasing, antialiasing, distance);
+
+  if (mask <= 0.001) {
+    fragColor = vec4(0.0);
+    return;
+  }
+
+  float epsilon = max(0.75, uDpr);
+  vec2 gradient = vec2(
+    sceneSdf(point + vec2(epsilon, 0.0))
+      - sceneSdf(point - vec2(epsilon, 0.0)),
+    sceneSdf(point + vec2(0.0, epsilon))
+      - sceneSdf(point - vec2(0.0, epsilon))
+  ) / (2.0 * epsilon);
+
+  float depth = nearestDepth(point);
+  float edgeInfluence = exp(
+    -max(-distance, 0.0) / max(10.0 * uDpr, 1.0)
+  );
+  vec3 normal = normalize(vec3(
+    gradient * edgeInfluence * (1.15 + 0.34 * depth),
+    1.0
+  ));
+
+  vec2 refractedPixels = normal.xy
+    * edgeInfluence
+    * (3.0 + 4.2 * depth)
+    * uDpr;
+  float normalLength = length(normal.xy);
+  vec2 dispersionAxis = normalLength > 0.001
+    ? normal.xy / normalLength
+    : vec2(0.0);
+  float dispersion = edgeInfluence
+    * (0.42 + 0.38 * depth)
+    * uDpr;
+
+  vec2 redUv = coverUv(
+    (point + refractedPixels + dispersionAxis * dispersion) / uResolution
+  );
+  vec2 greenUv = coverUv(
+    (point + refractedPixels) / uResolution
+  );
+  vec2 blueUv = coverUv(
+    (point + refractedPixels - dispersionAxis * dispersion) / uResolution
+  );
+
+  vec3 glassColor = vec3(
+    texture(uWallpaper, redUv).r,
+    texture(uWallpaper, greenUv).g,
+    texture(uWallpaper, blueUv).b
+  );
+
+  vec2 lightDelta = (uPointer.xy - point)
+    / max(min(uResolution.x, uResolution.y), 1.0);
+  vec3 lightDirection = normalize(vec3(lightDelta * 1.8, 0.72));
+  vec3 halfVector = normalize(lightDirection + vec3(0.0, 0.0, 1.0));
+  float specular = pow(max(dot(normal, halfVector), 0.0), 54.0)
+    * edgeInfluence
+    * (0.22 + 0.14 * depth);
+  float fresnel = pow(
+    1.0 - clamp(normal.z, 0.0, 1.0),
+    3.0
+  ) * edgeInfluence;
+
+  float luminance = dot(glassColor, vec3(0.2126, 0.7152, 0.0722));
+  vec3 adaptiveTint = luminance > 0.58
+    ? vec3(0.035, 0.04, 0.055)
+    : vec3(0.88, 0.93, 1.0);
+  glassColor = mix(
+    glassColor,
+    adaptiveTint,
+    0.022 + 0.014 * depth
+  );
+
+  vec3 dispersionGlow = vec3(
+    0.06 * max(normal.x, 0.0),
+    0.018,
+    0.075 * max(-normal.x, 0.0)
+  ) * edgeInfluence;
+  glassColor += specular * vec3(1.0, 0.985, 0.96)
+    + fresnel * vec3(0.10, 0.13, 0.18)
+    + dispersionGlow;
+
+  float outputAlpha = mask * 0.94;
+  fragColor = vec4(
+    clamp(glassColor, 0.0, 1.0) * outputAlpha,
+    outputAlpha
+  );
+}`
 
 const topApps = [
   {
@@ -261,6 +472,8 @@ const spotlightSelectedIndex = ref(0)
 const searchItems = ref([])
 const loadingData = ref(true)
 const dataError = ref('')
+const portalDesktopRef = ref(null)
+const liquidGlassCanvas = ref(null)
 const windowRef = ref(null)
 const spotlightInput = ref(null)
 const launchpadInput = ref(null)
@@ -274,6 +487,8 @@ const windowBodyScrolled = ref(false)
 const dragging = ref(false)
 const compactLayout = ref(false)
 const isMinimizing = ref(false)
+const desktopFocused = ref(true)
+const liquidGlassReady = ref(false)
 const lastFocusedElement = ref(null)
 const overlayReturnFocus = ref(null)
 let clockTimer
@@ -282,12 +497,39 @@ let dragPointerId = null
 let dragCaptureTarget = null
 let dragStart = { pointerX: 0, pointerY: 0, originX: 0, originY: 0 }
 let dockAnimationFrame
+let dockSettleTimer
 let minimizeTimer
+let liquidGlassRuntime
+let liquidGlassAnimationFrame
+let liquidGlassResizeObserver
+let liquidGlassMutationObserver
+let liquidGlassReducedMotionQuery
+let liquidGlassReducedTransparencyQuery
+let liquidGlassForcedColorsQuery
+let liquidGlassGeneration = 0
+let liquidGlassAnimateUntil = 0
+let liquidGlassGeometryDirty = true
+let liquidGlassLastFrameTime = 0
+let liquidGlassContextLost = false
+let liquidGlassSurfaceNodes = []
+const liquidGlassLight = {
+  x: 0,
+  y: 0,
+  targetX: 0,
+  targetY: 0,
+  velocityX: 0,
+  velocityY: 0,
+  energy: 0,
+  targetEnergy: 0,
+  velocityEnergy: 0,
+}
 
 const allWindowApps = computed(() => [...topApps, ...bottomApps])
 const activeWindowApp = computed(() => topApps.find((app) => app.id === activeWindow.value))
 const activeOverlayApp = computed(() => bottomApps.find((app) => app.id === activeOverlay.value))
-const activeApp = computed(() => activeOverlayApp.value || activeWindowApp.value)
+const activeApp = computed(
+  () => activeOverlayApp.value || (desktopFocused.value ? activeWindowApp.value : null),
+)
 const minimizedApp = computed(() => allWindowApps.value.find((app) => app.id === minimizedWindow.value))
 const dockWindowApps = computed(() => [
   bottomApps[0],
@@ -588,6 +830,643 @@ async function restorePreviousFocus(target = lastFocusedElement) {
   }
 }
 
+function shouldDisableLiquidGlass() {
+  return (
+    liquidGlassReducedTransparencyQuery?.matches
+    || liquidGlassForcedColorsQuery?.matches
+  )
+}
+
+function compileLiquidGlassShader(gl, type, source) {
+  const shader = gl.createShader(type)
+  if (!shader) throw new Error('Unable to create Liquid Glass shader')
+
+  gl.shaderSource(shader, source)
+  gl.compileShader(shader)
+
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(shader) || 'Unknown shader compilation error'
+    gl.deleteShader(shader)
+    throw new Error(log)
+  }
+
+  return shader
+}
+
+function createLiquidGlassProgram(gl) {
+  const vertexShader = compileLiquidGlassShader(
+    gl,
+    gl.VERTEX_SHADER,
+    liquidGlassVertexShader,
+  )
+  let fragmentShader
+
+  try {
+    fragmentShader = compileLiquidGlassShader(
+      gl,
+      gl.FRAGMENT_SHADER,
+      liquidGlassFragmentShader,
+    )
+  } catch (error) {
+    gl.deleteShader(vertexShader)
+    throw error
+  }
+
+  const program = gl.createProgram()
+
+  if (!program) {
+    gl.deleteShader(vertexShader)
+    gl.deleteShader(fragmentShader)
+    throw new Error('Unable to create Liquid Glass program')
+  }
+
+  gl.attachShader(program, vertexShader)
+  gl.attachShader(program, fragmentShader)
+  gl.linkProgram(program)
+  gl.deleteShader(vertexShader)
+  gl.deleteShader(fragmentShader)
+
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    const log = gl.getProgramInfoLog(program) || 'Unknown program link error'
+    gl.deleteProgram(program)
+    throw new Error(log)
+  }
+
+  return program
+}
+
+function cancelLiquidGlassFrame() {
+  window.cancelAnimationFrame(liquidGlassAnimationFrame)
+  liquidGlassAnimationFrame = undefined
+}
+
+function destroyLiquidGlassRuntime({ skipGlCleanup = false } = {}) {
+  liquidGlassGeneration += 1
+  cancelLiquidGlassFrame()
+  liquidGlassAnimateUntil = 0
+  liquidGlassLastFrameTime = 0
+  liquidGlassReady.value = false
+
+  if (!liquidGlassRuntime) return
+
+  const {
+    gl,
+    program,
+    texture,
+    vertexArray,
+    image,
+  } = liquidGlassRuntime
+
+  if (image) {
+    image.onload = null
+    image.onerror = null
+  }
+
+  if (!skipGlCleanup && !liquidGlassContextLost) {
+    gl.deleteTexture(texture)
+    gl.deleteVertexArray(vertexArray)
+    gl.deleteProgram(program)
+  }
+
+  liquidGlassRuntime = undefined
+}
+
+function refreshLiquidGlassSurfaceNodes() {
+  const root = portalDesktopRef.value
+  if (!root) {
+    liquidGlassSurfaceNodes = []
+    return
+  }
+
+  liquidGlassSurfaceNodes = Array.from(
+    root.querySelectorAll('[data-liquid-surface]'),
+  )
+    .sort(
+      (first, second) => Number(first.dataset.liquidGroup || 0)
+        - Number(second.dataset.liquidGroup || 0),
+    )
+    .slice(0, MAX_LIQUID_SURFACES)
+
+  if (liquidGlassResizeObserver) {
+    liquidGlassResizeObserver.disconnect()
+    liquidGlassResizeObserver.observe(root)
+    liquidGlassSurfaceNodes.forEach((node) => {
+      liquidGlassResizeObserver.observe(node)
+    })
+  }
+}
+
+function resizeLiquidGlassCanvas() {
+  const runtime = liquidGlassRuntime
+  const canvas = liquidGlassCanvas.value
+  if (!runtime || !canvas) return false
+
+  const cssWidth = Math.max(1, window.innerWidth)
+  const cssHeight = Math.max(1, window.innerHeight)
+  const desiredScale = Math.min(window.devicePixelRatio || 1, 1.35)
+  const budgetScale = Math.sqrt(
+    LIQUID_GLASS_PIXEL_BUDGET / (cssWidth * cssHeight),
+  )
+  const renderScale = Math.max(
+    0.65,
+    Math.min(desiredScale, budgetScale),
+  )
+  const width = Math.max(1, Math.round(cssWidth * renderScale))
+  const height = Math.max(1, Math.round(cssHeight * renderScale))
+  const resized = canvas.width !== width || canvas.height !== height
+
+  runtime.cssWidth = cssWidth
+  runtime.cssHeight = cssHeight
+  runtime.renderScale = renderScale
+
+  if (resized) {
+    canvas.width = width
+    canvas.height = height
+    runtime.gl.viewport(0, 0, width, height)
+    liquidGlassGeometryDirty = true
+  }
+
+  return resized
+}
+
+function measureLiquidGlassSurfaces() {
+  const runtime = liquidGlassRuntime
+  if (!runtime) return
+
+  const visibleSurfaces = liquidGlassSurfaceNodes
+    .map((node) => ({ node, rect: node.getBoundingClientRect() }))
+    .filter(({ node, rect }) => (
+      node.getClientRects().length
+      && rect.width > 0
+      && rect.height > 0
+    ))
+    .slice(0, MAX_LIQUID_SURFACES)
+  const scale = runtime.renderScale
+  let previousGroup = null
+
+  runtime.rects.fill(0)
+  runtime.surfaceMaterials.fill(0)
+
+  visibleSurfaces.forEach(({ node, rect }, index) => {
+    const group = Number(node.dataset.liquidGroup || index + 1)
+    const configuredRadius = Number(node.dataset.liquidRadius || 12)
+    const radius = Math.min(
+      configuredRadius,
+      rect.width / 2,
+      rect.height / 2,
+    )
+    const depth = Number(node.dataset.liquidDepth || 1)
+    const startsNewGroup = previousGroup === null || previousGroup !== group
+    const rectOffset = index * 4
+
+    runtime.rects[rectOffset] = (rect.left + rect.width / 2) * scale
+    runtime.rects[rectOffset + 1] = (
+      runtime.cssHeight - rect.top - rect.height / 2
+    ) * scale
+    runtime.rects[rectOffset + 2] = rect.width / 2 * scale
+    runtime.rects[rectOffset + 3] = rect.height / 2 * scale
+    runtime.surfaceMaterials[rectOffset] = radius * scale
+    runtime.surfaceMaterials[rectOffset + 1] = depth
+    runtime.surfaceMaterials[rectOffset + 2] = startsNewGroup
+      ? 0
+      : Math.min(radius * 0.72, 18) * scale
+    runtime.surfaceMaterials[rectOffset + 3] = startsNewGroup ? 1 : 0
+
+    previousGroup = group
+  })
+
+  runtime.surfaceCount = visibleSurfaces.length
+  liquidGlassGeometryDirty = false
+}
+
+function drawLiquidGlass() {
+  const runtime = liquidGlassRuntime
+  if (!runtime?.textureReady || document.hidden) return
+
+  const {
+    gl,
+    program,
+    uniforms,
+    texture,
+    vertexArray,
+  } = runtime
+  const scale = runtime.renderScale
+  const lightX = liquidGlassLight.x * scale
+  const lightY = (runtime.cssHeight - liquidGlassLight.y) * scale
+  const pointerEnergy = liquidGlassReducedMotionQuery?.matches
+    ? 0
+    : Math.min(1, Math.max(0, liquidGlassLight.energy))
+
+  gl.clear(gl.COLOR_BUFFER_BIT)
+  gl.useProgram(program)
+  gl.bindVertexArray(vertexArray)
+  gl.activeTexture(gl.TEXTURE0)
+  gl.bindTexture(gl.TEXTURE_2D, texture)
+  gl.uniform1i(uniforms.wallpaper, 0)
+  gl.uniform2f(uniforms.resolution, gl.drawingBufferWidth, gl.drawingBufferHeight)
+  gl.uniform2f(uniforms.imageSize, runtime.imageWidth, runtime.imageHeight)
+  gl.uniform3f(uniforms.pointer, lightX, lightY, pointerEnergy)
+  gl.uniform1f(uniforms.pointerRadius, 25 * scale)
+  gl.uniform1f(uniforms.dpr, scale)
+  gl.uniform1f(uniforms.wallpaperZoom, 1.02)
+  gl.uniform1i(uniforms.surfaceCount, runtime.surfaceCount)
+  gl.uniform4fv(uniforms.rects, runtime.rects)
+  gl.uniform4fv(uniforms.surfaceMaterials, runtime.surfaceMaterials)
+  gl.drawArrays(gl.TRIANGLES, 0, 3)
+}
+
+function integrateLiquidGlassSpring(deltaTime) {
+  if (liquidGlassReducedMotionQuery?.matches) {
+    liquidGlassLight.x = window.innerWidth * 0.24
+    liquidGlassLight.y = 46
+    liquidGlassLight.targetX = liquidGlassLight.x
+    liquidGlassLight.targetY = liquidGlassLight.y
+    liquidGlassLight.velocityX = 0
+    liquidGlassLight.velocityY = 0
+    liquidGlassLight.energy = 0
+    liquidGlassLight.targetEnergy = 0
+    liquidGlassLight.velocityEnergy = 0
+    return false
+  }
+
+  const stiffness = 300
+  const damping = 22
+  const updateAxis = (value, target, velocity) => {
+    const acceleration = (target - value) * stiffness - velocity * damping
+    const nextVelocity = velocity + acceleration * deltaTime
+    const nextValue = value + nextVelocity * deltaTime
+    const settled = Math.abs(target - nextValue) < 0.04
+      && Math.abs(nextVelocity) < 0.04
+
+    return settled
+      ? { value: target, velocity: 0, moving: false }
+      : { value: nextValue, velocity: nextVelocity, moving: true }
+  }
+  const horizontal = updateAxis(
+    liquidGlassLight.x,
+    liquidGlassLight.targetX,
+    liquidGlassLight.velocityX,
+  )
+  const vertical = updateAxis(
+    liquidGlassLight.y,
+    liquidGlassLight.targetY,
+    liquidGlassLight.velocityY,
+  )
+  const energy = updateAxis(
+    liquidGlassLight.energy,
+    liquidGlassLight.targetEnergy,
+    liquidGlassLight.velocityEnergy,
+  )
+
+  liquidGlassLight.x = horizontal.value
+  liquidGlassLight.velocityX = horizontal.velocity
+  liquidGlassLight.y = vertical.value
+  liquidGlassLight.velocityY = vertical.velocity
+  liquidGlassLight.energy = energy.value
+  liquidGlassLight.velocityEnergy = energy.velocity
+
+  return horizontal.moving || vertical.moving || energy.moving
+}
+
+function renderLiquidGlassFrame(timestamp) {
+  liquidGlassAnimationFrame = undefined
+  if (!liquidGlassRuntime?.textureReady || document.hidden) return
+
+  resizeLiquidGlassCanvas()
+  const deltaTime = liquidGlassLastFrameTime
+    ? Math.min(1 / 30, Math.max(1 / 240, (timestamp - liquidGlassLastFrameTime) / 1000))
+    : 1 / 60
+  liquidGlassLastFrameTime = timestamp
+  const geometryAnimating = (
+    timestamp < liquidGlassAnimateUntil
+    || dragging.value
+  )
+
+  if (liquidGlassGeometryDirty || geometryAnimating) {
+    measureLiquidGlassSurfaces()
+  }
+
+  const lightMoving = integrateLiquidGlassSpring(deltaTime)
+  drawLiquidGlass()
+
+  if (lightMoving || geometryAnimating) {
+    liquidGlassAnimationFrame = window.requestAnimationFrame(
+      renderLiquidGlassFrame,
+    )
+  } else {
+    liquidGlassLastFrameTime = 0
+  }
+}
+
+function scheduleLiquidGlassRender({ geometry = false, duration = 0 } = {}) {
+  if (geometry) liquidGlassGeometryDirty = true
+  if (liquidGlassReducedMotionQuery?.matches) duration = 0
+  liquidGlassAnimateUntil = Math.max(
+    liquidGlassAnimateUntil,
+    performance.now() + duration,
+  )
+
+  if (
+    !liquidGlassRuntime?.textureReady
+    || liquidGlassAnimationFrame
+    || document.hidden
+  ) return
+
+  liquidGlassAnimationFrame = window.requestAnimationFrame(
+    renderLiquidGlassFrame,
+  )
+}
+
+function initializeLiquidGlass() {
+  destroyLiquidGlassRuntime()
+  if (shouldDisableLiquidGlass() || !liquidGlassCanvas.value) return
+
+  const canvas = liquidGlassCanvas.value
+  const gl = canvas.getContext('webgl2', {
+    alpha: true,
+    antialias: false,
+    depth: false,
+    stencil: false,
+    premultipliedAlpha: true,
+    preserveDrawingBuffer: false,
+    powerPreference: 'low-power',
+  })
+
+  if (!gl) return
+
+  try {
+    const program = createLiquidGlassProgram(gl)
+    const vertexArray = gl.createVertexArray()
+    const texture = gl.createTexture()
+
+    if (!vertexArray || !texture) {
+      gl.deleteProgram(program)
+      throw new Error('Unable to allocate Liquid Glass GPU resources')
+    }
+
+    const generation = liquidGlassGeneration
+    const image = new Image()
+    liquidGlassRuntime = {
+      gl,
+      program,
+      vertexArray,
+      texture,
+      image,
+      textureReady: false,
+      imageWidth: 1,
+      imageHeight: 1,
+      cssWidth: 1,
+      cssHeight: 1,
+      renderScale: 1,
+      surfaceCount: 0,
+      rects: new Float32Array(MAX_LIQUID_SURFACES * 4),
+      surfaceMaterials: new Float32Array(MAX_LIQUID_SURFACES * 4),
+      uniforms: {
+        wallpaper: gl.getUniformLocation(program, 'uWallpaper'),
+        resolution: gl.getUniformLocation(program, 'uResolution'),
+        imageSize: gl.getUniformLocation(program, 'uImageSize'),
+        pointer: gl.getUniformLocation(program, 'uPointer'),
+        pointerRadius: gl.getUniformLocation(program, 'uPointerRadius'),
+        dpr: gl.getUniformLocation(program, 'uDpr'),
+        wallpaperZoom: gl.getUniformLocation(program, 'uWallpaperZoom'),
+        surfaceCount: gl.getUniformLocation(program, 'uSurfaceCount'),
+        rects: gl.getUniformLocation(program, 'uRects[0]'),
+        surfaceMaterials: gl.getUniformLocation(program, 'uSurface[0]'),
+      },
+    }
+
+    gl.disable(gl.DEPTH_TEST)
+    gl.disable(gl.STENCIL_TEST)
+    gl.disable(gl.CULL_FACE)
+    gl.disable(gl.BLEND)
+    gl.clearColor(0, 0, 0, 0)
+    gl.bindVertexArray(vertexArray)
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array([0, 0, 0, 0]),
+    )
+
+    image.decoding = 'async'
+    image.onload = () => {
+      if (
+        generation !== liquidGlassGeneration
+        || !liquidGlassRuntime
+        || liquidGlassContextLost
+      ) return
+
+      gl.bindTexture(gl.TEXTURE_2D, texture)
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        image,
+      )
+      liquidGlassRuntime.imageWidth = image.naturalWidth
+      liquidGlassRuntime.imageHeight = image.naturalHeight
+      liquidGlassRuntime.textureReady = true
+      liquidGlassReady.value = true
+      liquidGlassGeometryDirty = true
+      resizeLiquidGlassCanvas()
+      refreshLiquidGlassSurfaceNodes()
+      liquidGlassLight.x = window.innerWidth * 0.24
+      liquidGlassLight.y = 46
+      liquidGlassLight.targetX = liquidGlassLight.x
+      liquidGlassLight.targetY = liquidGlassLight.y
+      scheduleLiquidGlassRender({ geometry: true })
+    }
+    image.onerror = () => {
+      if (generation === liquidGlassGeneration) {
+        destroyLiquidGlassRuntime()
+      }
+    }
+    image.src = wallpaper
+  } catch (error) {
+    console.warn('Liquid Glass renderer unavailable:', error)
+    destroyLiquidGlassRuntime()
+  }
+}
+
+function handleLiquidGlassPointerMove(event) {
+  if (
+    liquidGlassReducedMotionQuery?.matches
+    || event.pointerType === 'touch'
+    || !window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  ) return
+
+  const interactiveSurface = event.target instanceof Element
+    ? event.target.closest('[data-liquid-interactive]')
+    : null
+
+  if (!interactiveSurface) {
+    liquidGlassLight.targetX = window.innerWidth * 0.24
+    liquidGlassLight.targetY = 46
+    liquidGlassLight.targetEnergy = 0
+    scheduleLiquidGlassRender({ duration: 220 })
+    return
+  }
+
+  liquidGlassLight.targetX = event.clientX
+  liquidGlassLight.targetY = event.clientY
+  liquidGlassLight.targetEnergy = 0.82
+  scheduleLiquidGlassRender({ duration: 240 })
+}
+
+function handleLiquidGlassPointerLeave() {
+  liquidGlassLight.targetX = window.innerWidth * 0.24
+  liquidGlassLight.targetY = 46
+  liquidGlassLight.targetEnergy = 0
+  scheduleLiquidGlassRender({ duration: 240 })
+}
+
+function isLiquidGlassGeometryTransition(event) {
+  return event.target instanceof Element && event.target.matches(
+    '[data-liquid-surface], .launchpad-panel, .mac-window, .spotlight-panel',
+  )
+}
+
+function handleLiquidGlassTransitionRun(event) {
+  if (!isLiquidGlassGeometryTransition(event)) return
+  scheduleLiquidGlassRender({ geometry: true, duration: 300 })
+}
+
+function handleLiquidGlassTransitionEnd(event) {
+  if (!isLiquidGlassGeometryTransition(event)) return
+  scheduleLiquidGlassRender({ geometry: true })
+}
+
+function handleLiquidGlassVisibilityChange() {
+  if (document.hidden) {
+    cancelLiquidGlassFrame()
+    return
+  }
+
+  liquidGlassLastFrameTime = 0
+  scheduleLiquidGlassRender({ geometry: true })
+}
+
+function handleLiquidGlassPreferenceChange() {
+  if (shouldDisableLiquidGlass()) {
+    destroyLiquidGlassRuntime()
+    return
+  }
+
+  if (!liquidGlassRuntime) {
+    initializeLiquidGlass()
+    return
+  }
+
+  liquidGlassLight.targetEnergy = 0
+  scheduleLiquidGlassRender({ geometry: true })
+}
+
+function handleLiquidGlassContextLost(event) {
+  event.preventDefault()
+  liquidGlassContextLost = true
+  destroyLiquidGlassRuntime({ skipGlCleanup: true })
+}
+
+function handleLiquidGlassContextRestored() {
+  liquidGlassContextLost = false
+  initializeLiquidGlass()
+}
+
+function mountLiquidGlass() {
+  const root = portalDesktopRef.value
+  const canvas = liquidGlassCanvas.value
+  if (!root || !canvas) return
+
+  liquidGlassReducedMotionQuery = window.matchMedia(
+    '(prefers-reduced-motion: reduce)',
+  )
+  liquidGlassReducedTransparencyQuery = window.matchMedia(
+    '(prefers-reduced-transparency: reduce)',
+  )
+  liquidGlassForcedColorsQuery = window.matchMedia('(forced-colors: active)')
+
+  ;[
+    liquidGlassReducedMotionQuery,
+    liquidGlassReducedTransparencyQuery,
+    liquidGlassForcedColorsQuery,
+  ].forEach((query) => {
+    query.addEventListener('change', handleLiquidGlassPreferenceChange)
+  })
+
+  canvas.addEventListener('webglcontextlost', handleLiquidGlassContextLost)
+  canvas.addEventListener(
+    'webglcontextrestored',
+    handleLiquidGlassContextRestored,
+  )
+  root.addEventListener('transitionrun', handleLiquidGlassTransitionRun)
+  root.addEventListener('transitionend', handleLiquidGlassTransitionEnd)
+  document.addEventListener(
+    'visibilitychange',
+    handleLiquidGlassVisibilityChange,
+  )
+
+  liquidGlassResizeObserver = new ResizeObserver(() => {
+    scheduleLiquidGlassRender({ geometry: true })
+  })
+  liquidGlassResizeObserver.observe(root)
+  liquidGlassMutationObserver = new MutationObserver(() => {
+    refreshLiquidGlassSurfaceNodes()
+    scheduleLiquidGlassRender({ geometry: true, duration: 300 })
+  })
+  liquidGlassMutationObserver.observe(root, {
+    childList: true,
+    subtree: true,
+  })
+
+  refreshLiquidGlassSurfaceNodes()
+  initializeLiquidGlass()
+}
+
+function unmountLiquidGlass() {
+  const root = portalDesktopRef.value
+  const canvas = liquidGlassCanvas.value
+
+  liquidGlassResizeObserver?.disconnect()
+  liquidGlassMutationObserver?.disconnect()
+  liquidGlassResizeObserver = undefined
+  liquidGlassMutationObserver = undefined
+
+  ;[
+    liquidGlassReducedMotionQuery,
+    liquidGlassReducedTransparencyQuery,
+    liquidGlassForcedColorsQuery,
+  ].forEach((query) => {
+    query?.removeEventListener('change', handleLiquidGlassPreferenceChange)
+  })
+
+  root?.removeEventListener('transitionrun', handleLiquidGlassTransitionRun)
+  root?.removeEventListener('transitionend', handleLiquidGlassTransitionEnd)
+  canvas?.removeEventListener('webglcontextlost', handleLiquidGlassContextLost)
+  canvas?.removeEventListener(
+    'webglcontextrestored',
+    handleLiquidGlassContextRestored,
+  )
+  document.removeEventListener(
+    'visibilitychange',
+    handleLiquidGlassVisibilityChange,
+  )
+  liquidGlassSurfaceNodes = []
+  destroyLiquidGlassRuntime()
+}
+
 function updateCompactLayout() {
   compactLayout.value = window.matchMedia(
     '(max-width: 700px), (max-width: 950px) and (max-height: 600px) and (orientation: landscape)',
@@ -650,6 +1529,7 @@ async function openWindow(id) {
     return
   }
 
+  desktopFocused.value = true
   activeOverlay.value = null
   if (activeWindow.value === id && minimizedWindow.value === id) {
     await restoreMinimizedWindow()
@@ -689,7 +1569,23 @@ async function closeWindow() {
   windowMaximized.value = false
   windowPositioned.value = false
   windowBodyScrolled.value = false
+  desktopFocused.value = false
   await restorePreviousFocus()
+}
+
+async function handleDesktopPointerDown() {
+  if (activeOverlay.value) {
+    await closeWindow()
+    return
+  }
+
+  desktopFocused.value = false
+  liquidGlassLight.targetEnergy = 0
+  scheduleLiquidGlassRender({ duration: 220 })
+}
+
+function activateWindowSurface() {
+  desktopFocused.value = true
 }
 
 async function minimizeWindow() {
@@ -708,6 +1604,7 @@ async function minimizeWindow() {
 
 async function restoreMinimizedWindow() {
   if (!minimizedWindow.value) return
+  desktopFocused.value = true
   activeWindow.value = minimizedWindow.value
   minimizedWindow.value = null
   isMinimizing.value = false
@@ -720,6 +1617,7 @@ function toggleMaximizeWindow() {
   if (windowMaximized.value) {
     windowMaximized.value = false
     windowPos.value = { ...restoreWindowPos.value }
+    scheduleLiquidGlassRender({ geometry: true, duration: 240 })
     return
   }
 
@@ -730,6 +1628,7 @@ function toggleMaximizeWindow() {
     windowPositioned.value = true
   }
   windowMaximized.value = true
+  scheduleLiquidGlassRender({ geometry: true, duration: 240 })
 }
 
 function startWindowDrag(event) {
@@ -743,6 +1642,7 @@ function startWindowDrag(event) {
   const rect = windowRef.value?.getBoundingClientRect()
   if (!rect) return
 
+  desktopFocused.value = true
   cancelWindowDrag()
   windowPos.value = { x: rect.left, y: rect.top }
   windowPositioned.value = true
@@ -776,6 +1676,7 @@ function moveWindowDrag(event) {
     x: proposed.x - dragStart.originX,
     y: proposed.y - dragStart.originY,
   }
+  scheduleLiquidGlassRender({ geometry: true })
 }
 
 function endWindowDrag(event) {
@@ -796,6 +1697,7 @@ function endWindowDrag(event) {
   if (captureTarget?.hasPointerCapture(completedPointerId)) {
     captureTarget.releasePointerCapture(completedPointerId)
   }
+  scheduleLiquidGlassRender({ geometry: true })
 }
 
 function removeWindowDragListeners() {
@@ -823,6 +1725,7 @@ function cancelWindowDrag() {
 
 function handleViewportResize() {
   updateCompactLayout()
+  scheduleLiquidGlassRender({ geometry: true })
   if (window.innerWidth <= 900) resetDockMagnification()
   if (
     compactLayout.value
@@ -865,7 +1768,9 @@ function trapFocus(event, root) {
 }
 
 function handleDialogKeydown(event) {
-  trapFocus(event, event.currentTarget)
+  if (activeOverlay.value) {
+    trapFocus(event, event.currentTarget)
+  }
 }
 
 function handleWindowBodyScroll(event) {
@@ -936,10 +1841,12 @@ function handleDockPointerMove(event) {
   ) return
 
   window.cancelAnimationFrame(dockAnimationFrame)
+  window.clearTimeout(dockSettleTimer)
   const pointerX = event.clientX
   dockAnimationFrame = window.requestAnimationFrame(() => {
     const dock = dockRef.value
     if (!dock) return
+    dock.classList.remove('is-settling')
     const dockRect = dock.getBoundingClientRect()
 
     dock.querySelectorAll('.launcher-item').forEach((item) => {
@@ -965,11 +1872,19 @@ function handleDockPointerMove(event) {
 
 function resetDockMagnification() {
   window.cancelAnimationFrame(dockAnimationFrame)
-  dockRef.value?.querySelectorAll('.launcher-item').forEach((item) => {
+  const dock = dockRef.value
+  if (!dock) return
+
+  dock.classList.add('is-settling')
+  dock.querySelectorAll('.launcher-item').forEach((item) => {
     item.style.removeProperty('--dock-scale')
     item.style.removeProperty('--dock-shift')
     item.style.removeProperty('--dock-lift')
   })
+  window.clearTimeout(dockSettleTimer)
+  dockSettleTimer = window.setTimeout(() => {
+    dock.classList.remove('is-settling')
+  }, 260)
 }
 
 async function loadPortalData() {
@@ -1041,9 +1956,25 @@ watch(spotlightFlatLinks, (links) => {
   )
 })
 
+watch(
+  [
+    activeWindow,
+    activeOverlay,
+    minimizedWindow,
+    windowMaximized,
+    compactLayout,
+  ],
+  async () => {
+    await nextTick()
+    refreshLiquidGlassSurfaceNodes()
+    scheduleLiquidGlassRender({ geometry: true, duration: 300 })
+  },
+)
+
 onMounted(() => {
   loadPortalData()
   updateCompactLayout()
+  mountLiquidGlass()
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('resize', handleViewportResize)
   clockTimer = window.setInterval(() => {
@@ -1056,7 +1987,9 @@ onBeforeUnmount(() => {
   cancelWindowDrag()
   window.clearInterval(clockTimer)
   window.clearTimeout(minimizeTimer)
+  window.clearTimeout(dockSettleTimer)
   window.cancelAnimationFrame(dockAnimationFrame)
+  unmountLiquidGlass()
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('resize', handleViewportResize)
 })
@@ -1064,14 +1997,35 @@ onBeforeUnmount(() => {
 
 <template>
   <main
+    ref="portalDesktopRef"
     class="portal-desktop"
+    :class="{
+      'has-liquid-glass': liquidGlassReady,
+      'has-active-overlay': Boolean(activeOverlay),
+      'is-desktop-focused': desktopFocused,
+    }"
     :style="{ '--portal-wallpaper': `url(${wallpaper})` }"
-    @pointerdown.self="closeWindow"
+    @pointerdown.self="handleDesktopPointerDown"
+    @pointermove.passive="handleLiquidGlassPointerMove"
+    @pointerleave="handleLiquidGlassPointerLeave"
   >
     <div class="wallpaper" aria-hidden="true"></div>
+    <canvas
+      ref="liquidGlassCanvas"
+      class="liquid-glass-optics"
+      aria-hidden="true"
+    ></canvas>
     <div class="desktop-vignette" aria-hidden="true"></div>
 
-    <header class="portal-menu-bar" aria-label="Portal menu bar">
+    <header
+      class="portal-menu-bar"
+      aria-label="Portal menu bar"
+      data-liquid-surface
+      data-liquid-interactive
+      data-liquid-group="1"
+      data-liquid-radius="0"
+      data-liquid-depth="0.62"
+    >
       <div class="menu-left">
         <RouterLink to="/" class="menu-home-link" aria-label="Back to home">
           <img src="/favicon_liuyin.svg" alt="" class="menu-brand-icon">
@@ -1171,21 +2125,27 @@ onBeforeUnmount(() => {
             'is-maximized': windowMaximized,
             'is-dragging': dragging,
             'is-minimizing': isMinimizing,
+            'is-receded': activeOverlay || !desktopFocused,
           },
         ]"
         :style="windowStyle"
         :aria-label="activeWindowApp.title"
         role="dialog"
-        :aria-modal="activeOverlay ? 'false' : 'true'"
+        aria-modal="false"
         :aria-hidden="activeOverlay ? 'true' : undefined"
         :inert="Boolean(activeOverlay)"
+        data-liquid-surface
+        data-liquid-group="2"
+        data-liquid-radius="14"
+        data-liquid-depth="1.18"
         tabindex="-1"
-        @pointerdown.stop
+        @pointerdown.stop="activateWindowSurface"
         @keydown="handleDialogKeydown"
       >
         <div
           class="window-titlebar"
           :class="{ 'has-scrolled-divider': windowBodyScrolled }"
+          data-liquid-interactive
           @pointerdown="startWindowDrag"
           @lostpointercapture="endWindowDrag"
           @dblclick="toggleMaximizeWindow"
@@ -1282,6 +2242,11 @@ onBeforeUnmount(() => {
           aria-label="Spotlight"
           role="dialog"
           aria-modal="true"
+          data-liquid-surface
+          data-liquid-interactive
+          data-liquid-group="3"
+          data-liquid-radius="22"
+          data-liquid-depth="1.08"
           tabindex="-1"
           @pointerdown.stop
           @keydown="handleDialogKeydown"
@@ -1390,10 +2355,27 @@ onBeforeUnmount(() => {
           @click.self="closeWindow"
           @keydown="handleDialogKeydown"
         >
-          <button class="launchpad-close" type="button" aria-label="Close Launchpad" @click="closeWindow">
+          <button
+            class="launchpad-close"
+            type="button"
+            aria-label="Close Launchpad"
+            data-liquid-surface
+            data-liquid-interactive
+            data-liquid-group="4"
+            data-liquid-radius="999"
+            data-liquid-depth="0.8"
+            @click="closeWindow"
+          >
             ×
           </button>
-          <label class="launchpad-search">
+          <label
+            class="launchpad-search"
+            data-liquid-surface
+            data-liquid-interactive
+            data-liquid-group="4"
+            data-liquid-radius="999"
+            data-liquid-depth="0.82"
+          >
             <span class="spotlight-magnifier" aria-hidden="true"></span>
             <input
               ref="launchpadInput"
@@ -1446,6 +2428,11 @@ onBeforeUnmount(() => {
       ref="dockRef"
       class="bottom-launcher"
       aria-label="Portal Dock"
+      data-liquid-surface
+      data-liquid-interactive
+      data-liquid-group="5"
+      data-liquid-radius="24"
+      data-liquid-depth="1.28"
       tabindex="-1"
       @pointerdown.stop
       @pointermove="handleDockPointerMove"
@@ -1519,23 +2506,34 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .portal-desktop {
-  --portal-material-menu: rgba(30, 30, 34, 0.72);
-  --portal-material-window: rgba(36, 36, 40, 0.78);
-  --portal-material-dock: rgba(40, 40, 44, 0.45);
-  --portal-material-blur: saturate(180%) blur(24px);
-  --portal-hairline: rgba(255, 255, 255, 0.09);
+  --portal-material-menu: rgba(22, 27, 36, 0.56);
+  --portal-material-window: rgba(35, 36, 41, 0.72);
+  --portal-material-content: rgba(28, 29, 34, 0.78);
+  --portal-material-dock: rgba(32, 35, 43, 0.32);
+  --portal-material-blur: saturate(175%) blur(22px);
+  --portal-hairline: rgba(255, 255, 255, 0.13);
   --portal-stroke-outer: rgba(0, 0, 0, 0.35);
   --portal-text-primary: rgba(255, 255, 255, 0.92);
-  --portal-text-secondary: rgba(255, 255, 255, 0.62);
-  --portal-text-tertiary: rgba(255, 255, 255, 0.42);
+  --portal-text-secondary: rgba(255, 255, 255, 0.7);
+  --portal-text-tertiary: rgba(255, 255, 255, 0.52);
   --portal-text-accent: #0a84ff;
   --portal-shadow-window:
     0 0 0 0.5px var(--portal-stroke-outer),
-    0 22px 70px rgba(0, 0, 0, 0.38),
-    0 4px 18px rgba(0, 0, 0, 0.22);
-  --portal-radius-window: 10px;
-  --portal-radius-control: 7px;
+    0 34px 96px rgba(0, 0, 0, 0.38),
+    0 10px 30px rgba(0, 0, 0, 0.24);
+  --portal-radius-window: 14px;
+  --portal-radius-control: 9px;
   --portal-radius-icon: 22.5%;
+  --portal-spring-settle: linear(
+    0,
+    0.294 10%,
+    0.681 22%,
+    0.885 32%,
+    1.021 50%,
+    0.986 66%,
+    1.006 82%,
+    1 100%
+  );
   --portal-fw-regular: 400;
   --portal-fw-medium: 500;
   --portal-fw-semibold: 600;
@@ -1552,23 +2550,44 @@ onBeforeUnmount(() => {
 }
 
 .wallpaper,
-.desktop-vignette {
+.desktop-vignette,
+.liquid-glass-optics {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
 .wallpaper {
+  z-index: 0;
   background-image: var(--portal-wallpaper);
   background-size: cover;
   background-position: center;
   transform: scale(1.02);
 }
 
+.liquid-glass-optics {
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  contain: strict;
+  transition: opacity 180ms ease-out;
+}
+
+.has-liquid-glass .liquid-glass-optics {
+  opacity: 1;
+}
+
 .desktop-vignette {
+  z-index: 2;
   background:
-    linear-gradient(180deg, rgba(17, 17, 27, 0.38), rgba(17, 17, 27, 0.06) 42%, rgba(17, 17, 27, 0.46)),
-    radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.08), transparent 34rem);
+    linear-gradient(
+      180deg,
+      rgba(12, 17, 26, 0.2),
+      rgba(12, 17, 26, 0.015) 38%,
+      rgba(12, 17, 26, 0.22)
+    ),
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.055), transparent 38rem);
 }
 
 .portal-menu-bar {
@@ -2228,11 +3247,24 @@ onBeforeUnmount(() => {
   height: 26px;
   padding: 0 10px;
   color: var(--portal-text-primary);
-  background: var(--portal-material-menu);
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.015)),
+    var(--portal-material-menu);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.2),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.12),
+    0 1px 12px rgba(0, 0, 0, 0.12);
   -webkit-backdrop-filter: var(--portal-material-blur);
   backdrop-filter: var(--portal-material-blur);
+}
+
+.has-liquid-glass .portal-menu-bar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(6, 11, 18, 0.08)),
+    rgba(20, 26, 35, 0.26);
+  -webkit-backdrop-filter: saturate(155%) blur(13px);
+  backdrop-filter: saturate(155%) blur(13px);
 }
 
 .menu-left,
@@ -2244,6 +3276,7 @@ onBeforeUnmount(() => {
   width: 16px;
   height: 16px;
   border-radius: 4px;
+  filter: saturate(0.72) brightness(1.08);
 }
 
 .menu-home-link,
@@ -2259,7 +3292,7 @@ onBeforeUnmount(() => {
   color: var(--portal-text-primary);
   background: transparent;
   cursor: pointer;
-  transition: background-color 120ms ease;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .menu-home-link:hover,
@@ -2332,7 +3365,7 @@ onBeforeUnmount(() => {
 .menu-status-action,
 .menu-clock-action {
   cursor: pointer;
-  transition: background-color 120ms ease;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .menu-status-action:hover,
@@ -2374,15 +3407,27 @@ onBeforeUnmount(() => {
   max-height: min(690px, calc(100dvh - 118px));
   min-height: 24rem;
   overflow: hidden;
-  border: 0.5px solid var(--portal-hairline);
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--portal-radius-window);
   color: var(--portal-text-primary);
-  background: var(--portal-material-window);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.035)),
+    var(--portal-material-window);
   box-shadow: var(--portal-shadow-window);
   -webkit-backdrop-filter: var(--portal-material-blur);
   backdrop-filter: var(--portal-material-blur);
   transform-origin: center center;
-  will-change: transform, opacity;
+  transition:
+    filter 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity, filter;
+}
+
+.has-liquid-glass .mac-window {
+  background: rgba(29, 31, 37, 0.3);
+  -webkit-backdrop-filter: saturate(150%) blur(15px);
+  backdrop-filter: saturate(150%) blur(15px);
 }
 
 .mac-window.is-positioned {
@@ -2398,16 +3443,24 @@ onBeforeUnmount(() => {
   transition: none !important;
 }
 
+.mac-window.is-receded {
+  border-color: rgba(255, 255, 255, 0.09);
+  filter: saturate(0.68) brightness(0.82);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.28),
+    0 16px 48px rgba(0, 0, 0, 0.26);
+}
+
 .window-music {
   width: min(780px, calc(100vw - 48px));
 }
 
 .window-weather {
-  width: min(560px, calc(100vw - 48px));
+  width: min(620px, calc(100vw - 48px));
 }
 
 .window-calendar {
-  width: min(600px, calc(100vw - 48px));
+  width: min(620px, calc(100vw - 48px));
 }
 
 .window-todo {
@@ -2415,14 +3468,16 @@ onBeforeUnmount(() => {
 }
 
 .window-titlebar {
-  grid-template-columns: 72px minmax(0, 1fr) 72px;
-  min-height: 31px;
-  padding: 0 10px;
-  background: transparent;
+  grid-template-columns: 84px minmax(0, 1fr) 84px;
+  min-height: 37px;
+  padding: 0 13px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.008)),
+    rgba(12, 14, 20, 0.08);
   border-bottom: 0.5px solid transparent;
   cursor: grab;
   touch-action: none;
-  transition: border-color 120ms ease;
+  transition: border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .window-titlebar.has-scrolled-divider {
@@ -2442,6 +3497,7 @@ onBeforeUnmount(() => {
   width: 12px;
   height: 12px;
   overflow: hidden;
+  border: 0.5px solid rgba(0, 0, 0, 0.18);
   cursor: default;
 }
 
@@ -2457,37 +3513,73 @@ onBeforeUnmount(() => {
   background: #28c840;
 }
 
+.traffic-light::before,
 .traffic-light::after {
+  content: '';
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: rgba(55, 33, 30, 0.82);
-  font-family: Arial, sans-serif;
-  font-size: 10px;
-  font-weight: var(--portal-fw-semibold);
-  line-height: 12px;
+  top: 50%;
+  left: 50%;
+  display: block;
+  background: rgba(52, 31, 29, 0.82);
   opacity: 0;
-  transition: opacity 90ms ease;
+  transition: opacity 120ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.traffic-light.close::before,
+.traffic-light.close::after {
+  width: 7px;
+  height: 1px;
+  border-radius: 999px;
+}
+
+.traffic-light.close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 
 .traffic-light.close::after {
-  content: '×';
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.traffic-light.minimize::before {
+  width: 7px;
+  height: 1px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
 }
 
 .traffic-light.minimize::after {
-  content: '−';
-  padding-bottom: 2px;
+  display: none;
+}
+
+.traffic-light.zoom::before,
+.traffic-light.zoom::after {
+  width: 4px;
+  height: 4px;
+  background: transparent;
+  border-color: rgba(16, 65, 31, 0.86);
+  border-style: solid;
+}
+
+.traffic-light.zoom::before {
+  border-width: 1px 0 0 1px;
+  transform: translate(-3px, -3px);
 }
 
 .traffic-light.zoom::after {
-  content: '+';
-  color: rgba(18, 65, 33, 0.86);
+  border-width: 0 1px 1px 0;
+  transform: translate(-1px, -1px);
 }
 
+.traffic-lights:hover .traffic-light::before,
 .traffic-lights:hover .traffic-light::after,
+.traffic-light:focus-visible::before,
 .traffic-light:focus-visible::after {
   opacity: 1;
+}
+
+.mac-window.is-receded .traffic-light {
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .window-title {
@@ -2515,6 +3607,9 @@ onBeforeUnmount(() => {
 
 .window-body {
   padding: 14px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.025), rgba(0, 0, 0, 0.03)),
+    var(--portal-material-content);
   scrollbar-color: rgba(255, 255, 255, 0.26) transparent;
   scrollbar-width: thin;
 }
@@ -2545,7 +3640,9 @@ onBeforeUnmount(() => {
 }
 
 .window-music .window-body {
-  background: transparent;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.03)),
+    var(--portal-material-content);
 }
 
 .mac-app-content {
@@ -2614,7 +3711,7 @@ onBeforeUnmount(() => {
   background:
     radial-gradient(circle at 92% 4%, rgba(10, 132, 255, 0.13), transparent 260px),
     radial-gradient(circle at 10% 100%, rgba(94, 92, 230, 0.11), transparent 280px),
-    rgba(12, 14, 22, 0.12);
+    rgba(25, 27, 34, 0.84);
 }
 
 .todo-shell {
@@ -2926,22 +4023,30 @@ onBeforeUnmount(() => {
   color: #ff9f9a;
 }
 
-.window-shell-enter-active,
+.window-shell-enter-active {
+  transition:
+    opacity 210ms ease-out,
+    transform 240ms var(--portal-spring-settle),
+    filter 210ms ease-out;
+}
+
 .window-shell-leave-active {
   transition:
-    opacity 180ms cubic-bezier(0.32, 0.72, 0, 1),
-    transform 180ms cubic-bezier(0.32, 0.72, 0, 1);
+    opacity 160ms ease-in,
+    transform 160ms ease-in,
+    filter 150ms ease-in;
 }
 
 .mac-window.window-shell-enter-from,
 .mac-window.window-shell-leave-to {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.92);
+  filter: blur(5px) saturate(0.88);
+  transform: translate(-50%, -50%) translateY(8px) scale(0.975);
 }
 
 .mac-window.is-positioned.window-shell-enter-from,
 .mac-window.is-positioned.window-shell-leave-to {
-  transform: scale(0.92);
+  transform: translateY(8px) scale(0.975);
 }
 
 .mac-window.is-positioned.is-minimizing.window-shell-leave-to {
@@ -2957,9 +4062,15 @@ onBeforeUnmount(() => {
 
 .spotlight-overlay {
   z-index: 40;
-  background: rgba(5, 8, 18, 0.24);
-  -webkit-backdrop-filter: blur(7px) saturate(112%);
-  backdrop-filter: blur(7px) saturate(112%);
+  background:
+    radial-gradient(
+      ellipse 700px 500px at 50% 18%,
+      rgba(4, 9, 18, 0.32),
+      rgba(4, 9, 18, 0.08) 62%,
+      transparent 82%
+    );
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .spotlight-panel {
@@ -2968,49 +4079,56 @@ onBeforeUnmount(() => {
   left: 50%;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  width: min(720px, calc(100vw - 32px));
-  max-height: min(620px, calc(100dvh - 150px));
+  width: min(680px, calc(100vw - 32px));
+  max-height: min(590px, calc(100dvh - 150px));
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 18px;
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
   color: var(--portal-text-primary);
   background:
-    linear-gradient(145deg, rgba(56, 59, 76, 0.91), rgba(27, 29, 41, 0.87)),
-    rgba(31, 32, 40, 0.88);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(0, 0, 0, 0.04)),
+    rgba(31, 33, 39, 0.8);
   box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.18),
-    0 32px 92px rgba(0, 0, 0, 0.48),
-    0 8px 26px rgba(0, 0, 0, 0.3);
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.18),
+    0 34px 96px rgba(0, 0, 0, 0.42),
+    0 10px 28px rgba(0, 0, 0, 0.26);
   transform: translateX(-50%);
-  -webkit-backdrop-filter: saturate(180%) blur(34px);
-  backdrop-filter: saturate(180%) blur(34px);
+  -webkit-backdrop-filter: saturate(165%) blur(24px);
+  backdrop-filter: saturate(165%) blur(24px);
+}
+
+.has-liquid-glass .spotlight-panel {
+  background: rgba(28, 31, 38, 0.38);
+  -webkit-backdrop-filter: saturate(150%) blur(16px);
+  backdrop-filter: saturate(150%) blur(16px);
 }
 
 .spotlight-search {
   position: relative;
-  min-height: 72px;
-  padding: 0 20px;
+  min-height: 60px;
+  padding: 0 18px;
   border: 0;
   border-radius: 0;
   border-bottom: 0.5px solid var(--portal-hairline);
-  background:
-    radial-gradient(circle at 6% 0%, rgba(100, 210, 255, 0.09), transparent 180px),
-    rgba(0, 0, 0, 0.12);
+  background: rgba(5, 8, 14, 0.13);
   box-shadow: none;
 }
 
 .spotlight-search::after {
   content: '';
   position: absolute;
-  right: 20px;
+  right: 18px;
   bottom: -0.5px;
-  left: 20px;
-  height: 2px;
+  left: 18px;
+  height: 1.5px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #0a84ff, #5e5ce6);
+  background: #0a84ff;
   opacity: 0;
   transform: scaleX(0.92);
-  transition: opacity 140ms ease, transform 140ms ease;
+  transition:
+    opacity 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .spotlight-search:focus-within::after {
@@ -3028,7 +4146,7 @@ onBeforeUnmount(() => {
 
 .spotlight-input {
   color: var(--portal-text-primary);
-  font-size: clamp(20px, 3vw, 24px);
+  font-size: clamp(19px, 3vw, 22px);
   font-weight: var(--portal-fw-regular);
 }
 
@@ -3038,12 +4156,12 @@ onBeforeUnmount(() => {
 
 .spotlight-results {
   min-height: 0;
-  max-height: 466px;
+  max-height: 448px;
   padding: 6px 7px 10px;
   overflow-y: auto;
   border: 0;
   border-radius: 0;
-  background: transparent;
+  background: rgba(18, 20, 25, 0.62);
   box-shadow: none;
   overscroll-behavior: contain;
 }
@@ -3070,8 +4188,8 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr) auto;
   width: 100%;
-  min-height: 56px;
-  padding: 7px 10px;
+  min-height: 51px;
+  padding: 6px 10px;
   border: 0;
   border-radius: 10px;
   color: var(--portal-text-primary);
@@ -3081,9 +4199,9 @@ onBeforeUnmount(() => {
   cursor: pointer;
   box-shadow: none;
   transition:
-    background-color 120ms ease,
-    box-shadow 120ms ease,
-    transform 120ms ease;
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .spotlight-result:hover,
@@ -3092,11 +4210,10 @@ onBeforeUnmount(() => {
 }
 
 .spotlight-result.is-selected {
-  background:
-    linear-gradient(90deg, rgba(10, 132, 255, 0.55), rgba(94, 92, 230, 0.34));
+  background: rgba(10, 132, 255, 0.68);
   box-shadow:
-    inset 0 0 0 0.5px rgba(174, 219, 255, 0.24),
-    0 4px 14px rgba(0, 70, 160, 0.13);
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
+    0 3px 12px rgba(0, 74, 155, 0.18);
 }
 
 .spotlight-result-icon {
@@ -3104,11 +4221,11 @@ onBeforeUnmount(() => {
   width: 30px;
   height: 30px;
   place-items: center;
-  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  border: 0;
   border-radius: 9px;
   color: var(--portal-text-secondary);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.085);
+  box-shadow: none;
 }
 
 .spotlight-result.is-selected .spotlight-result-icon {
@@ -3145,11 +4262,11 @@ onBeforeUnmount(() => {
 .spotlight-result-category {
   max-width: 120px;
   overflow: hidden;
-  padding: 3px 7px;
-  border: 0.5px solid rgba(255, 255, 255, 0.09);
-  border-radius: 999px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   color: var(--portal-text-secondary);
-  background: rgba(0, 0, 0, 0.12);
+  background: transparent;
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3168,9 +4285,8 @@ onBeforeUnmount(() => {
 }
 
 .spotlight-result.is-selected .spotlight-result-category {
-  border-color: rgba(255, 255, 255, 0.16);
   color: rgba(255, 255, 255, 0.82);
-  background: rgba(0, 0, 0, 0.12);
+  background: transparent;
 }
 
 .spotlight-result.is-selected .spotlight-result-open {
@@ -3190,7 +4306,7 @@ onBeforeUnmount(() => {
   padding: 0 14px;
   border-top: 0.5px solid var(--portal-hairline);
   color: var(--portal-text-tertiary);
-  background: rgba(0, 0, 0, 0.14);
+  background: rgba(14, 16, 21, 0.72);
   font-size: 11px;
 }
 
@@ -3216,14 +4332,24 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
-.spotlight-shell-enter-active,
-.spotlight-shell-leave-active {
-  transition: opacity 160ms ease;
+.spotlight-shell-enter-active {
+  transition: opacity 190ms ease-out;
 }
 
-.spotlight-shell-enter-active .spotlight-panel,
+.spotlight-shell-leave-active {
+  transition: opacity 150ms ease-in;
+}
+
+.spotlight-shell-enter-active .spotlight-panel {
+  transition:
+    transform 240ms var(--portal-spring-settle),
+    filter 200ms ease-out;
+}
+
 .spotlight-shell-leave-active .spotlight-panel {
-  transition: transform 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition:
+    transform 150ms ease-in,
+    filter 140ms ease-in;
 }
 
 .spotlight-shell-enter-from,
@@ -3233,16 +4359,17 @@ onBeforeUnmount(() => {
 
 .spotlight-shell-enter-from .spotlight-panel,
 .spotlight-shell-leave-to .spotlight-panel {
-  transform: translateX(-50%) scale(0.96);
+  filter: blur(5px);
+  transform: translateX(-50%) translateY(7px) scale(0.975);
 }
 
 .launchpad-overlay {
   z-index: 34;
   overflow: hidden;
   color: var(--portal-text-primary);
-  background: rgba(12, 12, 16, 0.34);
-  -webkit-backdrop-filter: blur(36px) brightness(0.62) saturate(135%);
-  backdrop-filter: blur(36px) brightness(0.62) saturate(135%);
+  background: rgba(9, 12, 18, 0.22);
+  -webkit-backdrop-filter: blur(24px) brightness(0.76) saturate(130%);
+  backdrop-filter: blur(24px) brightness(0.76) saturate(130%);
 }
 
 .launchpad-panel {
@@ -3257,14 +4384,16 @@ onBeforeUnmount(() => {
   top: 38px;
   right: 24px;
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   place-items: center;
-  border: 0.5px solid var(--portal-hairline);
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
   border-radius: 50%;
   color: var(--portal-text-secondary);
-  background: rgba(0, 0, 0, 0.24);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.015)),
+    rgba(22, 25, 31, 0.38);
   font: inherit;
   font-size: 20px;
   cursor: pointer;
@@ -3273,15 +4402,27 @@ onBeforeUnmount(() => {
 .launchpad-search {
   display: grid;
   grid-template-columns: auto 1fr;
-  width: min(280px, 72vw);
-  min-height: 32px;
+  width: min(300px, 72vw);
+  min-height: 36px;
   align-items: center;
   gap: 8px;
   margin: 0 auto 38px;
   padding: 0 10px;
-  border: 0.5px solid var(--portal-hairline);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.25);
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), transparent),
+    rgba(18, 21, 27, 0.38);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.16),
+    0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.has-liquid-glass .launchpad-search,
+.has-liquid-glass .launchpad-close {
+  background: rgba(20, 24, 31, 0.16);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  backdrop-filter: saturate(160%) blur(12px);
 }
 
 .launchpad-search .spotlight-magnifier {
@@ -3307,6 +4448,19 @@ onBeforeUnmount(() => {
   color: var(--portal-text-tertiary);
 }
 
+.launchpad-search:focus-within {
+  border-color: rgba(10, 132, 255, 0.82);
+  box-shadow:
+    0 0 0 2px rgba(10, 132, 255, 0.7),
+    0 0 0 4px rgba(255, 255, 255, 0.14),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.16),
+    0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.launchpad-search input:focus-visible {
+  outline: none;
+}
+
 .launchpad-groups {
   display: grid;
   gap: 34px;
@@ -3327,8 +4481,8 @@ onBeforeUnmount(() => {
 }
 
 .launchpad-grid {
-  grid-template-columns: repeat(9, minmax(0, 1fr));
-  gap: 28px 18px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 30px 20px;
 }
 
 .launchpad-tile {
@@ -3338,7 +4492,7 @@ onBeforeUnmount(() => {
   border-radius: 10px;
   color: var(--portal-text-primary);
   background: transparent;
-  transition: transform 160ms ease;
+  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .launchpad-tile:hover,
@@ -3348,8 +4502,8 @@ onBeforeUnmount(() => {
 }
 
 .launchpad-tile img {
-  width: 68px;
-  height: 68px;
+  width: 72px;
+  height: 72px;
   border-radius: var(--portal-radius-icon);
   object-fit: cover;
   background: rgba(255, 255, 255, 0.08);
@@ -3360,6 +4514,7 @@ onBeforeUnmount(() => {
   color: var(--portal-text-primary);
   font-size: 12px;
   font-weight: var(--portal-fw-regular);
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.48);
 }
 
 .launchpad-empty {
@@ -3368,14 +4523,24 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-.launchpad-shell-enter-active,
-.launchpad-shell-leave-active {
-  transition: opacity 180ms ease;
+.launchpad-shell-enter-active {
+  transition: opacity 210ms ease-out;
 }
 
-.launchpad-shell-enter-active .launchpad-panel,
+.launchpad-shell-leave-active {
+  transition: opacity 160ms ease-in;
+}
+
+.launchpad-shell-enter-active .launchpad-panel {
+  transition:
+    transform 240ms var(--portal-spring-settle),
+    filter 210ms ease-out;
+}
+
 .launchpad-shell-leave-active .launchpad-panel {
-  transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition:
+    transform 160ms ease-in,
+    filter 150ms ease-in;
 }
 
 .launchpad-shell-enter-from,
@@ -3385,7 +4550,8 @@ onBeforeUnmount(() => {
 
 .launchpad-shell-enter-from .launchpad-panel,
 .launchpad-shell-leave-to .launchpad-panel {
-  transform: scale(1.08);
+  filter: blur(4px);
+  transform: scale(0.985);
 }
 
 .bottom-launcher {
@@ -3394,14 +4560,25 @@ onBeforeUnmount(() => {
   min-height: 64px;
   padding: 7px 9px 5px;
   overflow: visible;
-  border: 0.5px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  background: var(--portal-material-dock);
+  border: 0.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 24px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.012)),
+    var(--portal-material-dock);
   box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.18),
-    0 16px 46px rgba(0, 0, 0, 0.28);
-  -webkit-backdrop-filter: saturate(180%) blur(30px);
-  backdrop-filter: saturate(180%) blur(30px);
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.32),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.22),
+    0 18px 50px rgba(0, 0, 0, 0.26);
+  -webkit-backdrop-filter: saturate(175%) blur(24px);
+  backdrop-filter: saturate(175%) blur(24px);
+}
+
+.has-liquid-glass .bottom-launcher {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), transparent),
+    rgba(26, 31, 40, 0.11);
+  -webkit-backdrop-filter: saturate(155%) blur(13px);
+  backdrop-filter: saturate(155%) blur(13px);
 }
 
 .launcher-item {
@@ -3418,8 +4595,12 @@ onBeforeUnmount(() => {
   transform:
     translateX(var(--dock-shift))
     translateY(var(--dock-lift));
-  transition: transform 90ms linear;
+  transition: none;
   will-change: transform;
+}
+
+.bottom-launcher.is-settling .launcher-item {
+  transition: transform 240ms var(--portal-spring-settle);
 }
 
 .launcher-item:hover,
@@ -3438,8 +4619,12 @@ onBeforeUnmount(() => {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.27);
   transform: scale(var(--dock-scale));
   transform-origin: center bottom;
-  transition: transform 90ms linear;
+  transition: none;
   will-change: transform;
+}
+
+.bottom-launcher.is-settling .launcher-item img {
+  transition: transform 240ms var(--portal-spring-settle);
 }
 
 .launcher-tooltip {
@@ -3453,14 +4638,16 @@ onBeforeUnmount(() => {
   border: 0.5px solid var(--portal-hairline);
   border-radius: 6px;
   color: var(--portal-text-primary);
-  background: rgba(36, 36, 40, 0.86);
+  background: rgba(33, 35, 41, 0.78);
   font-size: 12px;
   font-weight: var(--portal-fw-regular);
   line-height: 1.2;
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 5px);
-  transition: opacity 120ms ease, transform 120ms ease;
+  transition:
+    opacity 120ms ease-in,
+    transform 120ms ease-in;
   white-space: nowrap;
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
@@ -3475,7 +4662,7 @@ onBeforeUnmount(() => {
   height: 7px;
   border-right: 0.5px solid var(--portal-hairline);
   border-bottom: 0.5px solid var(--portal-hairline);
-  background: rgba(36, 36, 40, 0.86);
+  background: rgba(33, 35, 41, 0.78);
   transform: translate(-50%, -4px) rotate(45deg);
 }
 
@@ -3483,6 +4670,7 @@ onBeforeUnmount(() => {
 .launcher-item:focus-visible .launcher-tooltip {
   opacity: 1;
   transform: translate(-50%, 0);
+  transition-timing-function: ease-out;
 }
 
 .launcher-item.is-running::after {
@@ -3504,7 +4692,8 @@ onBeforeUnmount(() => {
 .launcher-divider {
   height: 48px;
   margin: 0 3px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.18);
 }
 
 .minimized-window-preview img {
@@ -3524,13 +4713,15 @@ onBeforeUnmount(() => {
   .traffic-light,
   .spotlight-result,
   .launchpad-close,
-  .launchpad-search input,
   .launchpad-tile,
-  .launcher-item,
-  .mac-window
+  .launcher-item
 ):focus-visible {
   outline: 2px solid var(--portal-text-accent);
   outline-offset: 2px;
+}
+
+.mac-window:focus {
+  outline: none;
 }
 
 @media (max-width: 1100px) and (min-width: 701px) {
@@ -3605,7 +4796,7 @@ onBeforeUnmount(() => {
   .mac-window,
   .mac-window.is-positioned,
   .mac-window.is-maximized {
-    top: calc(44px + env(safe-area-inset-top) + 6px) !important;
+    top: calc(44px + env(safe-area-inset-top) + 14px) !important;
     right: 8px !important;
     bottom: calc(66px + max(8px, env(safe-area-inset-bottom))) !important;
     left: 8px !important;
@@ -3639,17 +4830,26 @@ onBeforeUnmount(() => {
     content: '';
     position: absolute;
     inset: 8px;
+    width: auto;
+    height: auto;
     border-radius: 50%;
     background: #ff5f57;
+    opacity: 1;
+    transform: none;
   }
 
   .traffic-light.close::after {
-    color: rgba(55, 33, 30, 0.82);
-    line-height: 28px;
+    display: none;
   }
 
   .window-body {
     padding: 10px;
+  }
+
+  .weather-shell :deep(.weather-content) {
+    justify-content: flex-start;
+    padding-top: 22px;
+    box-sizing: border-box;
   }
 
   .spotlight-overlay {
@@ -3837,7 +5037,123 @@ onBeforeUnmount(() => {
   }
 }
 
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .portal-menu-bar {
+    background: rgba(34, 38, 46, 0.96);
+  }
+
+  .mac-window,
+  .spotlight-panel {
+    background: rgba(39, 41, 48, 0.98);
+  }
+
+  .window-body,
+  .spotlight-results,
+  .spotlight-footer {
+    background: rgba(26, 28, 34, 0.98);
+  }
+
+  .bottom-launcher,
+  .launchpad-search,
+  .launchpad-close,
+  .launcher-tooltip,
+  .launcher-tooltip::after {
+    background: rgba(45, 48, 56, 0.96);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .portal-desktop {
+    --portal-hairline: rgba(255, 255, 255, 0.34);
+    --portal-text-primary: rgba(255, 255, 255, 1);
+    --portal-text-secondary: rgba(255, 255, 255, 0.88);
+    --portal-text-tertiary: rgba(255, 255, 255, 0.74);
+  }
+
+  .portal-menu-bar,
+  .mac-window,
+  .spotlight-panel,
+  .bottom-launcher,
+  .launchpad-search,
+  .launchpad-close {
+    border-color: rgba(255, 255, 255, 0.42);
+  }
+
+  .window-body,
+  .spotlight-results,
+  .spotlight-footer {
+    background-color: rgba(20, 22, 27, 0.9);
+  }
+
+  .portal-desktop :is(
+    .menu-home-link,
+    .menu-glyph-button,
+    .menu-command,
+    .menu-status-action,
+    .menu-clock-action,
+    .traffic-light,
+    .spotlight-result,
+    .launchpad-close,
+    .launchpad-search input,
+    .launchpad-tile,
+    .launcher-item
+  ):focus-visible {
+    outline-width: 3px;
+    outline-offset: 2px;
+  }
+}
+
+@media (forced-colors: active) {
+  .liquid-glass-optics {
+    display: none;
+  }
+
+  .portal-desktop,
+  .portal-menu-bar,
+  .mac-window,
+  .window-titlebar,
+  .window-body,
+  .spotlight-overlay,
+  .spotlight-panel,
+  .spotlight-search,
+  .spotlight-results,
+  .spotlight-footer,
+  .launchpad-overlay,
+  .launchpad-search,
+  .launchpad-close,
+  .bottom-launcher,
+  .launcher-tooltip,
+  .launcher-tooltip::after {
+    color: CanvasText;
+    border-color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+    filter: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .portal-desktop :is(
+    button,
+    a,
+    input,
+    [tabindex]
+  ):focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  .spotlight-result.is-selected {
+    color: HighlightText;
+    background: Highlight;
+  }
+}
+
 @media (prefers-reduced-transparency: reduce) {
+  .liquid-glass-optics {
+    display: none;
+  }
+
   .portal-menu-bar,
   .mac-window,
   .spotlight-panel,
@@ -3856,6 +5172,12 @@ onBeforeUnmount(() => {
   .mac-window,
   .spotlight-panel {
     background: rgb(43, 43, 47);
+  }
+
+  .window-body,
+  .spotlight-results,
+  .spotlight-footer {
+    background: rgb(31, 32, 37);
   }
 
   .spotlight-overlay {
@@ -3882,6 +5204,7 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .liquid-glass-optics,
   .window-shell-enter-active,
   .window-shell-leave-active,
   .spotlight-shell-enter-active,
