@@ -271,68 +271,92 @@ const liquidWebGLReady = ref(false)
 const liquidMaterialPresets = Object.freeze({
   strip: {
     radius: 0,
-    bevel: 7,
-    refraction: 4,
-    dispersion: 0.32,
-    tint: 0.055,
-    highlight: 0.48,
+    bevel: 6,
+    refraction: 3.2,
+    dispersion: 0.16,
+    tint: 0.045,
+    highlight: 0.44,
     opacity: 0.92,
     interaction: 0.08,
+    ior: 1.22,
+    normalStrength: 0.82,
+    shininess: 76,
+    adaptivity: 0.34,
     tintColor: [0.055, 0.105, 0.17],
   },
   window: {
     radius: 14,
-    bevel: 19,
-    refraction: 14,
-    dispersion: 0.86,
-    tint: 0.105,
-    highlight: 0.76,
+    bevel: 16,
+    refraction: 9.5,
+    dispersion: 0.38,
+    tint: 0.082,
+    highlight: 0.7,
     opacity: 0.97,
-    interaction: 0.26,
+    interaction: 0.16,
+    ior: 1.34,
+    normalStrength: 1.06,
+    shininess: 72,
+    adaptivity: 0.76,
     tintColor: [0.035, 0.065, 0.105],
   },
   panel: {
     radius: 22,
-    bevel: 20,
-    refraction: 13,
-    dispersion: 0.78,
-    tint: 0.115,
-    highlight: 0.72,
+    bevel: 18,
+    refraction: 10.5,
+    dispersion: 0.42,
+    tint: 0.09,
+    highlight: 0.68,
     opacity: 0.97,
-    interaction: 0.28,
+    interaction: 0.2,
+    ior: 1.36,
+    normalStrength: 1.12,
+    shininess: 66,
+    adaptivity: 0.86,
     tintColor: [0.035, 0.06, 0.1],
   },
   dock: {
     radius: 20,
-    bevel: 17,
-    refraction: 18,
-    dispersion: 1.12,
-    tint: 0.055,
-    highlight: 0.92,
+    bevel: 15,
+    refraction: 14,
+    dispersion: 0.62,
+    tint: 0.048,
+    highlight: 0.88,
     opacity: 0.98,
     interaction: 0.78,
+    ior: 1.48,
+    normalStrength: 1.38,
+    shininess: 92,
+    adaptivity: 0.48,
     tintColor: [0.045, 0.075, 0.12],
   },
   search: {
     radius: 999,
-    bevel: 12,
+    bevel: 10,
     refraction: 10,
-    dispersion: 0.62,
-    tint: 0.085,
-    highlight: 0.76,
+    dispersion: 0.46,
+    tint: 0.065,
+    highlight: 0.74,
     opacity: 0.96,
     interaction: 0.52,
+    ior: 1.44,
+    normalStrength: 1.28,
+    shininess: 86,
+    adaptivity: 0.56,
     tintColor: [0.045, 0.075, 0.12],
   },
   circle: {
     radius: 999,
-    bevel: 10,
+    bevel: 9,
     refraction: 11,
-    dispersion: 0.68,
-    tint: 0.06,
-    highlight: 0.82,
+    dispersion: 0.55,
+    tint: 0.05,
+    highlight: 0.8,
     opacity: 0.97,
     interaction: 0.6,
+    ior: 1.5,
+    normalStrength: 1.44,
+    shininess: 96,
+    adaptivity: 0.5,
     tintColor: [0.045, 0.075, 0.12],
   },
 })
@@ -367,8 +391,10 @@ uniform vec4 uRect;
 uniform vec2 uLight;
 uniform vec4 uShape;
 uniform vec4 uMaterial;
+uniform vec4 uOptics;
 uniform vec3 uTintColor;
 uniform float uBrightness;
+uniform float uPixelScale;
 
 in vec2 vLocal;
 in vec2 vScreen;
@@ -386,23 +412,43 @@ vec2 safeNormalize(vec2 value) {
   return value / max(length(value), 0.0001);
 }
 
-vec2 roundedBoxNormal(vec2 point, vec2 halfSize, float radius) {
-  vec2 offset = abs(point) - halfSize + vec2(radius);
-  vec2 outside = max(offset, 0.0);
-
-  if (length(outside) > 0.0001) {
-    return safeNormalize(outside) * sign(point);
-  }
-
-  return offset.x > offset.y
-    ? vec2(sign(point.x), 0.0)
-    : vec2(0.0, sign(point.y));
-}
-
 vec2 wallpaperUv(vec2 screenPosition) {
   vec2 uv = (screenPosition - uWallpaperRect.xy) / uWallpaperRect.zw;
   uv = clamp(uv, vec2(0.001), vec2(0.999));
   return vec2(uv.x, 1.0 - uv.y);
+}
+
+vec3 srgbToLinear(vec3 color) {
+  vec3 safeColor = clamp(color, vec3(0.0), vec3(1.0));
+  vec3 low = safeColor / 12.92;
+  vec3 high = pow(
+    (safeColor + 0.055) / 1.055,
+    vec3(2.4)
+  );
+  return mix(
+    low,
+    high,
+    step(vec3(0.04045), safeColor)
+  );
+}
+
+vec3 linearToSrgb(vec3 color) {
+  vec3 safeColor = clamp(color, vec3(0.0), vec3(1.0));
+  vec3 low = safeColor * 12.92;
+  vec3 high = 1.055 * pow(safeColor, vec3(1.0 / 2.4)) - 0.055;
+  return mix(
+    low,
+    high,
+    step(vec3(0.0031308), safeColor)
+  );
+}
+
+float linearLuminance(vec3 color) {
+  return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+vec3 sampleWallpaper(vec2 screenPosition) {
+  return texture(uWallpaper, wallpaperUv(screenPosition)).rgb;
 }
 
 vec3 sampleRefractedWallpaper(vec2 screenPosition, vec2 axis, float dispersion) {
@@ -417,107 +463,266 @@ vec3 sampleRefractedWallpaper(vec2 screenPosition, vec2 axis, float dispersion) 
   );
 }
 
+float glassHeight(
+  vec2 point,
+  vec2 halfSize,
+  float radius,
+  float bevel,
+  float zRadius
+) {
+  float inside = max(
+    -roundedBoxDistance(point, halfSize, radius),
+    0.0
+  );
+  float depth = min(inside, bevel);
+  return sqrt(max(depth * (2.0 * zRadius - depth), 0.0));
+}
+
+vec3 glassNormal(
+  vec2 point,
+  vec2 halfSize,
+  float radius,
+  float bevel,
+  float zRadius,
+  float strength
+) {
+  float epsilon = 1.25 * uPixelScale;
+  float leftHeight = glassHeight(
+    point - vec2(epsilon, 0.0),
+    halfSize,
+    radius,
+    bevel,
+    zRadius
+  );
+  float rightHeight = glassHeight(
+    point + vec2(epsilon, 0.0),
+    halfSize,
+    radius,
+    bevel,
+    zRadius
+  );
+  float topHeight = glassHeight(
+    point - vec2(0.0, epsilon),
+    halfSize,
+    radius,
+    bevel,
+    zRadius
+  );
+  float bottomHeight = glassHeight(
+    point + vec2(0.0, epsilon),
+    halfSize,
+    radius,
+    bevel,
+    zRadius
+  );
+  vec2 gradient = vec2(
+    rightHeight - leftHeight,
+    bottomHeight - topHeight
+  ) / (2.0 * epsilon);
+
+  return normalize(vec3(-gradient * strength, 1.0));
+}
+
 void main() {
   vec2 halfSize = uRect.zw * 0.5;
   float radius = min(uShape.x, min(halfSize.x, halfSize.y));
   vec2 centered = vLocal - halfSize;
   float distanceToShape = roundedBoxDistance(centered, halfSize, radius);
-  float antialias = max(fwidth(distanceToShape), 0.72);
+  float antialias = max(fwidth(distanceToShape), 0.55);
   float mask = 1.0 - smoothstep(-antialias, antialias, distanceToShape);
 
   float insideDistance = max(-distanceToShape, 0.0);
-  float edge = pow(
-    1.0 - smoothstep(0.0, max(uShape.y, 1.0), insideDistance),
-    0.72
+  float logicalMinSize = min(uRect.z, uRect.w) / uPixelScale;
+  float sizeFactor = smoothstep(
+    72.0,
+    520.0,
+    logicalMinSize
   );
-  vec2 normal2d = roundedBoxNormal(centered, halfSize, radius);
-  float curvature = edge * edge;
-  vec3 normal = normalize(vec3(
-    normal2d * mix(0.0, 1.72, curvature),
-    mix(1.0, 0.3, curvature)
-  ));
+  float materialization = smoothstep(0.02, 0.96, uMaterial.z);
+  float thicknessScale = mix(0.92, 1.1, sizeFactor);
+  float bevel = max(
+    uShape.y
+      * thicknessScale
+      * mix(0.62, 1.0, materialization),
+    1.0
+  );
+  float zRadius = bevel;
+  float edge = pow(
+    1.0 - smoothstep(0.0, bevel, insideDistance),
+    0.82
+  );
+  vec3 normal = glassNormal(
+    centered,
+    halfSize,
+    radius,
+    bevel,
+    zRadius,
+    uOptics.y
+  );
 
   vec2 pointerVector = vScreen - uLight;
-  float pointerDistance = length(pointerVector);
+  float pointerDistance = length(pointerVector) / uPixelScale;
   float pointerLens = (
     1.0 - smoothstep(12.0, 112.0, pointerDistance)
   ) * uMaterial.w;
 
-  vec2 displacement = -normal2d * uShape.z * edge;
+  vec2 pointerDirection = safeNormalize(pointerVector);
+  normal = normalize(vec3(
+    normal.xy + pointerDirection * pointerLens * edge * 0.08,
+    normal.z
+  ));
+
+  vec2 displacement = -normal.xy
+    * uShape.z
+    * edge
+    * thicknessScale
+    * materialization;
   displacement += safeNormalize(pointerVector)
     * pointerLens
     * uShape.z
-    * 0.2;
+    * edge
+    * 0.09
+    * materialization;
 
   vec2 dispersionAxis = safeNormalize(
-    displacement + normal2d * 0.001
+    normal.xy + displacement * 0.001
   );
-  vec3 refracted = sampleRefractedWallpaper(
+  vec3 refractedSrgb = sampleRefractedWallpaper(
     vScreen + displacement,
     dispersionAxis,
-    uShape.w * edge
+    uShape.w * edge * materialization
   );
+  vec3 refracted = srgbToLinear(refractedSrgb);
 
-  float sourceLuminance = dot(
-    refracted,
-    vec3(0.2126, 0.7152, 0.0722)
-  );
+  float statisticRadius = mix(3.0, 6.0, sizeFactor) * uPixelScale;
+  vec2 sampleCenter = vScreen + displacement;
+  float luminanceLeft = linearLuminance(srgbToLinear(sampleWallpaper(
+    sampleCenter - vec2(statisticRadius, 0.0)
+  )));
+  float luminanceRight = linearLuminance(srgbToLinear(sampleWallpaper(
+    sampleCenter + vec2(statisticRadius, 0.0)
+  )));
+  float luminanceTop = linearLuminance(srgbToLinear(sampleWallpaper(
+    sampleCenter - vec2(0.0, statisticRadius)
+  )));
+  float luminanceBottom = linearLuminance(srgbToLinear(sampleWallpaper(
+    sampleCenter + vec2(0.0, statisticRadius)
+  )));
+  float localMean = (
+    luminanceLeft
+    + luminanceRight
+    + luminanceTop
+    + luminanceBottom
+  ) * 0.25;
+  float localContrast = (
+    abs(luminanceLeft - localMean)
+    + abs(luminanceRight - localMean)
+    + abs(luminanceTop - localMean)
+    + abs(luminanceBottom - localMean)
+  ) * 0.25;
+
+  float sourceLuminance = linearLuminance(refracted);
   vec3 saturated = mix(
     vec3(sourceLuminance),
     refracted,
-    1.1
+    1.06
   );
+  float brightBackdrop = smoothstep(0.42, 0.82, localMean);
+  float complexBackdrop = smoothstep(0.035, 0.16, localContrast);
   float adaptiveTint = uMaterial.x
-    + smoothstep(0.48, 0.92, sourceLuminance) * 0.075;
-  vec3 glassColor = mix(saturated, uTintColor, adaptiveTint);
-  float brightBackdrop = smoothstep(0.56, 0.94, sourceLuminance);
-  glassColor *= mix(1.015, 0.86, brightBackdrop);
+    + uOptics.w * (
+      brightBackdrop * 0.07
+      + complexBackdrop * 0.055
+      + sizeFactor * 0.018
+    );
+  vec3 glassColor = mix(
+    saturated,
+    srgbToLinear(uTintColor),
+    clamp(adaptiveTint, 0.0, 0.26)
+  );
+  glassColor *= mix(1.018, 0.85, brightBackdrop * uOptics.w);
+  glassColor *= mix(1.0, 0.94, complexBackdrop * uOptics.w);
 
-  vec2 lightVector = uLight - vScreen;
-  vec2 lightDirection2d = safeNormalize(lightVector);
-  vec3 lightDirection = normalize(vec3(
-    lightVector / uResolution * vec2(uResolution.x / uResolution.y, 1.0) * 3.2,
+  vec2 keyLightVector = vec2(
+    uResolution.x * 0.22,
+    -uResolution.y * 0.16
+  ) - vScreen;
+  vec3 keyLightDirection = normalize(vec3(
+    keyLightVector / uResolution * vec2(uResolution.x / uResolution.y, 1.0) * 3.0,
     0.72
   ));
+  vec2 interactiveLightVector = uLight - vScreen;
+  vec3 interactiveLightDirection = normalize(vec3(
+    interactiveLightVector / uResolution * vec2(uResolution.x / uResolution.y, 1.0) * 3.2,
+    0.68
+  ));
   vec3 viewDirection = vec3(0.0, 0.0, 1.0);
-  vec3 halfDirection = normalize(lightDirection + viewDirection);
-
-  float specular = pow(
-    max(dot(normal, halfDirection), 0.0),
-    58.0
-  ) * edge;
-  float directionalEdge = pow(
-    max(dot(normal2d, lightDirection2d), 0.0),
-    1.5
-  ) * edge;
-  float oppositeEdge = max(
-    dot(normal2d, -lightDirection2d),
+  vec3 keyHalfDirection = normalize(keyLightDirection + viewDirection);
+  vec3 interactiveHalfDirection = normalize(
+    interactiveLightDirection + viewDirection
+  );
+  float keyVisibility = max(dot(normal, keyLightDirection), 0.0);
+  float interactiveVisibility = max(
+    dot(normal, interactiveLightDirection),
     0.0
-  ) * edge;
-  float fresnel = pow(
-    1.0 - max(normal.z, 0.0),
-    2.4
+  );
+
+  float keySpecular = pow(
+    max(dot(normal, keyHalfDirection), 0.0),
+    uOptics.z
+  ) * keyVisibility * edge;
+  float interactiveSpecular = pow(
+    max(dot(normal, interactiveHalfDirection), 0.0),
+    max(uOptics.z * 0.82, 24.0)
+  ) * interactiveVisibility * edge * pointerLens;
+  float r0 = pow(
+    (uOptics.x - 1.0) / (uOptics.x + 1.0),
+    2.0
+  );
+  float fresnel = (
+    r0
+    + (1.0 - r0) * pow(1.0 - max(normal.z, 0.0), 5.0)
   ) * edge;
   float innerRim = (
-    1.0 - smoothstep(0.0, 1.35, insideDistance)
+    1.0 - smoothstep(
+      0.0,
+      1.15 * uPixelScale,
+      insideDistance
+    )
   ) * mask;
 
-  glassColor += vec3(1.0, 0.985, 0.95)
-    * (
-      specular * 0.62
-      + directionalEdge * 0.16
-      + innerRim * 0.075
+  glassColor = clamp(
+    glassColor * min(uBrightness, 1.0),
+    vec3(0.0),
+    vec3(1.0)
+  );
+  float highlightEnergy = (
+      keySpecular * 0.24
+      + interactiveSpecular * 0.34
+      + innerRim * 0.038
     )
-    * uMaterial.y;
-  glassColor += vec3(0.42, 0.66, 1.0)
-    * fresnel
-    * 0.075
-    * uMaterial.y;
-  glassColor -= oppositeEdge * 0.045 * uMaterial.y;
-  glassColor *= uBrightness;
+    * uMaterial.y
+    * materialization
+    * uBrightness;
+  glassColor = mix(
+    glassColor,
+    srgbToLinear(vec3(1.0, 0.985, 0.95)),
+    clamp(highlightEnergy, 0.0, 0.58)
+  );
+  float fresnelEnergy = fresnel
+    * 0.055
+    * uMaterial.y
+    * materialization
+    * uBrightness;
+  glassColor = mix(
+    glassColor,
+    srgbToLinear(vec3(0.48, 0.69, 1.0)),
+    clamp(fresnelEnergy, 0.0, 0.16)
+  );
 
   float alpha = mask * uMaterial.z;
-  fragmentColor = vec4(glassColor * alpha, alpha);
+  vec3 outputColor = linearToSrgb(glassColor);
+  fragmentColor = vec4(outputColor * alpha, alpha);
 }
 `
 const windowPos = ref({ x: 0, y: 0 })
@@ -1390,6 +1595,133 @@ function syncLiquidSurfaceObservers(renderer, surfaces) {
   })
 }
 
+function rebuildLiquidLuminanceMap(renderer, cssWidth, cssHeight) {
+  const mapWidth = 96
+  const mapHeight = Math.max(
+    36,
+    Math.round(mapWidth * cssHeight / cssWidth),
+  )
+  if (
+    renderer.luminanceMap?.width === mapWidth
+    && renderer.luminanceMap?.height === mapHeight
+  ) return
+
+  const canvas = renderer.luminanceCanvas || document.createElement('canvas')
+  const context = canvas.getContext('2d', {
+    alpha: false,
+    willReadFrequently: true,
+  })
+  if (!context) return
+
+  canvas.width = mapWidth
+  canvas.height = mapHeight
+  const coverScale = Math.max(
+    mapWidth / renderer.image.naturalWidth,
+    mapHeight / renderer.image.naturalHeight,
+  ) * 1.02
+  const wallpaperWidth = renderer.image.naturalWidth * coverScale
+  const wallpaperHeight = renderer.image.naturalHeight * coverScale
+  const wallpaperX = (mapWidth - wallpaperWidth) / 2
+  const wallpaperY = (mapHeight - wallpaperHeight) / 2
+
+  context.clearRect(0, 0, mapWidth, mapHeight)
+  context.drawImage(
+    renderer.image,
+    wallpaperX,
+    wallpaperY,
+    wallpaperWidth,
+    wallpaperHeight,
+  )
+
+  try {
+    renderer.luminanceCanvas = canvas
+    renderer.luminanceMap = {
+      width: mapWidth,
+      height: mapHeight,
+      pixels: context.getImageData(0, 0, mapWidth, mapHeight).data,
+    }
+  } catch {
+    renderer.luminanceMap = undefined
+  }
+}
+
+function sampleLiquidSurfaceLuminance(renderer, rect, rootRect) {
+  const map = renderer.luminanceMap
+  if (!map) return undefined
+
+  const samplePositions = [
+    [0.5, 0.5],
+    [0.2, 0.25],
+    [0.8, 0.25],
+    [0.2, 0.75],
+    [0.8, 0.75],
+  ]
+  const samples = samplePositions.map(([horizontal, vertical]) => {
+    const rootX = rect.left - rootRect.left + rect.width * horizontal
+    const rootY = rect.top - rootRect.top + rect.height * vertical
+    const mapX = Math.max(
+      0,
+      Math.min(
+        map.width - 1,
+        Math.round(rootX / rootRect.width * (map.width - 1)),
+      ),
+    )
+    const mapY = Math.max(
+      0,
+      Math.min(
+        map.height - 1,
+        Math.round(rootY / rootRect.height * (map.height - 1)),
+      ),
+    )
+    const index = (mapY * map.width + mapX) * 4
+    const red = Math.pow(map.pixels[index] / 255, 2.2)
+    const green = Math.pow(map.pixels[index + 1] / 255, 2.2)
+    const blue = Math.pow(map.pixels[index + 2] / 255, 2.2)
+    return red * 0.2126 + green * 0.7152 + blue * 0.0722
+  })
+  const mean = samples.reduce((sum, sample) => sum + sample, 0) / samples.length
+  const contrast = samples.reduce(
+    (sum, sample) => sum + Math.abs(sample - mean),
+    0,
+  ) / samples.length
+
+  return { mean, contrast }
+}
+
+function adaptLiquidSurfaceForeground(surface, kind, statistics) {
+  if (!statistics || !['strip', 'search', 'circle'].includes(kind)) return
+
+  const currentTone = surface.dataset.liquidForeground
+  const useDarkForeground = currentTone === 'dark'
+    ? statistics.mean > 0.54
+    : statistics.mean > 0.64
+  const nextTone = useDarkForeground ? 'dark' : 'light'
+  if (currentTone === nextTone) return
+
+  surface.dataset.liquidForeground = nextTone
+  surface.style.setProperty(
+    '--liquid-foreground',
+    useDarkForeground
+      ? 'rgba(17, 24, 33, 0.9)'
+      : 'rgba(255, 255, 255, 0.94)',
+  )
+  surface.style.setProperty(
+    '--liquid-foreground-muted',
+    useDarkForeground
+      ? 'rgba(17, 24, 33, 0.58)'
+      : 'rgba(255, 255, 255, 0.62)',
+  )
+  surface.style.setProperty(
+    '--liquid-foreground-shadow',
+    useDarkForeground
+      ? '0 1px 1px rgba(255, 255, 255, 0.16)'
+      : `0 1px 2px rgba(0, 0, 0, ${Math.min(
+        0.52,
+        0.26 + statistics.contrast * 1.8,
+      ).toFixed(3)})`,
+  )
+}
+
 function resizeLiquidCanvas(renderer, rootRect) {
   const cssWidth = Math.max(1, rootRect.width)
   const cssHeight = Math.max(1, rootRect.height)
@@ -1410,6 +1742,7 @@ function resizeLiquidCanvas(renderer, rootRect) {
     renderer.canvas.height = height
   }
 
+  rebuildLiquidLuminanceMap(renderer, cssWidth, cssHeight)
   renderer.cssWidth = cssWidth
   renderer.cssHeight = cssHeight
   renderer.scaleX = width / cssWidth
@@ -1512,6 +1845,12 @@ function drawLiquidGlass(renderer) {
     const contrastMode = liquidGlassContrastQuery?.matches
     const surfaceOpacity = liquidSurfaceOpacity(surface, root) * preset.opacity
     const brightness = surface.classList.contains('is-receded') ? 0.84 : 1.02
+    const surfaceStatistics = sampleLiquidSurfaceLuminance(
+      renderer,
+      rect,
+      rootRect,
+    )
+    adaptLiquidSurfaceForeground(surface, kind, surfaceStatistics)
 
     gl.scissor(
       left,
@@ -1534,8 +1873,16 @@ function drawLiquidGlass(renderer) {
       surfaceOpacity,
       liquidGlassMotionQuery?.matches ? 0 : preset.interaction,
     )
+    gl.uniform4f(
+      uniforms.optics,
+      preset.ior,
+      preset.normalStrength,
+      preset.shininess,
+      preset.adaptivity,
+    )
     gl.uniform3fv(uniforms.tintColor, preset.tintColor)
     gl.uniform1f(uniforms.brightness, brightness)
+    gl.uniform1f(uniforms.pixelScale, scale)
     gl.drawArrays(gl.TRIANGLES, 0, 6)
   })
 
@@ -1736,8 +2083,10 @@ async function initializeLiquidGlassRenderer() {
       light: uniform('uLight'),
       shape: uniform('uShape'),
       material: uniform('uMaterial'),
+      optics: uniform('uOptics'),
       tintColor: uniform('uTintColor'),
       brightness: uniform('uBrightness'),
+      pixelScale: uniform('uPixelScale'),
     }
 
     const handleContextLost = (event) => {
@@ -1834,6 +2183,19 @@ function handleLiquidLightPointerMove(event) {
   requestLiquidGlassRender(220)
 }
 
+function handleLiquidLightPress(event) {
+  if (liquidGlassMotionQuery?.matches) return
+
+  const rootRect = portalDesktopRef.value?.getBoundingClientRect()
+  if (!rootRect) return
+  liquidPointerActive = true
+  liquidLightTarget = {
+    x: event.clientX - rootRect.left,
+    y: event.clientY - rootRect.top,
+  }
+  requestLiquidGlassRender(event.pointerType === 'touch' ? 360 : 260)
+}
+
 function resetLiquidLight() {
   liquidPointerActive = false
   requestLiquidGlassRender(liquidGlassMotionQuery?.matches ? 0 : 300)
@@ -1841,6 +2203,10 @@ function resetLiquidLight() {
 
 function handleLiquidGlassScroll() {
   requestLiquidGlassRender(160)
+}
+
+function handleLiquidGlassFocus() {
+  requestLiquidGlassRender(220)
 }
 
 function handleLiquidVisibilityChange() {
@@ -1985,9 +2351,14 @@ onBeforeUnmount(() => {
     }"
     :style="{ '--portal-wallpaper': `url(${wallpaper})` }"
     @pointerdown.self="handleDesktopPointerDown"
+    @pointerdown.capture="handleLiquidLightPress"
+    @pointerup.capture="resetLiquidLight"
+    @pointercancel.capture="resetLiquidLight"
     @pointermove="handleLiquidLightPointerMove"
     @pointerleave="resetLiquidLight"
     @scroll.capture="handleLiquidGlassScroll"
+    @focusin.capture="handleLiquidGlassFocus"
+    @focusout.capture="handleLiquidGlassFocus"
   >
     <div class="wallpaper" aria-hidden="true"></div>
     <canvas
@@ -5360,6 +5731,47 @@ onBeforeUnmount(() => {
 .liquid-surface > * {
   position: relative;
   z-index: 2;
+}
+
+.portal-menu-bar.liquid-surface,
+.spotlight-search.liquid-surface,
+.launchpad-search.liquid-surface,
+.launchpad-close.liquid-surface,
+.launcher-tooltip.liquid-surface {
+  color: var(--liquid-foreground, var(--portal-text-primary));
+  text-shadow: var(
+    --liquid-foreground-shadow,
+    0 1px 2px rgba(0, 0, 0, 0.28)
+  );
+  transition:
+    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    text-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.portal-menu-bar.liquid-surface :is(
+  .menu-home-link,
+  .menu-glyph-button,
+  .menu-current-app,
+  .menu-commands,
+  .menu-command,
+  .menu-status-glyph,
+  .menu-status-action,
+  .menu-clock,
+  .menu-clock-action
+) {
+  color: inherit;
+}
+
+.spotlight-search.liquid-surface .spotlight-input,
+.launchpad-search.liquid-surface input {
+  color: inherit;
+  text-shadow: inherit;
+}
+
+.spotlight-search.liquid-surface .spotlight-input::placeholder,
+.launchpad-search.liquid-surface input::placeholder {
+  color: var(--liquid-foreground-muted, var(--portal-text-tertiary));
+  opacity: 1;
 }
 
 .portal-menu-bar.liquid-surface {
