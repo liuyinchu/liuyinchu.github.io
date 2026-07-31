@@ -1432,10 +1432,12 @@ onBeforeUnmount(() => {
   position: relative;
   isolation: isolate;
   display: grid;
-  width: min(100%, 27rem);
-  min-height: 4.15rem;
+  align-content: center;
+  width: min(100%, 250px);
+  height: 35px;
+  min-height: 35px;
   margin: 1.55rem 0;
-  padding: 0.62rem 1.18rem 0.66rem;
+  padding: 2px 13px 3px;
   overflow: hidden;
   border: 1px solid rgba(205, 214, 244, 0.11);
   border-radius: 999px;
@@ -1575,10 +1577,10 @@ onBeforeUnmount(() => {
   overflow: hidden;
   color: rgba(205, 214, 244, 0.62);
   font-family: "Fira Code", monospace;
-  font-size: 0.48rem;
+  font-size: 0.32rem;
   font-weight: 720;
-  letter-spacing: 0.17em;
-  line-height: 1.22;
+  letter-spacing: 0.14em;
+  line-height: 1.05;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1588,10 +1590,10 @@ onBeforeUnmount(() => {
   overflow: hidden;
   color: #f7f7ff;
   font-family: "Inter", "LXGW WenKai", sans-serif;
-  font-size: 0.94rem;
+  font-size: 0.68rem;
   font-weight: 820;
   letter-spacing: -0.025em;
-  line-height: 1.19;
+  line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1599,10 +1601,10 @@ onBeforeUnmount(() => {
 .markdown-body :deep(.md-stream-button-copy) {
   overflow: hidden;
   color: rgba(221, 225, 244, 0.68);
-  font-size: 0.62rem;
+  font-size: 0.4rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  line-height: 1.24;
+  line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1983,10 +1985,11 @@ onBeforeUnmount(() => {
   }
 
   .markdown-body :deep(.md-stream-button) {
-    width: 100%;
-    min-height: 3.9rem;
+    width: min(100%, 250px);
+    height: 35px;
+    min-height: 35px;
     margin: 1.45rem 0;
-    padding: 0.57rem 1rem 0.6rem;
+    padding: 2px 13px 3px;
   }
 
   .markdown-body :deep(.md-stream-button-field) {
@@ -2003,16 +2006,16 @@ onBeforeUnmount(() => {
   }
 
   .markdown-body :deep(.md-stream-button-eyebrow) {
-    font-size: 0.45rem;
+    font-size: 0.32rem;
     letter-spacing: 0.14em;
   }
 
   .markdown-body :deep(.md-stream-button-title) {
-    font-size: 0.88rem;
+    font-size: 0.68rem;
   }
 
   .markdown-body :deep(.md-stream-button-copy) {
-    font-size: 0.58rem;
+    font-size: 0.4rem;
   }
 }
 

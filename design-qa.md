@@ -1,35 +1,34 @@
-# Design QA — Markdown 流光按钮视觉收敛
+# Design QA — Markdown 流光按钮最终尺寸
 
-- Source visual truth: `/var/folders/cl/gg6c2l912qq71_cy6bn29z140000gn/T/codex-clipboard-3f17248c-6341-4787-95a7-cbdd1993f876.png`
-- Source pixels: `1070 × 320`
+- Final source truth: browser annotation 1 on `.md-stream-button`, visible viewport `1440 × 900`, requested box `250 × 35`
+- Prior visual reference: `/var/folders/cl/gg6c2l912qq71_cy6bn29z140000gn/T/codex-clipboard-3f17248c-6341-4787-95a7-cbdd1993f876.png` (`1070 × 320`)
 - Implementation route: `http://localhost:5173/markdown-components#%E6%B5%81%E5%85%89%E6%8C%89%E9%92%AE`
-- Desktop implementation screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button-refine/stream-button-desktop-final.png` (`1269 × 714`)
-- Focused implementation crop: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button-refine/implementation-focused.png` (`449 × 84`)
-- Mobile implementation screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button-refine/stream-button-mobile-final.png` (`379 × 820`)
-- Combined comparison: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button-refine/design-comparison.png` (`1002 × 174`)
-- Desktop CSS viewport: default in-app browser viewport, captured at `1269 × 714`; button box `432 × 66.4`
-- Mobile CSS viewport override: `390 × 844`; captured content area `379 × 820`; button box `322.6 × 62.4`
-- Density normalization: browser captures and focused crop use one captured image pixel per CSS pixel. Source and implementation were independently scaled to `108px` comparison height while preserving aspect ratio.
-- State: dark theme, default live animation. Focus-visible was checked separately before the default-state captures.
+- Before screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260731-stream-button-final-size/before-default.png` (`1013 × 768`), button `432 × 66.4`
+- Final annotated-viewport screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260731-stream-button-final-size/after-1440x900.png` (`1429 × 900` browser content area), button `250 × 35`
+- Final default-viewport screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260731-stream-button-final-size/after-default-visible.png` (`1013 × 768`), button `250 × 35`
+- Final mobile screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260731-stream-button-final-size/after-mobile-390x844.png` (`379 × 844` browser content area), button `250 × 35`
+- Responsive underflow check: at a `280 × 700` override (`269px` browser content area), the `246.6px` article column leaves `212.6px` available after article padding; the button contracts to `212.6 × 35`
+- Comparison method: the before and after default-viewport screenshots were inspected together in one comparison input. The annotation's exact numeric target was also checked from the live DOM at the annotated viewport.
+- State: dark theme, default live animation.
+
+## Final annotation evidence
+
+- Exact target: live `getBoundingClientRect()` returned `250 × 35` at the requested desktop viewport.
+- Responsive cap: both desktop and standard mobile resolve to `width: min(100%, 250px)` and `height: 35px`; only narrower article columns reduce the width.
+- Internal fit: padding and the three typographic tiers were scaled with the outer box. Eyebrow, title, and body remain vertically centered; long copy stays single-line and safely clips with ellipsis.
+- Visual continuity: the existing black-to-orange/magenta/violet field, SVG turbulence/displacement, screen blending, bright core, and asynchronous sine-driven motion were intentionally left unchanged.
+- Page integrity: the smaller pill does not overlap the following Markdown example and introduces no component-level horizontal overflow.
 
 ## Full-view comparison evidence
 
-The desktop and mobile captures show a compact call-to-action that remains visually distinct from the larger Link Card above it. The desktop button is capped at `27rem`; the mobile button fills the article column without clipping its content or creating component-level horizontal overflow. The page's existing typography, spacing, and Catppuccin surface treatment remain intact.
+The final implementation now reads unambiguously as a compact button rather than a card. In the paired default-viewport evidence, the bounding box changes from `432 × 66.4` to `250 × 35` while preserving the same left alignment, pill radius, dark surface, continuous right-side color field, and three-line information hierarchy.
 
-## Focused comparison evidence
+The annotated desktop capture and the `390 × 844` mobile capture show the same intentional `250 × 35` cap. The `280 × 700` underflow check confirms the cap participates in the existing responsive article width instead of forcing horizontal overflow.
 
-The combined image verifies the intended transfer from the reference:
+## Final required fidelity surfaces
 
-- The left side remains near-black and readable while the color field enters softly from the middle.
-- The right side uses one continuous overlapping field with warm orange/cream above, magenta through the center, and violet below.
-- The previous regular pinstripes are absent.
-- Broad displaced light ribbons replace the earlier thin, mechanically repeated lines.
-- The reference is a large card; the implementation intentionally compresses the visual language into a `432 × 66.4` button.
-
-## Required fidelity surfaces
-
-- Fonts and typography: the site's established fonts are retained. Eyebrow, title, and supporting copy remain legible at the smaller button size; all three truncate safely rather than wrapping into the color field.
-- Spacing and layout rhythm: desktop width fell from `36rem` to `27rem`, desktop height from `89.6px` to `66.4px`, and mobile height from `80px` to `62.4px`. Padding, radius, and shadow now read as a button rather than a feature card.
+- Fonts and typography: the site's established fonts are retained. Eyebrow, title, and supporting copy were proportionally reduced to fit the annotated height; all three remain single-line and truncate safely rather than wrapping into the color field.
+- Spacing and layout rhythm: the final cap is exactly `250 × 35`, down from the preceding `432 × 66.4`. The pill remains left-aligned with the article content and keeps its existing section margins.
 - Colors and visual tokens: the source's black, burnt-orange, cream, hot-magenta, and violet order is reflected in the live field. Screen blending is retained while layer opacity was reduced to avoid a washed-out white stripe.
 - Image quality and asset fidelity: the requested visual is a live CSS/SVG effect rather than a raster asset. The color field stays continuous at both sizes; no repeating-line overlay, stretching artifact, hard-edged blob, or filter halo is visible.
 - Copy and content: `eyebrow`, `title`, and Markdown-formatted supporting copy are unchanged and coherent.
@@ -76,8 +75,15 @@ The final animation continues to use independent sine groups based on irrational
 - Post-fix evidence: `stream-button-desktop-final.png`, `stream-button-mobile-final.png`, and `design-comparison.png`.
 - No actionable P0/P1/P2 mismatch remains. The narrower aspect ratio and smaller type scale are intentional consequences of implementing a button instead of reproducing the reference card.
 
+### Pass 4 — passed
+
+- Browser annotation changed the accepted target from `432 × 66.4` to exactly `250 × 35`.
+- Fixes: applied an explicit `250px` responsive width cap and `35px` fixed height, centered the content stack, and scaled padding and type so the three-tier label fits without expanding the outer box.
+- Live DOM checks passed at desktop, standard mobile, and sub-250px available widths.
+- No actionable P0/P1/P2 mismatch remains.
+
 ## Follow-up polish
 
-- P3: the three-line Markdown copy hierarchy is necessarily denser than the reference's two-line card; it remains readable and was not changed because the component API intentionally exposes eyebrow, title, and body copy.
+- P3: the final annotated size intentionally produces a very dense three-line hierarchy. It remains coherent at normal zoom and uses ellipsis where needed, but copy legibility is necessarily lower than in the preceding `432 × 66.4` version.
 
 final result: passed
