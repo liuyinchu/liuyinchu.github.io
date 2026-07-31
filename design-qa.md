@@ -1,89 +1,90 @@
-# Design QA — Markdown 流光按钮最终尺寸
+# Design QA — precision-physkit 文档主页
 
-- Final source truth: browser annotation 1 on `.md-stream-button`, visible viewport `1440 × 900`, requested box `250 × 35`
-- Prior visual reference: `/var/folders/cl/gg6c2l912qq71_cy6bn29z140000gn/T/codex-clipboard-3f17248c-6341-4787-95a7-cbdd1993f876.png` (`1070 × 320`)
-- Implementation route: `http://localhost:5173/markdown-components#%E6%B5%81%E5%85%89%E6%8C%89%E9%92%AE`
-- Before screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260731-stream-button-final-size/before-default.png` (`1013 × 768`), button `432 × 66.4`
-- Final annotated-viewport screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260731-stream-button-final-size/after-1440x900.png` (`1429 × 900` browser content area), button `250 × 35`
-- Final default-viewport screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260731-stream-button-final-size/after-default-visible.png` (`1013 × 768`), button `250 × 35`
-- Final mobile screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260731-stream-button-final-size/after-mobile-390x844.png` (`379 × 844` browser content area), button `250 × 35`
-- Responsive underflow check: at a `280 × 700` override (`269px` browser content area), the `246.6px` article column leaves `212.6px` available after article padding; the button contracts to `212.6 × 35`
-- Comparison method: the before and after default-viewport screenshots were inspected together in one comparison input. The annotation's exact numeric target was also checked from the live DOM at the annotated viewport.
-- State: dark theme, default live animation.
+- Source visual truth: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260801-precision-physkit-page/source-markdown-components-final-1440x900.png`
+- Responsive source capture: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260801-precision-physkit-page/source-markdown-components-mobile-390x844.png`
+- Secondary source truth: browser annotation 1 on `.md-stream-button`, requested box `200 × 50px` at a `1440 × 900` visible viewport.
+- Implementation route: `http://localhost:5173/precision-physkit`
+- Desktop implementation screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260801-precision-physkit-page/precision-physkit-desktop-final-1440x900.png`
+- Mobile implementation screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260801-precision-physkit-page/precision-physkit-mobile-final-390x844.png`
+- Focused stream-button screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260801-precision-physkit-page/stream-button-200x50-visible-final.png`
+- Desktop viewport override: `1440 × 900`; browser content viewport `1429 × 900`; source and implementation captures `1429 × 893`; density `1 captured pixel / CSS pixel`.
+- Mobile viewport override: `390 × 844`; browser content viewport `379 × 844`; source and implementation captures `379 × 820`; density `1 captured pixel / CSS pixel`.
+- State: Catppuccin dark theme, default header state, document beginning. Folding and anchor-navigation states were checked separately.
+- Comparison method: desktop source and implementation were opened together in one comparison input; mobile source and implementation were opened together in a second same-size comparison input.
 
-## Final annotation evidence
+## Findings
 
-- Exact target: live `getBoundingClientRect()` returned `250 × 35` at the requested desktop viewport.
-- Responsive cap: both desktop and standard mobile resolve to `width: min(100%, 250px)` and `height: 35px`; only narrower article columns reduce the width.
-- Internal fit: padding and the three typographic tiers were scaled with the outer box. Eyebrow, title, and body remain vertically centered; long copy stays single-line and safely clips with ellipsis.
-- Visual continuity: the existing black-to-orange/magenta/violet field, SVG turbulence/displacement, screen blending, bright core, and asynchronous sine-driven motion were intentionally left unchanged.
-- Page integrity: the smaller pill does not overlap the following Markdown example and introduces no component-level horizontal overflow.
+No actionable P0, P1, or P2 mismatch remains.
+
+The project page preserves the existing general Markdown page skeleton while replacing only project-specific content: hero label, title, subtitle, page Markdown source, and the second radial accent. The new route renders the complete three-part tutorial and the annotated stream button resolves to exactly `200 × 50px` on desktop and standard mobile widths.
 
 ## Full-view comparison evidence
 
-The final implementation now reads unambiguously as a compact button rather than a card. In the paired default-viewport evidence, the bounding box changes from `432 × 66.4` to `250 × 35` while preserving the same left alignment, pill radius, dark surface, continuous right-side color field, and three-line information hierarchy.
+### Desktop
 
-The annotated desktop capture and the `390 × 844` mobile capture show the same intentional `250 × 35` cap. The `280 × 700` underflow check confirms the cap participates in the existing responsive article width instead of forcing horizontal overflow.
+- Source and implementation use the same `960px` hero width, `1032.4px` rendered Markdown width, page padding, border, radius, surface opacity, shadow, and header offset.
+- Source hero box measured `960 × 216.6px`; implementation measured `960 × 217.1px`. The `0.5px` height difference comes from the project-specific title metrics and is visually negligible.
+- The Markdown body starts at `476.3px` in the source and `475.7px` in the implementation, preserving the vertical transition from hero to content.
+- The page hierarchy remains hero → page title → explanatory content. The implementation adds badges and a document-scope alert without changing the outer page structure.
 
-## Final required fidelity surfaces
+### Mobile
 
-- Fonts and typography: the site's established fonts are retained. Eyebrow, title, and supporting copy were proportionally reduced to fit the annotated height; all three remain single-line and truncate safely rather than wrapping into the color field.
-- Spacing and layout rhythm: the final cap is exactly `250 × 35`, down from the preceding `432 × 66.4`. The pill remains left-aligned with the article content and keeps its existing section margins.
-- Colors and visual tokens: the source's black, burnt-orange, cream, hot-magenta, and violet order is reflected in the live field. Screen blending is retained while layer opacity was reduced to avoid a washed-out white stripe.
-- Image quality and asset fidelity: the requested visual is a live CSS/SVG effect rather than a raster asset. The color field stays continuous at both sizes; no repeating-line overlay, stretching artifact, hard-edged blob, or filter halo is visible.
-- Copy and content: `eyebrow`, `title`, and Markdown-formatted supporting copy are unchanged and coherent.
-- Interaction and accessibility: the native anchor navigates to `/space1`; browser Back returns to the component manual. The cyan focus-visible ring remains clear. Reduced-motion handling preserves a static field and disables continuous updates.
+- Both pages use the same `359.8px` hero width and `9.6px` side inset at the `379px` content viewport.
+- The implementation has no page-level horizontal overflow (`scrollWidth === clientWidth === 379px`).
+- The two-column overview collapses to one column; code blocks retain their own horizontal scroller instead of widening the document.
+- The project title remains on one line, the subtitle remains readable, and the top document card stays inside the viewport.
 
-## Animation evidence
+## Focused region comparison evidence
 
-Two samples `900ms` apart changed:
+- Stream button: live DOM measurements returned exactly `200 × 50px` for both instances on `/precision-physkit` and for the component manual instance at the annotated desktop viewport.
+- The button keeps the established continuous black-to-orange/magenta/violet field, SVG turbulence/displacement, screen blending, bright core, and asynchronous sine-driven animation. Only the requested outer dimensions, padding, and text scale changed.
+- Rich Markdown rendering: the combined document produced 5 level-two sections, 35 level-three sections, 3 tables, 122 highlighted code blocks, and 173 MathJax containers. No raw component syntax or Markdown load-error surface remained visible.
+- Cross-chapter transitions render as two link cards and two contextual alerts. The introduction and conclusion render two step sequences, one responsive columns block, one native folding block, badges, and source-code stream buttons.
 
-- `baseFrequency`: `0.00209 0.02385` → `0.00213 0.02387`
-- displacement scale: `27.27` → `27.81`
-- primary field shift: `-0.80%` → `-0.51%`
-- first ribbon offset: `2.81%` → `2.84%`
-- counter ribbon offset: `0.58%` → `0.06%`
-- first ribbon tilt: `-0.24deg` → `-0.02deg`
-- bright-core opacity: `0.472` → `0.468`
+## Required fidelity surfaces
 
-The final animation continues to use independent sine groups based on irrational constants. Separate field, ribbon, counter-ribbon, tilt, displacement, and core-breath values move at different rates without fixed keyframes.
+- Fonts and typography: the hero and Markdown page reuse the source page's `LXGW WenKai`, `Fira Code`, and inherited article typography. English package naming remains optically balanced at desktop and mobile widths; inline code, headings, tables, and formulas retain the existing hierarchy.
+- Spacing and layout rhythm: hero dimensions, content widths, outer margins, card padding, radii, and header offset match the source skeleton. The combined document adds section transitions only at the three source-document boundaries.
+- Colors and tokens: Catppuccin Mocha surfaces, text, blue headings, borders, shadows, and callout tones are inherited. The project page changes the source's secondary purple ambient glow to the existing teal token for project identity without introducing a new palette.
+- Image quality and asset fidelity: neither the source page nor the project documentation requires project imagery. Existing site avatar and icon assets are reused; no placeholder, CSS illustration, or custom replacement asset was introduced.
+- Copy and content: all three supplied drafts are preserved verbatim inside the assembled document. Added copy is limited to a scope statement, reading route, cross-chapter transitions, quick links, final reproducibility checklist, and repository calls to action.
 
-## Browser and interaction checks
+## Interaction, accessibility, and runtime checks
 
-- Desktop and mobile layouts render without overlap or component clipping.
-- Pointer activation reaches `/space1`; Back restores the Markdown components route.
-- Focus-visible styling renders on the native link.
-- No component-specific browser error was observed.
-- Existing Vue Router warnings for async Chinese/hash headings remain unrelated to this component refinement.
+- `/code` renders one `precision-physkit` project card with a unique `/precision-physkit` homepage link and the project GitHub link.
+- `/precision-physkit` resolves directly through Vue Router.
+- The quick link to `#part-preprocess` updates the hash and reaches the intended chapter region.
+- The native folding component toggles from closed to open.
+- Header navigation, semantic headings, native links, code copy buttons, focus styles, and reduced-motion behavior remain inherited from the established page and component implementations.
+- Desktop and mobile page widths remain stable. Tables and code blocks do not create document-level horizontal scrolling.
+- No page-specific console error was observed. Existing MathJax component-version warnings and the known asynchronous Vue Router hash warning remain unrelated to this page implementation.
 
 ## Comparison history
 
-### Pass 1 — blocked
+### Pass 1 — passed
 
-- [P1] Button dimensions read as a card: `36rem × 89.6px` was too long and too tall.
-- [P1] A `repeating-linear-gradient` created artificial, evenly spaced horizontal lines.
-- [P1] One translated color plane and high displacement amplitude made the animation feel mechanically synchronized.
-- Fixes: reduced desktop and mobile dimensions, removed the repeating-line layer, softened the noise before displacement, added two independently moving broad ribbons, and slowed each sine group to a different irrational cadence.
+- The first rendered project page matched the existing Markdown page frame at both desktop and mobile sizes.
+- The long document rendered all three supplied chapters, formulas, tables, highlighted code, explicit anchors, and selected rich components without an actionable layout or content defect.
+- No P0/P1/P2 visual correction was required after the first comparison.
 
-### Pass 2 — blocked
+### Stream-button annotation pass — passed
 
-- [P2] The first smooth-field revision blended into one pale pink bar and underrepresented the reference's top-orange and lower-violet separation.
-- Fixes: vertically separated the three overlapping color regions, strengthened the upper warm core and lower violet ribbon, reduced additive opacity, increased broad-form displacement, and added subtle counter-rotation.
+- Requested dimensions: `200 × 50px`.
+- Observed dimensions: `200 × 50px` on the component manual, project document desktop view, and project document mobile view.
+- No component-level or page-level overflow was introduced.
 
-### Pass 3 — passed
+## Implementation checklist
 
-- Post-fix evidence: `stream-button-desktop-final.png`, `stream-button-mobile-final.png`, and `design-comparison.png`.
-- No actionable P0/P1/P2 mismatch remains. The narrower aspect ratio and smaller type scale are intentional consequences of implementing a button instead of reproducing the reference card.
-
-### Pass 4 — passed
-
-- Browser annotation changed the accepted target from `432 × 66.4` to exactly `250 × 35`.
-- Fixes: applied an explicit `250px` responsive width cap and `35px` fixed height, centered the content stack, and scaled padding and type so the three-tier label fits without expanding the outer box.
-- Live DOM checks passed at desktop, standard mobile, and sub-250px available widths.
-- No actionable P0/P1/P2 mismatch remains.
+- [x] Register `/precision-physkit`.
+- [x] Add a project card and repository link to `/code`.
+- [x] Assemble the three supplied drafts into one public Markdown content file.
+- [x] Add a cohesive introduction, reading route, chapter transitions, quick links, and reproducibility conclusion.
+- [x] Use existing alerts, badges, steps, columns, folding, link cards, and stream buttons.
+- [x] Apply the `200 × 50px` stream-button annotation responsively.
+- [x] Verify desktop, mobile, anchor, folding, route, card-link, Markdown, MathJax, and build behavior.
 
 ## Follow-up polish
 
-- P3: the final annotated size intentionally produces a very dense three-line hierarchy. It remains coherent at normal zoom and uses ellipsis where needed, but copy legibility is necessarily lower than in the preceding `432 × 66.4` version.
+- P3: the required single-page document is intentionally very long. The quick index and chapter transition cards make it navigable, but a future dedicated sticky table of contents could further reduce return-to-top travel without changing the document content.
 
 final result: passed

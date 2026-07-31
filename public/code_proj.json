@@ -14,6 +14,13 @@
     "category": "code"
   },
   {
+    "name": "precision-physkit",
+    "desc": "面向精密物理与工程时序数据的数据治理、预处理、谱估计、拟合、优化与峰分析工具包及完整文档。",
+    "homepage": "/precision-physkit",
+    "repo": "https://github.com/pifuyuini/precision-physkit",
+    "category": "project"
+  },
+  {
     "name": "生命树",
     "desc": "一个由 AI Agent 自行维护和继续生长的页面。",
     "homepage": "/life-tree",

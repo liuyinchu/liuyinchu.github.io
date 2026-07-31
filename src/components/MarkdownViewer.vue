@@ -1433,11 +1433,11 @@ onBeforeUnmount(() => {
   isolation: isolate;
   display: grid;
   align-content: center;
-  width: min(100%, 250px);
-  height: 35px;
-  min-height: 35px;
+  width: min(100%, 200px);
+  height: 50px;
+  min-height: 50px;
   margin: 1.55rem 0;
-  padding: 2px 13px 3px;
+  padding: 5px 12px 6px;
   overflow: hidden;
   border: 1px solid rgba(205, 214, 244, 0.11);
   border-radius: 999px;
@@ -1577,7 +1577,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   color: rgba(205, 214, 244, 0.62);
   font-family: "Fira Code", monospace;
-  font-size: 0.32rem;
+  font-size: 0.36rem;
   font-weight: 720;
   letter-spacing: 0.14em;
   line-height: 1.05;
@@ -1590,7 +1590,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   color: #f7f7ff;
   font-family: "Inter", "LXGW WenKai", sans-serif;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 820;
   letter-spacing: -0.025em;
   line-height: 1.05;
@@ -1601,7 +1601,7 @@ onBeforeUnmount(() => {
 .markdown-body :deep(.md-stream-button-copy) {
   overflow: hidden;
   color: rgba(221, 225, 244, 0.68);
-  font-size: 0.4rem;
+  font-size: 0.45rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.05;
@@ -1985,11 +1985,11 @@ onBeforeUnmount(() => {
   }
 
   .markdown-body :deep(.md-stream-button) {
-    width: min(100%, 250px);
-    height: 35px;
-    min-height: 35px;
+    width: min(100%, 200px);
+    height: 50px;
+    min-height: 50px;
     margin: 1.45rem 0;
-    padding: 2px 13px 3px;
+    padding: 5px 12px 6px;
   }
 
   .markdown-body :deep(.md-stream-button-field) {
@@ -2006,16 +2006,16 @@ onBeforeUnmount(() => {
   }
 
   .markdown-body :deep(.md-stream-button-eyebrow) {
-    font-size: 0.32rem;
+    font-size: 0.36rem;
     letter-spacing: 0.14em;
   }
 
   .markdown-body :deep(.md-stream-button-title) {
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 
   .markdown-body :deep(.md-stream-button-copy) {
-    font-size: 0.4rem;
+    font-size: 0.45rem;
   }
 }
 

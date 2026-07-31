@@ -36,6 +36,7 @@ import AcademicGuide from '../pages/AcademicGuide.vue'
 import LifeTree from '../pages/LifeTree.vue'
 import ModernControlCourse from '../pages/ModernControlCourse.vue'
 import MarkdownComponents from '../pages/MarkdownComponents.vue'
+import PrecisionPhyskit from '../pages/PrecisionPhyskit.vue'
 
 
 const routes = [
@@ -76,6 +77,7 @@ const routes = [
   { path: '/life-tree', component: LifeTree },
   { path: '/modern-control-course', component: ModernControlCourse },
   { path: '/markdown-components', component: MarkdownComponents },
+  { path: '/precision-physkit', component: PrecisionPhyskit },
 ]
 
 const router = createRouter({
