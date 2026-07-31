@@ -8,6 +8,7 @@ const BLOCK_COMPONENTS = new Set([
   'gallery',
   'columns',
   'link-card',
+  'stream-button',
 ])
 
 const INLINE_COMPONENTS = new Set(['alert', 'blur', 'tip', 'badge', 'mark', 'progress'])
@@ -50,6 +51,7 @@ const ALERT_META = {
 }
 
 const BADGE_TONES = new Set(['accent', 'info', 'success', 'warning', 'danger', 'muted'])
+let markdownRenderInstance = 0
 
 function parseAttributes(source = '') {
   const attributes = Object.create(null)
@@ -204,7 +206,7 @@ export function installMarkdownComponentRules(md, escapeHtml) {
 }
 
 function parseBlockOpening(line) {
-  const match = line.match(/^(\s*)(:{1,6})(alert|blur|chat|folding|timeline|steps|gallery|columns|link-card)(?:\{([^}]*)\})?\s*$/i)
+  const match = line.match(/^(\s*)(:{1,6})(alert|blur|chat|folding|timeline|steps|gallery|columns|link-card|stream-button)(?:\{([^}]*)\})?\s*$/i)
   const name = match?.[3]?.toLowerCase()
   if (!match || !BLOCK_COMPONENTS.has(name)) return null
   return {
@@ -370,6 +372,23 @@ function renderComponent(name, attributes, source, context) {
     return `<div class="md-columns" style="--md-columns:${count}">${columns}</div>`
   }
 
+  if (name === 'stream-button') {
+    const rawHref = safeHref(attributes.href || '#')
+    const href = escapeHtml(rawHref)
+    const title = escapeHtml(attributes.title || '沿着流光继续')
+    const eyebrow = escapeHtml(attributes.eyebrow || 'LUMINOUS FLOW')
+    const copy = source.trim()
+      ? md.renderInline(source.trim(), env)
+      : escapeHtml(attributes.subtitle || '让风把下一段旅程照亮。')
+    const filterId = `md-stream-filter-${context.renderId}-${context.counter}`
+    const seed = (context.counter * 17) % 97 + 1
+    const externalAttributes = /^https?:\/\//i.test(rawHref)
+      ? ' target="_blank" rel="noopener noreferrer"'
+      : ''
+
+    return `<a class="md-stream-button" href="${href}" data-md-stream-button${externalAttributes}><svg class="md-stream-button-filter" width="0" height="0" aria-hidden="true" focusable="false"><filter id="${filterId}" x="-35%" y="-45%" width="180%" height="190%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.0032 0.032" numOctaves="2" seed="${seed}" stitchTiles="stitch" result="streamNoise"/><feDisplacementMap in="SourceGraphic" in2="streamNoise" scale="30" xChannelSelector="R" yChannelSelector="B"/></filter></svg><span class="md-stream-button-field" style="filter:url(#${filterId})" aria-hidden="true"></span><span class="md-stream-button-core" aria-hidden="true"></span><span class="md-stream-button-content"><span class="md-stream-button-eyebrow">${eyebrow}</span><strong class="md-stream-button-title">${title}</strong><span class="md-stream-button-copy">${copy}</span></span></a>`
+  }
+
   const href = escapeHtml(safeHref(attributes.href || '#'))
   const title = escapeHtml(attributes.title || '继续阅读')
   const eyebrow = escapeHtml(attributes.eyebrow || 'RELATED')
@@ -435,18 +454,124 @@ function renderFootnotes(context) {
 }
 
 export function renderMarkdownWithComponents(source, md, escapeHtml) {
+  markdownRenderInstance += 1
   const extracted = collectFootnotes(source)
   const env = {
     footnotes: extracted.footnotes,
     footnoteRefCounts: new Map(),
     footnoteReferences: new Map(),
   }
-  const context = { md, env, escapeHtml, counter: 0 }
+  const context = { md, env, escapeHtml, counter: 0, renderId: markdownRenderInstance }
   return renderFragment(extracted.body, context) + renderFootnotes(context)
+}
+
+function attachStreamButtonAnimations(container) {
+  const buttons = [...container.querySelectorAll('[data-md-stream-button]')]
+  if (!buttons.length) return () => {}
+
+  const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+  const states = buttons.map((button, index) => ({
+    button,
+    displacement: button.querySelector('feDisplacementMap'),
+    phase: index * ((1 + Math.sqrt(5)) / 2),
+    turbulence: button.querySelector('feTurbulence'),
+  }))
+  let animationFrame = 0
+  let lastFrame = 0
+  let startedAt = performance.now()
+
+  const applyStaticState = () => {
+    states.forEach(({ button, displacement, turbulence }) => {
+      turbulence?.setAttribute('baseFrequency', '0.0032 0.032')
+      displacement?.setAttribute('scale', '30')
+      button.style.setProperty('--md-stream-shift-x', '0%')
+      button.style.setProperty('--md-stream-shift-y', '0%')
+      button.style.setProperty('--md-stream-core', '0.78')
+      button.style.setProperty('--md-stream-core-scale', '1')
+    })
+  }
+
+  const stop = () => {
+    if (!animationFrame) return
+    window.cancelAnimationFrame(animationFrame)
+    animationFrame = 0
+  }
+
+  const renderFrame = (now) => {
+    if (motionQuery?.matches || document.hidden) {
+      stop()
+      return
+    }
+
+    if (now - lastFrame >= 30) {
+      const time = (now - startedAt) / 1000
+      states.forEach(({ button, displacement, phase, turbulence }) => {
+        const horizontalWave = (
+          Math.sin(time * Math.SQRT2 * 0.31 + phase)
+          + 0.58 * Math.sin(time * Math.sqrt(3) * 0.23 + phase * 1.7)
+          + 0.34 * Math.sin(time * Math.PI * 0.17 + phase * 0.63)
+        )
+        const verticalWave = (
+          Math.sin(time * Math.sqrt(5) * 0.19 + phase * 0.82)
+          + 0.46 * Math.sin(time * Math.E * 0.13 + phase * 1.31)
+          + 0.28 * Math.sin(time * Math.SQRT2 * 0.37 + phase * 0.41)
+        )
+        const breath = (
+          Math.sin(time * Math.sqrt(2) * 0.43 + phase)
+          + 0.42 * Math.sin(time * Math.sqrt(7) * 0.21 + phase * 0.37)
+        )
+        const frequencyX = Math.max(0.0018, 0.0032 + horizontalWave * 0.00042)
+        const frequencyY = Math.max(0.023, 0.032 + verticalWave * 0.0032)
+        const scale = 30 + horizontalWave * 3.8 + verticalWave * 2.3
+
+        turbulence?.setAttribute('baseFrequency', `${frequencyX.toFixed(5)} ${frequencyY.toFixed(5)}`)
+        displacement?.setAttribute('scale', scale.toFixed(2))
+        button.style.setProperty('--md-stream-shift-x', `${(horizontalWave * 1.45).toFixed(2)}%`)
+        button.style.setProperty('--md-stream-shift-y', `${(verticalWave * 0.72).toFixed(2)}%`)
+        button.style.setProperty('--md-stream-core', `${Math.min(0.98, Math.max(0.56, 0.76 + breath * 0.11)).toFixed(3)}`)
+        button.style.setProperty('--md-stream-core-scale', `${(1 + breath * 0.035).toFixed(3)}`)
+      })
+      lastFrame = now
+    }
+
+    animationFrame = window.requestAnimationFrame(renderFrame)
+  }
+
+  const start = () => {
+    if (animationFrame || motionQuery?.matches || document.hidden) return
+    startedAt = performance.now()
+    animationFrame = window.requestAnimationFrame(renderFrame)
+  }
+
+  const onMotionChange = () => {
+    if (motionQuery?.matches) {
+      stop()
+      applyStaticState()
+      return
+    }
+    start()
+  }
+
+  const onVisibilityChange = () => {
+    if (document.hidden) stop()
+    else start()
+  }
+
+  applyStaticState()
+  motionQuery?.addEventListener?.('change', onMotionChange)
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  start()
+
+  return () => {
+    stop()
+    motionQuery?.removeEventListener?.('change', onMotionChange)
+    document.removeEventListener('visibilitychange', onVisibilityChange)
+  }
 }
 
 export function attachMarkdownComponentInteractions(container) {
   if (!container) return () => {}
+  const cleanupStreamButtons = attachStreamButtonAnimations(container)
 
   const onClick = (event) => {
     const inlineBlur = event.target.closest('[data-md-blur-inline]')
@@ -468,5 +593,8 @@ export function attachMarkdownComponentInteractions(container) {
   }
 
   container.addEventListener('click', onClick)
-  return () => container.removeEventListener('click', onClick)
+  return () => {
+    cleanupStreamButtons()
+    container.removeEventListener('click', onClick)
+  }
 }

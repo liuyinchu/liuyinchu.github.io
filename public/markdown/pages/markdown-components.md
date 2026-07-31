@@ -268,4 +268,20 @@
 ::
 ```
 
+## 流光按钮
+
+流光按钮适合承担更醒目的跳转动作。右侧连续色场会经过 SVG 湍流置换，被梳成缓慢游动的水平风丝；动画由多组不同步的正弦波实时驱动，并在“减少动态效果”偏好下自动停驻。
+
+::stream-button{title="沿着流光继续" eyebrow="LUMINOUS FLOW" href="/space1"}
+去随记里看看最近留下的 **思考与片段**。
+::
+
+```markdown
+::stream-button{title="沿着流光继续" eyebrow="LUMINOUS FLOW" href="/space1"}
+去随记里看看最近留下的 **思考与片段**。
+::
+```
+
+支持 `title`、`eyebrow` 与 `href` 属性；组件正文会作为胶囊按钮的副文案，并保留粗体、强调和行内代码等常用格式。
+
 [^component]: 脚注由通用 Markdown 组件生成，支持 **Markdown** 内容、多次引用和返回正文链接。

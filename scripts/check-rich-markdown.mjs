@@ -82,6 +82,29 @@ assert.doesNotMatch(unsafeLink, /javascript:/)
 assert.match(unsafeLink, /md-link-card-icon/)
 assert.match(unsafeLink, /<svg/)
 
+const streamButton = render(`::stream-button{href="/space1" title="沿着流光继续" eyebrow="LUMINOUS FLOW"}
+支持 **Markdown** 副文案。
+::`)
+assert.match(streamButton, /class="md-stream-button"/)
+assert.match(streamButton, /data-md-stream-button/)
+assert.match(streamButton, /<feTurbulence[^>]+baseFrequency="0\.0032 0\.032"/)
+assert.match(streamButton, /<feDisplacementMap[^>]+scale="30"/)
+assert.match(streamButton, /class="md-stream-button-field"/)
+assert.match(streamButton, /<strong>Markdown<\/strong>/)
+assert.match(streamButton, /href="\/space1"/)
+
+const externalStreamButton = render(`::stream-button{href="https://example.com" title="外部链接"}
+安全打开。
+::`)
+assert.match(externalStreamButton, /target="_blank"/)
+assert.match(externalStreamButton, /rel="noopener noreferrer"/)
+
+const unsafeStreamButton = render(`::stream-button{href="javascript:alert(1)" title="安全回退"}
+不会执行脚本。
+::`)
+assert.match(unsafeStreamButton, /href="#"/)
+assert.doesNotMatch(unsafeStreamButton, /javascript:/)
+
 const unclosed = render(`::alert
 没有闭合
 
