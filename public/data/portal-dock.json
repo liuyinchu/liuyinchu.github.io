@@ -8,7 +8,7 @@
         "url": "https://chat.openai.com/"
       },
       {
-        "name": "深度求索",
+        "name": "DeepSeek",
         "url": "https://chat.deepseek.com/"
       },
       {
@@ -26,6 +26,10 @@
       {
         "name": "Claude",
         "url": "https://claude.ai/"
+      },
+      {
+        "name": "Kimi",
+        "url": "https://www.kimi.com/"
       }
     ]
   },
@@ -148,6 +152,10 @@
       {
         "name": "中山大学 LaTeX 在线编辑器",
         "url": "https://latex.sysu.edu.cn/login"
+      },
+      {
+        "name": "LINUX DO",
+        "url": "https://linux.do/"
       }
     ]
   }

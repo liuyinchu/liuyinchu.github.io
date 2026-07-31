@@ -1,5 +1,9 @@
 # 使一颗心免于哀伤？
 
+## “在我们的时代中”
+
+我听说，时代这东西，就像一辆无人驾驭的马车，从我们身边疾驰而过，连车辙都来不及细看。人站在路边，常常只能看见尘土，却看不见车上载的是谁，也不知道这车要去往何方。若按礼法来看，这实在是个名分不清、交接无节的时节：谁在掌辔，谁在守望，谁该让路，谁该追赶，都没有一个明白的说法。我因此常常想，所谓礼，未必是刻在竹简上的条文，倒更像是人面对疾驰之物时，肯不肯停下脚步，问一句：这一程，该由谁来负责，又该把什么交给下一个人。这样看来，时代虽快，人心若还能存着这份掂量，便不算失了根本。
+
 ## Codex 小技巧
 
 这个[网站](https://chatgpt.com/codex/cloud/settings/analytics)可用于检测 Codex 的模型使用情况。
@@ -26,6 +30,8 @@
 - [ppt-master](https://hugohe3.github.io/ppt-master/)：AI 可以从任何文档生成可直接编辑的 PPTX 文件——真正的 PowerPoint 形状，而不是图像。
 - [Humanizer-zh](https://github.com/op7418/humanizer-zh)：Humanizer-zh 是一个用于去除文本中 AI 生成痕迹的工具，帮助你将 AI 生成的内容改写得更自然、更像人类书写的文本。
 - [Apple-Design](https://github.com/emilkowalski/skills/blob/main/skills/apple-design/SKILL.md)：苹果公司在界面设计和流畅的物理动画方面的理念，已应用于网页设计。可用于构建或审核手势驱动的用户界面、弹簧动画、拖拽/滑动/滑动交互、动量和可中断的过渡效果、半透明材质和深度、排版（光学尺寸、字距、行距）、减少动画，以及苹果风格界面背后的设计基础（反馈、空间一致性、克制）。
+- [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/main/README.zh.md)：一个为跨多平台和框架构建专业 UI/UX 提供设计智能的 AI 技能。
+- 
 
 ---
 

@@ -1,5 +1,13 @@
 [
   {
+    "id": "precision_physkit_blog",
+    "title": "precision-physkit：把精密测量数据处理整理成可复现的工作流",
+    "author": "pifuyuini",
+    "date": "2026-08-01",
+    "desc": "我听闻做实验的人有个讲究：数据出了门，处理的过程就要跟着见人。可如今许多脚本，缺口怎么补、滤波怎么选、频谱参数为何定，都像旧时账房先生的心算，只在他自己脑子里。等到复核论文或换一批数据，重写 FFT 倒不费事，难的是把当时那番盘算从记忆里请出来。这实在是名分不清、交接无节的隐患。",
+    "image": "/bg/blog_cover_purple_white_4k.jpg"
+  }, 
+  {
     "id": "lab_guide_intro",
     "title": "开篇与导论：实验数据处理作为参数估计",
     "author": "pifuyuini",
