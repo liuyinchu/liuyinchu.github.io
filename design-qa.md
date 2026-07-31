@@ -1,68 +1,83 @@
-# Design QA — Markdown 流光按钮
+# Design QA — Markdown 流光按钮视觉收敛
 
-- Source visual truth: `/var/folders/cl/gg6c2l912qq71_cy6bn29z140000gn/T/codex-clipboard-02e6c5fa-8fe9-4b69-9a09-f91146e75632.jpg`
-- Source pixels: `1206 × 952`; focused dark-card crop: `770 × 248`
+- Source visual truth: `/var/folders/cl/gg6c2l912qq71_cy6bn29z140000gn/T/codex-clipboard-3f17248c-6341-4787-95a7-cbdd1993f876.png`
+- Source pixels: `1070 × 320`
 - Implementation route: `http://localhost:5173/markdown-components#%E6%B5%81%E5%85%89%E6%8C%89%E9%92%AE`
-- Implementation focused screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button/implementation-stream-button-focused.png` (`616 × 112`)
-- Full desktop screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button/stream-button-desktop.png` (`1189 × 892`)
-- Mobile screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button/stream-button-mobile.png` (`379 × 820`)
-- Focus screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button/stream-button-focus.png`
-- Combined comparison: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button/design-comparison.png` (`1300 × 260`)
-- Desktop CSS viewport: `1200 × 900`; button box: `576 × 89.6`
-- Mobile CSS viewport: `390 × 844`; button box: `322.6 × 80`
-- Density normalization: browser captures and focused crop were compared at approximately `1 CSS px = 1 image px`; the reference crop was proportionally scaled only for the combined comparison.
-- State: dark theme, default live animation; mobile focus-visible state checked separately.
+- Desktop implementation screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button-refine/stream-button-desktop-final.png` (`1269 × 714`)
+- Focused implementation crop: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button-refine/implementation-focused.png` (`449 × 84`)
+- Mobile implementation screenshot: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button-refine/stream-button-mobile-final.png` (`379 × 820`)
+- Combined comparison: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/20260731-stream-button-refine/design-comparison.png` (`1002 × 174`)
+- Desktop CSS viewport: default in-app browser viewport, captured at `1269 × 714`; button box `432 × 66.4`
+- Mobile CSS viewport override: `390 × 844`; captured content area `379 × 820`; button box `322.6 × 62.4`
+- Density normalization: browser captures and focused crop use one captured image pixel per CSS pixel. Source and implementation were independently scaled to `108px` comparison height while preserving aspect ratio.
+- State: dark theme, default live animation. Focus-visible was checked separately before the default-state captures.
 
 ## Full-view comparison evidence
 
-The component remains a compact call-to-action inside the existing Markdown component manual rather than inheriting the reference card's large height. Its full-width mobile layout and capped desktop width preserve the page rhythm, leave the syntax example readable below it, and do not introduce horizontal overflow.
+The desktop and mobile captures show a compact call-to-action that remains visually distinct from the larger Link Card above it. The desktop button is capped at `27rem`; the mobile button fills the article column without clipping its content or creating component-level horizontal overflow. The page's existing typography, spacing, and Catppuccin surface treatment remain intact.
 
 ## Focused comparison evidence
 
-The combined comparison verifies the intended visual transfer:
+The combined image verifies the intended transfer from the reference:
 
-- The left text zone remains dark and high-contrast.
-- The right side is one continuous overlapping color field, not separated blurred blobs.
-- Magenta, violet, warm orange, and a bright cream core reproduce the reference's light behavior.
-- The field is displaced into horizontal wind filaments; `screen` blending makes intersections additive.
-- The reference card proportions were intentionally reduced to a `5–6rem` capsule button.
+- The left side remains near-black and readable while the color field enters softly from the middle.
+- The right side uses one continuous overlapping field with warm orange/cream above, magenta through the center, and violet below.
+- The previous regular pinstripes are absent.
+- Broad displaced light ribbons replace the earlier thin, mechanically repeated lines.
+- The reference is a large card; the implementation intentionally compresses the visual language into a `432 × 66.4` button.
 
 ## Required fidelity surfaces
 
-- Fonts and typography: the existing site fonts are retained. Eyebrow, title, and copy reproduce the reference hierarchy at button scale without clipping at desktop or mobile widths.
-- Spacing and layout rhythm: pill radius, compact height, left alignment, padding, and capped desktop width are balanced against the Markdown page. Mobile width expands to the available column.
-- Colors and visual tokens: the dark Catppuccin-compatible base is preserved while the right field uses violet, magenta, orange, and cream light. Contrast remains legible through the field mask.
-- Image quality and asset fidelity: the source contains no reusable raster asset for the button. The requested live CSS color field and SVG filter are rendered sharply at both tested sizes, without raster stretching or halos.
-- Copy and content: title, eyebrow, and Markdown-formatted supporting copy are present and coherent.
-- Interaction and accessibility: pointer navigation reaches `/space1`; the native anchor receives a visible cyan focus ring; reduced-motion code stops the animation and retains a static visual; external links receive `noopener noreferrer`.
+- Fonts and typography: the site's established fonts are retained. Eyebrow, title, and supporting copy remain legible at the smaller button size; all three truncate safely rather than wrapping into the color field.
+- Spacing and layout rhythm: desktop width fell from `36rem` to `27rem`, desktop height from `89.6px` to `66.4px`, and mobile height from `80px` to `62.4px`. Padding, radius, and shadow now read as a button rather than a feature card.
+- Colors and visual tokens: the source's black, burnt-orange, cream, hot-magenta, and violet order is reflected in the live field. Screen blending is retained while layer opacity was reduced to avoid a washed-out white stripe.
+- Image quality and asset fidelity: the requested visual is a live CSS/SVG effect rather than a raster asset. The color field stays continuous at both sizes; no repeating-line overlay, stretching artifact, hard-edged blob, or filter halo is visible.
+- Copy and content: `eyebrow`, `title`, and Markdown-formatted supporting copy are unchanged and coherent.
+- Interaction and accessibility: the native anchor navigates to `/space1`; browser Back returns to the component manual. The cyan focus-visible ring remains clear. Reduced-motion handling preserves a static field and disables continuous updates.
 
 ## Animation evidence
 
-Two samples taken 420 ms apart changed:
+Two samples `900ms` apart changed:
 
-- `baseFrequency`: `0.00382 0.03305` → `0.00380 0.03374`
-- displacement scale: `36.39` → `36.65`
-- bright-core opacity: `0.900` → `0.912`
+- `baseFrequency`: `0.00209 0.02385` → `0.00213 0.02387`
+- displacement scale: `27.27` → `27.81`
+- primary field shift: `-0.80%` → `-0.51%`
+- first ribbon offset: `2.81%` → `2.84%`
+- counter ribbon offset: `0.58%` → `0.06%`
+- first ribbon tilt: `-0.24deg` → `-0.02deg`
+- bright-core opacity: `0.472` → `0.468`
 
-The horizontal turbulence frequency remains close to one tenth of the vertical frequency. Multiple sine terms based on irrational constants drive turbulence, displacement, field drift, and core breathing without fixed visual keyframes.
+The final animation continues to use independent sine groups based on irrational constants. Separate field, ribbon, counter-ribbon, tilt, displacement, and core-breath values move at different rates without fixed keyframes.
 
 ## Browser and interaction checks
 
-- Desktop and mobile layouts rendered without overlap or horizontal page overflow.
-- Pointer activation navigated to `/space1` and browser Back returned to the component manual.
-- Focus-visible styling rendered on the native link.
-- No component-specific console error or warning was observed. Existing unrelated Home transition and encoded Chinese heading-scroll warnings remain outside this change.
+- Desktop and mobile layouts render without overlap or component clipping.
+- Pointer activation reaches `/space1`; Back restores the Markdown components route.
+- Focus-visible styling renders on the native link.
+- No component-specific browser error was observed.
+- Existing Vue Router warnings for async Chinese/hash headings remain unrelated to this component refinement.
 
 ## Comparison history
 
-### Pass 1
+### Pass 1 — blocked
 
-- P0/P1/P2 findings: none.
-- Intentional difference: the source is a large card; the implementation is a smaller action button as requested.
-- Post-fix evidence: no visual fix loop was required.
+- [P1] Button dimensions read as a card: `36rem × 89.6px` was too long and too tall.
+- [P1] A `repeating-linear-gradient` created artificial, evenly spaced horizontal lines.
+- [P1] One translated color plane and high displacement amplitude made the animation feel mechanically synchronized.
+- Fixes: reduced desktop and mobile dimensions, removed the repeating-line layer, softened the noise before displacement, added two independently moving broad ribbons, and slowed each sine group to a different irrational cadence.
+
+### Pass 2 — blocked
+
+- [P2] The first smooth-field revision blended into one pale pink bar and underrepresented the reference's top-orange and lower-violet separation.
+- Fixes: vertically separated the three overlapping color regions, strengthened the upper warm core and lower violet ribbon, reduced additive opacity, increased broad-form displacement, and added subtle counter-rotation.
+
+### Pass 3 — passed
+
+- Post-fix evidence: `stream-button-desktop-final.png`, `stream-button-mobile-final.png`, and `design-comparison.png`.
+- No actionable P0/P1/P2 mismatch remains. The narrower aspect ratio and smaller type scale are intentional consequences of implementing a button instead of reproducing the reference card.
 
 ## Follow-up polish
 
-- P3: none required for handoff.
+- P3: the three-line Markdown copy hierarchy is necessarily denser than the reference's two-line card; it remains readable and was not changed because the component API intentionally exposes eyebrow, title, and body copy.
 
 final result: passed

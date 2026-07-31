@@ -1421,26 +1421,32 @@ onBeforeUnmount(() => {
 .markdown-body :deep(.md-stream-button) {
   --md-stream-shift-x: 0%;
   --md-stream-shift-y: 0%;
-  --md-stream-core: 0.78;
+  --md-stream-layer-a-x: 0%;
+  --md-stream-layer-a-y: 0%;
+  --md-stream-layer-a-tilt: 0deg;
+  --md-stream-layer-b-x: 0%;
+  --md-stream-layer-b-y: 0%;
+  --md-stream-layer-b-tilt: 0deg;
+  --md-stream-core: 0.58;
   --md-stream-core-scale: 1;
   position: relative;
   isolation: isolate;
   display: grid;
-  width: min(100%, 36rem);
-  min-height: 5.6rem;
-  margin: 1.9rem 0;
-  padding: 0.95rem clamp(1.3rem, 4vw, 1.8rem);
+  width: min(100%, 27rem);
+  min-height: 4.15rem;
+  margin: 1.55rem 0;
+  padding: 0.62rem 1.18rem 0.66rem;
   overflow: hidden;
-  border: 1px solid rgba(205, 214, 244, 0.15);
+  border: 1px solid rgba(205, 214, 244, 0.11);
   border-radius: 999px;
   box-sizing: border-box;
   color: #f4f5ff;
   background:
-    linear-gradient(102deg, #0d0d14 0%, #11111b 53%, #191425 100%);
+    linear-gradient(100deg, #0d0d13 0%, #111118 58%, #18111d 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.065),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.42),
-    0 18px 42px rgba(0, 0, 0, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.052),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.38),
+    0 13px 30px rgba(0, 0, 0, 0.25);
   text-decoration: none;
   transform: translateZ(0);
   transition:
@@ -1456,8 +1462,8 @@ onBeforeUnmount(() => {
   inset: 0;
   border-radius: inherit;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 23%, transparent 72%, rgba(0, 0, 0, 0.2)),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02), transparent 34%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 26%, transparent 74%, rgba(0, 0, 0, 0.18)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018), transparent 40%);
   pointer-events: none;
 }
 
@@ -1466,9 +1472,9 @@ onBeforeUnmount(() => {
   color: #ffffff;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.095),
-    0 22px 48px rgba(0, 0, 0, 0.34),
-    0 0 34px rgba(203, 166, 247, 0.11);
-  transform: translateY(-2px) scale(1.008);
+    0 17px 34px rgba(0, 0, 0, 0.31),
+    0 0 28px rgba(203, 166, 247, 0.09);
+  transform: translateY(-2px) scale(1.01);
 }
 
 .markdown-body :deep(.md-stream-button:active) {
@@ -1492,46 +1498,65 @@ onBeforeUnmount(() => {
 .markdown-body :deep(.md-stream-button-field) {
   position: absolute;
   z-index: 0;
-  inset: -42% -12% -46% 34%;
+  inset: -38% -12% -44% 37%;
   background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.1) 0,
-      rgba(255, 255, 255, 0.1) 1px,
-      transparent 1px,
-      transparent 9px
-    ),
-    radial-gradient(ellipse 68% 58% at 91% 18%, rgba(255, 224, 142, 0.98) 0%, rgba(248, 154, 92, 0.68) 31%, transparent 68%),
-    radial-gradient(ellipse 76% 58% at 94% 72%, rgba(242, 107, 193, 0.97) 0%, rgba(177, 84, 223, 0.72) 38%, transparent 72%),
-    radial-gradient(ellipse 72% 76% at 51% 94%, rgba(104, 91, 255, 0.94) 0%, rgba(93, 89, 226, 0.5) 38%, transparent 72%),
-    radial-gradient(ellipse 90% 80% at 64% 45%, rgba(240, 86, 146, 0.62) 0%, rgba(203, 73, 174, 0.32) 42%, transparent 74%),
-    linear-gradient(90deg, transparent 0%, rgba(99, 72, 206, 0.2) 28%, rgba(245, 122, 194, 0.78) 67%, rgba(255, 205, 124, 0.9) 100%);
+    radial-gradient(ellipse 118% 42% at 94% 4%, rgba(255, 228, 159, 0.98) 0%, rgba(249, 145, 75, 0.82) 34%, rgba(190, 58, 72, 0.42) 56%, transparent 78%),
+    radial-gradient(ellipse 124% 38% at 89% 57%, rgba(244, 61, 181, 0.98) 0%, rgba(211, 45, 163, 0.83) 40%, rgba(141, 52, 177, 0.42) 62%, transparent 81%),
+    radial-gradient(ellipse 110% 30% at 71% 102%, rgba(102, 75, 239, 0.96) 0%, rgba(146, 52, 208, 0.76) 45%, transparent 79%),
+    linear-gradient(96deg, transparent 0%, rgba(62, 40, 126, 0.2) 24%, rgba(174, 42, 146, 0.56) 61%, rgba(241, 122, 86, 0.76) 100%);
   mix-blend-mode: screen;
-  opacity: 0.94;
+  opacity: 0.88;
   transform:
     translate3d(var(--md-stream-shift-x), var(--md-stream-shift-y), 0)
-    scale(1.09);
-  transform-origin: 78% 50%;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.18) 14%, #000 43%);
-  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.18) 14%, #000 43%);
+    scale(1.07, 1.025);
+  transform-origin: 82% 50%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.13) 18%, #000 52%);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.13) 18%, #000 52%);
   pointer-events: none;
   will-change: transform, filter;
+}
+
+.markdown-body :deep(.md-stream-button-field::before),
+.markdown-body :deep(.md-stream-button-field::after) {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.markdown-body :deep(.md-stream-button-field::before) {
+  inset: 8% -4% 24% 4%;
+  background:
+    radial-gradient(ellipse 96% 19% at 73% 53%, rgba(255, 91, 188, 0.58) 0%, rgba(246, 54, 166, 0.32) 43%, transparent 77%);
+  filter: blur(2px);
+  transform: translate3d(var(--md-stream-layer-a-x), var(--md-stream-layer-a-y), 0) rotate(var(--md-stream-layer-a-tilt)) scaleX(1.08);
+  transform-origin: 80% 55%;
+}
+
+.markdown-body :deep(.md-stream-button-field::after) {
+  inset: 29% 1% -5% -5%;
+  background:
+    radial-gradient(ellipse 88% 18% at 68% 81%, rgba(99, 73, 239, 0.9) 0%, rgba(152, 53, 209, 0.52) 44%, transparent 78%);
+  filter: blur(2.5px);
+  transform: translate3d(var(--md-stream-layer-b-x), var(--md-stream-layer-b-y), 0) rotate(var(--md-stream-layer-b-tilt)) scaleX(1.07);
+  transform-origin: 78% 72%;
 }
 
 .markdown-body :deep(.md-stream-button-core) {
   position: absolute;
   z-index: 1;
-  top: 50%;
-  right: -1%;
-  width: 24%;
-  height: 88%;
+  top: -2%;
+  right: -2%;
+  width: 27%;
+  height: 58%;
   border-radius: 50%;
-  background: radial-gradient(ellipse at 62% 50%, rgba(255, 249, 218, 0.98) 0%, rgba(255, 213, 151, 0.72) 26%, rgba(244, 117, 198, 0.22) 54%, transparent 74%);
-  filter: blur(1.5px);
+  background: radial-gradient(ellipse at 67% 34%, rgba(255, 249, 216, 0.96) 0%, rgba(255, 214, 145, 0.68) 30%, rgba(246, 132, 90, 0.24) 55%, transparent 77%);
+  filter: blur(5px);
   mix-blend-mode: screen;
   opacity: var(--md-stream-core);
-  transform: translateY(-50%) scale(var(--md-stream-core-scale));
-  transform-origin: 72% 50%;
+  transform: scale(var(--md-stream-core-scale));
+  transform-origin: 72% 34%;
   pointer-events: none;
   will-change: opacity, transform;
 }
@@ -1540,8 +1565,8 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 4;
   display: grid;
-  max-width: 69%;
-  gap: 0.06rem;
+  max-width: 66%;
+  gap: 0;
   min-width: 0;
   pointer-events: none;
 }
@@ -1550,10 +1575,10 @@ onBeforeUnmount(() => {
   overflow: hidden;
   color: rgba(205, 214, 244, 0.62);
   font-family: "Fira Code", monospace;
-  font-size: 0.62rem;
+  font-size: 0.48rem;
   font-weight: 720;
-  letter-spacing: 0.18em;
-  line-height: 1.35;
+  letter-spacing: 0.17em;
+  line-height: 1.22;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1563,10 +1588,10 @@ onBeforeUnmount(() => {
   overflow: hidden;
   color: #f7f7ff;
   font-family: "Inter", "LXGW WenKai", sans-serif;
-  font-size: clamp(1.02rem, 2.1vw, 1.2rem);
+  font-size: 0.94rem;
   font-weight: 820;
   letter-spacing: -0.025em;
-  line-height: 1.28;
+  line-height: 1.19;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1574,10 +1599,10 @@ onBeforeUnmount(() => {
 .markdown-body :deep(.md-stream-button-copy) {
   overflow: hidden;
   color: rgba(221, 225, 244, 0.68);
-  font-size: clamp(0.7rem, 1.4vw, 0.78rem);
+  font-size: 0.62rem;
   font-weight: 500;
-  letter-spacing: 0.015em;
-  line-height: 1.35;
+  letter-spacing: 0.01em;
+  line-height: 1.24;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1959,35 +1984,35 @@ onBeforeUnmount(() => {
 
   .markdown-body :deep(.md-stream-button) {
     width: 100%;
-    min-height: 5rem;
-    margin: 1.6rem 0;
-    padding: 0.82rem 1.18rem;
+    min-height: 3.9rem;
+    margin: 1.45rem 0;
+    padding: 0.57rem 1rem 0.6rem;
   }
 
   .markdown-body :deep(.md-stream-button-field) {
-    inset: -44% -18% -50% 26%;
+    inset: -42% -17% -48% 31%;
   }
 
   .markdown-body :deep(.md-stream-button-core) {
-    right: -4%;
-    width: 31%;
+    right: -5%;
+    width: 32%;
   }
 
   .markdown-body :deep(.md-stream-button-content) {
-    max-width: 72%;
+    max-width: 70%;
   }
 
   .markdown-body :deep(.md-stream-button-eyebrow) {
-    font-size: 0.56rem;
+    font-size: 0.45rem;
     letter-spacing: 0.14em;
   }
 
   .markdown-body :deep(.md-stream-button-title) {
-    font-size: 1rem;
+    font-size: 0.88rem;
   }
 
   .markdown-body :deep(.md-stream-button-copy) {
-    font-size: 0.68rem;
+    font-size: 0.58rem;
   }
 }
 
@@ -2003,11 +2028,13 @@ onBeforeUnmount(() => {
   }
 
   .markdown-body :deep(.md-stream-button-field) {
-    transform: scale(1.09);
+    transform: scale(1.07, 1.025);
     will-change: auto;
   }
 
-  .markdown-body :deep(.md-stream-button-core) {
+  .markdown-body :deep(.md-stream-button-core),
+  .markdown-body :deep(.md-stream-button-field::before),
+  .markdown-body :deep(.md-stream-button-field::after) {
     will-change: auto;
   }
 }

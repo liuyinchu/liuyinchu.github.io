@@ -386,7 +386,7 @@ function renderComponent(name, attributes, source, context) {
       ? ' target="_blank" rel="noopener noreferrer"'
       : ''
 
-    return `<a class="md-stream-button" href="${href}" data-md-stream-button${externalAttributes}><svg class="md-stream-button-filter" width="0" height="0" aria-hidden="true" focusable="false"><filter id="${filterId}" x="-35%" y="-45%" width="180%" height="190%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.0032 0.032" numOctaves="2" seed="${seed}" stitchTiles="stitch" result="streamNoise"/><feDisplacementMap in="SourceGraphic" in2="streamNoise" scale="30" xChannelSelector="R" yChannelSelector="B"/></filter></svg><span class="md-stream-button-field" style="filter:url(#${filterId})" aria-hidden="true"></span><span class="md-stream-button-core" aria-hidden="true"></span><span class="md-stream-button-content"><span class="md-stream-button-eyebrow">${eyebrow}</span><strong class="md-stream-button-title">${title}</strong><span class="md-stream-button-copy">${copy}</span></span></a>`
+    return `<a class="md-stream-button" href="${href}" data-md-stream-button${externalAttributes}><svg class="md-stream-button-filter" width="0" height="0" aria-hidden="true" focusable="false"><filter id="${filterId}" x="-35%" y="-55%" width="180%" height="210%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.0022 0.022" numOctaves="2" seed="${seed}" stitchTiles="stitch" result="streamNoise"/><feGaussianBlur in="streamNoise" stdDeviation="0.42 1.35" result="streamNoiseSoft"/><feDisplacementMap in="SourceGraphic" in2="streamNoiseSoft" scale="27" xChannelSelector="R" yChannelSelector="B" result="streamDisplaced"/><feGaussianBlur in="streamDisplaced" stdDeviation="0.45 0.8"/></filter></svg><span class="md-stream-button-field" style="filter:url(#${filterId})" aria-hidden="true"></span><span class="md-stream-button-core" aria-hidden="true"></span><span class="md-stream-button-content"><span class="md-stream-button-eyebrow">${eyebrow}</span><strong class="md-stream-button-title">${title}</strong><span class="md-stream-button-copy">${copy}</span></span></a>`
   }
 
   const href = escapeHtml(safeHref(attributes.href || '#'))
@@ -482,11 +482,17 @@ function attachStreamButtonAnimations(container) {
 
   const applyStaticState = () => {
     states.forEach(({ button, displacement, turbulence }) => {
-      turbulence?.setAttribute('baseFrequency', '0.0032 0.032')
-      displacement?.setAttribute('scale', '30')
+      turbulence?.setAttribute('baseFrequency', '0.0022 0.022')
+      displacement?.setAttribute('scale', '27')
       button.style.setProperty('--md-stream-shift-x', '0%')
       button.style.setProperty('--md-stream-shift-y', '0%')
-      button.style.setProperty('--md-stream-core', '0.78')
+      button.style.setProperty('--md-stream-layer-a-x', '0%')
+      button.style.setProperty('--md-stream-layer-a-y', '0%')
+      button.style.setProperty('--md-stream-layer-a-tilt', '0deg')
+      button.style.setProperty('--md-stream-layer-b-x', '0%')
+      button.style.setProperty('--md-stream-layer-b-y', '0%')
+      button.style.setProperty('--md-stream-layer-b-tilt', '0deg')
+      button.style.setProperty('--md-stream-core', '0.58')
       button.style.setProperty('--md-stream-core-scale', '1')
     })
   }
@@ -506,30 +512,40 @@ function attachStreamButtonAnimations(container) {
     if (now - lastFrame >= 30) {
       const time = (now - startedAt) / 1000
       states.forEach(({ button, displacement, phase, turbulence }) => {
-        const horizontalWave = (
-          Math.sin(time * Math.SQRT2 * 0.31 + phase)
-          + 0.58 * Math.sin(time * Math.sqrt(3) * 0.23 + phase * 1.7)
-          + 0.34 * Math.sin(time * Math.PI * 0.17 + phase * 0.63)
+        const fieldWave = (
+          Math.sin(time * Math.SQRT2 * 0.2 + phase)
+          + 0.52 * Math.sin(time * Math.sqrt(3) * 0.14 + phase * 1.7)
+          + 0.31 * Math.sin(time * Math.PI * 0.092 + phase * 0.63)
         )
-        const verticalWave = (
-          Math.sin(time * Math.sqrt(5) * 0.19 + phase * 0.82)
-          + 0.46 * Math.sin(time * Math.E * 0.13 + phase * 1.31)
-          + 0.28 * Math.sin(time * Math.SQRT2 * 0.37 + phase * 0.41)
+        const ribbonWave = (
+          Math.sin(time * Math.sqrt(5) * 0.16 + phase * 0.82)
+          + 0.43 * Math.sin(time * Math.E * 0.105 + phase * 1.31)
+          + 0.25 * Math.sin(time * Math.SQRT2 * 0.25 + phase * 0.41)
+        )
+        const counterWave = (
+          Math.sin(time * Math.sqrt(7) * 0.095 + phase * 1.19)
+          + 0.38 * Math.sin(time * Math.PI * 0.061 + phase * 0.54)
         )
         const breath = (
-          Math.sin(time * Math.sqrt(2) * 0.43 + phase)
-          + 0.42 * Math.sin(time * Math.sqrt(7) * 0.21 + phase * 0.37)
+          Math.sin(time * Math.sqrt(2) * 0.24 + phase)
+          + 0.36 * Math.sin(time * Math.sqrt(7) * 0.14 + phase * 0.37)
         )
-        const frequencyX = Math.max(0.0018, 0.0032 + horizontalWave * 0.00042)
-        const frequencyY = Math.max(0.023, 0.032 + verticalWave * 0.0032)
-        const scale = 30 + horizontalWave * 3.8 + verticalWave * 2.3
+        const frequencyX = Math.max(0.0018, 0.0022 + fieldWave * 0.00016)
+        const frequencyY = Math.max(0.018, 0.022 + ribbonWave * 0.00155)
+        const scale = 27 + fieldWave * 2.2 + ribbonWave * 1.45
 
         turbulence?.setAttribute('baseFrequency', `${frequencyX.toFixed(5)} ${frequencyY.toFixed(5)}`)
         displacement?.setAttribute('scale', scale.toFixed(2))
-        button.style.setProperty('--md-stream-shift-x', `${(horizontalWave * 1.45).toFixed(2)}%`)
-        button.style.setProperty('--md-stream-shift-y', `${(verticalWave * 0.72).toFixed(2)}%`)
-        button.style.setProperty('--md-stream-core', `${Math.min(0.98, Math.max(0.56, 0.76 + breath * 0.11)).toFixed(3)}`)
-        button.style.setProperty('--md-stream-core-scale', `${(1 + breath * 0.035).toFixed(3)}`)
+        button.style.setProperty('--md-stream-shift-x', `${(fieldWave * 1.2).toFixed(2)}%`)
+        button.style.setProperty('--md-stream-shift-y', `${(ribbonWave * 0.48).toFixed(2)}%`)
+        button.style.setProperty('--md-stream-layer-a-x', `${(ribbonWave * 2.35).toFixed(2)}%`)
+        button.style.setProperty('--md-stream-layer-a-y', `${(fieldWave * 0.72).toFixed(2)}%`)
+        button.style.setProperty('--md-stream-layer-a-tilt', `${(counterWave * 0.78).toFixed(2)}deg`)
+        button.style.setProperty('--md-stream-layer-b-x', `${(counterWave * -1.9).toFixed(2)}%`)
+        button.style.setProperty('--md-stream-layer-b-y', `${(ribbonWave * -0.58).toFixed(2)}%`)
+        button.style.setProperty('--md-stream-layer-b-tilt', `${(fieldWave * -0.62).toFixed(2)}deg`)
+        button.style.setProperty('--md-stream-core', `${Math.min(0.78, Math.max(0.42, 0.57 + breath * 0.075)).toFixed(3)}`)
+        button.style.setProperty('--md-stream-core-scale', `${(1 + breath * 0.026).toFixed(3)}`)
       })
       lastFrame = now
     }
