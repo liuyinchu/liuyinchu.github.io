@@ -1,42 +1,42 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '../pages/Home.vue'
-import Code from '../pages/Code.vue'
-import Resource from '../pages/Resource.vue'
+const Code = () => import('../pages/Code.vue')
+const Resource = () => import('../pages/Resource.vue')
 // import Notes from '../pages/Notes.vue'
-import Space1 from '../pages/Space1.vue'           
-import Space2 from '../pages/Space2.vue' 
-import Space3 from '../pages/Space3.vue'          
-import Space4 from '../pages/Space4.vue'
-import Talk from '../pages/Talk.vue'
-import VisitorCenter from '../pages/VisitorCenter.vue'
-import ArticleView from '../pages/ArticleView.vue' 
-import About from '../pages/About.vue'
-import AboutIntro from '../pages/AboutIntro.vue'
-import Credit from '../pages/Credit.vue'
-import Portal from '../pages/Portal.vue'
-import LabReport from '../pages/LabReport.vue'
+const Space1 = () => import('../pages/Space1.vue')
+const Space2 = () => import('../pages/Space2.vue')
+const Space3 = () => import('../pages/Space3.vue')
+const Space4 = () => import('../pages/Space4.vue')
+const Talk = () => import('../pages/Talk.vue')
+const VisitorCenter = () => import('../pages/VisitorCenter.vue')
+const ArticleView = () => import('../pages/ArticleView.vue')
+const About = () => import('../pages/About.vue')
+const AboutIntro = () => import('../pages/AboutIntro.vue')
+const Credit = () => import('../pages/Credit.vue')
+const Portal = () => import('../pages/Portal.vue')
+const LabReport = () => import('../pages/LabReport.vue')
 // import PostIt from '../pages/PostIt.vue'
-import Academic from '../pages/Academic.vue'
-import YsyLatex from '../pages/YsyLatex.vue'
-import YsyDataAnalysisHelper from '../pages/YsyDataAnalysisHelper.vue'
-import BriskNexus from '../pages/BriskNexus.vue'
-import PaperSwitchBrush from '../pages/PaperSwitchBrush.vue'
-import Research from '../pages/Research.vue'
-import CyberMatch from '../pages/CyberMatch.vue'
-import LYC2048 from '../pages/LYC2048.vue'
-import ResourceDirectory from '../pages/ResourceDirectory.vue'
-import ResourceLiterature from '../pages/ResourceLiterature.vue'
-import ResourceProgramming from '../pages/ResourceProgramming.vue'
-import ResourceComputer from '../pages/ResourceComputer.vue'
-import ResourceMaterials from '../pages/ResourceMaterials.vue'
-import ResourceTools from '../pages/ResourceTools.vue'
-import ResourceFiles from '../pages/ResourceFiles.vue'
-import AcademicGuide from '../pages/AcademicGuide.vue'
-import LifeTree from '../pages/LifeTree.vue'
-import ModernControlCourse from '../pages/ModernControlCourse.vue'
-import MarkdownComponents from '../pages/MarkdownComponents.vue'
-import PrecisionPhyskit from '../pages/PrecisionPhyskit.vue'
+const Academic = () => import('../pages/Academic.vue')
+const YsyLatex = () => import('../pages/YsyLatex.vue')
+const YsyDataAnalysisHelper = () => import('../pages/YsyDataAnalysisHelper.vue')
+const BriskNexus = () => import('../pages/BriskNexus.vue')
+const PaperSwitchBrush = () => import('../pages/PaperSwitchBrush.vue')
+const Research = () => import('../pages/Research.vue')
+const CyberMatch = () => import('../pages/CyberMatch.vue')
+const LYC2048 = () => import('../pages/LYC2048.vue')
+const ResourceDirectory = () => import('../pages/ResourceDirectory.vue')
+const ResourceLiterature = () => import('../pages/ResourceLiterature.vue')
+const ResourceProgramming = () => import('../pages/ResourceProgramming.vue')
+const ResourceComputer = () => import('../pages/ResourceComputer.vue')
+const ResourceMaterials = () => import('../pages/ResourceMaterials.vue')
+const ResourceTools = () => import('../pages/ResourceTools.vue')
+const ResourceFiles = () => import('../pages/ResourceFiles.vue')
+const AcademicGuide = () => import('../pages/AcademicGuide.vue')
+const LifeTree = () => import('../pages/LifeTree.vue')
+const ModernControlCourse = () => import('../pages/ModernControlCourse.vue')
+const MarkdownComponents = () => import('../pages/MarkdownComponents.vue')
+const PrecisionPhyskit = () => import('../pages/PrecisionPhyskit.vue')
 
 
 const routes = [
