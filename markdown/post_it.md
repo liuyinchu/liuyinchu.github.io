@@ -26,12 +26,15 @@
 - [codex-ppt-skill](https://github.com/ningzimu/codex-ppt-skill)：一个面向 Codex 的 PPT 生成 skill，也可在 Claude Code、OpenClaw、Hermes Agent 等支持 SKILL.md 的 agent 中使用；在这些非 Codex 环境中通常需要配置 gpt-image-2 或第三方 OpenAI 兼容格式的生图 API。它把文章、报告、论文、课程笔记等内容转换成“整页图片式”的演示文稿：先规划大纲和视觉风格，再生成每页幻灯片图片，最后用本地脚本组装为 .pptx。
 - [ScanSci PDF](https://skills.scansci.com/skills/scansci-pdf/)：ScanSci PDF 是一个学术论文下载的 MCP 服务器。它同时尝试 13+ 个数据源（arXiv、Sci-Hub、LibGen、Unpaywall 等），哪个先成功用哪个。支持 100+ 中国高校 WebVPN 和 CARSI 联邦认证，能获取绝大多数付费论文的全文 PDF。
 - [AI-research-SKILLs](https://github.com/Orchestra-Research/AI-research-SKILLs)：这是一个最全面的开源技能库，能够使AI代理自主开展人工智能研究，从提出想法到撰写论文。
-- [novel-generator](https://clawhub.ai/ityhg/skills/novel-generator)：这是一个中文爽文小说生成技能。用户只需提供一句话方向（如"写个都市重生爽文"），AI 代理即可自动完善提示词、规划大纲、逐章创作并输出为独立 Markdown 文件。 
+- [novel-generator](https://clawhub.ai/ityhg/skills/novel-generator)：这是一个中文爽文小说生成技能。用户只需提供一句话方向（如"写个都市重生爽文"），AI 代理即可自动完善提示词、规划大纲、逐章创作并输出为独立 Markdown 文件。:badge[用过]{tone="success"}
 - [ppt-master](https://hugohe3.github.io/ppt-master/)：AI 可以从任何文档生成可直接编辑的 PPTX 文件——真正的 PowerPoint 形状，而不是图像。
-- [Humanizer-zh](https://github.com/op7418/humanizer-zh)：Humanizer-zh 是一个用于去除文本中 AI 生成痕迹的工具，帮助你将 AI 生成的内容改写得更自然、更像人类书写的文本。
-- [Apple-Design](https://github.com/emilkowalski/skills/blob/main/skills/apple-design/SKILL.md)：苹果公司在界面设计和流畅的物理动画方面的理念，已应用于网页设计。可用于构建或审核手势驱动的用户界面、弹簧动画、拖拽/滑动/滑动交互、动量和可中断的过渡效果、半透明材质和深度、排版（光学尺寸、字距、行距）、减少动画，以及苹果风格界面背后的设计基础（反馈、空间一致性、克制）。
+- [Humanizer-zh](https://github.com/op7418/humanizer-zh)：Humanizer-zh 是一个用于去除文本中 AI 生成痕迹的工具，帮助你将 AI 生成的内容改写得更自然、更像人类书写的文本。:badge[用过]{tone="success"}
+- [Apple-Design](https://github.com/emilkowalski/skills/blob/main/skills/apple-design/SKILL.md)：苹果公司在界面设计和流畅的物理动画方面的理念，已应用于网页设计。可用于构建或审核手势驱动的用户界面、弹簧动画、拖拽/滑动/滑动交互、动量和可中断的过渡效果、半透明材质和深度、排版（光学尺寸、字距、行距）、减少动画，以及苹果风格界面背后的设计基础（反馈、空间一致性、克制）。:badge[用过]{tone="success"}
 - [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/main/README.zh.md)：一个为跨多平台和框架构建专业 UI/UX 提供设计智能的 AI 技能。
-- 
+- [GC Minimal Zine Poster](https://github.com/LiamGvchi/gc-minimal-zine-poster/tree/main)：这是一个 Codex 技能：它会把主题、句子、物件、情绪、文章构想、照片或内容简报，转化为一张安静、极简的 ZINE 风格编辑海报所需的提示词，并生成对应的位图图像。:badge[用过]{tone="success"}
+- [Photo to Zine Postcard](https://github.com/Whiplashzeb/photo-to-zine-postcard)：把你拍摄的照片转换成一套极简、留白充足、带手绘二创元素的 Zine 风格明信片。:badge[用过]{tone="success"}
+- [Photo Abstract Editorial](https://github.com/ZzzLc0405/photo-abstract-editorial/tree/main)：将一张照片转化为“原始摄影区域 + 抽象记忆面板 + 诗意英文标题”的竖向编辑作品的 Codex Skill。它保留照片的真实内容，并仅从照片本身提炼空间关系、构图节奏和色彩关系；它不是滤镜、照片重画或风格迁移。:badge[用过]{tone="success"}
+- [open-kimi-ppt-skill](https://github.com/jinwyp/open-ppt-skill)：逆向 Kimi Slides 实现的非官方演示文稿 Skill，让 AI Coding Agent 可以创建、编辑、复刻、读取并导出 PPT/PPTX。每次生成默认产出两份文件：可继续编辑的 PPTD 项目，以及嵌入字体、带淡入淡出翻页切换的 PPTX。支持页内元素动画和预设主题，附带本地浏览器编辑器，可随时手动导出 PPTX。支持 Codex、Claude Code、Cursor、WorkBuddy 等任何兼容 SKILL.md 规范的 Agent。
 
 ---
 
