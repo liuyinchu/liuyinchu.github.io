@@ -7671,6 +7671,217 @@ onBeforeUnmount(() => {
   }
 }
 
+/* Phone portrait: keep the desktop metaphor readable instead of squeezing it horizontally. */
+@media (max-width: 480px) and (orientation: portrait) {
+  .mac-window,
+  .mac-window.is-positioned,
+  .mac-window.is-maximized {
+    right: max(12px, env(safe-area-inset-right)) !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+  }
+
+  .mac-window.liquid-surface::before {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.055),
+        transparent 42%,
+        rgba(3, 10, 18, 0.08)
+      ),
+      rgba(8, 16, 27, 0.22);
+  }
+
+  .window-titlebar {
+    grid-template-columns: 52px minmax(0, 1fr) 52px;
+    min-height: 44px;
+  }
+
+  .traffic-light.close {
+    width: 44px;
+    height: 44px;
+    margin-left: -8px;
+    border: 0;
+    background: radial-gradient(circle, #ff5f57 0 6px, transparent 6.5px);
+  }
+
+  .traffic-light.close::before,
+  .traffic-light.close::after {
+    display: none;
+  }
+
+  .window-body,
+  .window-todo .window-body,
+  .window-music .window-body {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.03), transparent 48%),
+      rgba(5, 11, 19, 0.28);
+    text-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.58),
+      0 0 10px rgba(0, 0, 0, 0.14);
+  }
+
+  .widget-shell :deep(.weather-container),
+  .widget-shell :deep(.calendar),
+  .todo-shell :deep(.todo-list-container),
+  .todo-shell :deep(.todo-container) {
+    background: rgba(7, 13, 22, 0.14);
+  }
+
+  .weather-shell :deep(.weather-container) {
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .weather-shell :deep(.loading-state) {
+    color: rgba(255, 255, 255, 0.78);
+    background: rgba(7, 13, 22, 0.18);
+  }
+
+  .calendar-shell :deep(.nav-btn),
+  .calendar-shell :deep(.today-btn),
+  .calendar-shell :deep(.mark-btn) {
+    min-height: 44px;
+  }
+
+  .calendar-shell :deep(.nav-btn) {
+    min-width: 44px;
+  }
+
+  .calendar-shell :deep(.calendar-grid) {
+    column-gap: 2px;
+    row-gap: 4px;
+  }
+
+  .calendar-shell :deep(.calendar-cell) {
+    min-height: 44px;
+  }
+
+  .calendar-shell :deep(.red-pill) {
+    min-height: 36px;
+    padding-inline: 10px;
+  }
+
+  .todo-overview-mark {
+    width: 44px;
+    height: 44px;
+  }
+
+  .spotlight-overlay {
+    background: rgba(3, 8, 15, 0.2);
+  }
+
+  .spotlight-panel {
+    right: max(12px, env(safe-area-inset-right));
+    left: max(12px, env(safe-area-inset-left));
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(0, 0, 0, 0.06)),
+      rgba(18, 24, 34, 0.88);
+  }
+
+  .spotlight-search {
+    background: rgba(7, 12, 20, 0.42);
+  }
+
+  .spotlight-results {
+    background: rgba(10, 16, 26, 0.78);
+  }
+
+  .spotlight-group h2,
+  .spotlight-footer {
+    color: rgba(255, 255, 255, 0.74);
+  }
+
+  .launchpad-overlay {
+    background: rgba(7, 12, 20, 0.34);
+    -webkit-backdrop-filter: blur(28px) brightness(0.68) saturate(122%);
+    backdrop-filter: blur(28px) brightness(0.68) saturate(122%);
+  }
+
+  .launchpad-panel {
+    bottom: calc(73px + env(safe-area-inset-bottom));
+    padding-bottom: 24px;
+    scroll-padding-bottom: 24px;
+  }
+
+  .launchpad-panel:focus {
+    outline: none;
+  }
+
+  .launchpad-close {
+    top: calc(68px + env(safe-area-inset-top));
+  }
+
+  .launchpad-search input {
+    font-size: 16px;
+  }
+
+  .launchpad-groups.liquid-surface {
+    background: rgba(8, 15, 25, 0.18);
+  }
+
+  .launchpad-tile {
+    min-height: 108px;
+    align-content: start;
+  }
+
+  .launchpad-tile span {
+    display: -webkit-box;
+    min-height: 2.5em;
+    overflow: hidden;
+    line-height: 1.25;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .bottom-launcher.liquid-surface {
+    right: auto;
+    left: 50%;
+    width: max-content;
+    max-width: calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    justify-content: center;
+    overflow: visible;
+    transform: translateX(-50%);
+  }
+
+  .bottom-launcher > a.launcher-item,
+  .bottom-launcher > .launcher-divider {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) and (orientation: portrait) {
+  .todo-shell {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .todo-overview {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .todo-shell :deep(.mode-switch) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .todo-shell :deep(.mode-btn) {
+    width: auto;
+    flex: none;
+  }
+
+  .todo-shell :deep(.current-day-chip) {
+    width: 100%;
+    grid-column: 1 / -1;
+    white-space: nowrap;
+  }
+
+  .todo-shell :deep(.task-list:empty::after) {
+    width: 100%;
+    white-space: pre-wrap;
+  }
+}
+
 @media (min-width: 560px) and (max-width: 950px) and (max-height: 600px) and (orientation: landscape) {
   .mac-window,
   .mac-window.is-positioned,
