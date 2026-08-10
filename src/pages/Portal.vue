@@ -265,6 +265,7 @@ const portalDesktopRef = ref(null)
 const windowRef = ref(null)
 const spotlightInput = ref(null)
 const launchpadInput = ref(null)
+const launchpadPanel = ref(null)
 const dockRef = ref(null)
 const liquidCanvasRef = ref(null)
 const liquidWebGLReady = ref(false)
@@ -857,10 +858,10 @@ const windowStyle = computed(() => {
 
   if (windowMaximized.value) {
     return {
-      top: '34px',
-      left: '8px',
-      width: 'calc(100vw - 16px)',
-      height: 'calc(100dvh - 112px)',
+      top: 'var(--portal-window-max-top, 34px)',
+      left: 'var(--portal-window-max-inset, 8px)',
+      width: 'calc(100vw - var(--portal-window-max-gutter, 16px))',
+      height: 'calc(100dvh - var(--portal-window-max-height-offset, 112px))',
       maxHeight: 'none',
     }
   }
@@ -1102,7 +1103,7 @@ async function restorePreviousFocus(target = lastFocusedElement) {
 
 function updateCompactLayout() {
   compactLayout.value = window.matchMedia(
-    '(max-width: 700px), (max-width: 950px) and (max-height: 600px) and (orientation: landscape)',
+    '(max-width: 1100px), (max-width: 1366px) and (hover: none) and (pointer: coarse)',
   ).matches
 
   if (compactLayout.value) {
@@ -1147,7 +1148,10 @@ async function focusActiveSurface() {
   if (activeOverlay.value === 'map') {
     spotlightInput.value?.focus({ preventScroll: true })
   } else if (activeOverlay.value === 'dock') {
-    launchpadInput.value?.focus({ preventScroll: true })
+    const touchFirstLayout = compactLayout.value
+      || window.matchMedia('(hover: none) and (pointer: coarse)').matches
+    if (touchFirstLayout) launchpadPanel.value?.focus({ preventScroll: true })
+    else launchpadInput.value?.focus({ preventScroll: true })
   } else if (isOrdinaryWindow(activeWindow.value) && minimizedWindow.value !== activeWindow.value) {
     windowRef.value?.focus({ preventScroll: true })
   }
@@ -1243,15 +1247,28 @@ async function restoreMinimizedWindow() {
   activeWindow.value = minimizedWindow.value
   minimizedWindow.value = null
   isMinimizing.value = false
+  await nextTick()
+  if (!compactLayout.value) {
+    const rect = windowRef.value?.getBoundingClientRect()
+    if (!windowPositionUserAdjusted) await centerWindow()
+    else if (rect) windowPos.value = clampWindowPosition(windowPos.value.x, windowPos.value.y, rect)
+  }
   await focusActiveSurface()
 }
 
-function toggleMaximizeWindow() {
+async function toggleMaximizeWindow() {
   if (!isOrdinaryWindow(activeWindow.value) || compactLayout.value) return
 
   if (windowMaximized.value) {
     windowMaximized.value = false
-    windowPos.value = { ...restoreWindowPos.value }
+    await nextTick()
+    const rect = windowRef.value?.getBoundingClientRect()
+    windowPos.value = clampWindowPosition(
+      restoreWindowPos.value.x,
+      restoreWindowPos.value.y,
+      rect,
+    )
+    restoreWindowPos.value = { ...windowPos.value }
     return
   }
 
@@ -1359,20 +1376,23 @@ function cancelWindowDrag() {
   }
 }
 
-function handleViewportResize() {
+async function handleViewportResize() {
+  const wasCompactLayout = compactLayout.value
   updateCompactLayout()
   requestLiquidGlassRender(320)
   if (window.innerWidth <= 900) resetDockMagnification()
+  if (wasCompactLayout !== compactLayout.value) await nextTick()
   if (
     compactLayout.value
     || windowMaximized.value
     || !windowPositioned.value
     || !isOrdinaryWindow(activeWindow.value)
+    || minimizedWindow.value === activeWindow.value
   ) return
 
   const rect = windowRef.value?.getBoundingClientRect()
   if (!windowPositionUserAdjusted) {
-    centerWindow()
+    await centerWindow()
     return
   }
   windowPos.value = clampWindowPosition(windowPos.value.x, windowPos.value.y, rect)
@@ -1488,12 +1508,18 @@ function handleDockPointerMove(event) {
     if (!dock) return
     dock.classList.remove('is-settling')
     const dockRect = dock.getBoundingClientRect()
+    const dockStyles = window.getComputedStyle(dock)
+    const readDockMetric = (name, fallback) => (
+      Number.parseFloat(dockStyles.getPropertyValue(name)) || fallback
+    )
+    const radius = readDockMetric('--portal-dock-magnify-radius', 90)
+    const maxShift = readDockMetric('--portal-dock-magnify-shift', 6)
+    const maxLift = readDockMetric('--portal-dock-magnify-lift', 10)
 
     dock.querySelectorAll('.launcher-item').forEach((item) => {
       const itemCenter = dockRect.left + item.offsetLeft - dock.scrollLeft + item.offsetWidth / 2
       const signedDistance = itemCenter - pointerX
       const distance = Math.abs(signedDistance)
-      const radius = 90
       const influence = distance >= radius
         ? 0
         : (Math.cos(Math.PI * distance / radius) + 1) / 2
@@ -1503,9 +1529,9 @@ function handleDockPointerMove(event) {
       item.style.setProperty('--dock-scale', scale.toFixed(3))
       item.style.setProperty(
         '--dock-shift',
-        `${direction * influence * horizontalInfluence * 6}px`,
+        `${direction * influence * horizontalInfluence * maxShift}px`,
       )
-      item.style.setProperty('--dock-lift', `${influence * -10}px`)
+      item.style.setProperty('--dock-lift', `${influence * -maxLift}px`)
     })
   })
 }
@@ -1760,8 +1786,9 @@ function resizeLiquidCanvas(renderer, rootRect) {
   const cssWidth = Math.max(1, rootRect.width)
   const cssHeight = Math.max(1, rootRect.height)
   const coarsePointer = liquidGlassPointerQuery?.matches === false
-  const pixelBudget = coarsePointer ? 1200000 : 4200000
-  const scaleLimit = coarsePointer ? 1.45 : 1.35
+  const ultraWideViewport = cssWidth >= 2560 && cssHeight >= 1400
+  const pixelBudget = coarsePointer ? 1200000 : (ultraWideViewport ? 8400000 : 4200000)
+  const scaleLimit = coarsePointer ? 1.45 : (ultraWideViewport ? 1 : 1.35)
   const budgetScale = Math.sqrt(pixelBudget / (cssWidth * cssHeight))
   const renderScale = Math.min(
     window.devicePixelRatio || 1,
@@ -2646,6 +2673,12 @@ onBeforeUnmount(() => {
           @pointerdown.stop
           @keydown="handleDialogKeydown"
         >
+          <button
+            class="spotlight-close"
+            type="button"
+            aria-label="Close Spotlight"
+            @click="closeWindow"
+          >×</button>
           <label
             class="spotlight-search liquid-surface"
             data-liquid-surface
@@ -2748,6 +2781,7 @@ onBeforeUnmount(() => {
         @click.self="closeWindow"
       >
         <section
+          ref="launchpadPanel"
           class="launchpad-panel"
           aria-label="Launchpad"
           role="dialog"
@@ -2967,6 +3001,13 @@ onBeforeUnmount(() => {
   --portal-fw-semibold: 600;
   --portal-text: var(--portal-text-primary);
   --portal-muted: var(--portal-text-secondary);
+  --portal-window-max-top: 34px;
+  --portal-window-max-inset: 8px;
+  --portal-window-max-gutter: 16px;
+  --portal-window-max-height-offset: 112px;
+  --portal-dock-magnify-radius: 90;
+  --portal-dock-magnify-shift: 6;
+  --portal-dock-magnify-lift: 10;
 
   position: relative;
   width: 100vw;
@@ -4491,6 +4532,10 @@ onBeforeUnmount(() => {
   transform: translateX(-50%);
   -webkit-backdrop-filter: saturate(165%) blur(24px);
   backdrop-filter: saturate(165%) blur(24px);
+}
+
+.spotlight-close {
+  display: none;
 }
 
 .spotlight-search {
@@ -6627,6 +6672,7 @@ onBeforeUnmount(() => {
   .menu-clock-action,
   .traffic-light,
   .spotlight-result,
+  .spotlight-close,
   .launchpad-close,
   .launchpad-tile,
   .launcher-item
@@ -6993,6 +7039,698 @@ onBeforeUnmount(() => {
 
   .launcher-item img {
     transform: none !important;
+  }
+}
+
+/* Ultra-wide desktops: scale the system chrome without changing the 1280×800 baseline. */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .portal-desktop {
+    --portal-window-max-top: 54px;
+    --portal-window-max-inset: 16px;
+    --portal-window-max-gutter: 32px;
+    --portal-window-max-height-offset: 164px;
+    --portal-dock-magnify-radius: 140;
+    --portal-dock-magnify-shift: 9;
+    --portal-dock-magnify-lift: 16;
+  }
+
+  .portal-menu-bar {
+    height: 42px;
+    padding: 0 20px;
+  }
+
+  .menu-left,
+  .menu-right {
+    gap: 7px;
+  }
+
+  .menu-brand-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+
+  .menu-home-link,
+  .menu-glyph-button,
+  .menu-status-glyph {
+    width: 36px;
+    height: 36px;
+  }
+
+  .menu-current-app,
+  .menu-commands,
+  .menu-clock {
+    font-size: 18px;
+  }
+
+  .menu-current-app {
+    margin-inline: 5px 10px;
+  }
+
+  .menu-command {
+    padding: 4px 10px;
+  }
+
+  .menu-glyph-button svg,
+  .menu-status-glyph svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  .battery-glyph,
+  .battery-glyph svg {
+    width: 34px;
+  }
+
+  .menu-clock {
+    padding: 4px 9px;
+  }
+
+  .mac-window {
+    width: min(1380px, calc(100vw - 112px));
+    max-height: min(1040px, calc(100dvh - 176px));
+    min-height: 34rem;
+    font-size: 18px;
+  }
+
+  .window-music {
+    width: min(1160px, calc(100vw - 112px));
+  }
+
+  .window-weather,
+  .window-calendar {
+    width: min(920px, calc(100vw - 112px));
+  }
+
+  .window-todo {
+    width: min(1040px, calc(100vw - 112px));
+  }
+
+  .window-titlebar {
+    grid-template-columns: 132px minmax(0, 1fr) 132px;
+    min-height: 54px;
+    padding: 0 20px;
+  }
+
+  .traffic-lights {
+    gap: 12px;
+  }
+
+  .traffic-light {
+    width: 18px;
+    height: 18px;
+  }
+
+  .window-title {
+    gap: 9px;
+    font-size: 18px;
+  }
+
+  .window-title img,
+  .window-title-glyph {
+    width: 24px;
+    height: 24px;
+  }
+
+  .window-body {
+    padding: 22px;
+  }
+
+  .window-music :deep(.aplayer-list) {
+    max-height: 420px !important;
+  }
+
+  .spotlight-panel {
+    top: clamp(140px, 12vh, 240px);
+    width: min(980px, calc(100vw - 96px));
+    max-height: min(860px, calc(100dvh - 280px));
+  }
+
+  .spotlight-search {
+    min-height: 82px;
+    padding-inline: 26px;
+  }
+
+  .spotlight-input {
+    font-size: 30px;
+  }
+
+  .spotlight-results {
+    max-height: 660px;
+    padding: 9px 11px 14px;
+  }
+
+  .spotlight-result {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    min-height: 70px;
+    padding: 8px 15px;
+  }
+
+  .spotlight-result-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .spotlight-result-copy strong {
+    font-size: 19px;
+  }
+
+  .spotlight-result-copy small,
+  .spotlight-result-category {
+    font-size: 15px;
+  }
+
+  .spotlight-footer {
+    min-height: 50px;
+    padding-inline: 20px;
+    font-size: 14px;
+  }
+
+  .launchpad-panel {
+    inset: 42px 0 0;
+    padding: 72px clamp(56px, 7vw, 180px) 168px;
+  }
+
+  .launchpad-close {
+    top: 62px;
+    right: 40px;
+    width: 52px;
+    height: 52px;
+    font-size: 28px;
+  }
+
+  .launchpad-search {
+    width: min(440px, 72vw);
+    min-height: 52px;
+    margin-bottom: 54px;
+    padding-inline: 16px;
+  }
+
+  .launchpad-search input {
+    font-size: 18px;
+  }
+
+  .launchpad-groups {
+    gap: 46px;
+    max-width: 1800px;
+  }
+
+  .launchpad-grid {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 42px 28px;
+  }
+
+  .launchpad-tile {
+    min-height: 132px;
+    gap: 12px;
+  }
+
+  .launchpad-tile img {
+    width: 96px;
+    height: 96px;
+  }
+
+  .launchpad-tile span,
+  .link-group h2 {
+    font-size: 16px;
+  }
+
+  .bottom-launcher.liquid-surface {
+    --lg-surface-radius: 30px;
+    bottom: 20px;
+    height: 98px;
+    gap: 5px;
+    padding: 8px 15px;
+    border-radius: 30px;
+  }
+
+  .bottom-launcher.liquid-surface::before,
+  .bottom-launcher.liquid-surface::after {
+    clip-path: inset(0 round 30px);
+  }
+
+  .launcher-item {
+    flex-basis: 72px;
+    width: 72px;
+    height: 82px;
+    grid-template-rows: 68px 14px;
+  }
+
+  .launcher-item img {
+    width: 68px;
+    height: 68px;
+  }
+
+  .launcher-divider {
+    height: 58px;
+    margin-inline: 5px;
+  }
+
+  .launcher-tooltip {
+    max-width: 220px;
+    padding: 8px 13px;
+    font-size: 16px;
+  }
+}
+
+/* Short laptops: reclaim vertical space while leaving the 800px-high baseline untouched. */
+@media (min-width: 1101px) and (max-width: 1600px) and (max-height: 780px) {
+  .portal-desktop {
+    --portal-window-max-top: 30px;
+    --portal-window-max-inset: 6px;
+    --portal-window-max-gutter: 12px;
+    --portal-window-max-height-offset: 92px;
+  }
+
+  .mac-window {
+    max-height: calc(100dvh - 98px);
+    min-height: min(384px, calc(100dvh - 98px));
+  }
+
+  .window-todo {
+    min-height: min(440px, calc(100dvh - 98px));
+  }
+
+  .window-titlebar {
+    min-height: 34px;
+  }
+
+  .window-body {
+    padding: 10px;
+  }
+
+  .window-music :deep(.aplayer-list) {
+    max-height: 190px !important;
+  }
+
+  .spotlight-panel {
+    top: 48px;
+    max-height: calc(100dvh - 108px);
+  }
+
+  .launchpad-panel {
+    padding-top: 28px;
+    padding-bottom: 82px;
+  }
+
+  .launchpad-search {
+    margin-bottom: 20px;
+  }
+
+  .launchpad-groups {
+    gap: 22px;
+  }
+
+  .launchpad-grid {
+    gap: 20px 16px;
+  }
+
+  .bottom-launcher.liquid-surface {
+    --lg-surface-radius: 18px;
+    bottom: max(7px, env(safe-area-inset-bottom));
+    height: 57px;
+    padding: 4px 8px;
+    border-radius: 18px;
+  }
+
+  .bottom-launcher.liquid-surface::before,
+  .bottom-launcher.liquid-surface::after {
+    clip-path: inset(0 round 18px);
+  }
+
+  .launcher-item {
+    flex-basis: 40px;
+    width: 40px;
+    height: 46px;
+    grid-template-rows: 38px 8px;
+  }
+
+  .launcher-item img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .launcher-divider {
+    height: 34px;
+    margin-inline: 2px;
+  }
+}
+
+/* Tablet workspace: a touch-first window shell with the same desktop visual language. */
+@media (min-width: 701px) and (max-width: 1100px),
+  (min-width: 701px) and (max-width: 1366px) and (hover: none) and (pointer: coarse) {
+  .portal-menu-bar {
+    height: calc(44px + env(safe-area-inset-top));
+    padding:
+      env(safe-area-inset-top)
+      max(10px, env(safe-area-inset-right))
+      0
+      max(10px, env(safe-area-inset-left));
+  }
+
+  .menu-left,
+  .menu-right {
+    gap: 2px;
+  }
+
+  .menu-commands {
+    display: none;
+  }
+
+  .menu-home-link,
+  .menu-glyph-button,
+  .menu-status-glyph {
+    width: 44px;
+    height: 44px;
+  }
+
+  .menu-current-app {
+    margin-right: 4px;
+    font-size: 14px;
+  }
+
+  .menu-clock {
+    min-height: 44px;
+    padding-inline: 10px;
+    font-size: 13px;
+  }
+
+  .mac-window,
+  .mac-window.is-positioned,
+  .mac-window.is-maximized {
+    top: calc(44px + env(safe-area-inset-top) + 12px) !important;
+    right: max(12px, env(safe-area-inset-right)) !important;
+    bottom: calc(80px + max(12px, env(safe-area-inset-bottom))) !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+    transform: none !important;
+  }
+
+  .window-titlebar {
+    grid-template-columns: 52px minmax(0, 1fr) 52px;
+    min-height: 44px;
+    padding: 0 8px;
+    cursor: default;
+  }
+
+  .traffic-light.minimize,
+  .traffic-light.zoom {
+    display: none;
+  }
+
+  .traffic-light.close {
+    width: 44px;
+    height: 44px;
+    margin-left: -8px;
+    border: 0;
+    background: radial-gradient(circle, #ff5f57 0 6px, transparent 6.5px);
+  }
+
+  .traffic-light.close::before,
+  .traffic-light.close::after {
+    display: none;
+  }
+
+  .window-body {
+    padding: 14px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .calendar-shell :deep(.nav-btn),
+  .calendar-shell :deep(.today-btn),
+  .calendar-shell :deep(.mark-btn),
+  .todo-shell :deep(.mode-btn),
+  .todo-shell :deep(.current-day-chip),
+  .todo-shell :deep(.add-button) {
+    min-height: 44px;
+  }
+
+  .spotlight-panel {
+    top: calc(44px + env(safe-area-inset-top) + 18px);
+    right: max(24px, env(safe-area-inset-right));
+    left: max(24px, env(safe-area-inset-left));
+    width: auto;
+    max-height: calc(100dvh - 170px - env(safe-area-inset-top));
+    transform: none;
+  }
+
+  .spotlight-search {
+    min-height: 60px;
+    padding-right: 68px;
+  }
+
+  .spotlight-search:focus-within {
+    box-shadow: inset 0 0 0 2px rgba(10, 132, 255, 0.88);
+  }
+
+  .spotlight-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 4;
+    display: grid;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    color: var(--portal-text-primary);
+    background: rgba(255, 255, 255, 0.1);
+    font: inherit;
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  .launchpad-panel {
+    inset: calc(44px + env(safe-area-inset-top)) 0 0;
+    padding:
+      46px
+      max(30px, env(safe-area-inset-right))
+      calc(104px + env(safe-area-inset-bottom))
+      max(30px, env(safe-area-inset-left));
+  }
+
+  .launchpad-close {
+    top: calc(54px + env(safe-area-inset-top));
+    right: max(18px, env(safe-area-inset-right));
+    width: 44px;
+    height: 44px;
+  }
+
+  .launchpad-search {
+    min-height: 44px;
+    margin-bottom: 30px;
+  }
+
+  .launchpad-groups {
+    gap: 30px;
+  }
+
+  .launchpad-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 28px 16px;
+  }
+
+  .launchpad-tile img {
+    width: 68px;
+    height: 68px;
+  }
+
+  .bottom-launcher.liquid-surface {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    height: 68px;
+    max-width: calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    padding: 6px 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .launcher-item {
+    --dock-scale: 1 !important;
+    --dock-shift: 0px !important;
+    --dock-lift: 0px !important;
+    flex-basis: 48px;
+    width: 48px;
+    height: 56px;
+    grid-template-rows: 46px 10px;
+    transform: none !important;
+  }
+
+  .launcher-item img {
+    width: 44px;
+    height: 44px;
+    transform: none !important;
+  }
+
+  .launcher-tooltip {
+    display: none;
+  }
+
+  .launcher-divider {
+    height: 40px;
+  }
+}
+
+@media (min-width: 1101px) and (max-width: 1366px) and (hover: none) and (pointer: coarse) {
+  .launchpad-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* Compact phones and short landscape screens: respect notches and make Dock scrolling explicit. */
+@media (max-width: 700px),
+  (max-width: 950px) and (max-height: 600px) and (orientation: landscape) {
+  .portal-menu-bar {
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+
+  .menu-left,
+  .menu-right {
+    gap: 0;
+  }
+
+  .menu-home-link,
+  .menu-glyph-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .menu-current-app {
+    max-width: 86px;
+  }
+
+  .mac-window,
+  .mac-window.is-positioned,
+  .mac-window.is-maximized {
+    right: max(8px, env(safe-area-inset-right)) !important;
+    left: max(8px, env(safe-area-inset-left)) !important;
+  }
+
+  .spotlight-panel {
+    right: max(8px, env(safe-area-inset-right));
+    left: max(8px, env(safe-area-inset-left));
+  }
+
+  .spotlight-search {
+    padding-right: 62px;
+  }
+
+  .spotlight-search:focus-within {
+    box-shadow: inset 0 0 0 2px rgba(10, 132, 255, 0.88);
+  }
+
+  .spotlight-close {
+    position: absolute;
+    top: 5px;
+    right: max(5px, env(safe-area-inset-right));
+    z-index: 4;
+    display: grid;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    color: var(--portal-text-primary);
+    background: rgba(255, 255, 255, 0.1);
+    font: inherit;
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  .launchpad-panel {
+    padding-right: max(18px, env(safe-area-inset-right));
+    padding-left: max(18px, env(safe-area-inset-left));
+  }
+
+  .launchpad-close {
+    right: max(12px, env(safe-area-inset-right));
+  }
+
+  .bottom-launcher.liquid-surface {
+    right: max(8px, env(safe-area-inset-right));
+    left: max(8px, env(safe-area-inset-left));
+    width: auto;
+    max-width: none;
+    box-sizing: border-box;
+    scroll-padding-inline: 7px;
+    overscroll-behavior-inline: contain;
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .launchpad-search {
+    width: min(260px, calc(100vw - 128px));
+  }
+}
+
+@media (min-width: 560px) and (max-width: 950px) and (max-height: 600px) and (orientation: landscape) {
+  .mac-window,
+  .mac-window.is-positioned,
+  .mac-window.is-maximized {
+    bottom: calc(58px + max(5px, env(safe-area-inset-bottom))) !important;
+  }
+
+  .launchpad-panel {
+    padding-top: 20px;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+
+  .launchpad-search {
+    min-height: 40px;
+    margin-bottom: 16px;
+  }
+
+  .launchpad-groups {
+    gap: 16px;
+    padding: 12px;
+  }
+
+  .link-group + .link-group {
+    padding-top: 14px;
+  }
+
+  .launchpad-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 18px 10px;
+  }
+
+  .launchpad-tile {
+    min-height: 70px;
+  }
+
+  .launchpad-tile img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .bottom-launcher.liquid-surface {
+    bottom: max(5px, env(safe-area-inset-bottom));
+    height: 49px;
+    padding-block: 2px;
+  }
+
+  .launcher-item {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+    grid-template-rows: 38px 6px;
+  }
+
+  .launcher-item img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .launcher-divider {
+    height: 34px;
   }
 }
 
