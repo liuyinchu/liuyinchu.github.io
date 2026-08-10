@@ -192,6 +192,7 @@ function onMarkdownLoaded(rawText) {
                 class="article-state-folio-icon"
                 viewBox="0 0 64 64"
                 fill="none"
+                aria-hidden="true"
                 focusable="false"
               >
                 <g v-if="status === 'loading'" class="article-state-scan-glyph">
@@ -233,7 +234,7 @@ function onMarkdownLoaded(rawText) {
             aria-busy="true"
           >
             <span class="article-state-kicker">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <svg class="article-state-kicker-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <circle cx="12" cy="12" r="8" />
                 <path d="M12 7v5l3 2" />
               </svg>
@@ -252,10 +253,10 @@ function onMarkdownLoaded(rawText) {
             aria-describedby="article-not-found-description"
           >
             <span class="article-state-kicker">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <circle cx="5" cy="12" r="2.25" />
-                <circle cx="19" cy="12" r="2.25" />
-                <path d="M7.25 12h3.25m3 0h3.25M11 8.75l2 2.1-2 2.4" />
+              <svg class="article-state-kicker-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5Z" />
+                <path d="M14 2v6h6" />
+                <path d="m9.5 13 5 5m0-5-5 5" />
               </svg>
               Article · signal lost
             </span>
@@ -267,9 +268,11 @@ function onMarkdownLoaded(rawText) {
             </p>
 
             <div class="article-state-path">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <circle cx="12" cy="12" r="8" />
-                <path d="M12 8v4l3 2" />
+              <svg class="article-state-path-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h5" />
+                <path d="M14 2v6h6v3" />
+                <circle cx="17" cy="17" r="3" />
+                <path d="M17 12v2M17 20v2M12 17h2M20 17h2" />
               </svg>
               <span>
                 <small>Requested article</small>
@@ -304,7 +307,7 @@ function onMarkdownLoaded(rawText) {
             aria-describedby="article-error-description"
           >
             <span class="article-state-kicker">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <svg class="article-state-kicker-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M4 12a8 8 0 0 1 13.7-5.6L20 9" />
                 <path d="M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15" />
               </svg>
@@ -318,7 +321,7 @@ function onMarkdownLoaded(rawText) {
             </p>
 
             <div class="article-state-path">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <svg class="article-state-path-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M4 12a8 8 0 0 1 13.7-5.6L20 9" />
                 <path d="M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15" />
                 <path d="M4 20v-5h5" />
@@ -1070,7 +1073,7 @@ function onMarkdownLoaded(rawText) {
   right: 1.05rem;
   width: 4.35rem;
   height: 4.35rem;
-  color: #59698a;
+  color: #455675;
   stroke: currentColor;
   stroke-width: 2;
   stroke-linecap: round;
@@ -1078,7 +1081,7 @@ function onMarkdownLoaded(rawText) {
 }
 
 .article-state-panel--error .article-state-folio-icon {
-  color: #865c7a;
+  color: #704d67;
 }
 
 .article-state-folio-trace {
@@ -1162,21 +1165,24 @@ function onMarkdownLoaded(rawText) {
 .article-state-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.42rem;
   color: var(--article-state-mauve);
   font-family: "Cinzel", Georgia, serif;
-  font-size: 0.67rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1;
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
 .article-state-kicker svg {
-  width: 1.25rem;
-  height: 1.25rem;
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  stroke-width: 1.75;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -1220,6 +1226,13 @@ function onMarkdownLoaded(rawText) {
     0 0 0 1px rgba(115, 122, 148, 0.18);
 }
 
+.article-state-path > svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  stroke-width: 1.75;
+}
+
 .article-state-actions {
   gap: 0.9rem;
   margin-top: 1.35rem;
@@ -1227,7 +1240,7 @@ function onMarkdownLoaded(rawText) {
 
 .article-state-action {
   min-height: 3.35rem;
-  border: 1px solid #686f88;
+  border: 1px solid #747c98;
   border-radius: 0.95rem;
   background: linear-gradient(145deg, #303445, #272a39);
   box-shadow:
@@ -1331,7 +1344,110 @@ function onMarkdownLoaded(rawText) {
   }
 }
 
+@media (min-width: 620px) and (max-width: 860px) {
+  .page-container:not([data-state="ready"]) {
+    padding-top: 4rem;
+    padding-bottom: 3rem;
+  }
+
+  .article-state-panel {
+    grid-template-columns: minmax(14.25rem, 0.78fr) minmax(0, 1.22fr);
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .article-state-instrument {
+    gap: 0.7rem;
+    padding: 0.85rem;
+  }
+
+  .article-state-folio-well {
+    min-height: 11.5rem;
+    padding: 0.8rem;
+  }
+
+  .article-state-folio-card {
+    width: min(78%, 9.25rem);
+  }
+
+  .article-state-folio-code {
+    font-size: 2.35rem;
+  }
+
+  .article-state-folio-icon {
+    top: 3.65rem;
+    right: 0.75rem;
+    width: 3.05rem;
+    height: 3.05rem;
+  }
+
+  .article-state-folio-trace {
+    right: 0.8rem;
+    bottom: 2.65rem;
+    left: 1.4rem;
+  }
+
+  .article-state-folio-caption {
+    right: 0.8rem;
+    left: 1.4rem;
+  }
+
+  .article-state-telemetry > span {
+    padding: 0.5rem 0.55rem;
+  }
+
+  .article-state-content {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .article-state-body h1 {
+    margin-top: 0.65rem;
+    font-size: clamp(1.85rem, 4.7vw, 2.05rem);
+  }
+
+  .article-state-description {
+    margin-top: 0.65rem;
+    font-size: 0.94rem;
+    line-height: 1.58;
+  }
+
+  .article-state-path {
+    grid-template-columns: 1.05rem minmax(0, 1fr);
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.7rem 0.55rem;
+  }
+
+  .article-state-path > svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .article-state-path code {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.72rem;
+    letter-spacing: -0.025em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .article-state-actions {
+    gap: 0.65rem;
+    margin-top: 0.9rem;
+  }
+
+  .article-state-action {
+    min-height: 3.1rem;
+    padding-inline: 0.7rem;
+  }
+}
+
 @media (max-width: 520px) {
+  .page-container:not([data-state="ready"]) {
+    padding-top: 3rem;
+  }
+
   .article-state-panel {
     gap: 1rem;
     padding: 0.85rem;
@@ -1387,12 +1503,30 @@ function onMarkdownLoaded(rawText) {
   }
 
   .article-state-path {
+    grid-template-columns: 1.05rem minmax(0, 1fr);
+    gap: 0.5rem;
     margin-top: 1.15rem;
+    padding: 0.7rem 0.55rem;
+  }
+
+  .article-state-path > svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .article-state-path code {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.72rem;
+    letter-spacing: -0.025em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .article-state-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.72rem;
+    margin-top: 1rem;
   }
 }
 
@@ -1485,7 +1619,13 @@ function onMarkdownLoaded(rawText) {
   }
 
   .article-state-kicker {
-    font-size: 0.56rem;
+    gap: 0.36rem;
+    font-size: 0.6rem;
+  }
+
+  .article-state-kicker svg {
+    width: 0.95rem;
+    height: 0.95rem;
   }
 
   .article-state-body h1 {
@@ -1556,6 +1696,13 @@ function onMarkdownLoaded(rawText) {
   .article-state-folio-card::before,
   .article-state-folio-card::after {
     display: none;
+  }
+
+  .article-state-body h1:focus-visible {
+    padding-inline-start: 0;
+    outline: 2px solid Highlight;
+    outline-offset: 0.35rem;
+    box-shadow: none;
   }
 }
 </style>
