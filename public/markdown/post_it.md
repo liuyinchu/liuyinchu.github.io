@@ -31,7 +31,7 @@
 - [Humanizer-zh](https://github.com/op7418/humanizer-zh)：Humanizer-zh 是一个用于去除文本中 AI 生成痕迹的工具，帮助你将 AI 生成的内容改写得更自然、更像人类书写的文本。
 - [Apple-Design](https://github.com/emilkowalski/skills/blob/main/skills/apple-design/SKILL.md)：苹果公司在界面设计和流畅的物理动画方面的理念，已应用于网页设计。可用于构建或审核手势驱动的用户界面、弹簧动画、拖拽/滑动/滑动交互、动量和可中断的过渡效果、半透明材质和深度、排版（光学尺寸、字距、行距）、减少动画，以及苹果风格界面背后的设计基础（反馈、空间一致性、克制）。
 - [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/main/README.zh.md)：一个为跨多平台和框架构建专业 UI/UX 提供设计智能的 AI 技能。
-- 
+- [GC Minimal Zine Poster](https://github.com/LiamGvchi/gc-minimal-zine-poster/tree/main)：这是一个 Codex 技能：它会把主题、句子、物件、情绪、文章构想、照片或内容简报，转化为一张安静、极简的 ZINE 风格编辑海报所需的提示词，并生成对应的位图图像。
 
 ---
 
