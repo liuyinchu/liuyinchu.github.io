@@ -5,6 +5,7 @@ import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
 
 const route = useRoute()
+const isHomeRoute = computed(() => route.path === '/')
 const isPortalRoute = computed(() => route.path === '/portal')
 </script>
 
@@ -12,7 +13,8 @@ const isPortalRoute = computed(() => route.path === '/portal')
   <Header v-if="!isPortalRoute" />
 
   <RouterView v-slot="{ Component }">
-    <Transition name="route-flow" mode="out-in">
+    <component v-if="isHomeRoute" :is="Component" :key="route.path" />
+    <Transition v-else name="route-flow" mode="out-in">
       <component :is="Component" :key="route.path" />
     </Transition>
   </RouterView>
