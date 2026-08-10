@@ -412,6 +412,7 @@ const onScroll = (e) => {
 
 // --- 神经粒子 Canvas 动画 ---
 let animationFrameId;
+let resizeCanvas;
 const initCanvas = () => {
   const canvas = canvasRef.value;
   if (!canvas) return;
@@ -419,12 +420,12 @@ const initCanvas = () => {
   const ctx = canvas.getContext('2d');
   let width, height;
   
-  const resize = () => {
+  resizeCanvas = () => {
     width = canvas.width = canvas.offsetWidth;
     height = canvas.height = canvas.offsetHeight;
   };
-  window.addEventListener('resize', resize);
-  resize();
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
 
   const particles = [];
   const particleCount = 80; // 粒子数量
@@ -558,7 +559,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
-  window.removeEventListener('resize', initCanvas);
+  if (resizeCanvas) window.removeEventListener('resize', resizeCanvas);
 });
 
 const attachmentLinks = {

@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 
 /** LocalStorage keys 与日历联动事件 */
 const LS_KEYS = {
@@ -122,6 +122,11 @@ watch(mode,  (m) => localStorage.setItem(LS_KEYS.MODE, m))
 onMounted(() => {
   window.addEventListener('app:date-change', onDateChange)
   window.addEventListener('app:set-mode', onModeChange)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('app:date-change', onDateChange)
+  window.removeEventListener('app:set-mode', onModeChange)
 })
 
 // 业务操作
