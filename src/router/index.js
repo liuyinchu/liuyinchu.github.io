@@ -37,6 +37,7 @@ const LifeTree = () => import('../pages/LifeTree.vue')
 const ModernControlCourse = () => import('../pages/ModernControlCourse.vue')
 const MarkdownComponents = () => import('../pages/MarkdownComponents.vue')
 const PrecisionPhyskit = () => import('../pages/PrecisionPhyskit.vue')
+const NotFound = () => import('../pages/NotFound.vue')
 
 
 const routes = [
@@ -78,6 +79,7 @@ const routes = [
   { path: '/modern-control-course', component: ModernControlCourse },
   { path: '/markdown-components', component: MarkdownComponents },
   { path: '/precision-physkit', component: PrecisionPhyskit },
+  { path: '/:pathMatch(.*)*', component: NotFound },
 ]
 
 const router = createRouter({
