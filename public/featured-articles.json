@@ -4,7 +4,7 @@
     "label": "科研相关"
   },
   {
-    "id": "modernity_and_diet",
+    "id": "in_our_time",
     "label": "生活思考"
   },
   {
@@ -14,6 +14,10 @@
   {
     "id": "note_of_configure_server",
     "label": "Linux 学习"
+  },
+  {
+    "id": "eyeglasses_note_2026",
+    "label": "心得体会"
   },
   {
     "id": "learn_python_dev",
