@@ -82,24 +82,99 @@ const routes = [
   { path: '/:pathMatch(.*)*', component: NotFound },
 ]
 
+// App reports the mounted route after the outgoing view has been removed.
+let renderedPath = null
+let pendingView = null
+
+export function markRouteViewReady(path) {
+  renderedPath = path
+  if (pendingView?.path === path) {
+    pendingView.resolve()
+    pendingView = null
+  }
+}
+
+let cancelPositionWait = null
+
+function waitForSavedPosition(position) {
+  return new Promise((resolve) => {
+    const root = document.documentElement
+    const previousAnchor = root.style.overflowAnchor
+    let stableTimer = 0
+    let deadlineTimer = 0
+    let finished = false
+    root.style.overflowAnchor = 'none'
+
+    const finish = (restore) => {
+      if (finished) return
+      finished = true
+      observer.disconnect()
+      clearTimeout(stableTimer)
+      clearTimeout(deadlineTimer)
+      for (const event of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
+        window.removeEventListener(event, cancel)
+      }
+      root.style.overflowAnchor = previousAnchor
+      cancelPositionWait = null
+      resolve(restore)
+    }
+    const cancel = () => finish(false)
+    const checkHeight = () => {
+      clearTimeout(stableTimer)
+      // Space1 and article bodies arrive after mounted; a short shell clamps
+      // scrollTop and then browser anchoring can follow its footer downward.
+      if (root.scrollHeight - window.innerHeight >= position.top - 1) {
+        stableTimer = setTimeout(() => finish(true), 100)
+      }
+    }
+    const observer = new ResizeObserver(checkHeight)
+    cancelPositionWait = cancel
+    observer.observe(document.body)
+    for (const event of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
+      window.addEventListener(event, cancel, { passive: true })
+    }
+    // Changed or unavailable content must never leave navigation waiting forever.
+    deadlineTimer = setTimeout(() => finish(true), 1500)
+    checkHeight()
+  })
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    if (to.hash) {
+  async scrollBehavior(to, from, savedPosition) {
+    // A newer navigation owns scrolling; release an older pending navigation.
+    cancelPositionWait?.()
+    pendingView?.resolve()
+    pendingView = null
+    if (renderedPath !== to.path) {
+      await new Promise((resolve) => {
+        pendingView = { path: to.path, resolve }
+      })
+    }
+    if (router.currentRoute.value.fullPath !== to.fullPath) return false
+
+    if (savedPosition) {
+      const restore = await waitForSavedPosition(savedPosition)
+      if (!restore || router.currentRoute.value.fullPath !== to.fullPath) return false
+      return { ...savedPosition, behavior: 'instant' }
+    }
+
+    const samePage = to.path === from.path && from.matched.length > 0
+    if (to.hash && (!samePage || to.hash !== from.hash)) {
       return {
         el: to.hash,
         top: 88,
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        behavior: samePage && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'smooth'
+          : 'instant',
       }
     }
-    if (savedPosition) {
-      return savedPosition
-    } else {
-      // 切换页面时，瞬间回到顶部，配合 fade 动画，视觉上就是“新页面直接出现在眼前”
-      return { top: 0 }
-    }
+    // Query changes should not pull a reader away from their current position.
+    if (samePage && to.hash === from.hash) return false
+    return { left: 0, top: 0, behavior: 'instant' }
   }
+
 })
 
 export default router
