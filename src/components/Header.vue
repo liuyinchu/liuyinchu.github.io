@@ -542,6 +542,10 @@ onUnmounted(() => {
   animation-delay: calc(var(--i) * 0.045s);
 }
 
+.mobile-menu-container a > span {
+  position: relative;
+}
+
 .mobile-menu-container .nav-icon {
   width: 1.15em;
   height: 1.15em;
@@ -553,14 +557,16 @@ onUnmounted(() => {
   color: #fff;
 }
 
-.mobile-menu-container a.is-active::after {
+.mobile-menu-container a.is-active > span::after {
   content: '';
-  display: block;
+  position: absolute;
+  bottom: -0.5rem;
+  left: 50%;
   width: 34px;
   height: 2px;
-  margin: 0.58rem auto 0;
   border-radius: 999px;
   background: linear-gradient(90deg, #74c7ec, #f5c2e7);
+  transform: translateX(-50%);
 }
 
 .mobile-menu-enter-active,
