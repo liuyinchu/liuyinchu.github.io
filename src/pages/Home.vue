@@ -80,17 +80,7 @@ const introWords = [
   'Welcome'
 ]
 
-function isRestoredEntry() {
-  const navigationType = window.performance.getEntriesByType('navigation')[0]?.type
-
-  return Boolean(window.location.hash || window.history.state?.scroll || window.scrollY > 0)
-    || navigationType === 'reload'
-    || navigationType === 'back_forward'
-}
-
 function shouldShowIntroOnFirstPaint() {
-  if (isRestoredEntry()) return false
-
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const routerHistoryState = window.history.state
   const hasRouterBackEntry = routerHistoryState?.back != null
@@ -105,42 +95,13 @@ const introOffset = ref(0)
 const introWordStage = ref(null)
 const introWordTrack = ref(null)
 const headerOffset = ref(0)
-const homeRoot = ref(null)
 
 let introFrameId = 0
 let introFinishTimer = 0
 let originalBodyOverflow = ''
 let headerResizeObserver = null
-let sectionObserver = null
-let isUnmounted = false
-
-function observeSectionEntrances() {
-  if (isRestoredEntry()
-    || window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    || !window.IntersectionObserver) return
-
-  sectionObserver = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue
-
-      entry.target.classList.add('has-entered')
-      sectionObserver.unobserve(entry.target)
-    }
-  }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' })
-
-  // Already visible content stays still, including the first viewport after navigation.
-  // Everything remains visible by default; the observer only adds one-shot animations.
-  const targets = homeRoot.value?.querySelectorAll('.home-panel:not(.home-panel--first), .home-panel__content') || []
-  for (const target of targets) {
-    if (target.getBoundingClientRect().top >= window.innerHeight) {
-      sectionObserver.observe(target)
-    }
-  }
-}
 
 function updateHeaderOffset() {
-  if (isUnmounted) return
-
   headerOffset.value = document.querySelector('header')?.getBoundingClientRect().height || 0
 }
 
@@ -201,7 +162,6 @@ async function startIntro() {
   document.body.style.overflow = 'hidden'
 
   await nextTick()
-  if (isUnmounted) return
 
   introOffset.value = getIntroWordMetrics().centerOffset
 
@@ -241,13 +201,10 @@ function startIntroIfNeeded() {
 onMounted(() => {
   observeHeaderOffset()
   window.addEventListener('resize', updateHeaderOffset)
-  observeSectionEntrances()
   startIntroIfNeeded()
 })
 
 onBeforeUnmount(() => {
-  isUnmounted = true
-  sectionObserver?.disconnect()
   headerResizeObserver?.disconnect()
   window.removeEventListener('resize', updateHeaderOffset)
   finishIntro()
@@ -293,7 +250,6 @@ onBeforeUnmount(() => {
   </Transition>
 
   <main
-    ref="homeRoot"
     class="home-scroll"
     aria-label="LiuYinChu homepage"
     :style="{ '--home-header-offset': `${headerOffset}px` }"
@@ -462,7 +418,6 @@ onBeforeUnmount(() => {
 }
 
 .home-scroll {
-  --home-content-inset: clamp(1.25rem, 7.5vw, 8rem);
   background: #03050b;
   color: #fff;
   font-family: 'Inter', 'LXGW WenKai', sans-serif;
@@ -471,17 +426,11 @@ onBeforeUnmount(() => {
 
 .home-panel {
   position: relative;
-  min-height: max(36rem, 94svh);
-  padding: clamp(5rem, 12svh, 9rem) var(--home-content-inset);
+  min-height: 100svh;
   overflow: hidden;
   display: flex;
   align-items: flex-end;
   isolation: isolate;
-}
-
-.home-panel--first {
-  min-height: 100svh;
-  padding: 0;
 }
 
 .home-panel__image {
@@ -491,7 +440,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1);
+  transform: scale(1.018);
 }
 
 .home-panel__shade {
@@ -499,14 +448,14 @@ onBeforeUnmount(() => {
   inset: 0;
   z-index: -2;
   background:
-    linear-gradient(180deg, rgba(3, 5, 11, 0.16) 0%, rgba(3, 5, 11, 0.08) 40%, rgba(3, 5, 11, 0.62) 100%),
-    linear-gradient(90deg, rgba(3, 5, 11, 0.78) 0%, rgba(3, 5, 11, 0.52) 32%, rgba(3, 5, 11, 0.12) 68%, rgba(3, 5, 11, 0.10) 100%);
+    linear-gradient(180deg, rgba(3, 5, 11, 0.16) 0%, rgba(3, 5, 11, 0.22) 44%, rgba(3, 5, 11, 0.72) 100%),
+    linear-gradient(90deg, rgba(3, 5, 11, 0.74) 0%, rgba(3, 5, 11, 0.42) 28%, rgba(3, 5, 11, 0.12) 58%, rgba(3, 5, 11, 0.58) 100%);
 }
 
 .home-panel--right .home-panel__shade {
   background:
-    linear-gradient(180deg, rgba(3, 5, 11, 0.16) 0%, rgba(3, 5, 11, 0.08) 40%, rgba(3, 5, 11, 0.62) 100%),
-    linear-gradient(270deg, rgba(3, 5, 11, 0.80) 0%, rgba(3, 5, 11, 0.54) 32%, rgba(3, 5, 11, 0.12) 68%, rgba(3, 5, 11, 0.10) 100%);
+    linear-gradient(180deg, rgba(3, 5, 11, 0.16) 0%, rgba(3, 5, 11, 0.22) 44%, rgba(3, 5, 11, 0.72) 100%),
+    linear-gradient(270deg, rgba(3, 5, 11, 0.78) 0%, rgba(3, 5, 11, 0.44) 32%, rgba(3, 5, 11, 0.10) 62%, rgba(3, 5, 11, 0.50) 100%);
 }
 
 .home-panel--first .home-panel__shade {
@@ -539,8 +488,8 @@ onBeforeUnmount(() => {
 }
 
 .home-panel__content {
-  width: min(100%, 32rem);
-  margin: 0 0 clamp(0.5rem, 2svh, 1.5rem);
+  width: min(520px, calc(100vw - 48px));
+  margin: 0 0 clamp(4.7rem, 10vh, 7rem) clamp(2rem, 7vw, 6rem);
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.54);
 }
 
@@ -548,33 +497,37 @@ onBeforeUnmount(() => {
   justify-content: flex-end;
 }
 
+.home-panel--right .home-panel__content {
+  margin-right: clamp(2rem, 7vw, 6rem);
+  margin-left: 0;
+}
+
 .home-panel__eyebrow {
-  margin: 0 0 1.1rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: 0.18em;
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.70);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .home-panel__title {
   margin: 0;
-  font-size: clamp(2.65rem, 4.6vw, 4.75rem);
-  font-weight: 800;
-  line-height: 1.12;
-  text-wrap: balance;
+  font-size: clamp(2.8rem, 5.6vw, 5.8rem);
+  font-weight: 900;
+  line-height: 0.96;
   letter-spacing: 0;
   color: #fff;
 }
 
 .home-panel__description {
-  max-width: 28rem;
-  margin: 1.45rem 0 2rem;
-  font-size: clamp(1.03rem, 1.25vw, 1.18rem);
-  font-weight: 400;
-  line-height: 1.85;
-  color: rgba(255, 255, 255, 0.84);
+  max-width: 33rem;
+  margin: 1.25rem 0 1.85rem;
+  font-size: clamp(1.08rem, 1.45vw, 1.32rem);
+  font-weight: 500;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .home-panel__button {
@@ -584,13 +537,13 @@ onBeforeUnmount(() => {
   min-width: 10.5rem;
   min-height: 3rem;
   padding: 0.72rem 1.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 2px solid rgba(255, 255, 255, 0.92);
   border-radius: 0;
   color: #fff;
   background: rgba(255, 255, 255, 0.02);
   text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: 0.04em;
   transition:
@@ -634,7 +587,7 @@ onBeforeUnmount(() => {
   border-right: 2px solid rgba(255, 255, 255, 0.95);
   border-bottom: 2px solid rgba(255, 255, 255, 0.95);
   transform: rotate(45deg);
-  animation: scrollCue 1.8s ease-in-out 3;
+  animation: scrollCue 1.55s ease-in-out infinite;
 }
 
 @keyframes scrollCue {
@@ -650,42 +603,6 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes homeImageSettle {
-  from { transform: scale(1.025); }
-  to { transform: scale(1); }
-}
-
-@keyframes homeContentEnter {
-  from { opacity: 0; transform: translateY(1rem); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .home-panel.has-entered .home-panel__image {
-    animation: homeImageSettle 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  .home-panel__content.has-entered > * {
-    animation: homeContentEnter 620ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-  }
-
-  .home-panel__content.has-entered .home-panel__title {
-    animation-delay: 35ms;
-  }
-
-  .home-panel__content.has-entered .home-panel__description {
-    animation-delay: 90ms;
-  }
-
-  .home-panel__content.has-entered .home-panel__button {
-    animation-delay: 140ms;
-  }
-
-  .home-panel__content:focus-within > * {
-    animation: none;
-  }
-}
-
 @media (max-width: 768px) {
   .entry-word-stage,
   .entry-word {
@@ -696,59 +613,27 @@ onBeforeUnmount(() => {
     font-size: clamp(2.2rem, 12vw, 4rem);
   }
 
-  .home-panel:not(.home-panel--first) {
-    min-height: max(32rem, 92svh);
-    padding-block: 5.5rem max(4rem, calc(env(safe-area-inset-bottom) + 3rem));
-    justify-content: flex-start;
+  .home-panel {
+    min-height: 100svh;
   }
 
-  .home-panel:not(.home-panel--first) .home-panel__shade {
-    background: linear-gradient(180deg,
-      rgba(3, 5, 11, 0.10) 0%,
-      rgba(3, 5, 11, 0.12) 35%,
-      rgba(3, 5, 11, 0.65) 72%,
-      rgba(3, 5, 11, 0.88) 100%);
-  }
-
-  .home-panel__content {
-    width: min(100%, 32rem);
-    margin: 0;
+  .home-panel__content,
+  .home-panel--right .home-panel__content {
+    width: min(100% - 2rem, 34rem);
+    margin: 0 1rem 5.2rem;
   }
 
   .home-panel__title {
-    font-size: clamp(2.4rem, 10vw, 3.4rem);
+    font-size: clamp(2.35rem, 12vw, 4.1rem);
   }
 
   .home-panel__description {
     font-size: 1rem;
-    line-height: 1.8;
+    line-height: 1.7;
   }
 
   .home-panel__button {
     min-width: 9.5rem;
-  }
-}
-
-@media (max-height: 560px) and (orientation: landscape) {
-  .home-panel:not(.home-panel--first) {
-    min-height: calc(100svh - var(--home-header-offset, 0px));
-    padding-block: 3rem 2.5rem;
-  }
-
-  .home-panel__content {
-    margin: 0;
-  }
-
-  .home-panel__title {
-    font-size: 2.6rem;
-  }
-
-  .home-panel__description {
-    margin-block: 1.1rem 1.5rem;
-  }
-
-  .home-panel__scroll-cue {
-    bottom: 2rem;
   }
 }
 
