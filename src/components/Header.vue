@@ -107,6 +107,11 @@ const navItems = [
     to: '/code',
     match: [
       '/code',
+      '/labreport',
+      '/life-tree',
+      '/modern-control-course',
+      '/markdown-components',
+      '/precision-physkit',
       '/brisk-nexus',
       '/ysy-latex',
       '/ysy-data-analysis-helper',
