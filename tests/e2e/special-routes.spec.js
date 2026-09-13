@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { SPECIAL_ROUTES } from './route-manifest.js'
+import { DISABLED_ROUTES, SPECIAL_ROUTES } from './route-manifest.js'
 import {
   auditPage,
   BASE_URL,
@@ -58,6 +58,7 @@ test('a missing article uses the article-level recovery state', async ({
 for (const route of [
   SPECIAL_ROUTES.nestedMissingArticle,
   SPECIAL_ROUTES.globalMissing,
+  ...DISABLED_ROUTES,
 ]) {
   test(route + ' uses the global NotFound page', async ({ page }) => {
     const audit = auditPage(page)

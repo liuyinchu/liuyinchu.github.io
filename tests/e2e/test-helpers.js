@@ -126,6 +126,9 @@ export async function expectKnownRouteShell(page, route) {
   if (route === '/portal') {
     await expect(page.locator('#app > .portal-desktop')).toBeVisible()
     await expect(page.locator('#app > *')).toHaveCount(1)
+  } else if (route === '/ai-frontier' || route.startsWith('/ai-frontier/benchmarks/')) {
+    await expect(page.locator('.frontier-shell')).toBeVisible()
+    await expect(page.locator('#app > *')).toHaveCount(1)
   } else {
     await expect
       .poll(() => page.locator('#app > *').count(), {

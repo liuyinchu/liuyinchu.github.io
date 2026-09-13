@@ -9,16 +9,13 @@ export const STATIC_ROUTES = Object.freeze([
   '/talk',
   '/visitor-center',
   '/about',
-  '/about/self',
   '/credit',
   '/portal',
   '/labreport',
-  '/academic',
   '/ysy-latex',
   '/ysy-data-analysis-helper',
   '/brisk-nexus',
   '/paper-switch-brush',
-  '/research',
   '/cyber-match',
   '/lyc2048',
   '/rd',
@@ -33,6 +30,13 @@ export const STATIC_ROUTES = Object.freeze([
   '/modern-control-course',
   '/markdown-components',
   '/precision-physkit',
+  '/ai-frontier',
+])
+
+export const DISABLED_ROUTES = Object.freeze([
+  '/about/self',
+  '/research',
+  '/academic',
 ])
 
 export const SPECIAL_ROUTES = Object.freeze({

@@ -12,17 +12,14 @@ const Talk = () => import('../pages/Talk.vue')
 const VisitorCenter = () => import('../pages/VisitorCenter.vue')
 const ArticleView = () => import('../pages/ArticleView.vue')
 const About = () => import('../pages/About.vue')
-const AboutIntro = () => import('../pages/AboutIntro.vue')
 const Credit = () => import('../pages/Credit.vue')
 const Portal = () => import('../pages/Portal.vue')
 const LabReport = () => import('../pages/LabReport.vue')
 // import PostIt from '../pages/PostIt.vue'
-const Academic = () => import('../pages/Academic.vue')
 const YsyLatex = () => import('../pages/YsyLatex.vue')
 const YsyDataAnalysisHelper = () => import('../pages/YsyDataAnalysisHelper.vue')
 const BriskNexus = () => import('../pages/BriskNexus.vue')
 const PaperSwitchBrush = () => import('../pages/PaperSwitchBrush.vue')
-const Research = () => import('../pages/Research.vue')
 const CyberMatch = () => import('../pages/CyberMatch.vue')
 const LYC2048 = () => import('../pages/LYC2048.vue')
 const ResourceDirectory = () => import('../pages/ResourceDirectory.vue')
@@ -37,6 +34,8 @@ const LifeTree = () => import('../pages/LifeTree.vue')
 const ModernControlCourse = () => import('../pages/ModernControlCourse.vue')
 const MarkdownComponents = () => import('../pages/MarkdownComponents.vue')
 const PrecisionPhyskit = () => import('../pages/PrecisionPhyskit.vue')
+const AIFrontier = () => import('../pages/AIFrontier.vue')
+const AIBenchmark = () => import('../pages/AIBenchmark.vue')
 const NotFound = () => import('../pages/NotFound.vue')
 
 
@@ -54,17 +53,14 @@ const routes = [
   { path: '/space1/post_it', redirect: '/talk' },
   { path: '/space1/:id', component: ArticleView },
   { path: '/about', component: About },
-  { path: '/about/self', component: AboutIntro },
   { path: '/credit', component: Credit },
   { path: '/portal', component: Portal },
   { path: '/labreport', component: LabReport },
   // { path: '/postit', component: PostIt },
-  { path: '/academic', component: Academic },
   { path: '/ysy-latex', component: YsyLatex },
   { path: '/ysy-data-analysis-helper', component: YsyDataAnalysisHelper },
   { path: '/brisk-nexus', component: BriskNexus },
   { path: '/paper-switch-brush', component: PaperSwitchBrush },
-  { path: '/research', component: Research },
   { path: '/cyber-match', component: CyberMatch },
   { path: '/lyc2048', component: LYC2048 },
   { path: '/rd', component: ResourceDirectory },
@@ -79,6 +75,8 @@ const routes = [
   { path: '/modern-control-course', component: ModernControlCourse },
   { path: '/markdown-components', component: MarkdownComponents },
   { path: '/precision-physkit', component: PrecisionPhyskit },
+  { path: '/ai-frontier', component: AIFrontier },
+  { path: '/ai-frontier/benchmarks/:benchmarkId', component: AIBenchmark },
   { path: '/:pathMatch(.*)*', component: NotFound },
 ]
 
