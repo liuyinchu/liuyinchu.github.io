@@ -96,5 +96,12 @@
     "url": "https://namethatui.com/",
     "intro": "UI 可视化词典。用你自己的粗略语言描述一下，你就能得到它的真实名称、API 符号，以及一个可以直接粘贴到你的编码代理中的提示。",
     "add": null
+  },
+  {
+    "idx": 15,
+    "name": "更权威的 IP 检测",
+    "url": "https://meowvps.com/tools/ip-check/",
+    "intro": "来自猫猫站。",
+    "add": "[什么是代理检测](https://meowvps.com/blog/detect/)；[代理检测](https://meowvps.com/tools/detector/)；[什么是 IP 质量检测](https://meowvps.com/blog/ipcheck/)"
   }
 ]

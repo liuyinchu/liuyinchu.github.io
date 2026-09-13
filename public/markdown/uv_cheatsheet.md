@@ -24,7 +24,7 @@ winget install --id=astral-sh.uv -e
 scoop install main/uv
 ```
 
-官方同时提供独立安装脚本，以及 Homebrew、WinGet、Scoop 等安装方式。([Astral Docs][2])
+官方同时提供独立安装脚本，以及 Homebrew、WinGet、Scoop 等安装方式。
 
 ---
 
@@ -32,19 +32,19 @@ scoop install main/uv
 
 ### A. 做“项目”时
 
-用 `uv init / add / run / sync / lock`。项目依赖写在 `pyproject.toml`，第一次运行项目命令时通常会生成 `.venv` 和 `uv.lock`。`uv run` 会在执行前自动检查 lockfile 和环境是否同步。([Astral Docs][3])
+用 `uv init / add / run / sync / lock`。项目依赖写在 `pyproject.toml`，第一次运行项目命令时通常会生成 `.venv` 和 `uv.lock`。`uv run` 会在执行前自动检查 lockfile 和环境是否同步。
 
 ### B. 跑“一次性工具”时
 
-用 `uvx ...`，它等价于 `uv tool run ...`，会在临时隔离环境里运行。([Astral Docs][4])
+用 `uvx ...`，它等价于 `uv tool run ...`，会在临时隔离环境里运行。
 
 ### C. 管 Python 版本时
 
-用 `uv python ...`，可以安装、列出、升级、pin Python 版本；缺失 Python 时，uv 也能按需自动下载。([Astral Docs][5])
+用 `uv python ...`，可以安装、列出、升级、pin Python 版本；缺失 Python 时，uv 也能按需自动下载。
 
 ### D. 还在沿用 pip/requirements 工作流时
 
-用 `uv pip ...`。这是 uv 的 pip 兼容接口，适合还没切到完整 uv project 工作流的项目。它直接操作虚拟环境，而不是让 uv 自动管理项目环境。([Astral Docs][6])
+用 `uv pip ...`。这是 uv 的 pip 兼容接口，适合还没切到完整 uv project 工作流的项目。它直接操作虚拟环境，而不是让 uv 自动管理项目环境。
 
 ---
 
@@ -58,7 +58,7 @@ cd hello-world
 uv run main.py
 ```
 
-`uv init` 会创建基础项目文件；项目命令首次执行时会补齐环境和 lockfile。([Astral Docs][3])
+`uv init` 会创建基础项目文件；项目命令首次执行时会补齐环境和 lockfile。
 
 ### 加依赖
 
@@ -69,7 +69,7 @@ uv add git+https://github.com/psf/requests
 uv add -r requirements.txt -c constraints.txt
 ```
 
-`uv add` 会更新 `pyproject.toml`，并同步更新 lockfile 和项目环境。([Astral Docs][3])
+`uv add` 会更新 `pyproject.toml`，并同步更新 lockfile 和项目环境。
 
 ### 删依赖
 
@@ -77,7 +77,7 @@ uv add -r requirements.txt -c constraints.txt
 uv remove requests
 ```
 
-删除项目依赖时用 `uv remove`。([Astral Docs][3])
+删除项目依赖时用 `uv remove`。
 
 ### 运行项目内命令 / 脚本
 
@@ -88,7 +88,7 @@ uv run -- flask run -p 3000
 uv run example.py
 ```
 
-`uv run` 会先保证 lockfile 和环境是最新，再执行命令。([Astral Docs][3])
+`uv run` 会先保证 lockfile 和环境是最新，再执行命令。
 
 ### 手动同步环境
 
@@ -98,7 +98,7 @@ source .venv/bin/activate   # Linux/macOS
 # .venv\Scripts\activate    # Windows
 ```
 
-`uv sync` 用来把环境同步到 lockfile；默认是精确同步，会移除不属于项目依赖的多余包。([Astral Docs][3])
+`uv sync` 用来把环境同步到 lockfile；默认是精确同步，会移除不属于项目依赖的多余包。
 
 ### 升级某个包
 
@@ -106,7 +106,7 @@ source .venv/bin/activate   # Linux/macOS
 uv lock --upgrade-package requests
 ```
 
-升级指定依赖时，官方示例是对 lockfile 执行定向升级。([Astral Docs][3])
+升级指定依赖时，官方示例是对 lockfile 执行定向升级。
 
 ---
 
@@ -119,7 +119,7 @@ uv add --dev pytest
 uv add --dev ruff mypy
 ```
 
-uv 现在把开发依赖放到 `[dependency-groups]`，`--dev` 会写入 `dev` 组。默认情况下，`dev` 组会被包含进环境。([Astral Docs][7])
+uv 现在把开发依赖放到 `[dependency-groups]`，`--dev` 会写入 `dev` 组。默认情况下，`dev` 组会被包含进环境。
 
 ### 可选依赖（extras）
 
@@ -127,7 +127,7 @@ uv 现在把开发依赖放到 `[dependency-groups]`，`--dev` 会写入 `dev` �
 uv add httpx --optional network
 ```
 
-可选依赖写入 `[project.optional-dependencies]`。([Astral Docs][7])
+可选依赖写入 `[project.optional-dependencies]`。
 
 ### 同步时带上 extras / groups
 
@@ -137,7 +137,7 @@ uv sync --all-groups
 # 也支持按 extra / group 选择
 ```
 
-`uv sync` 支持安装所有 extras、所有 dependency groups，或按选项控制范围。([Astral Docs][1])
+`uv sync` 支持安装所有 extras、所有 dependency groups，或按选项控制范围。
 
 ---
 
@@ -149,7 +149,7 @@ uv sync --all-groups
 uv tree
 ```
 
-`uv tree` 用于展示项目依赖树。([Astral Docs][1])
+`uv tree` 用于展示项目依赖树。
 
 ### 导出 requirements.txt / pylock / SBOM
 
@@ -158,7 +158,7 @@ uv export
 # 常见用途：导出 requirements.txt
 ```
 
-`uv export` 可以把项目 lockfile 导出为 `requirements.txt`、`pylock.toml`（PEP 751）或 CycloneDX v1.5 JSON。([Astral Docs][1])
+`uv export` 可以把项目 lockfile 导出为 `requirements.txt`、`pylock.toml`（PEP 751）或 CycloneDX v1.5 JSON。
 
 ---
 
@@ -174,7 +174,7 @@ uvx ruff@latest check
 uvx --from "ruff==0.3.0" ruff check
 ```
 
-`uvx` 是 `uv tool run` 的别名，默认在临时隔离环境里运行；若命令名和包名不同，或需要复杂版本约束，就用 `--from`。([Astral Docs][4])
+`uvx` 是 `uv tool run` 的别名，默认在临时隔离环境里运行；若命令名和包名不同，或需要复杂版本约束，就用 `--from`。
 
 ### 安装成长期可用工具
 
@@ -186,14 +186,14 @@ uv tool uninstall ruff
 uv tool update-shell
 ```
 
-常驻工具用 `uv tool install`；工具管理子命令包括 `install / upgrade / list / uninstall / update-shell`。([Astral Docs][4])
+常驻工具用 `uv tool install`；工具管理子命令包括 `install / upgrade / list / uninstall / update-shell`。
 
 ### 什么时候用 `uvx`，什么时候用 `uv run`
 
 * **独立工具**：`uvx ruff check`
 * **依赖项目环境的工具**（比如 `pytest`、`mypy` 需要看到当前项目依赖/安装状态）：优先 `uv run pytest`
 
-官方明确说明：若工具需要你的项目一起参与运行，通常应使用 `uv run`，而不是隔离环境里的 `uvx`。([Astral Docs][4])
+官方明确说明：若工具需要你的项目一起参与运行，通常应使用 `uv run`，而不是隔离环境里的 `uvx`。
 
 ---
 
@@ -206,7 +206,7 @@ uv run script.py
 uv run --python 3.10 script.py
 ```
 
-uv 支持直接运行脚本，并可为单次执行指定 Python 版本。([Astral Docs][8])
+uv 支持直接运行脚本，并可为单次执行指定 Python 版本。
 
 ### 给脚本加 shebang
 
@@ -223,7 +223,7 @@ chmod +x greet
 ./greet
 ```
 
-这是官方推荐的可执行脚本方式。([Astral Docs][8])
+这是官方推荐的可执行脚本方式。
 
 ### 锁定脚本依赖
 
@@ -231,7 +231,7 @@ chmod +x greet
 uv lock --script example.py
 ```
 
-PEP 723 脚本可以单独生成旁边的 `.lock` 文件。([Astral Docs][8])
+PEP 723 脚本可以单独生成旁边的 `.lock` 文件。
 
 ---
 
@@ -248,7 +248,7 @@ uv python upgrade 3.12
 uv python upgrade
 ```
 
-uv 可安装最新 Python、指定版本、多版本，也支持升级已安装的 uv-managed Python。([Astral Docs][5])
+uv 可安装最新 Python、指定版本、多版本，也支持升级已安装的 uv-managed Python。
 
 ### pin 项目 Python 版本
 
@@ -257,7 +257,7 @@ uv python pin 3.12
 uv python pin
 ```
 
-`uv python pin` 会把版本写入 `.python-version`；不带参数时会显示当前 pin。([Astral Docs][1])
+`uv python pin` 会把版本写入 `.python-version`；不带参数时会显示当前 pin。
 
 ### 只用系统 Python
 
@@ -265,7 +265,7 @@ uv python pin
 uv run --no-managed-python ...
 ```
 
-官方说明支持 `--no-managed-python`，强制不用 uv 管理的 Python。([Astral Docs][5])
+官方说明支持 `--no-managed-python`，强制不用 uv 管理的 Python。
 
 ---
 
@@ -277,7 +277,7 @@ uv run --no-managed-python ...
 uv venv
 ```
 
-`uv venv` 用于创建虚拟环境；如果机器上没有合适 Python，uv 可以按需下载。([Astral Docs][1])
+`uv venv` 用于创建虚拟环境；如果机器上没有合适 Python，uv 可以按需下载。
 
 ### pip 兼容工作流
 
@@ -291,7 +291,7 @@ uv pip tree
 uv pip check
 ```
 
-`uv pip compile` 用来把输入依赖解析成锁定输出；`uv pip sync` 会把环境严格同步到文件内容，并移除文件中未列出的包；想保留额外包则用 `uv pip install`。([Astral Docs][1])
+`uv pip compile` 用来把输入依赖解析成锁定输出；`uv pip sync` 会把环境严格同步到文件内容，并移除文件中未列出的包；想保留额外包则用 `uv pip install`。
 
 ---
 
@@ -304,7 +304,7 @@ uv build
 ls dist/
 ```
 
-`uv build` 会构建源码包和 wheel，默认输出到 `dist/`。([Astral Docs][3])
+`uv build` 会构建源码包和 wheel，默认输出到 `dist/`。
 
 ### 发布
 
@@ -312,7 +312,7 @@ ls dist/
 uv publish
 ```
 
-`uv publish` 是官方 CLI 的一级命令之一，用于上传构建产物到包索引。([Astral Docs][1])
+`uv publish` 是官方 CLI 的一级命令之一，用于上传构建产物到包索引。
 
 ---
 
@@ -329,7 +329,7 @@ uv run --with rich script.py
 * `--frozen`：直接使用现有 lockfile，不检查是否最新。
 * `--no-sync`：不检查环境是否与 lockfile 同步。
 * `--with`：给本次运行临时附加依赖。
-  这些都是官方命令参考里的常用控制项。([Astral Docs][9])
+  这些都是官方命令参考里的常用控制项。
 
 ---
 
@@ -345,7 +345,7 @@ uv add --dev pytest ruff
 uv run pytest
 ```
 
-这是 uv 最推荐、最顺手的主工作流。([Astral Docs][3])
+这是 uv 最推荐、最顺手的主工作流。
 
 ### 场景 2：我只想临时跑个工具
 
@@ -354,7 +354,7 @@ uvx ruff check
 uvx --from httpie http
 ```
 
-用 `uvx`。([Astral Docs][4])
+用 `uvx`。
 
 ### 场景 3：我还在维护 requirements.txt 项目
 
@@ -364,7 +364,7 @@ uv pip compile requirements.in -o requirements.txt
 uv pip sync requirements.txt
 ```
 
-用 `uv pip` 兼容接口。([Astral Docs][1])
+用 `uv pip` 兼容接口。
 
 ### 场景 4：我只想跑一个脚本，不想手动建虚拟环境
 
@@ -372,16 +372,16 @@ uv pip sync requirements.txt
 uv run script.py
 ```
 
-直接用 `uv run`。([Astral Docs][8])
+直接用 `uv run`。
 
 ---
 
 ## 13) 一句话避坑
 
-* **项目依赖别手动 `uv pip install` 到项目 `.venv` 里**；官方更推荐项目里用 `uv add`，一次性需求用 `uv run --with` 或 `uvx`。([Astral Docs][10])
-* **`uvx` 是隔离环境**，需要项目上下文时改用 `uv run`。([Astral Docs][4])
-* **`uv sync` 默认是精确同步**，会清理多余包；而 `uv pip sync` 也会移除 requirements 文件之外的包。([Astral Docs][1])
-* **`uv pip` 不是完整“项目模式”**，它更像 pip/pip-tools 的高速替代接口。([Astral Docs][6])
+* **项目依赖别手动 `uv pip install` 到项目 `.venv` 里**；官方更推荐项目里用 `uv add`，一次性需求用 `uv run --with` 或 `uvx`。
+* **`uvx` 是隔离环境**，需要项目上下文时改用 `uv run`。
+* **`uv sync` 默认是精确同步**，会清理多余包；而 `uv pip sync` 也会移除 requirements 文件之外的包。
+* **`uv pip` 不是完整“项目模式”**，它更像 pip/pip-tools 的高速替代接口。
 
 ---
 
