@@ -52,11 +52,11 @@ watch(
 <template>
   <div class="frontier-markdown" :aria-busy="loading">
     <div v-if="loading" class="frontier-markdown-state" role="status">
-      <span class="frontier-markdown-state-label">REPORT CONTENT</span>
+      <span class="frontier-markdown-state-label">正在加载</span>
       <p>正在载入报告正文。</p>
     </div>
     <div v-else-if="loadFailed" class="frontier-markdown-state" role="alert">
-      <span class="frontier-markdown-state-label">CONTENT UNAVAILABLE</span>
+      <span class="frontier-markdown-state-label">加载失败</span>
       <p>报告正文暂时无法加载，请重试。</p>
       <button type="button" @click="attempt += 1">重新加载 <span aria-hidden="true">↗</span></button>
     </div>
@@ -73,10 +73,10 @@ watch(
 
 <style scoped>
 .frontier-markdown { min-width: 0; }
-.frontier-markdown-state { padding: 2rem 0; border-block: 1px solid var(--f-line); color: var(--f-ink); }
-.frontier-markdown-state-label { color: var(--f-muted); font: 0.7rem/1.5 var(--f-mono); letter-spacing: 0.08em; }
-.frontier-markdown-state p { margin: 0.8rem 0 1rem; }
-.frontier-markdown-state button { padding: 0.55rem 0.8rem; border: 1px solid var(--f-ink); border-radius: 0; color: var(--f-ink); background: transparent; font: inherit; cursor: pointer; }
+.frontier-markdown-state { padding: 1.5rem; border: 1px solid var(--f-line); border-radius: 12px; color: var(--f-ink); background: var(--f-panel); }
+.frontier-markdown-state-label { color: var(--f-ink); font: 600 0.95rem/1.5 var(--f-font); }
+.frontier-markdown-state p { margin: 0.5rem 0 1rem; color: var(--f-muted); font-size: 0.875rem; }
+.frontier-markdown-state button { padding: 0.55rem 0.8rem; border: 1px solid var(--f-line); border-radius: 8px; color: var(--f-accent); background: var(--f-surface); font: 600 0.875rem/1.5 var(--f-font); cursor: pointer; }
 .frontier-markdown-state button:hover { color: var(--f-on-accent); border-color: var(--f-accent); background: var(--f-accent); }
 
 .frontier-markdown :deep(.markdown-body.markdown-body--frontier) {
@@ -99,8 +99,8 @@ watch(
   color: var(--f-ink);
   background: transparent;
   font-family: var(--f-font);
-  font-size: 1.04rem;
-  line-height: 1.85;
+  font-size: 1rem;
+  line-height: 1.9;
   overflow-wrap: break-word;
   -webkit-font-smoothing: antialiased;
 }
@@ -111,35 +111,44 @@ watch(
 .frontier-markdown :deep(.markdown-body--frontier em) { color: inherit; }
 
 .frontier-markdown :deep(.markdown-body--frontier :is(h1, h2, h3, h4, h5, h6)) {
-  margin: 2.7rem 0 1rem;
+  margin: 2.4rem 0 1rem;
   color: var(--f-ink);
   font-family: var(--f-font);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.25;
-  scroll-margin-top: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+  scroll-margin-top: 1rem;
 }
 .frontier-markdown :deep(.markdown-body--frontier > :first-child) { margin-top: 0; }
-.frontier-markdown :deep(.markdown-body--frontier h1) { padding-bottom: 0.85rem; border-bottom: 1px solid var(--f-ink); font-size: clamp(1.9rem, 3vw, 2.6rem); }
-.frontier-markdown :deep(.markdown-body--frontier h2) { padding-top: 1.4rem; border-top: 1px solid var(--f-line); font-size: clamp(1.55rem, 2.2vw, 2rem); }
-.frontier-markdown :deep(.markdown-body--frontier h3) { font-size: 1.35rem; }
+.frontier-markdown :deep(.markdown-body--frontier h1) { padding: 0; border: 0; font-size: 1.75rem; }
+.frontier-markdown :deep(.markdown-body--frontier h2) { padding: 0; border: 0; font-size: 1.4375rem; }
+.frontier-markdown :deep(.markdown-body--frontier h3) { font-size: 1.2rem; }
 .frontier-markdown :deep(.markdown-body--frontier :is(h4, h5, h6)) { font-size: 1.1rem; }
 
 .frontier-markdown :deep(.markdown-body--frontier .header-anchor) {
-  border-radius: 0;
+  position: absolute;
+  top: 0.23em;
+  left: -1.2em;
+  width: 1em;
+  height: 1em;
+  margin: 0;
+  border-radius: 6px;
   color: var(--f-accent);
   background: transparent;
   box-shadow: none;
-  opacity: 0.5;
-  transform: translateY(0.04em);
+  opacity: 0;
+  pointer-events: none;
+  transform: none;
+  transition: opacity 160ms ease, background-color 160ms ease;
 }
 .frontier-markdown :deep(.markdown-body--frontier :is(h1, h2, h3):hover .header-anchor),
 .frontier-markdown :deep(.markdown-body--frontier .header-anchor:focus-visible) {
   color: var(--f-accent);
-  background: var(--f-panel);
+  background: var(--f-accent-soft);
   box-shadow: none;
   opacity: 1;
-  transform: translateY(0.04em);
+  pointer-events: auto;
+  transform: none;
 }
 
 .frontier-markdown :deep(.markdown-body--frontier .md-text-link) {
@@ -151,7 +160,8 @@ watch(
   font-weight: 500;
   text-decoration: underline;
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, var(--f-accent) 38%, transparent);
+  text-underline-offset: 0.2em;
   transition: color 140ms ease;
 }
 .frontier-markdown :deep(.markdown-body--frontier .md-text-link:hover),
@@ -166,7 +176,7 @@ watch(
 
 /* Keep the viewer's semantic structures and interactions; change only their material. */
 .frontier-markdown :deep(.markdown-body--frontier :is(
-  blockquote, pre.code-block, .code-header, .md-image-link, .md-figure img,
+  blockquote, pre:where(.code-block), .code-header, .md-image-link, :where(.md-figure) img,
   .md-callout, .md-alert, .md-alert-inline, .md-blur-inline, .md-blur-block,
   .md-folding, .md-chat, .md-chat-bubble,
   .md-chat-system, .md-column, .md-link-card, .md-mini-toc, .markdown-mermaid,
@@ -174,24 +184,24 @@ watch(
 )),
 .frontier-markdown :deep(.markdown-body--frontier .md-chat-message.is-self .md-chat-bubble) {
   border-color: var(--f-line);
-  border-radius: 0;
+  border-radius: 10px;
   color: var(--f-ink);
   background: var(--f-panel);
   box-shadow: none;
 }
 
-.frontier-markdown :deep(.markdown-body--frontier blockquote) { padding: 1.1rem 1.25rem; border-left: 3px solid var(--f-accent); }
+.frontier-markdown :deep(.markdown-body.markdown-body--frontier blockquote) { padding: 0.65rem 1rem; border-left: 3px solid var(--f-line); background: var(--f-panel); }
 .frontier-markdown :deep(.markdown-body--frontier blockquote p) { color: var(--f-ink); }
 .frontier-markdown :deep(.markdown-body--frontier .md-image-link) { background: transparent; }
 .frontier-markdown :deep(.markdown-body--frontier .md-image-link:hover) { background: transparent; box-shadow: none; }
 .frontier-markdown :deep(.markdown-body--frontier .md-image-link:hover img),
 .frontier-markdown :deep(.markdown-body--frontier .md-image-link:focus-visible img) { filter: none; transform: none; }
-.frontier-markdown :deep(.markdown-body--frontier :is(figcaption, .md-figcaption)) { color: var(--f-muted); font: 0.76rem/1.6 var(--f-mono); text-align: left; }
+.frontier-markdown :deep(.markdown-body--frontier :is(figcaption, .md-figcaption)) { color: var(--f-muted); font: 0.82rem/1.6 var(--f-font); text-align: left; }
 
 .frontier-markdown :deep(.markdown-body--frontier :not(pre) > code) {
-  padding: 0.13em 0.3em;
-  border-color: var(--f-line);
-  border-radius: 0;
+  padding: 0.16em 0.35em;
+  border-color: transparent;
+  border-radius: 5px;
   color: var(--f-ink);
   background: var(--f-panel);
   box-shadow: none;
@@ -199,7 +209,7 @@ watch(
   font-size: 0.88em;
 }
 .frontier-markdown :deep(.markdown-body--frontier pre.code-block) { margin-block: 2rem; }
-.frontier-markdown :deep(.markdown-body--frontier .code-header) { min-height: 2.6rem; }
+.frontier-markdown :deep(.markdown-body--frontier .code-header) { min-height: 2.6rem; border-radius: 0; background: color-mix(in srgb, var(--f-panel) 70%, var(--f-surface)); }
 .frontier-markdown :deep(.markdown-body--frontier .window-dots) { display: none; }
 .frontier-markdown :deep(.markdown-body--frontier .lang-tag) { margin-left: 0; color: var(--f-muted); font-family: var(--f-mono); }
 .frontier-markdown :deep(.markdown-body--frontier pre code) { padding: 1.15rem 1.25rem; color: var(--f-ink); background: transparent; font: 0.86rem/1.75 var(--f-mono); }
@@ -209,17 +219,19 @@ watch(
 .frontier-markdown :deep(.markdown-body--frontier .hljs :is(.hljs-addition, .hljs-deletion)) { color: var(--f-ink); background: var(--f-panel); text-decoration-color: var(--f-accent); }
 .frontier-markdown :deep(.markdown-body--frontier .hljs .hljs-deletion) { text-decoration: line-through; }
 
-.frontier-markdown :deep(.markdown-body--frontier :is(th, td)) { border: 1px solid var(--f-line); padding: 0.7rem 0.9rem; font-size: 0.92rem; }
-.frontier-markdown :deep(.markdown-body--frontier th) { color: var(--f-ink); background: var(--f-panel); font-weight: 750; }
-.frontier-markdown :deep(.markdown-body--frontier tr:nth-child(2n) td) { background: transparent; }
+.frontier-markdown :deep(.markdown-body--frontier table) { display: table; width: 100%; border: 1px solid var(--f-line); border-radius: 10px; border-collapse: separate; border-spacing: 0; overflow: hidden; background: var(--f-surface); }
+.frontier-markdown :deep(.markdown-body--frontier :is(th, td)) { border: 0; border-bottom: 1px solid var(--f-line); padding: 0.75rem 1rem; font-size: 0.9rem; line-height: 1.7; overflow-wrap: anywhere; }
+.frontier-markdown :deep(.markdown-body--frontier th) { color: var(--f-ink); background: var(--f-panel); font-weight: 650; text-align: left; }
+.frontier-markdown :deep(.markdown-body--frontier tr:nth-child(2n) td) { background: color-mix(in srgb, var(--f-panel) 55%, var(--f-surface)); }
+.frontier-markdown :deep(.markdown-body--frontier tbody tr:last-child td) { border-bottom: 0; }
 
 .frontier-markdown :deep(.markdown-body--frontier :is(.copy-button, .md-blur-block-head button, a.back-top)) {
   border: 1px solid var(--f-line);
-  border-radius: 0;
-  color: var(--f-ink);
-  background: transparent;
+  border-radius: 7px;
+  color: var(--f-muted);
+  background: var(--f-surface);
   box-shadow: none;
-  font-family: var(--f-mono);
+  font-family: var(--f-font);
   transform: none;
 }
 .frontier-markdown :deep(.markdown-body--frontier :is(.copy-button, .md-blur-block-head button, a.back-top):hover),
@@ -233,7 +245,7 @@ watch(
 
 .frontier-markdown :deep(.markdown-body--frontier :is(.md-button, .md-stream-button)) {
   border: 1px solid var(--f-accent);
-  border-radius: 0;
+  border-radius: 9px;
   color: var(--f-on-accent);
   background: var(--f-accent);
   box-shadow: none;
@@ -252,13 +264,13 @@ watch(
 .frontier-markdown :deep(.markdown-body--frontier :is(.md-stream-button-field, .md-stream-button-core, .md-stream-button-filter)),
 .frontier-markdown :deep(.markdown-body--frontier .md-stream-button::before) { display: none; }
 .frontier-markdown :deep(.markdown-body--frontier .md-stream-button-content) { max-width: 100%; gap: 0.15rem; }
-.frontier-markdown :deep(.markdown-body--frontier :is(.md-stream-button-eyebrow, .md-stream-button-copy)) { color: inherit; font-size: 0.63rem; }
+.frontier-markdown :deep(.markdown-body--frontier :is(.md-stream-button-eyebrow, .md-stream-button-copy)) { color: inherit; font: 0.72rem/1.4 var(--f-font); letter-spacing: 0; text-transform: none; }
 .frontier-markdown :deep(.markdown-body--frontier .md-stream-button-title) { color: inherit; font: 750 0.86rem/1.3 var(--f-font); }
 .frontier-markdown :deep(.markdown-body--frontier .md-stream-button-copy p) { color: inherit; }
 
 .frontier-markdown :deep(.markdown-body--frontier :is(.md-alert, .md-alert-inline)) { --alert-accent: var(--f-accent); --alert-soft: var(--f-panel); }
-.frontier-markdown :deep(.markdown-body--frontier .md-alert) { border-left-color: var(--f-accent); }
-.frontier-markdown :deep(.markdown-body--frontier :is(.md-callout-label, .md-alert-head, .md-link-card-eyebrow, .md-chat-speaker, .md-chat-system)) { color: var(--f-muted); font-family: var(--f-mono); }
+.frontier-markdown :deep(.markdown-body--frontier .md-alert) { border-left: 3px solid var(--f-accent); background: var(--f-accent-soft); }
+.frontier-markdown :deep(.markdown-body--frontier :is(.md-callout-label, .md-alert-head, .md-link-card-eyebrow, .md-chat-speaker, .md-chat-system)) { color: var(--f-muted); font-family: var(--f-font); font-size: 0.8rem; letter-spacing: 0; text-transform: none; }
 .frontier-markdown :deep(.markdown-body--frontier .md-alert-head > strong) { color: var(--f-accent); }
 .frontier-markdown :deep(.markdown-body--frontier :is(.md-blur-block-head, .md-folding > .md-folding-content)) { border-color: var(--f-line); }
 .frontier-markdown :deep(.markdown-body--frontier .md-folding > summary) { color: var(--f-ink); }
@@ -269,7 +281,7 @@ watch(
 
 .frontier-markdown :deep(.markdown-body--frontier .md-timeline::before),
 .frontier-markdown :deep(.markdown-body--frontier .md-steps::before) { background: var(--f-line); }
-.frontier-markdown :deep(.markdown-body--frontier :is(.md-timeline-marker, .md-steps-marker)) { border-color: var(--f-accent); border-radius: 0; color: var(--f-on-accent); background: var(--f-accent); font-family: var(--f-mono); }
+.frontier-markdown :deep(.markdown-body--frontier :is(.md-timeline-marker, .md-steps-marker)) { border-color: var(--f-accent); border-radius: 50%; color: var(--f-on-accent); background: var(--f-accent); font-family: var(--f-mono); }
 .frontier-markdown :deep(.markdown-body--frontier :is(.md-timeline-content, .md-steps-content) > strong) { color: var(--f-ink); }
 .frontier-markdown :deep(.markdown-body--frontier .md-link-card:hover),
 .frontier-markdown :deep(.markdown-body--frontier .md-link-card:focus-visible) { border-color: var(--f-accent); color: var(--f-ink); background: var(--f-panel); box-shadow: none; transform: none; }
@@ -279,10 +291,11 @@ watch(
 .frontier-markdown :deep(.markdown-body--frontier .md-link-card:focus-visible .md-link-card-icon) { color: var(--f-accent); border-color: var(--f-accent); transform: none; }
 
 .frontier-markdown :deep(.markdown-body--frontier .md-tip-inline) { color: var(--f-accent); border-color: var(--f-accent); }
-.frontier-markdown :deep(.markdown-body--frontier .md-tip-inline::after) { border-color: var(--f-line); border-radius: 0; color: var(--f-ink); background: var(--f-paper); box-shadow: none; }
-.frontier-markdown :deep(.markdown-body--frontier .md-mark) { color: var(--f-on-accent); background: var(--f-accent); }
+.frontier-markdown :deep(.markdown-body--frontier .md-tip-inline::after) { border-color: var(--f-line); border-radius: 8px; color: var(--f-ink); background: var(--f-surface); box-shadow: 0 6px 24px rgba(24, 34, 55, 0.1); }
+.frontier-markdown :deep(.markdown-body--frontier .md-mark) { border-radius: 4px; color: var(--f-ink); background: var(--f-accent-soft); }
+.frontier-markdown :deep(.markdown-body--frontier :is(.md-badge, .md-alert-inline)) { border-radius: 6px; color: var(--f-accent); background: var(--f-accent-soft); }
 .frontier-markdown :deep(.markdown-body--frontier :is(.md-progress-label, .md-progress-value)) { color: var(--f-muted); }
-.frontier-markdown :deep(.markdown-body--frontier .md-progress-track > span) { border-radius: 0; background: var(--f-accent); }
+.frontier-markdown :deep(.markdown-body--frontier .md-progress-track > span) { border-radius: inherit; background: var(--f-accent); }
 .frontier-markdown :deep(.markdown-body--frontier .md-footnotes) { border-color: var(--f-line); }
 .frontier-markdown :deep(.markdown-body--frontier .md-footnotes h2) { padding-top: 0; border-top: 0; }
 .frontier-markdown :deep(.markdown-body--frontier :is(.md-mini-toc strong, .ascii-title)) { color: var(--f-accent); }
@@ -303,7 +316,11 @@ watch(
 .frontier-markdown :deep(.markdown-body--frontier ::selection) { color: var(--f-on-accent); background: var(--f-accent); text-shadow: none; }
 
 @media (max-width: 680px) {
-  .frontier-markdown :deep(.markdown-body.markdown-body--frontier) { font-size: 0.98rem; }
+  .frontier-markdown :deep(.markdown-body--frontier table) { display: block; overflow-x: auto; }
+  .frontier-markdown :deep(.markdown-body--frontier :is(th, td)) { white-space: nowrap; overflow-wrap: normal; }
   .frontier-markdown :deep(.markdown-body--frontier pre code) { font-size: 0.78rem; padding: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .frontier-markdown :deep(.markdown-body--frontier :is(.header-anchor, .md-text-link)) { transition: none; }
 }
 </style>

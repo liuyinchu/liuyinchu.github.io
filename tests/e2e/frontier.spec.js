@@ -32,7 +32,7 @@ test.describe('AI Frontier', () => {
     await openOverview(page)
     await expect(page.getByRole('link', { name: 'Ysy AI Frontier 首页', exact: true })).toBeVisible()
     await expect(slide(page)).toContainText('DEMO')
-    await expect(slide(page)).toContainText('演示数据')
+    await expect(carousel(page)).toContainText('演示数据')
 
     const initial = await slide(page).getAttribute('aria-label')
     const next = page.getByRole('button', { name: '下一个 Benchmark', exact: true })
@@ -161,7 +161,7 @@ test.describe('AI Frontier', () => {
     await page.getByRole('button', { name: '切换到浅色模式', exact: true }).click()
     await expect(page.locator('.frontier-shell')).toHaveAttribute('data-theme', 'light')
     await page.getByRole('button', { name: '切换到暗色模式', exact: true }).click()
-    await page.getByRole('link', { name: '返回主站', exact: true }).click()
+    await page.getByRole('banner').getByRole('link', { name: '返回主站', exact: true }).click()
     await expect(page).toHaveURL(BASE_URL + '/')
     await expectKnownRouteShell(page, '/')
     await expect(page.locator('.frontier-shell')).toHaveCount(0)
@@ -215,6 +215,64 @@ test.describe('AI Frontier', () => {
     await expect(page.locator('.frontier-markdown')).toBeVisible()
     await expect(page.locator('.frontier-markdown').getByRole('heading').first()).toBeVisible()
     await expect(error).toHaveCount(0)
+    await finishAudit(page, audit)
+  })
+
+  test('the contents links navigate to chapters and update the active chapter on scroll', async ({ page }) => {
+    const audit = auditPage(page)
+    await gotoRoute(page, overview + '/benchmarks/reasoning-demo')
+    const contents = page.getByRole('navigation', { name: '本页目录', exact: true })
+    await expect(contents).toBeVisible()
+    const links = contents.getByRole('link')
+    await expect.poll(() => links.count()).toBeGreaterThan(1)
+
+    const firstLink = links.first()
+    const lastLink = links.last()
+    const firstHeading = page.locator('.frontier-markdown').getByRole('heading', {
+      name: await firstLink.innerText(),
+    })
+    const lastHeading = page.locator('.frontier-markdown').getByRole('heading', {
+      name: await lastLink.innerText(),
+    })
+    const targetId = await lastHeading.getAttribute('id')
+    await lastLink.click()
+    await expect.poll(() => page.evaluate(() => decodeURIComponent(window.location.hash.slice(1)))).toBe(targetId)
+    await expect(lastLink).toHaveAttribute('aria-current', 'location')
+    await expect(lastHeading).toBeInViewport()
+    await expect.poll(async () => {
+      const before = await page.evaluate(() => window.scrollY)
+      await page.waitForTimeout(120)
+      return Math.abs(await page.evaluate(() => window.scrollY) - before)
+    }).toBeLessThan(1)
+
+    const viewport = page.viewportSize()
+    await page.mouse.move(viewport.width / 2, viewport.height / 2)
+    const firstBounds = await firstHeading.boundingBox()
+    const scrollBefore = await page.evaluate(() => window.scrollY)
+    await page.mouse.wheel(0, firstBounds.y - viewport.height / 4)
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(scrollBefore)
+    await expect(firstLink).toHaveAttribute('aria-current', 'location')
+    await expect(lastLink).not.toHaveAttribute('aria-current', 'location')
+    await expect(firstHeading).toBeInViewport()
+
+    const overviewLink = page.getByRole('banner').getByRole('link', { name: '总览', exact: true })
+    await overviewLink.click()
+    await expect(page).toHaveURL(BASE_URL + overview)
+    await expect(page.locator('.frontier-cover h1')).toBeVisible()
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+
+    const overviewChapter = contents.getByRole('link').last()
+    await expect(overviewChapter).toBeVisible()
+    const overviewHeading = page.locator('.frontier-markdown').getByRole('heading', {
+      name: await overviewChapter.innerText(),
+    })
+    await overviewChapter.click()
+    await expect(overviewChapter).toHaveAttribute('aria-current', 'location')
+    await expect(overviewHeading).toBeInViewport()
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+    await overviewLink.click()
+    await expect(page).toHaveURL(BASE_URL + overview)
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
     await finishAudit(page, audit)
   })
 

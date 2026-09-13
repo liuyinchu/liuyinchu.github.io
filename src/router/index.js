@@ -75,8 +75,8 @@ const routes = [
   { path: '/modern-control-course', component: ModernControlCourse },
   { path: '/markdown-components', component: MarkdownComponents },
   { path: '/precision-physkit', component: PrecisionPhyskit },
-  { path: '/ai-frontier', component: AIFrontier },
-  { path: '/ai-frontier/benchmarks/:benchmarkId', component: AIBenchmark },
+  { path: '/ai-frontier', component: AIFrontier, meta: { anchorOffset: 108 } },
+  { path: '/ai-frontier/benchmarks/:benchmarkId', component: AIBenchmark, meta: { anchorOffset: 108 } },
   { path: '/:pathMatch(.*)*', component: NotFound },
 ]
 
@@ -162,7 +162,7 @@ const router = createRouter({
     if (to.hash && (!samePage || to.hash !== from.hash)) {
       return {
         el: to.hash,
-        top: 88,
+        top: to.meta.anchorOffset ?? 88,
         behavior: samePage && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
           ? 'smooth'
           : 'instant',

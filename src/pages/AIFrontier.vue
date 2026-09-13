@@ -1,42 +1,61 @@
 <script setup>
+import { computed, ref } from 'vue'
 import FrontierShell from '../components/frontier/FrontierShell.vue'
 import FrontierMarkdown from '../components/frontier/FrontierMarkdown.vue'
+import FrontierContents from '../components/frontier/FrontierContents.vue'
 import BenchmarkCarousel from '../components/frontier/BenchmarkCarousel.vue'
 import { useFrontierData } from '../components/frontier/useFrontierData'
 import '../components/frontier/frontier-pages.css'
+
 const { data, error, loading, load } = useFrontierData()
+const contents = ref([])
+const modelCount = computed(() => new Set((data.value?.benchmarks || []).flatMap(item => (item.rankings || []).map(model => model.id))).size)
 </script>
 
 <template>
   <FrontierShell>
     <header class="frontier-cover">
-      <div class="frontier-kicker"><span>INDEPENDENT AI OBSERVATORY</span><span>VOL. {{ data?.edition || '001' }} / {{ data?.demo ? 'DEMO EDITION' : 'FIELD REPORT' }}</span></div>
-      <div class="frontier-cover-grid">
-        <div class="frontier-cover-title"><p>YSY / 人工智能观察记录</p><h1>AI <em>FRONTIER</em><span class="frontier-title-mark" aria-hidden="true">↗</span></h1></div>
-        <div class="frontier-cover-abstract"><span class="frontier-crosshair" aria-hidden="true">⊕</span><p>追踪智能的边界。<br>用测试观察能力，<br>用记录整理变化。</p><a href="#intelligence">阅读信息简报 <span aria-hidden="true">↓</span></a></div>
+      <div class="frontier-cover-copy">
+        <div class="frontier-eyebrow"><span class="frontier-status-dot"></span> 个人 AI 观察站</div>
+        <h1>看见 AI 的<span>下一步。</span></h1>
+        <p>从能力榜单到前沿动态，让每一次变化都有据可循。</p>
+        <a class="frontier-inline-link" href="#intelligence">阅读最新札记 <span aria-hidden="true">↗</span></a>
       </div>
-      <div class="frontier-cover-bottom"><span>BENCHMARKS. EVIDENCE. PERSPECTIVES.</span><span>{{ data?.updatedAt || '—' }} <b>更新</b></span></div>
+      <div class="frontier-overview-stats" aria-label="内容概览">
+        <div class="frontier-stats-top"><span>Ysy AI Frontier</span><span v-if="data?.demo" class="frontier-soft-badge">演示刊</span></div>
+        <div class="frontier-stats-numbers">
+          <div><strong>{{ String(data?.benchmarks.length || 0).padStart(2, '0') }}</strong><span>项能力测试</span></div>
+          <div><strong>{{ String(modelCount).padStart(2, '0') }}</strong><span>个参测模型</span></div>
+        </div>
+        <div class="frontier-stats-foot"><span>最近更新</span><time>{{ data?.updatedAt || '—' }}</time></div>
+      </div>
     </header>
 
-    <section class="frontier-section" aria-labelledby="frontier-benchmarks-title">
+    <section id="benchmarks" class="frontier-section" aria-labelledby="frontier-benchmarks-title">
       <div class="frontier-section-heading">
-        <div class="frontier-section-title"><span class="frontier-section-number">01</span><div><p>THE LEADERBOARD</p><h2 id="frontier-benchmarks-title">AI 能力排行榜<span class="frontier-period">.</span></h2></div></div>
-        <p class="frontier-section-aside">不同测试，不同切面。<br>排名之外，也看方法与边界。</p>
+        <div><div class="frontier-eyebrow">BENCHMARKS</div><h2 id="frontier-benchmarks-title">能力，放在一起看。</h2></div>
+        <p>选一个测试，看看模型各自擅长什么。</p>
       </div>
-      <p v-if="loading" class="frontier-state" role="status">正在读取榜单 / LOADING DATA…</p>
-      <div v-else-if="error" class="frontier-state" role="alert"><p>{{ error }}</p><button type="button" class="frontier-text-button" @click="load">重新加载榜单 ↗</button></div>
+      <p v-if="loading" class="frontier-state" role="status">正在读取榜单…</p>
+      <div v-else-if="error" class="frontier-state" role="alert"><p>{{ error }}</p><button type="button" class="frontier-text-button" @click="load">重新加载榜单</button></div>
       <BenchmarkCarousel v-else-if="data.benchmarks.length" :benchmarks="data.benchmarks" :demo="data.demo" />
       <p v-else class="frontier-state">第一份测试报告正在准备中。</p>
     </section>
 
     <section id="intelligence" class="frontier-section frontier-intelligence" aria-labelledby="frontier-intelligence-title">
       <div class="frontier-section-heading">
-        <div class="frontier-section-title"><span class="frontier-section-number">02</span><div><p>INTELLIGENCE BRIEF</p><h2 id="frontier-intelligence-title">AI 信息收集<span class="frontier-period">.</span></h2></div></div>
-        <span class="frontier-section-aside">持续观察 / 持续记录</span>
+        <div><div class="frontier-eyebrow">FIELD NOTES</div><h2 id="frontier-intelligence-title">信息之外，多一点理解。</h2></div>
+        <p>模型、工具、研究与实践的持续记录。</p>
       </div>
-      <div class="frontier-editorial-grid">
-        <aside class="frontier-editorial-note"><span class="frontier-small-label">EDITOR’S NOTE</span><p>把值得留意的变化，<br>留在这里。</p><span class="frontier-note-rule"></span><p class="frontier-fine-print">模型、工具、研究与实践。<br>一份持续更新的个人 AI 观察档案。</p><span v-if="data?.demo" class="frontier-demo-label">当前为演示刊</span></aside>
-        <FrontierMarkdown src="/ai-frontier/news.md" />
+      <div class="frontier-reading-grid">
+        <article class="frontier-reading-card">
+          <div class="frontier-article-label"><span>AI 信息收集</span><span>YSY 的观察札记</span></div>
+          <FrontierMarkdown src="/ai-frontier/news.md" @toc-generated="contents = $event" />
+        </article>
+        <aside class="frontier-reading-sidebar">
+          <FrontierContents :items="contents" />
+          <div class="frontier-sidebar-note"><span class="frontier-small-label">关于这份记录</span><p>保留值得关注的进展，<br>也保留尚未解决的问题。</p><span v-if="data?.demo" class="frontier-soft-badge">当前内容为演示</span></div>
+        </aside>
       </div>
     </section>
   </FrontierShell>
