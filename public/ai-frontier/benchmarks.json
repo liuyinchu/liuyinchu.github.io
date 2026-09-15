@@ -4,173 +4,24 @@
   "demo": true,
   "benchmarks": [
     {
-      "id": "reasoning-demo",
-      "name": "推理能力演示榜",
-      "shortName": "推理",
-      "category": "推理与规划",
-      "description": "用虚构模型与手工编写的分数，演示多步推理、约束理解和答案核验的比较方式。",
-      "scoreLabel": "推理综合分",
-      "version": "demo-v1",
-      "unit": "分",
+      "id": "six-dof-avis-control-benchmark-v0",
+      "name": "动力学控制·主动隔振榜",
+      "shortName": "控制",
+      "category": "复杂问题",
+      "description": "面对真实问题中的模型设计控制器，以控制效果作为得分。",
+      "scoreLabel": "控制器性能得分",
+      "version": "demo-v0",
+      "unit": "dB",
       "maxScore": 100,
       "higherIsBetter": true,
-      "markdown": "/ai-frontier/benchmarks/reasoning-demo.md",
+      "markdown": "/ai-frontier/benchmarks/six-dof-avis-control-benchmark-v0.md",
       "rankings": [
         {
-          "id": "demo-alpha",
-          "name": "DEMO Alpha",
-          "provider": "虚构研究室 A",
-          "score": 96.2,
+          "id": "moonshot-kimi-k3-max-20260914",
+          "name": "Kimi K3 Max",
+          "provider": "Moonshot",
+          "score": 12.068,
           "tier": "S"
-        },
-        {
-          "id": "demo-beta",
-          "name": "DEMO Beta",
-          "provider": "虚构研究室 A",
-          "score": 87.8,
-          "tier": "A"
-        },
-        {
-          "id": "demo-gamma",
-          "name": "DEMO Gamma",
-          "provider": "虚构研究室 B",
-          "score": 76.4,
-          "tier": "B"
-        },
-        {
-          "id": "demo-delta",
-          "name": "DEMO Delta",
-          "provider": "虚构研究室 B",
-          "score": 64.9,
-          "tier": "C"
-        },
-        {
-          "id": "demo-epsilon",
-          "name": "DEMO Epsilon",
-          "provider": "虚构研究室 C",
-          "score": 55.2,
-          "tier": "D"
-        },
-        {
-          "id": "demo-zeta",
-          "name": "DEMO Zeta",
-          "provider": "虚构研究室 C",
-          "score": 42.6,
-          "tier": "D"
-        }
-      ]
-    },
-    {
-      "id": "coding-demo",
-      "name": "代码任务演示榜",
-      "shortName": "代码",
-      "category": "软件开发",
-      "description": "用虚构数据展示需求理解、代码修改与测试结果的综合比较，不代表真实编程能力。",
-      "scoreLabel": "代码综合分",
-      "version": "demo-v1",
-      "unit": "分",
-      "maxScore": 100,
-      "higherIsBetter": true,
-      "markdown": "/ai-frontier/benchmarks/coding-demo.md",
-      "rankings": [
-        {
-          "id": "demo-gamma",
-          "name": "DEMO Gamma",
-          "provider": "虚构研究室 B",
-          "score": 94.1,
-          "tier": "S"
-        },
-        {
-          "id": "demo-alpha",
-          "name": "DEMO Alpha",
-          "provider": "虚构研究室 A",
-          "score": 86.6,
-          "tier": "A"
-        },
-        {
-          "id": "demo-epsilon",
-          "name": "DEMO Epsilon",
-          "provider": "虚构研究室 C",
-          "score": 77.3,
-          "tier": "B"
-        },
-        {
-          "id": "demo-beta",
-          "name": "DEMO Beta",
-          "provider": "虚构研究室 A",
-          "score": 68.5,
-          "tier": "C"
-        },
-        {
-          "id": "demo-delta",
-          "name": "DEMO Delta",
-          "provider": "虚构研究室 B",
-          "score": 56.8,
-          "tier": "D"
-        },
-        {
-          "id": "demo-zeta",
-          "name": "DEMO Zeta",
-          "provider": "虚构研究室 C",
-          "score": 45.2,
-          "tier": "D"
-        }
-      ]
-    },
-    {
-      "id": "context-demo",
-      "name": "长文本理解演示榜",
-      "shortName": "长文本",
-      "category": "长上下文",
-      "description": "用虚构数据展示跨段信息检索、证据关联与长文归纳的比较方式，不声明任何产品上下文规格。",
-      "scoreLabel": "长文本综合分",
-      "version": "demo-v1",
-      "unit": "分",
-      "maxScore": 100,
-      "higherIsBetter": true,
-      "markdown": "/ai-frontier/benchmarks/context-demo.md",
-      "rankings": [
-        {
-          "id": "demo-delta",
-          "name": "DEMO Delta",
-          "provider": "虚构研究室 B",
-          "score": 93.5,
-          "tier": "S"
-        },
-        {
-          "id": "demo-gamma",
-          "name": "DEMO Gamma",
-          "provider": "虚构研究室 B",
-          "score": 85.4,
-          "tier": "A"
-        },
-        {
-          "id": "demo-alpha",
-          "name": "DEMO Alpha",
-          "provider": "虚构研究室 A",
-          "score": 74.8,
-          "tier": "B"
-        },
-        {
-          "id": "demo-epsilon",
-          "name": "DEMO Epsilon",
-          "provider": "虚构研究室 C",
-          "score": 62.7,
-          "tier": "C"
-        },
-        {
-          "id": "demo-beta",
-          "name": "DEMO Beta",
-          "provider": "虚构研究室 A",
-          "score": 54.9,
-          "tier": "D"
-        },
-        {
-          "id": "demo-zeta",
-          "name": "DEMO Zeta",
-          "provider": "虚构研究室 C",
-          "score": 40.3,
-          "tier": "D"
         }
       ]
     }

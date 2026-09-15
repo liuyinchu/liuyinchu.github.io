@@ -402,6 +402,10 @@ GPT，我们已经认识好久了，我们也聊过很多有趣的事情。作�
 
 ## AI 相关的碎碎念
 
+::link-card{title="本专题已被项目 Ysy AI Frontier 代替了，后续将不再更新" eyebrow="Ysy AI Frontier" href="/ai-frontier"}
+<img src="/bg/cover_layered_radial_blue_violet_4k.jpg" alt="Ysy AI Frontier" width="50%">
+::
+
 - 2026 年 7 月 16 日，Kimi K3 发布，[“如月之恒”](https://mp.weixin.qq.com/s/V4xhEIy8xDXSMDPrPkmUAQ?clicktag=js_name&scene=294&clickpos=20&from_safari=1)。
 - 2026 年 7 月 8 日，[GPT-5.6 正式发布，一个新时代？](https://openai.com/index/gpt-5-6/)
 - 2026 年 6 月 7 日，Claude 疑似政策放松了？
