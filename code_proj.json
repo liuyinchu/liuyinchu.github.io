@@ -1,5 +1,12 @@
 [
   {
+    "name": "Ysy AI Frontier",
+    "desc": "AI 能力榜单、Benchmark 测试报告与持续更新的信息简报。",
+    "homepage": "/ai-frontier",
+    "repo": "",
+    "category": "project"
+  },
+  {
     "name": "云海之上",
     "desc": "A game created by Kimi K3.",
     "homepage": "https://pifuyuini.github.io/cloudsea-game-demo/",

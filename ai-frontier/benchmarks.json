@@ -1,0 +1,29 @@
+{
+  "edition": "001",
+  "updatedAt": "2026-09-13",
+  "demo": true,
+  "benchmarks": [
+    {
+      "id": "six-dof-avis-control-benchmark-v0",
+      "name": "动力学控制·主动隔振榜",
+      "shortName": "控制",
+      "category": "复杂问题",
+      "description": "面对真实问题中的模型设计控制器，以控制效果作为得分。",
+      "scoreLabel": "控制器性能得分",
+      "version": "demo-v0",
+      "unit": "dB",
+      "maxScore": 100,
+      "higherIsBetter": true,
+      "markdown": "/ai-frontier/benchmarks/six-dof-avis-control-benchmark-v0.md",
+      "rankings": [
+        {
+          "id": "moonshot-kimi-k3-max-20260914",
+          "name": "Kimi K3 Max",
+          "provider": "Moonshot",
+          "score": 12.068,
+          "tier": "S"
+        }
+      ]
+    }
+  ]
+}

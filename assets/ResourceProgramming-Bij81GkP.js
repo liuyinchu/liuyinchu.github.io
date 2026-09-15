@@ -1,0 +1,1 @@
+import{R as r}from"./ResourceDetailPage-B_f4Cyqo.js";import{c as o,o as e}from"./index-mKBN2DW9.js";import"./index-BMSQkwth.js";const n={__name:"ResourceProgramming",setup(a){return(t,m)=>(e(),o(r,{title:"编程资源分享","json-file":"programming.json","category-id":"programming"}))}};export{n as default};

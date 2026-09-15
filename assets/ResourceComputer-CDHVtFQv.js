@@ -1,0 +1,1 @@
+import{R as e}from"./ResourceDetailPage-B_f4Cyqo.js";import{c as o,o as r}from"./index-mKBN2DW9.js";import"./index-BMSQkwth.js";const u={__name:"ResourceComputer",setup(t){return(c,a)=>(r(),o(e,{title:"计算机相关资源分享","json-file":"computer.json","category-id":"computer"}))}};export{u as default};

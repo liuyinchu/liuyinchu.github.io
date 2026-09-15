@@ -1,0 +1,1 @@
+import{_ as e,b as r,o as a,e as o}from"./index-mKBN2DW9.js";const n={class:"ambient-background-container"},t={__name:"AmbientBackground",setup(c){return(l,s)=>(a(),r("div",n,s[0]||(s[0]=[o("div",{class:"orb orb-1"},null,-1),o("div",{class:"orb orb-2"},null,-1),o("div",{class:"orb orb-3"},null,-1)])))}},b=e(t,[["__scopeId","data-v-2574e036"]]);export{b as A};

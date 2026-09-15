@@ -1,0 +1,1 @@
+import{R as e}from"./ResourceDetailPage-B_f4Cyqo.js";import{c as o,o as r}from"./index-mKBN2DW9.js";import"./index-BMSQkwth.js";const n={__name:"ResourceFiles",setup(s){return(t,a)=>(r(),o(e,{title:"文件分享","json-file":"files.json","category-id":"files"}))}};export{n as default};
