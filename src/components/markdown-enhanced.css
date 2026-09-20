@@ -243,14 +243,24 @@
   font-size: 1.15em;
 }
 
-/* Inline elements ignore max-width/overflow; a box keeps long formulas scrollable. */
+/* Preserve MathJax's native baseline and glyph bearings for ordinary inline math. */
 .markdown-body--enhanced :deep(mjx-container:not([display="true"])) {
-  display: inline-block;
+  display: inline;
+  max-width: none;
+  padding: 0;
+  overflow: visible;
+  vertical-align: baseline;
+  line-height: 0;
+}
+
+/* Only formulas wider than their text column need a separate scrolling line. */
+.markdown-body--enhanced :deep(mjx-container.md-inline-overflow:not([display="true"])) {
+  display: block;
   max-width: 100%;
-  padding-block: 0.12em;
+  margin-block: 0.4em;
+  padding: 0.2em;
   overflow-x: auto;
   overflow-y: hidden;
-  vertical-align: middle;
   line-height: 1;
 }
 

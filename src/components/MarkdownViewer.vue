@@ -32,6 +32,9 @@ let mermaidReady = false
 let copyCleanups = []
 let componentCleanup = null
 let mounted = false
+let inlineMathResizeObserver = null
+let inlineMathMutationObserver = null
+let inlineMathFrame = 0
 
 function escapeHtml(value = '') {
   return String(value)
@@ -222,6 +225,48 @@ async function typesetMath() {
   }
 }
 
+
+function cleanupEnhancedInlineMath() {
+  inlineMathResizeObserver?.disconnect()
+  inlineMathMutationObserver?.disconnect()
+  inlineMathResizeObserver = null
+  inlineMathMutationObserver = null
+  if (inlineMathFrame) window.cancelAnimationFrame(inlineMathFrame)
+  inlineMathFrame = 0
+}
+
+function observeEnhancedInlineMath() {
+  cleanupEnhancedInlineMath()
+  const container = markdownBodyRef.value
+  if (!container || !props.enhanced || props.variant !== 'article') return
+
+  const updateOverflow = () => {
+    inlineMathFrame = 0
+    const columnWidths = new Map()
+    for (const formula of container.querySelectorAll('mjx-container:not([display="true"])')) {
+      const math = formula.querySelector('mjx-math')
+      if (!math) continue // Lazy MathJax content is handled when its DOM arrives.
+      const column = formula.closest('p, li, td, th, blockquote, figcaption, h1, h2, h3, h4, h5, h6') || container
+      if (!columnWidths.has(column)) {
+        const style = getComputedStyle(column)
+        columnWidths.set(column, column.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight))
+      }
+      // Compare the mathematical body to the whole text column, not rounded
+      // scrollWidth/clientWidth on a short formula (italic glyphs can differ by 1px).
+      formula.classList.toggle('md-inline-overflow', math.getBoundingClientRect().width > columnWidths.get(column) + 1)
+    }
+  }
+  const queueUpdate = () => {
+    if (!inlineMathFrame) inlineMathFrame = window.requestAnimationFrame(updateOverflow)
+  }
+
+  inlineMathResizeObserver = new ResizeObserver(queueUpdate)
+  inlineMathResizeObserver.observe(container)
+  inlineMathMutationObserver = new MutationObserver(queueUpdate)
+  inlineMathMutationObserver.observe(container, { childList: true, subtree: true })
+  updateOverflow()
+}
+
 async function renderMermaid() {
   const container = markdownBodyRef.value
   if (!container) return
@@ -372,6 +417,7 @@ function emitToc() {
 
 async function renderMarkdown() {
   const token = ++renderToken
+  cleanupEnhancedInlineMath()
   try {
     const rawText = await readMarkdown()
     if (token !== renderToken) return
@@ -389,6 +435,8 @@ async function renderMarkdown() {
     componentCleanup = attachMarkdownComponentInteractions(markdownBodyRef.value)
     await renderMermaid()
     await typesetMath()
+    if (token !== renderToken || !mounted) return
+    observeEnhancedInlineMath()
   } catch (error) {
     renderedHtml.value = `<p class="markdown-error">${escapeHtml(error.message)}</p>`
     emit('tocGenerated', [])
@@ -408,6 +456,9 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  mounted = false
+  renderToken += 1
+  cleanupEnhancedInlineMath()
   cleanupCopyButtons()
   cleanupComponentInteractions()
 })
