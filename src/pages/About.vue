@@ -4,12 +4,12 @@ import TypingTitle from '../components/TypingTitle.vue'
 
 const aboutLinks = [
   {
-    title: '网站概览',
-    eyebrow: 'A Guide to This Space',
+    title: '网站说明书',
+    eyebrow: 'Inside This Space',
     index: '01',
     to: '/about/site',
-    desc: '第一次来？从这里了解网站的内容、栏目与使用方式。',
-    detail: 'Explore',
+    desc: '逐一展开网站的内容、功能、交互细节与设计思路。',
+    detail: 'Handbook',
   },
   {
     title: '自我介绍',
@@ -198,7 +198,7 @@ onBeforeUnmount(() => {
               <p class="eyebrow">ABOUT HUB</p>
               <h1 id="about-title">关于</h1>
               <p class="hero-lead">
-                从网站概览开始，也可以进一步了解站主、研究工作与内容的使用约定。
+                从网站说明书开始，也可以进一步了解站主、研究工作与内容的使用约定。
               </p>
             </div>
 
