@@ -4,17 +4,25 @@ import TypingTitle from '../components/TypingTitle.vue'
 
 const aboutLinks = [
   {
+    title: '网站概览',
+    eyebrow: 'A Guide to This Space',
+    index: '01',
+    to: '/about/site',
+    desc: '第一次来？从这里了解网站的内容、栏目与使用方式。',
+    detail: 'Explore',
+  },
+  {
     title: '自我介绍',
     eyebrow: 'Personal Profile',
-    index: '01',
+    index: '02',
     to: '/about/self',
-    desc: '保留原 About 内容，暂时作为个人介绍的起点。',
+    desc: '关于我的兴趣、研究，以及记录与创造的日常。',
     detail: 'Identity',
   },
   {
     title: '学术主页',
     eyebrow: 'Academic Work',
-    index: '02',
+    index: '03',
     to: '/research',
     desc: '进入研究综述、学术脉络和通往学术名片页的入口。',
     detail: 'Research',
@@ -22,7 +30,7 @@ const aboutLinks = [
   {
     title: '版权说明',
     eyebrow: 'Credits & License',
-    index: '03',
+    index: '04',
     to: '/credit',
     desc: '查看素材致谢、代码许可和内容版权边界。',
     detail: 'Credits',
@@ -124,7 +132,7 @@ function onTouchEnd(event) {
 onMounted(() => {
   originalHtmlOverflow = document.documentElement.style.overflow
   originalBodyOverflow = document.body.style.overflow
-  compactQuery = window.matchMedia('(max-width: 980px)')
+  compactQuery = window.matchMedia('(max-width: 980px), (max-height: 640px)')
   syncLayoutMode(compactQuery)
   compactQuery.addEventListener('change', syncLayoutMode)
 
@@ -190,7 +198,7 @@ onBeforeUnmount(() => {
               <p class="eyebrow">ABOUT HUB</p>
               <h1 id="about-title">关于</h1>
               <p class="hero-lead">
-                这里是站主相关内容的入口页：自我介绍、学术主页和版权说明会在这里分流。
+                从网站概览开始，也可以进一步了解站主、研究工作与内容的使用约定。
               </p>
             </div>
 
@@ -224,7 +232,7 @@ onBeforeUnmount(() => {
   --about-line-strong: rgba(var(--ctp-mocha-sky-rgb), 0.38);
   position: relative;
   height: calc(100svh - 72px);
-  overflow: hidden;
+  overflow: clip;
   isolation: isolate;
   color: var(--ctp-mocha-text);
   outline: none;
@@ -263,7 +271,7 @@ onBeforeUnmount(() => {
 .about-stage {
   position: relative;
   height: 100%;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .about-panel {
@@ -413,7 +421,7 @@ onBeforeUnmount(() => {
   grid-template-columns: 3rem minmax(12rem, 0.66fr) minmax(5rem, 0.22fr) 2rem;
   gap: clamp(1rem, 3vw, 2rem);
   align-items: center;
-  min-height: clamp(7.4rem, 18vh, 9rem);
+  min-height: clamp(6rem, 15vh, 8rem);
   border-bottom: 1px solid var(--about-line);
   border-radius: 8px;
   color: inherit;
@@ -632,7 +640,7 @@ onBeforeUnmount(() => {
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 980px), (max-height: 640px) {
   .about-page {
     height: auto;
     min-height: calc(100svh - 72px);
