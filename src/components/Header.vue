@@ -243,7 +243,7 @@ onUnmounted(() => {
   top: 0;
   z-index: 1000;
   width: 100%;
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.56);
+  background-color: rgb(var(--ctp-mocha-base-rgb, 30 30 46) / 0.56);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(16px) saturate(135%);
   -webkit-backdrop-filter: blur(16px) saturate(135%);
@@ -256,7 +256,7 @@ onUnmounted(() => {
 
 .site-header.is-scrolled,
 .site-header.is-menu-open {
-  background-color: rgba(var(--ctp-mocha-base-rgb), 0.84);
+  background-color: rgb(var(--ctp-mocha-base-rgb, 30 30 46) / 0.84);
   border-bottom-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.18);
 }
@@ -521,7 +521,7 @@ onUnmounted(() => {
   padding-bottom: max(3rem, env(safe-area-inset-bottom));
   background:
     radial-gradient(circle at 50% 0%, rgba(116, 199, 236, 0.12), transparent 34%),
-    rgba(var(--ctp-mocha-base-rgb), 0.94);
+    rgb(var(--ctp-mocha-base-rgb, 30 30 46) / 0.94);
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
 }
