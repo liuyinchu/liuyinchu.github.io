@@ -243,20 +243,31 @@ onUnmounted(() => {
   top: 0;
   z-index: 1000;
   width: 100%;
-  background-color: rgb(var(--ctp-mocha-base-rgb, 30 30 46) / 0.56);
+  --header-surface: rgb(var(--ctp-mocha-base-rgb, 30 30 46) / 0.56);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(16px) saturate(135%);
-  -webkit-backdrop-filter: blur(16px) saturate(135%);
   transition:
     transform 0.28s ease,
-    background-color 0.24s ease,
     border-color 0.24s ease,
     box-shadow 0.24s ease;
 }
 
+/* Keep backdrop sampling in a bounded layer, separate from the sticky/animated header. */
+.site-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--header-surface);
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  clip-path: inset(0);
+  transition: background-color 0.24s ease;
+}
+
 .site-header.is-scrolled,
 .site-header.is-menu-open {
-  background-color: rgb(var(--ctp-mocha-base-rgb, 30 30 46) / 0.84);
+  --header-surface: rgb(var(--ctp-mocha-base-rgb, 30 30 46) / 0.84);
   border-bottom-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.18);
 }
