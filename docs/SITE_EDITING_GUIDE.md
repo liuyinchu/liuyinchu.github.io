@@ -187,3 +187,15 @@ Portal 的 Spotlight 搜索现在会动态合并：
 - 页脚：`src/components/Footer.vue`
 
 页脚不是完全数据驱动。新增重要站内入口后，如果希望它固定出现在页脚，需要手动加入 `Footer.vue` 的 `footerColumns`。
+
+## 随记文章的 Enhanced 排版
+
+随记文章默认使用原版排版。目录顶部的小按钮可在原版与 Enhanced 之间切换，每次切换保存浏览器本地偏好（`article-typography`）并刷新当前页面。小屏幕的目录位于正文前方、默认折叠，排版按钮始终可见；没有标题的文章也保留切换入口。
+
+Enhanced 的设计参考：[排版的艺术：一条很长很长的路](https://re.karlbaey.top/articles/typography/)。保留本站暗色调，正文使用系统无衬线字体；桌面 18px、移动端 17px，行高分别为 1.9 / 1.85，正文最大行宽 42em。通过标题层级、段间距和留白组织内容，减轻标题锚点、引用、代码块与表格的装饰，并让脚注标记不撑高正文行距。
+
+- 偏好与文章布局：`src/pages/ArticleView.vue`
+- 目录顶部插槽与小屏折叠：`src/components/TableOfContents.vue`
+- 显式启用入口：`MarkdownViewer` 的 `enhanced` 属性，仅随记文章页传入；渲染器不读取全局偏好，page/embed 不启用此模式。
+- Enhanced 专用样式：`src/components/markdown-enhanced.css`，由渲染器以 scoped 样式加载。不要将这些规则移动到全局样式，避免影响项目页、课程页或 AI Frontier。
+- 内容作者无需改写 Markdown；公式、Mermaid、代码复制及既有富组件继续由原渲染链路处理。

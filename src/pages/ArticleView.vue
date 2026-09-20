@@ -9,6 +9,15 @@ import { calculateReadingTime } from '../utils/readingTime.js'
 const route = useRoute()
 const articleId = computed(() => String(route.params.id ?? ''))
 
+// The renderer never reads this preference: only journal articles opt in.
+const typographyStorageKey = 'article-typography'
+const enhancedTypography = ref(localStorage.getItem(typographyStorageKey) === 'enhanced')
+
+function toggleTypography() {
+  localStorage.setItem(typographyStorageKey, enhancedTypography.value ? 'original' : 'enhanced')
+  window.location.reload()
+}
+
 const articleMeta = ref(null)
 const toc = ref([])
 const status = ref('loading')
@@ -136,6 +145,7 @@ function onMarkdownLoaded(rawText) {
     class="page-container"
     data-page="article"
     :data-state="status"
+    :data-typography="enhancedTypography ? 'enhanced' : 'original'"
     :data-article-id="articleId"
     :aria-busy="status === 'loading'"
   >
@@ -163,14 +173,34 @@ function onMarkdownLoaded(rawText) {
         <MarkdownViewer 
           v-if="markdownSrc && articleMeta"
           :key="articleMeta.id"
-          :src="markdownSrc" 
+          :src="markdownSrc"
+          :enhanced="enhancedTypography"
           @toc-generated="onTocGenerated"
           @markdown-loaded="onMarkdownLoaded"
         />
       </main>
 
       <aside class="toc-wrapper">
-        <TableOfContents v-if="toc.length > 0" :toc="toc" />
+        <TableOfContents :toc="toc">
+          <template #controls>
+            <div class="article-typesetting">
+              <span>排版</span>
+              <button
+                class="typography-toggle"
+                type="button"
+                :aria-pressed="enhancedTypography"
+                :aria-label="enhancedTypography ? '切换至原版排版' : '切换至 Enhanced 排版'"
+                title="切换排版并刷新页面"
+                @click="toggleTypography"
+              >
+                {{ enhancedTypography ? 'Enhanced' : '原版' }}
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+                  <path d="M3 5h10m-3-3 3 3-3 3M13 11H3m3-3-3 3 3 3" />
+                </svg>
+              </button>
+            </div>
+          </template>
+        </TableOfContents>
       </aside>
     </div>
 
@@ -1705,4 +1735,67 @@ function onMarkdownLoaded(rawText) {
     box-shadow: none;
   }
 }
+
+/* The preference and layout are owned by journal articles, never by page embeds. */
+.article-typesetting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0.55rem 0.7rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid rgba(180, 190, 254, 0.1);
+  color: #a6adc8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  font-size: 0.75rem;
+}
+.typography-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(180, 190, 254, 0.16);
+  border-radius: 0.4rem;
+  background: transparent;
+  color: #bac2de;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.typography-toggle svg { width: 0.85rem; height: 0.85rem; }
+.typography-toggle:hover,
+.typography-toggle:focus-visible { color: #cdd6f4; border-color: #89b4fa; }
+.typography-toggle[aria-pressed="true"] { color: #89b4fa; }
+
+.page-container[data-typography="enhanced"] .main-content-area {
+  max-width: 1280px;
+  justify-content: center;
+  gap: clamp(1.5rem, 3vw, 3rem);
+}
+.page-container[data-typography="enhanced"] .article-wrapper {
+  max-width: 960px;
+  padding: clamp(1.5rem, 3.5vw, 3.5rem);
+  border: 1px solid rgba(180, 190, 254, 0.08);
+  background: #242535;
+}
+.page-container[data-typography="enhanced"] .toc-wrapper { width: 240px; }
+
+@media (max-width: 1099px) {
+  .main-content-area { display: flex; flex-direction: column; gap: 1rem; }
+  .toc-wrapper,
+  .page-container[data-typography="enhanced"] .toc-wrapper {
+    display: block;
+    order: -1;
+    width: 100%;
+  }
+  .article-typesetting { margin-bottom: 0.25rem; padding-bottom: 0.5rem; }
+  .typography-toggle { min-height: 2.75rem; padding-inline: 0.85rem; }
+}
+
+@media (max-width: 768px) {
+  .page-container[data-typography="enhanced"] .article-wrapper {
+    padding: 1.5rem 1.15rem;
+  }
+}
+
 </style>

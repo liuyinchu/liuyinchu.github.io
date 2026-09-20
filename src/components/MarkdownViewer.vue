@@ -18,6 +18,7 @@ const props = defineProps({
   content: { type: String, default: '' },
   variant: { type: String, default: 'article' },
   useCJK: { type: Boolean, default: false },
+  enhanced: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['tocGenerated', 'markdownLoaded'])
@@ -416,7 +417,7 @@ onBeforeUnmount(() => {
   <div
     ref="markdownBodyRef"
     class="markdown-body"
-    :class="[`markdown-body--${variant}`, { 'use-cjk': useCJK }]"
+    :class="[`markdown-body--${variant}`, { 'use-cjk': useCJK, 'markdown-body--enhanced': enhanced && variant === 'article' }]"
     v-html="renderedHtml"
   ></div>
 </template>
@@ -2042,3 +2043,5 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
+<style scoped src="./markdown-enhanced.css"></style>

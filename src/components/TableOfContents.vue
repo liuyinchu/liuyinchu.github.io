@@ -9,6 +9,7 @@ const props = defineProps({
 })
 
 const activeId = ref('')
+const mobileExpanded = ref(false)
 const tocContainer = ref(null)
 const linkElements = new Map()
 
@@ -97,12 +98,30 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="tocContainer" class="toc-sticky-container">
-    <div class="toc-heading">
-      <span>On this page</span>
-      <h4>目 录</h4>
+  <div class="toc-sticky-container">
+    <div v-if="$slots.controls" class="toc-controls"><slot name="controls" /></div>
+    <div v-if="toc.length" class="toc-heading">
+      <div>
+        <span>On this page</span>
+        <h4>目 录</h4>
+      </div>
+      <button
+        class="toc-disclosure"
+        type="button"
+        :aria-expanded="mobileExpanded"
+        aria-controls="article-table-of-contents"
+        @click="mobileExpanded = !mobileExpanded"
+      >
+        {{ mobileExpanded ? '收起目录 −' : '展开目录 +' }}
+      </button>
     </div>
-    <nav aria-label="文章目录">
+    <nav
+      v-if="toc.length"
+      ref="tocContainer"
+      id="article-table-of-contents"
+      aria-label="文章目录"
+      :class="{ 'toc-nav--collapsed': !mobileExpanded }"
+    >
       <ul>
         <li
           v-for="item in toc"
@@ -126,10 +145,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .toc-sticky-container {
+  display: flex;
+  flex-direction: column;
   position: sticky;
   top: calc(var(--site-header-height, 72px) + 1.25rem);
   max-height: calc(100dvh - var(--site-header-height, 72px) - 2.5rem);
-  overflow-y: auto;
+  overflow: hidden;
   padding: 1rem 0.8rem 1.1rem;
   border: 1px solid rgba(180, 190, 254, 0.16);
   border-radius: 1rem;
@@ -144,27 +165,31 @@ onBeforeUnmount(() => {
   scrollbar-color: rgba(137, 180, 250, 0.54) rgba(30, 30, 46, 0.88);
 }
 
-.toc-sticky-container::-webkit-scrollbar {
+nav::-webkit-scrollbar {
   width: 0.62rem;
 }
 
-.toc-sticky-container::-webkit-scrollbar-track {
+nav::-webkit-scrollbar-track {
   background: rgba(30, 30, 46, 0.88);
   border-radius: 999px;
 }
 
-.toc-sticky-container::-webkit-scrollbar-thumb {
+nav::-webkit-scrollbar-thumb {
   border: 2px solid rgba(30, 30, 46, 0.88);
   border-radius: 999px;
   background-color: rgba(137, 180, 250, 0.54);
   background-clip: padding-box;
 }
 
-.toc-sticky-container::-webkit-scrollbar-thumb:hover {
+nav::-webkit-scrollbar-thumb:hover {
   background-color: rgba(116, 199, 236, 0.74);
 }
 
+.toc-controls { flex-shrink: 0; }
+nav { min-height: 0; overflow-x: hidden; overflow-y: auto; }
+
 .toc-heading {
+  flex-shrink: 0;
   margin: 0 0 0.75rem;
   padding: 0.25rem 0.55rem 0.9rem;
   border-bottom: 1px solid rgba(243, 233, 198, 0.1);
@@ -244,4 +269,39 @@ li a.is-active::before {
     transition: none;
   }
 }
+
+.toc-disclosure { display: none; }
+
+@media (max-width: 1099px) {
+  .toc-sticky-container {
+    position: static;
+    max-height: none;
+    padding: 0.65rem 0.65rem 0.4rem;
+  }
+  .toc-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0;
+    padding: 0.35rem 0.55rem;
+    border: 0;
+  }
+  .toc-heading span { display: none; }
+  h4 { font-size: 1rem; letter-spacing: 0.08em; }
+  .toc-disclosure {
+    display: block;
+    min-height: 2.75rem;
+    padding: 0.4rem 0;
+    border: 0;
+    background: transparent;
+    color: #a6adc8;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  nav { max-height: 40dvh; overflow-y: auto; }
+  .toc-nav--collapsed { display: none; }
+}
+
 </style>
