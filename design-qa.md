@@ -88,3 +88,72 @@ The project page preserves the existing general Markdown page skeleton while rep
 - P3: the required single-page document is intentionally very long. The quick index and chapter transition cards make it navigable, but a future dedicated sticky table of contents could further reduce return-to-top travel without changing the document content.
 
 final result: passed
+
+---
+
+# Design QA — 星间 / Stellar Field (2026-09-22)
+
+This section records the current task. The earlier project report above is retained unchanged.
+
+## Source and implementation evidence
+
+- Source visual truth: https://openai.com/zh-Hans-CN/index/gpt-6-astra/ and the user's `codex-clipboard-508af4bf-9f5b-4bfe-856d-89b5bce0469b.png` attachment (1676 × 1250).
+- Implementation: http://localhost:5173/stellar-field, served from the remote repository through the requested SSH tunnel.
+- Source screenshots: browser captures in this task named `astraHeroDesktop`, `astraCursorBefore`, `astraBlossomBefore`, `astraHeroMobile`, and `astraBlossomMobile`.
+- Implementation screenshots: browser captures in this task named `stellarHeroFront`, `stellarCursorDensityFinal`, `stellarBlossomFinal`, `stellarHeroMobileFinal`, and `stellarBlossomMobileCorrect`.
+- Screenshot storage: these captures were emitted as images in the task conversation. No filesystem screenshot path was returned by the supported browser API, and no local screenshot files were created. The identifiers above describe the actual in-session captures, not invented file paths.
+- Desktop viewport: 1280 × 720 CSS px. Source canvas 1265 × 720 CSS px; implementation content 1269 px wide with a 648 px stage below the existing 72 px site header. Both were captured in the same browser at the same viewport; scrollbar/header differences were treated as intentional shell differences. Images were compared at the tool's native displayed scale, without resampling.
+- Mobile viewport: 390 × 844 CSS px; implementation document width 379 px and stage height 776 px below its existing 68 px header. No document-level horizontal overflow. The source uses a full-viewport scene and deliberately crops the enlarged formation at the sides; the implementation also preserves a large scene.
+- State: dark background, stable front-facing six/cursor/blossom formations, intermediate scattered reading state, rotated state, replay, pause, keyboard focus, and mobile layouts.
+- Full-view comparison: source and implementation screenshots were emitted together in the same tool result for each formation and for mobile. Captures taken during smooth scroll or hot reload were excluded from settled-state judgments.
+- Focused visual inspection: the full-view captures made the star cores, surrounding dust, outline geometry and control hit areas legible. The shader/core widths and the exact hit-test target at each mobile chapter button were additionally examined; separate raster crops were not required.
+
+## Findings and comparison history
+
+1. **[P1, fixed] Dim stars and absent galactic nucleus.** Initial stars resembled a faint line; the source has luminous white/blue cores, soft halos and a concentrated nucleus. Enlarged the bright-star sprites, introduced a nucleus-specific size/brightness increase, widened the soft halo, and separated cool dust from occasional warm stars. Subsequent front-facing comparisons show a luminous core and visible depth layers.
+2. **[P1, fixed] Wrong cursor silhouette.** The first pass used a conventional pointer with a rectangular stem. Replaced it with the observed four-vertex, rounded navigation arrow. The final source/implementation pair shows the matching overall silhouette and scale.
+3. **[P2, fixed] Flat dark background and overly uniform/thick stellar bands.** Added restrained blue/teal edge haze and visible deep-field stars. Kept luminous stars in the narrow streams, with broader dim dust outside; removed resampling that promoted distant dust points to bright stars. Final density uses 11,800 dust points, 132 bright stars and 360 background stars.
+4. **[P2, fixed] Foreground captions crossed the desktop formations.** Moved the cursor and blossom captions into the left margin on wide screens; added phrase-level line breaks. Mobile captions remain beneath the formation.
+5. **[P1, fixed] Moving prose intercepted mobile chapter controls.** DOM hit testing showed the story heading above the bottom buttons. Moved the controls into their own sticky overlay above the story. Post-fix hit tests resolve all three buttons to themselves, and chapter navigation reaches progress 0, 0.5 and 1.
+6. **[P2, fixed] Missing first-arrival gathering animation.** The first mount now starts from scattered stars and gathers into the current scroll state in approximately 1.8 seconds. Reduced-motion mode skips this transition.
+7. **[P2, fixed] Scattered particles behind the camera were projected into the image.** Independent staged-code review reproduced 406 behind-camera particles at a 90-degree yaw. Added near-plane clipping before perspective division. The regression calculation clips all 406 (668 including the near-plane margin), leaves zero behind-camera points visible, and bounds the projection scale to 15.2. The revised shader compiled and rendered normally in the browser.
+8. **[P3, remaining] Independent reconstruction.** Star positions, exact spline curvature, glow falloff and drag damping use original procedural parameters. They are visually inspired by the source, not extracted official parameters or a pixel-identical copy. Source code requests were blocked by the source site's challenge; no verification was bypassed. The page attributes the visual reference and uses original story text.
+
+## Required fidelity surfaces
+
+- **Fonts/typography:** the reference's launch copy is intentionally replaced with original Chinese text. The project uses the site's sans-serif fallback stack, restrained monospaced labels, readable paragraph line height and explicit heading phrase breaks. No clipped heading or document overflow was observed at the tested sizes.
+- **Spacing/layout:** the scene occupies the viewport below the existing site navigation. Five scroll sections align with the five morph anchors. Desktop captions avoid the main formation; mobile controls remain visible and independently clickable.
+- **Colors/tokens:** near-black/teal space, pale blue/white luminous stars, sparse amber points and low-contrast blue dust. The site's existing header and footer are retained deliberately.
+- **Image quality/asset fidelity:** the target is a real-time particle effect. It is implemented in native WebGL2 rather than replaced by a static image or video. Three-dimensional positions, glow, depth-dependent size, perspective and continuous particle correspondence remain active during interaction. The fallback is explicitly identified as a static star map.
+- **Copy/content:** an original narrative about seeing, choosing and connecting, followed by collapsible component usage documentation. No launch-page article text is copied. A source link and independent-project attribution are present.
+
+## Validation
+
+- Source captured and directly compared with the implementation in the in-app browser at desktop and mobile widths.
+- Scroll transitions observed in both directions; the same particle field gathers into three forms and scatters between them.
+- Mouse drag visibly rotates the formation; pointer release leaves `data-dragging=false` and supports inertia.
+- Direction keys and Home operate on the focused canvas; focus indication is visible.
+- Pause/resume state, replay, reset-view and all three chapter buttons exercised. Chapter buttons also restore the front view.
+- Component-use disclosure expands and collapses, with readable code and no horizontal document overflow.
+- `/code` contains exactly one Stellar Field project card with a `/stellar-field` homepage link. The site's code/project navigation remains active.
+- Navigating away leaves no canvas; returning creates one WebGL2 canvas and resumes the restored page state. Event/Observer/RAF/GPU cleanup was also reviewed in the implementation.
+- Additional 1440 × 900 layout check passed with no horizontal overflow. Pause/resume and replay were rechecked at this size. A separate advanced clipped-screenshot probe returned mismatched page imagery and was excluded from evidence; fresh-page checks through the normal browser capture showed stars while paused, resumed animation and a complete scatter/regather cycle. No speculative screenshot-recovery logic was added.
+- Final browser console inspection returned no errors or warnings for the page.
+- Geometry validation checked finite target coordinates, buffer dimensions and unchanged deep-field positions between all four targets. Both JavaScript modules pass `node --check`.
+- `npm run build` passes; the basic SEO generator includes the new route among 69 generated entries. Existing large-chunk warnings refer to unrelated Markdown/Mermaid bundles.
+- No dependencies installed. No source assets hotlinked. All code changes and the development server remain on the authorized remote host.
+
+## Limits
+
+- Mobile viewport layout was tested in the desktop browser; physical touchscreen gestures, low-end GPU performance, WebGL context loss and an OS-level reduced-motion preference were not device-tested. Their implementation paths were reviewed.
+- The visual reconstruction is deliberately disclosed as independent. Exact per-star positions and rendering pixels are not asserted to match the source.
+
+## Implementation checklist
+
+- [x] Reusable Vue component, documented props/events/methods and resource lifecycle.
+- [x] Three formations, continuous scroll morphs, realistic layered star light and interaction.
+- [x] Original project story, route, project card and navigation integration.
+- [x] Desktop/mobile visual comparisons, primary interaction checks and production build.
+- [x] Earlier QA records preserved; no unrelated code changes.
+
+final result: passed

@@ -1,5 +1,12 @@
 [
   {
+    "name": "星间 · Stellar Field",
+    "desc": "可拖拽、随滚动聚散变形的三维星空组件。一段关于看见、选择与连接的交互旅程。",
+    "homepage": "/stellar-field",
+    "repo": "",
+    "category": "code"
+  },
+  {
     "name": "Ysy AI Frontier",
     "desc": "AI 能力榜单、Benchmark 测试报告与持续更新的信息简报。",
     "homepage": "/ai-frontier",
