@@ -30,6 +30,8 @@ export const STATIC_ROUTES = Object.freeze([
   '/modern-control-course',
   '/markdown-components',
   '/precision-physkit',
+  '/cli-tools',
+  '/tzbox',
   '/ai-frontier',
 ])
 

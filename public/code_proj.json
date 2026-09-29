@@ -1,5 +1,33 @@
 [
   {
+    "name": "Genea",
+    "desc": "本地家谱画布，用人物卡片、代际排布和关系路径浏览与整理家族结构；提供《红楼梦》在线只读 Demo。",
+    "homepage": "https://pifuyuini.github.io/genea/",
+    "repo": "https://github.com/pifuyuini/genea",
+    "category": "project"
+  },
+  {
+    "name": "SeriesKit",
+    "desc": "由 Kimi 主导开发的轻量数据处理工具，支持统计分析、CSV 处理与图表报告，提供 Python 和独立 Rust 实现。",
+    "homepage": "/cli-tools",
+    "repo": "https://github.com/pifuyuini/serieskit",
+    "category": "code"
+  },
+  {
+    "name": "DocCheck & JSONLCheck",
+    "desc": "由 Codex 主导开发的离线检查工具：核对 Markdown 本地链接与锚点，校验 JSONL 记录、字段和类型变化。",
+    "homepage": "/cli-tools",
+    "repo": "https://github.com/pifuyuini/doccheck-jsonlcheck",
+    "category": "code"
+  },
+  {
+    "name": "TZBox",
+    "desc": "macOS 应用级时区代理，为应用选择启动时区并管理启动与正常重启，保留系统时区和应用自己的资料。",
+    "homepage": "/tzbox",
+    "repo": "https://github.com/pifuyuini/tzbox",
+    "category": "project"
+  },
+  {
     "name": "星间 · Stellar Field",
     "desc": "可拖拽、随滚动聚散变形的三维星空组件。一段关于看见、选择与连接的交互旅程。",
     "homepage": "/stellar-field",

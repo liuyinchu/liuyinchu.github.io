@@ -36,6 +36,8 @@ const LifeTree = () => import('../pages/LifeTree.vue')
 const ModernControlCourse = () => import('../pages/ModernControlCourse.vue')
 const MarkdownComponents = () => import('../pages/MarkdownComponents.vue')
 const PrecisionPhyskit = () => import('../pages/PrecisionPhyskit.vue')
+const CliTools = () => import('../pages/CliTools.vue')
+const TZBox = () => import('../pages/TZBox.vue')
 const AIFrontier = () => import('../pages/AIFrontier.vue')
 const AIBenchmark = () => import('../pages/AIBenchmark.vue')
 const NotFound = () => import('../pages/NotFound.vue')
@@ -79,6 +81,8 @@ const routes = [
   { path: '/modern-control-course', component: ModernControlCourse },
   { path: '/markdown-components', component: MarkdownComponents },
   { path: '/precision-physkit', component: PrecisionPhyskit },
+  { path: '/cli-tools', component: CliTools },
+  { path: '/tzbox', component: TZBox },
   { path: '/ai-frontier', component: AIFrontier, meta: { anchorOffset: 108 } },
   { path: '/ai-frontier/benchmarks/:benchmarkId', component: AIBenchmark, meta: { anchorOffset: 108 } },
   { path: '/:pathMatch(.*)*', component: NotFound },
