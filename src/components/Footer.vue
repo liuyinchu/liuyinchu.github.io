@@ -54,10 +54,11 @@
               <SiteIcon name="github" />
               <span>GitHub</span>
             </a>
-            <a href="mailto:mingchupifuyuini@gmail.com">
+            <button type="button" aria-label="复制邮箱地址" @click="copyEmail">
               <SiteIcon name="mail" />
               <span>Email</span>
-            </a>
+            </button>
+            <span class="footer-copy-status" role="status">{{ copyStatus }}</span>
           </div>
         </div>
       </div>
@@ -66,11 +67,49 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import SiteIcon from './common/SiteIcon.vue'
 
 const currentYear = new Date().getFullYear()
 const route = useRoute()
+const email = 'mingchupifuyuini@gmail.com'
+const copyStatus = ref('')
+
+async function copyEmail() {
+  copyStatus.value = ''
+
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(email)
+      copyStatus.value = '邮箱地址已复制'
+      return
+    } catch {
+      // Use the existing site's textarea approach when clipboard access is unavailable.
+    }
+  }
+
+  const focusedElement = document.activeElement
+  const textarea = document.createElement('textarea')
+  textarea.value = email
+  textarea.readOnly = true
+  textarea.style.cssText = 'position: fixed; top: 0; left: -9999px;'
+  document.body.appendChild(textarea)
+
+  try {
+    textarea.focus()
+    textarea.select()
+    textarea.setSelectionRange(0, email.length)
+    copyStatus.value = document.execCommand('copy')
+      ? '邮箱地址已复制'
+      : '复制失败，请手动复制邮箱地址：' + email
+  } catch {
+    copyStatus.value = '复制失败，请手动复制邮箱地址：' + email
+  } finally {
+    textarea.remove()
+    focusedElement?.focus({ preventScroll: true })
+  }
+}
 
 const footerColumns = [
   {
@@ -341,7 +380,8 @@ const footerColumns = [
   gap: 1.1rem;
 }
 
-.footer-contact a {
+.footer-contact a,
+.footer-contact button {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -351,6 +391,24 @@ const footerColumns = [
   transition: color 0.2s ease;
 }
 
+.footer-contact button {
+  padding: 0;
+  border: 0;
+  min-height: 0;
+  appearance: none;
+  background: none;
+  cursor: pointer;
+}
+
+.footer-copy-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .footer-contact :deep(.site-icon) {
   width: 1rem;
   height: 1rem;
@@ -358,7 +416,9 @@ const footerColumns = [
 }
 
 .footer-contact a:hover,
-.footer-contact a:focus-visible {
+.footer-contact a:focus-visible,
+.footer-contact button:hover,
+.footer-contact button:focus-visible {
   color: #fff;
 }
 
