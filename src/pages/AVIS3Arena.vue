@@ -5,6 +5,7 @@ import FrontierShell from '../components/frontier/FrontierShell.vue'
 import FrontierMarkdown from '../components/frontier/FrontierMarkdown.vue'
 import FrontierContents from '../components/frontier/FrontierContents.vue'
 import Avis3Leaderboard from '../components/frontier/Avis3Leaderboard.vue'
+import Avis3Spectra from '../components/frontier/Avis3Spectra.vue'
 import { displayScore, orderedResults, useAvis3Data } from '../components/frontier/useAvis3Data'
 import '../components/frontier/frontier-pages.css'
 
@@ -33,7 +34,7 @@ const contestant = (id) => data.value.contestants.find(item => item.id === id)
             <p>观察模型与运行工具组合在动力学控制任务中的表现。这里公开项目介绍、正式规则和核验后的成绩。</p>
             <div class="frontier-report-byline"><span>评测版本：{{ data.evaluationVersion || '待核验' }}</span><span v-if="data.release">· {{ data.release }}</span><span v-if="data.evaluatedAt">· 正式验收 <time>{{ data.evaluatedAt }}</time></span><span v-if="data.timezone">（{{ data.timezone }}）</span></div>
           </div>
-          <a class="frontier-primary-link" href="#methodology">阅读规则与说明 <span aria-hidden="true">↘</span></a>
+          <a class="frontier-primary-link" href="#spectra">查看逐轮频谱 <span aria-hidden="true">↘</span></a>
         </div>
         <div class="frontier-report-meta">
           <div><span>参测组合</span><strong>{{ data.contestants.length }} <small>组模型与工具</small></strong></div>
@@ -56,6 +57,11 @@ const contestant = (id) => data.value.contestants.find(item => item.id === id)
             <ol class="avis3-round-list"><li v-for="(score, index) in result.roundScores" :key="index"><span>第 {{ index + 1 }} 轮</span><strong :title="String(score)">{{ displayScore(score) }}</strong></li></ol>
           </article>
         </div>
+      </section>
+
+      <section id="spectra" class="frontier-section" aria-labelledby="avis3-spectra-title">
+        <div class="frontier-section-heading"><div><div class="frontier-eyebrow">ROUND SPECTRA</div><h2 id="avis3-spectra-title">逐轮频谱。</h2></div><p>三路输出，同一轮的受控与基线。</p></div>
+        <Avis3Spectra :arena="data" />
       </section>
 
       <section id="methodology" class="frontier-section" aria-labelledby="avis3-method-title">

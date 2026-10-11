@@ -432,6 +432,8 @@ watch(
 .frontier-markdown :deep(.markdown-body--frontier :is(.md-footnote-ref,.md-footnotes li,[id])) { scroll-margin-top: var(--f-scroll-offset); }
 .frontier-markdown :deep(.markdown-body--frontier .md-footnote-ref a) { font-family: var(--f-mono); }
 .frontier-markdown :deep(.markdown-body--frontier mjx-container:not([display='true'])) { display: inline; overflow: visible; max-width: none; line-height: normal; padding: 0; border: 0; background: transparent; }
+/* Keep MathJax's hidden, accessible MathML inside its lazy inline container. */
+.frontier-markdown :deep(.markdown-body--frontier mjx-assistive-mml) { width: 1px !important; height: 1px !important; }
 .frontier-markdown :deep(.markdown-body--frontier mjx-container.frontier-inline-overflow:not([display='true'])) { display: inline-block; max-width: 100%; overflow-x: auto; overflow-y: hidden; vertical-align: middle; padding-block: .2em; }
 .frontier-markdown :deep(.markdown-body--frontier mjx-container[display='true']) { display: block; max-width: 100%; overflow-x: auto; overflow-y: hidden; background: var(--f-panel); }
 @media (max-width: 680px) {

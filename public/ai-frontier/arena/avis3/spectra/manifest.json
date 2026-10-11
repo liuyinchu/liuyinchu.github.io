@@ -1,0 +1,380 @@
+{
+  "schema_version": 1,
+  "project": "AVIS3 Arena",
+  "dataset": "Official complete acceptance reruns recorded on 2026-10-09",
+  "export_date": "2026-10-12",
+  "test_date": "2026-10-09",
+  "timezone": "Asia/Shanghai",
+  "release": "0.1.0-candidate.3",
+  "arena_version": "avis3-v1",
+  "source_description": "Archived judge-produced spectra of the three completed official acceptance groups, bound to the actual submitted rule snapshots.",
+  "model_label_source": "User-provided labels retained from the previous verified handoff.",
+  "frequency_unit": "Hz",
+  "asd_unit": "m/sqrt(Hz)",
+  "channels": [
+    "y1",
+    "y2",
+    "y3"
+  ],
+  "layout": "frequency_major",
+  "shape_per_array": [
+    10000,
+    3
+  ],
+  "frequency_range_hz": [
+    0.01,
+    100.0
+  ],
+  "frequency_points_per_round": 10000,
+  "total_rounds": 30,
+  "total_channel_curves": 180,
+  "spectrum_types": {
+    "controlled_asd": "Controlled true velocity output converted to displacement-equivalent ASD",
+    "baseline_asd": "Zero-control true output from the same initial condition and disturbance, converted to displacement-equivalent ASD"
+  },
+  "welch": {
+    "fs": 10000.0,
+    "df": 0.01,
+    "fmin": 0.01,
+    "fmax": 100.0,
+    "window": "hann_periodic",
+    "nperseg": 1000000,
+    "nfft": 1000000,
+    "noverlap": 500000,
+    "detrend": "constant",
+    "scaling": "density",
+    "average": "mean",
+    "return_onesided": true,
+    "input_units": "m/s",
+    "output_units": "m/sqrt(Hz)",
+    "n_samples": 10000000,
+    "n_outputs": 3,
+    "duration_s": 1000.0,
+    "n_segments": 19
+  },
+  "processing": {
+    "resampled": false,
+    "rounded": false,
+    "smoothed": false,
+    "normalized": false,
+    "frequency_values_and_asd_values_preserved": true,
+    "noisy_observation_spectra_included": false
+  },
+  "limitations": [
+    "Export contains the recorded 0.01-100 Hz band only, with DC excluded.",
+    "No phase, cross-spectrum, coherence, confidence intervals or raw time trajectories are included.",
+    "Only the existing ROUND 01 UI screenshot was archived per contestant; separate ready-made images for all 30 rounds were not archived.",
+    "These are post-contest diagnostic spectra, not observations supplied to the competing rules.",
+    "Different contestants and rounds are independent random scenes, not paired identical disturbances."
+  ],
+  "public_repository_url": null,
+  "public_participation_url": null,
+  "contestants": [
+    {
+      "contestant_id": "contestant-1",
+      "model_label": "GPT-6-Astra Max+Codex",
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "mean": 850.5193688422376,
+      "std": 5.412808270329571,
+      "std_ddof": 1,
+      "failed_rounds": 0,
+      "round_count": 10
+    },
+    {
+      "contestant_id": "contestant-2",
+      "model_label": "Claude Opus5.5+Claude Code",
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "mean": 854.0119467536681,
+      "std": 3.534191515958316,
+      "std_ddof": 1,
+      "failed_rounds": 0,
+      "round_count": 10
+    },
+    {
+      "contestant_id": "contestant-3",
+      "model_label": "DeepSeek V4.1 Flash+DeepSeek Harness",
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "mean": 834.4561990493421,
+      "std": 6.157036011727188,
+      "std_ddof": 1,
+      "failed_rounds": 0,
+      "round_count": 10
+    }
+  ],
+  "spectra_bytes": 43701810,
+  "files": [
+    {
+      "path": "contestant-1/round-01.json",
+      "bytes": 1457560,
+      "contestant_id": "contestant-1",
+      "round_index": 1,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 847.8414673252039
+    },
+    {
+      "path": "contestant-1/round-02.json",
+      "bytes": 1455465,
+      "contestant_id": "contestant-1",
+      "round_index": 2,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 854.4198833882654
+    },
+    {
+      "path": "contestant-1/round-03.json",
+      "bytes": 1456430,
+      "contestant_id": "contestant-1",
+      "round_index": 3,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 855.3717003475208
+    },
+    {
+      "path": "contestant-1/round-04.json",
+      "bytes": 1455522,
+      "contestant_id": "contestant-1",
+      "round_index": 4,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 854.3210210925639
+    },
+    {
+      "path": "contestant-1/round-05.json",
+      "bytes": 1457161,
+      "contestant_id": "contestant-1",
+      "round_index": 5,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 844.4712601661079
+    },
+    {
+      "path": "contestant-1/round-06.json",
+      "bytes": 1457817,
+      "contestant_id": "contestant-1",
+      "round_index": 6,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 855.3761552401442
+    },
+    {
+      "path": "contestant-1/round-07.json",
+      "bytes": 1456697,
+      "contestant_id": "contestant-1",
+      "round_index": 7,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 839.8533271912448
+    },
+    {
+      "path": "contestant-1/round-08.json",
+      "bytes": 1454798,
+      "contestant_id": "contestant-1",
+      "round_index": 8,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 854.4020796249633
+    },
+    {
+      "path": "contestant-1/round-09.json",
+      "bytes": 1456792,
+      "contestant_id": "contestant-1",
+      "round_index": 9,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 852.0670981073855
+    },
+    {
+      "path": "contestant-1/round-10.json",
+      "bytes": 1456728,
+      "contestant_id": "contestant-1",
+      "round_index": 10,
+      "run_id": "56293fd160064c7bb0b295803a6cfd71",
+      "submission_id": "ad9c15ad09664879877969653d63247b",
+      "round_score": 847.0696959389778
+    },
+    {
+      "path": "contestant-2/round-01.json",
+      "bytes": 1456083,
+      "contestant_id": "contestant-2",
+      "round_index": 1,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 850.4938703115673
+    },
+    {
+      "path": "contestant-2/round-02.json",
+      "bytes": 1456481,
+      "contestant_id": "contestant-2",
+      "round_index": 2,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 855.7918208156193
+    },
+    {
+      "path": "contestant-2/round-03.json",
+      "bytes": 1456803,
+      "contestant_id": "contestant-2",
+      "round_index": 3,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 856.1003766915081
+    },
+    {
+      "path": "contestant-2/round-04.json",
+      "bytes": 1455630,
+      "contestant_id": "contestant-2",
+      "round_index": 4,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 851.0573144924236
+    },
+    {
+      "path": "contestant-2/round-05.json",
+      "bytes": 1457647,
+      "contestant_id": "contestant-2",
+      "round_index": 5,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 856.3555479331942
+    },
+    {
+      "path": "contestant-2/round-06.json",
+      "bytes": 1458337,
+      "contestant_id": "contestant-2",
+      "round_index": 6,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 855.8214132318532
+    },
+    {
+      "path": "contestant-2/round-07.json",
+      "bytes": 1455527,
+      "contestant_id": "contestant-2",
+      "round_index": 7,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 856.04275725
+    },
+    {
+      "path": "contestant-2/round-08.json",
+      "bytes": 1457812,
+      "contestant_id": "contestant-2",
+      "round_index": 8,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 856.1198352236353
+    },
+    {
+      "path": "contestant-2/round-09.json",
+      "bytes": 1457559,
+      "contestant_id": "contestant-2",
+      "round_index": 9,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 846.1547182069196
+    },
+    {
+      "path": "contestant-2/round-10.json",
+      "bytes": 1457509,
+      "contestant_id": "contestant-2",
+      "round_index": 10,
+      "run_id": "493d280da56d4cb888ed7f20952f10a3",
+      "submission_id": "76e650582d40468fb61b7375ffbce0db",
+      "round_score": 856.1818133799605
+    },
+    {
+      "path": "contestant-3/round-01.json",
+      "bytes": 1456509,
+      "contestant_id": "contestant-3",
+      "round_index": 1,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 828.7572980711792
+    },
+    {
+      "path": "contestant-3/round-02.json",
+      "bytes": 1456444,
+      "contestant_id": "contestant-3",
+      "round_index": 2,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 830.9120278410966
+    },
+    {
+      "path": "contestant-3/round-03.json",
+      "bytes": 1456528,
+      "contestant_id": "contestant-3",
+      "round_index": 3,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 840.634575918901
+    },
+    {
+      "path": "contestant-3/round-04.json",
+      "bytes": 1457904,
+      "contestant_id": "contestant-3",
+      "round_index": 4,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 843.095800278112
+    },
+    {
+      "path": "contestant-3/round-05.json",
+      "bytes": 1457430,
+      "contestant_id": "contestant-3",
+      "round_index": 5,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 832.1040663482642
+    },
+    {
+      "path": "contestant-3/round-06.json",
+      "bytes": 1457269,
+      "contestant_id": "contestant-3",
+      "round_index": 6,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 829.449813661346
+    },
+    {
+      "path": "contestant-3/round-07.json",
+      "bytes": 1456601,
+      "contestant_id": "contestant-3",
+      "round_index": 7,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 827.7214733650849
+    },
+    {
+      "path": "contestant-3/round-08.json",
+      "bytes": 1455498,
+      "contestant_id": "contestant-3",
+      "round_index": 8,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 838.0881344420441
+    },
+    {
+      "path": "contestant-3/round-09.json",
+      "bytes": 1455925,
+      "contestant_id": "contestant-3",
+      "round_index": 9,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 830.4866868244058
+    },
+    {
+      "path": "contestant-3/round-10.json",
+      "bytes": 1457344,
+      "contestant_id": "contestant-3",
+      "round_index": 10,
+      "run_id": "cf59fa67d27a443783d84e0307ebc66e",
+      "submission_id": "0489455c82f540108314ce75ffbf4955",
+      "round_score": 843.3121137429877
+    }
+  ]
+}

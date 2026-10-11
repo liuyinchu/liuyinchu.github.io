@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { auditPage, BASE_URL, expectKnownRouteShell, expectNoHorizontalOverflow, gotoRoute } from './test-helpers.js'
 import { mockFrontierNotes, NOTES_SOURCE, FRONTIER_MARKDOWN_FIXTURE } from './frontier-fixture.js'
+import { mockAvis3Spectra, spectraFixtures } from './avis3-spectra-fixture.js'
 
 const overview = '/ai-frontier'
 const arena = overview + '/arena/avis3'
@@ -23,7 +24,7 @@ async function openOverview(page) {
 
 test.describe('AI Frontier', () => {
   test.use({ colorScheme: 'light' })
-  test.beforeEach(async ({ page }) => { await mockFrontierNotes(page) })
+  test.beforeEach(async ({ page }) => { await mockFrontierNotes(page); await mockAvis3Spectra(page) })
 
   test('the overview presents verified models and tools in score order with live-source notes', async ({ page }) => {
     const response = await page.request.get(BASE_URL + '/ai-frontier/avis3.json')
@@ -331,6 +332,179 @@ test.describe('AI Frontier', () => {
     await expect(notesHeading).toBeInViewport()
     await overviewLink.click()
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+    await finishAudit(page, audit)
+  })
+})
+
+
+test.describe('AVIS3 spectra', () => {
+  test.use({ colorScheme: 'light' })
+  test.beforeEach(async ({ page }) => {
+    await mockFrontierNotes(page)
+    await mockAvis3Spectra(page)
+  })
+
+  test('spectra load one selected round and keep all thirty scores and file bindings', async ({ page }) => {
+    test.setTimeout(90_000)
+    const response = await page.request.get(BASE_URL + '/ai-frontier/avis3.json')
+    const data = await response.json()
+    const requests = []
+    page.on('request', request => {
+      if (request.url().includes('/arena/avis3/spectra/')) requests.push(new URL(request.url()).pathname)
+    })
+    await gotoRoute(page, arena)
+    const viewer = page.getByTestId('avis3-spectra')
+    const plots = viewer.getByRole('img')
+    const contestantSelect = viewer.getByLabel('参测组合 / CONTESTANT')
+    const roundSelect = viewer.getByLabel('轮次 / ROUND')
+    await expect(plots).toHaveCount(3)
+    await expect(contestantSelect).toHaveValue('contestant-2')
+    await expect(roundSelect).toHaveValue('1')
+    expect(requests).toEqual(['/ai-frontier/arena/avis3/spectra/contestant-2/round-01.json'])
+    await expect(page.getByRole('link', { name: '查看逐轮频谱', exact: true })).toHaveAttribute('href', '#spectra')
+
+    for (const id of ['contestant-2', 'contestant-1', 'contestant-3']) {
+      await contestantSelect.selectOption(id)
+      for (let round = 1; round <= 10; round++) {
+        await roundSelect.selectOption(String(round))
+        const path = id + '/round-' + String(round).padStart(2, '0') + '.json'
+        const fixture = spectraFixtures[path]
+        const score = data.results.find(item => item.contestantId === id).roundScores[round - 1]
+        expect(fixture.round_score).toBe(score)
+        await expect(viewer.locator('h3')).toContainText('第 ' + round + ' 轮')
+        await expect(viewer.locator('.spectra-registration')).toHaveText(id + ' / ROUND ' + String(round).padStart(2, '0'))
+        await expect(viewer.getByTestId('spectra-round-score')).toHaveText(score.toFixed(4))
+        await expect(viewer.getByTestId('spectra-round-score')).toHaveAttribute('title', String(score))
+        await expect(viewer.getByRole('link', { name: '当前轮频谱 JSON ↗', exact: true })).toHaveAttribute('href', '/ai-frontier/arena/avis3/spectra/' + path)
+        await expect(plots).toHaveCount(3)
+        const model = data.contestants.find(item => item.id === id).model
+        for (const channel of fixture.channels) {
+          const plot = viewer.locator('[data-channel="' + channel + '"]')
+          await expect(plot.locator('svg title')).toHaveText(model + '，第 ' + round + ' 轮，' + channel + ' 位移等效 ASD')
+          const pointCounts = await plot.locator('.spectra-curves path').evaluateAll(paths => paths.map(path => (path.getAttribute('d').match(/[ML]/g) || []).length))
+          expect(pointCounts).toEqual([fixture.frequency_hz.length, fixture.frequency_hz.length])
+        }
+        expect(requests.at(-1)).toBe('/ai-frontier/arena/avis3/spectra/' + path)
+      }
+    }
+    await expect(viewer).toContainText('不同选手同编号轮次使用不同场景')
+    await expectNoHorizontalOverflow(page)
+  })
+
+  test('spectra clear old curves during switching and ignore a late response', async ({ page }) => {
+    await gotoRoute(page, arena)
+    const viewer = page.getByTestId('avis3-spectra')
+    await expect(viewer.getByRole('img')).toHaveCount(3)
+    let releaseSlow
+    let notifyStarted
+    let notifyFinished
+    const slowReleased = new Promise(resolve => { releaseSlow = resolve })
+    const slowStarted = new Promise(resolve => { notifyStarted = resolve })
+    const slowFinished = new Promise(resolve => { notifyFinished = resolve })
+    await page.route('**/arena/avis3/spectra/contestant-2/round-02.json', async route => {
+      notifyStarted()
+      await slowReleased
+      await route.fulfill({ json: spectraFixtures['contestant-2/round-02.json'] })
+      notifyFinished()
+    })
+    await viewer.getByLabel('轮次 / ROUND').selectOption('2')
+    await slowStarted
+    await expect(viewer.getByRole('status')).toContainText('contestant-2 第 2 轮')
+    await expect(viewer.getByRole('img')).toHaveCount(0)
+    await expect(viewer.locator('h3')).toContainText('第 2 轮')
+    await viewer.getByLabel('参测组合 / CONTESTANT').selectOption('contestant-3')
+    await expect(viewer.getByRole('img')).toHaveCount(3)
+    await expect(viewer.locator('.spectra-registration')).toHaveText('contestant-3 / ROUND 02')
+    const currentPaths = await viewer.locator('.spectra-curves path').evaluateAll(paths => paths.map(path => path.getAttribute('d')))
+    releaseSlow()
+    await slowFinished
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    await expect(viewer.locator('.spectra-registration')).toHaveText('contestant-3 / ROUND 02')
+    expect(await viewer.locator('.spectra-curves path').evaluateAll(paths => paths.map(path => path.getAttribute('d')))).toEqual(currentPaths)
+    await expect(viewer.getByTestId('spectra-round-score')).toHaveAttribute('title', String(spectraFixtures['contestant-3/round-02.json'].round_score))
+  })
+
+  for (const failure of [
+    { label: 'HTTP failure', status: 503, contentType: 'application/json', body: '{"error":"temporary failure"}' },
+    { label: 'HTML fallback', status: 200, contentType: 'text/html', body: '<html><h1>Unexpected fallback</h1></html>' },
+  ]) {
+    test('spectra recover from ' + failure.label + ' after retry', async ({ page }) => {
+      const url = '**/arena/avis3/spectra/contestant-2/round-01.json'
+      const failing = route => route.fulfill({ status: failure.status, contentType: failure.contentType, body: failure.body })
+      await page.route(url, failing)
+      await gotoRoute(page, arena)
+      const viewer = page.getByTestId('avis3-spectra')
+      const error = viewer.getByRole('alert')
+      await expect(error).toContainText('本轮频谱暂时无法加载')
+      await expect(viewer.getByRole('img')).toHaveCount(0)
+      await page.unroute(url, failing)
+      const audit = auditPage(page)
+      await error.getByRole('button', { name: '重新加载频谱', exact: true }).click()
+      await expect(viewer.getByRole('img')).toHaveCount(3)
+      await expect(error).toHaveCount(0)
+      await expect(viewer.getByRole('link', { name: '当前轮频谱 JSON ↗', exact: true })).toHaveAttribute('href', '/ai-frontier/arena/avis3/spectra/contestant-2/round-01.json')
+      await finishAudit(page, audit)
+    })
+  }
+
+  test('spectra retain readable legends, log axes and native keyboard controls at each viewport', async ({ page, isMobile }) => {
+    const audit = auditPage(page)
+    await gotoRoute(page, arena)
+    const viewer = page.getByTestId('avis3-spectra')
+    await expect(viewer.getByRole('img')).toHaveCount(3)
+    await viewer.scrollIntoViewIfNeeded()
+    await expect(viewer.getByRole('list', { name: '频谱图例', exact: true })).toContainText('受控真值')
+    await expect(viewer.getByRole('list', { name: '频谱图例', exact: true })).toContainText('无控制基线')
+    await expect(viewer.locator('.spectra-data-meta')).toContainText('0.01–100 Hz')
+    await expect(viewer.locator('.spectra-data-meta')).toContainText('m/√Hz')
+    for (const channel of ['y1', 'y2', 'y3']) {
+      const plot = viewer.locator('[data-channel="' + channel + '"]')
+      const svg = plot.locator('svg')
+      await plot.scrollIntoViewIfNeeded()
+      await expect(svg).toBeVisible()
+      await expect(svg).toHaveAttribute('role', 'img')
+      await expect(svg.locator('title')).toContainText(channel + ' 位移等效 ASD')
+      await expect(svg.locator('desc')).toContainText('两轴均为对数刻度')
+      const geometry = await svg.evaluate(el => ({
+        width: el.getBoundingClientRect().width,
+        labelSize: Number.parseFloat(getComputedStyle(el.querySelector('.spectra-ticks')).fontSize) * el.getBoundingClientRect().width / el.viewBox.baseVal.width,
+        ticks: [...el.querySelectorAll('.spectra-ticks text')].map(text => text.textContent),
+        frame: (() => { const box = el.querySelector('.spectra-frame').getBBox(); return { x: box.x, y: box.y, width: box.width, height: box.height } })(),
+        bounds: [...el.querySelectorAll('.spectra-curves path')].map(path => {
+          const box = path.getBBox()
+          return { x: box.x, y: box.y, right: box.x + box.width, bottom: box.y + box.height }
+        }),
+      }))
+      expect(geometry.width).toBeGreaterThan(300)
+      expect(geometry.labelSize).toBeGreaterThanOrEqual(11)
+      expect(geometry.ticks.slice(0, 5)).toEqual(['0.01', '0.1', '1', '10', '100'])
+      expect(geometry.ticks.some(tick => /e-/.test(tick))).toBe(true)
+      for (const bounds of geometry.bounds) {
+        expect(bounds.x).toBeCloseTo(geometry.frame.x, 5)
+        expect(bounds.right).toBeCloseTo(geometry.frame.x + geometry.frame.width, 5)
+        expect(bounds.y).toBeGreaterThan(geometry.frame.y)
+        expect(bounds.bottom).toBeLessThan(geometry.frame.y + geometry.frame.height)
+      }
+    }
+    if (isMobile) {
+      const boxes = await viewer.locator('.spectra-plot').evaluateAll(plots => plots.map(plot => ({ x: plot.getBoundingClientRect().x, y: plot.getBoundingClientRect().y })))
+      expect(boxes[0].x).toBeCloseTo(boxes[1].x, 1)
+      expect(boxes[1].y).toBeGreaterThan(boxes[0].y)
+      expect(boxes[2].y).toBeGreaterThan(boxes[1].y)
+    }
+    const contestantSelect = viewer.getByLabel('参测组合 / CONTESTANT')
+    const roundSelect = viewer.getByLabel('轮次 / ROUND')
+    await contestantSelect.focus()
+    await expect(contestantSelect).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(roundSelect).toBeFocused()
+    await expect(roundSelect).toHaveCSS('outline-style', 'solid')
+    await expect(roundSelect).toHaveCSS('outline-width', '2px')
+    await contestantSelect.selectOption('contestant-1')
+    await expect(viewer.getByRole('img')).toHaveCount(3)
+    await roundSelect.selectOption('10')
+    await expect(viewer.locator('.spectra-registration')).toHaveText('contestant-1 / ROUND 10')
+    await expect(viewer.locator('svg title').first()).toContainText('第 10 轮')
     await finishAudit(page, audit)
   })
 })
