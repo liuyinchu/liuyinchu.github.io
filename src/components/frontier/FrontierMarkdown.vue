@@ -271,6 +271,8 @@ watch(
 .frontier-markdown :deep(.markdown-body--frontier th) { color: var(--f-ink); background: var(--f-panel); font-weight: 650; text-align: left; }
 .frontier-markdown :deep(.markdown-body--frontier tr:nth-child(2n) td) { background: color-mix(in srgb, var(--f-panel) 55%, var(--f-surface)); }
 .frontier-markdown :deep(.markdown-body--frontier tbody tr:last-child td) { border-bottom: 0; }
+.frontier-markdown :deep(.markdown-body--frontier tbody tr:hover) { color: var(--f-ink); background: var(--f-panel); }
+.frontier-markdown :deep(.markdown-body--frontier tbody tr:hover td) { background: var(--f-panel); }
 
 .frontier-markdown :deep(.markdown-body--frontier :is(.copy-button, .md-blur-block-head button, a.back-top)) {
   border: 1px solid var(--f-line);
