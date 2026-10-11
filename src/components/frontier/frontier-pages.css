@@ -21,14 +21,14 @@
 .frontier-section-heading .frontier-eyebrow { font-size: 10px; color: var(--f-accent); letter-spacing: .12em; }
 .frontier-section-heading h2 { font-size: 25px; font-weight: 700; letter-spacing: -.04em; line-height: 1.4; margin: 8px 0 0; }
 .frontier-section-heading > p { font-size: 12px; color: var(--f-muted); line-height: 1.7; margin: 0 0 3px; }
-.frontier-reading-grid { display: grid; grid-template-columns: minmax(0, 1fr) 235px; align-items: start; gap: 30px; }
-.frontier-reading-card { min-width: 0; padding: 32px 40px 42px; border: 1px solid var(--f-line); border-radius: 18px; background: var(--f-surface); }
-.frontier-article-label { display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 11px; color: var(--f-muted); padding-bottom: 22px; margin-bottom: 25px; border-bottom: 1px solid var(--f-line); }
-.frontier-article-label > :first-child { font-weight: 650; color: var(--f-accent); }
+.frontier-shell .frontier-reading-grid { display: grid; grid-template-columns: minmax(0, 1fr) 208px; align-items: start; gap: 40px; max-width: 1120px; margin-inline: auto; }
+.frontier-shell .frontier-reading-card { min-width: 0; padding: 34px 40px 46px; border-radius: 12px; background: var(--f-surface); }
+.frontier-shell .frontier-article-label { display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 46rem; margin: 0 auto 28px; padding-bottom: 16px; border-bottom: 1px solid var(--f-line); color: var(--f-muted); font-size: 11px; }
+.frontier-shell .frontier-article-label > :first-child { font-weight: 550; }
 .frontier-article-label a { color: var(--f-accent); text-decoration: none; }
 .frontier-article-label a:hover { text-decoration: underline; }
-.frontier-reading-sidebar { position: sticky; top: 100px; }
-.frontier-sidebar-note { padding: 24px 12px 0; margin-top: 22px; border-top: 1px solid var(--f-line); }
+.frontier-shell .frontier-reading-sidebar { position: sticky; top: 100px; min-width: 0; }
+.frontier-shell .frontier-sidebar-note { padding: 20px 0 0; margin-top: 18px; border-top: 1px solid var(--f-line); }
 .frontier-small-label { font-size: 12px; color: var(--f-ink); font-weight: 600; }
 .frontier-sidebar-note > p { color: var(--f-muted); font-size: 12px; line-height: 1.85; margin: 13px 0 18px; }
 .frontier-state { display: flex; align-items: center; justify-content: center; flex-direction: column; min-height: 240px; border: 1px solid var(--f-line); border-radius: 18px; background: var(--f-surface); color: var(--f-muted); font-size: 14px; padding: 24px; }
@@ -50,7 +50,7 @@
 .frontier-report-meta > div > span { width: 100%; font-size: 11px; color: var(--f-muted); margin-bottom: 3px; }
 .frontier-report-meta strong { font-size: 17px; font-weight: 650; letter-spacing: -.03em; }
 .frontier-report-meta small { font-size: 11px; font-weight: 400; color: var(--f-muted); }
-.frontier-sidebar-back { display: block; margin: 24px 0; padding: 15px 12px; border-top: 1px solid var(--f-line); color: var(--f-accent); font-size: 12px; text-decoration: none; }
+.frontier-shell .frontier-sidebar-back { display: block; margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--f-line); color: var(--f-accent); font-size: 12px; text-decoration: none; }
 .frontier-sidebar-back:hover { color: var(--f-accent); text-decoration: underline; }
 .frontier-missing { text-align: center; padding: 110px 0; }
 .frontier-missing h1 { font-size: 100px; font-weight: 700; color: var(--f-accent); margin: 18px 0; }
@@ -96,9 +96,13 @@
 
 @media (max-width: 1050px) {
   .frontier-cover { gap: 32px; grid-template-columns: minmax(0,1fr) 270px; }
-  .frontier-reading-grid { grid-template-columns: minmax(0,1fr) 200px; gap: 20px; }
-  .frontier-reading-card { padding: 28px; }
+  .frontier-shell .frontier-reading-card { padding: 30px 32px 40px; }
   .avis3-round-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 980px) {
+  .frontier-shell .frontier-reading-grid { grid-template-columns: 1fr; gap: 22px; max-width: 824px; }
+  .frontier-shell .frontier-reading-sidebar { position: static; grid-row: 1; }
+  .frontier-shell .frontier-sidebar-note, .frontier-shell .frontier-sidebar-back { display: none; }
 }
 @media (max-width: 760px) {
   .frontier-cover { grid-template-columns: 1fr; gap: 22px; padding: 30px 0; }
@@ -110,10 +114,8 @@
   .frontier-section-heading > p { display: none; }
   .frontier-section-heading h2 { font-size: 22px; }
   .frontier-section + .frontier-section { margin-top: 44px; }
-  .frontier-reading-grid { grid-template-columns: 1fr; gap: 20px; }
-  .frontier-reading-sidebar { position: static; grid-row: 1; }
-  .frontier-reading-card { padding: 22px; }
-  .frontier-sidebar-note, .frontier-sidebar-back { display: none; }
+  .frontier-shell .frontier-reading-card { padding: 24px 20px 32px; }
+  .frontier-shell .frontier-article-label { margin-bottom: 24px; padding-bottom: 14px; }
   .frontier-report-heading, .avis3-overview-intro { flex-direction: column; gap: 22px; align-items: flex-start; }
   .frontier-report-title h1 { font-size: 30px; }
   .frontier-report-title > p { font-size: 13px; }
@@ -138,6 +140,9 @@
   .avis3-round-status small { margin: 0; }
   .avis3-results-table .avis3-round-status::before { margin: 0; }
   .avis3-pending-cell { grid-column: 2 / -1; }
+}
+@media (max-width: 440px) {
+  .frontier-shell .frontier-reading-card { padding: 22px 16px 30px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .frontier-primary-link { transition: none; }

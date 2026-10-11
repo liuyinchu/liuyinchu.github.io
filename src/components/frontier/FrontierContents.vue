@@ -84,34 +84,61 @@ onBeforeUnmount(() => {
 
 <template>
   <nav class="frontier-contents" aria-label="本页目录">
-    <h2 class="frontier-contents__title">{{ title }}</h2>
-    <ul v-if="visibleItems.length" class="frontier-contents__list">
-      <li v-for="item in visibleItems" :key="item.id">
-        <a
-          :href="`#${item.id}`"
-          class="frontier-contents__link"
-          :class="{ 'is-active': activeId === item.id }"
-          :aria-current="activeId === item.id ? 'location' : undefined"
-          @click="goToHeading($event, item)"
-        >{{ item.text }}</a>
-      </li>
-    </ul>
-    <p v-else class="frontier-contents__empty">正在整理目录</p>
+    <details class="frontier-contents__disclosure" open>
+      <summary class="frontier-contents__summary">
+        <span class="frontier-contents__title">{{ title }}</span>
+        <span v-if="visibleItems.length" class="frontier-contents__count">{{ visibleItems.length }} 节</span>
+      </summary>
+      <ul v-if="visibleItems.length" class="frontier-contents__list">
+        <li v-for="item in visibleItems" :key="item.id">
+          <a
+            :href="`#${item.id}`"
+            class="frontier-contents__link"
+            :class="{ 'is-active': activeId === item.id }"
+            :aria-current="activeId === item.id ? 'location' : undefined"
+            @click="goToHeading($event, item)"
+          >{{ item.text }}</a>
+        </li>
+      </ul>
+      <p v-else class="frontier-contents__empty">正在整理目录</p>
+    </details>
   </nav>
 </template>
 
 <style scoped>
 .frontier-contents {
   min-width: 0;
-  padding: 16px;
-  border: 1px solid var(--f-line);
-  border-radius: 12px;
-  background: var(--f-panel);
+  padding: 6px 0;
+  background: transparent;
   color: var(--f-ink);
 }
 
+.frontier-contents__summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0 14px;
+  color: var(--f-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.frontier-contents__summary::-webkit-details-marker { display: none; }
+.frontier-contents__summary::after {
+  width: 5px;
+  height: 5px;
+  margin-left: auto;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  content: '';
+  transform: rotate(45deg);
+}
+.frontier-contents__disclosure[open] > summary::after { transform: rotate(225deg); }
+.frontier-contents__summary:focus-visible { outline: 2px solid var(--f-accent); outline-offset: 4px; }
+.frontier-contents__count { font-size: 11px; font-variant-numeric: tabular-nums; }
+
 .frontier-contents__title {
-  margin: 0 0 10px;
+  margin: 0;
   color: var(--f-muted);
   font-size: 12px;
   font-weight: 600;
@@ -120,18 +147,19 @@ onBeforeUnmount(() => {
 
 .frontier-contents__list {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 10px;
+  border-left: 1px solid var(--f-line);
   list-style: none;
 }
 
 .frontier-contents__link {
   position: relative;
   display: block;
-  padding: 7px 10px 7px 13px;
-  border-radius: 6px;
-  color: var(--f-ink);
+  padding: 7px 10px;
+  border-radius: 5px;
+  color: var(--f-muted);
   font-size: 13px;
   line-height: 1.5;
   text-decoration: none;
@@ -139,7 +167,8 @@ onBeforeUnmount(() => {
 }
 
 .frontier-contents__link:hover {
-  background: var(--f-surface);
+  color: var(--f-ink);
+  background: var(--f-panel);
 }
 
 .frontier-contents__link:focus-visible {
@@ -148,16 +177,17 @@ onBeforeUnmount(() => {
 }
 
 .frontier-contents__link.is-active {
-  background: color-mix(in srgb, var(--f-accent) 10%, var(--f-panel));
+  background: var(--f-accent-soft);
   color: var(--f-accent);
+  font-weight: 600;
 }
 
 .frontier-contents__link.is-active::before {
   position: absolute;
   top: 7px;
   bottom: 7px;
-  left: 0;
-  width: 3px;
+  left: -11px;
+  width: 2px;
   border-radius: 3px;
   background: var(--f-accent);
   content: '';
@@ -168,5 +198,29 @@ onBeforeUnmount(() => {
   color: var(--f-muted);
   font-size: 13px;
   line-height: 1.5;
+}
+@media (max-width: 980px) {
+  .frontier-contents { padding: 14px 18px; border: 1px solid var(--f-line); border-radius: 10px; }
+  .frontier-contents__summary { padding: 0; }
+  .frontier-contents__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px 16px;
+    max-height: 14rem;
+    margin-top: 12px;
+    padding: 10px 0 0;
+    overflow-y: auto;
+    border-top: 1px solid var(--f-line);
+    border-left: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--f-line) transparent;
+  }
+  .frontier-contents__link { padding: 7px 10px 7px 12px; }
+  .frontier-contents__link.is-active::before { left: 0; }
+  .frontier-contents__empty { margin-top: 12px; }
+}
+
+@media (max-width: 520px) {
+  .frontier-contents { padding: 13px 15px; }
+  .frontier-contents__list { grid-template-columns: 1fr; max-height: 12rem; }
 }
 </style>
