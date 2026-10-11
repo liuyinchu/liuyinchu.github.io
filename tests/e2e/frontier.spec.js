@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 import { auditPage, BASE_URL, expectKnownRouteShell, expectNoHorizontalOverflow, gotoRoute } from './test-helpers.js'
-import { mockFrontierNotes, NOTES_SOURCE } from './frontier-fixture.js'
+import { mockFrontierNotes, NOTES_SOURCE, FRONTIER_MARKDOWN_FIXTURE } from './frontier-fixture.js'
 
 const overview = '/ai-frontier'
 const arena = overview + '/arena/avis3'
@@ -91,37 +92,140 @@ test.describe('AI Frontier', () => {
     await finishAudit(page, audit)
   })
 
-  test('the theme survives reload and leaving Frontier restores the main site', async ({ page }) => {
+  test('Frontier stays light without changing document theme or saved preferences', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('ysy-ai-frontier-theme', 'dark'))
     const audit = auditPage(page)
     await gotoRoute(page, '/')
     await expectKnownRouteShell(page, '/')
-    const mainTheme = await page.evaluate(() => ({
+    const readMainTheme = () => page.evaluate(() => ({
       htmlClass: document.documentElement.className,
       bodyClass: document.body.className,
-      colorScheme: document.documentElement.style.colorScheme,
+      htmlStyle: document.documentElement.style.cssText,
+      frontierTheme: document.documentElement.getAttribute('data-frontier-theme'),
+      storage: { ...localStorage },
     }))
+    const mainTheme = await readMainTheme()
     await openOverview(page)
     await expect(page.locator('.frontier-shell')).toHaveAttribute('data-theme', 'light')
-    await page.getByRole('button', { name: '切换到暗色模式', exact: true }).click()
-    await expect(page.locator('.frontier-shell')).toHaveAttribute('data-theme', 'dark')
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('ysy-ai-frontier-theme'))).toBe('dark')
+    await expect(page.locator('.frontier-shell')).toHaveCSS('background-color', 'rgb(236, 229, 214)')
+    await expect(page.getByRole('button', { name: /切换到.*模式/ })).toHaveCount(0)
+    expect(await readMainTheme()).toEqual(mainTheme)
     await page.reload()
-    await expect(page.locator('.frontier-shell')).toHaveAttribute('data-theme', 'dark')
-    await expect(page.locator('html')).toHaveAttribute('data-frontier-theme', 'dark')
+    await expect(page.locator('.frontier-shell')).toHaveAttribute('data-theme', 'light')
+    expect(await readMainTheme()).toEqual(mainTheme)
     await page.getByRole('banner').getByRole('link', { name: 'AVIS3 Arena', exact: true }).click()
     await expect(page).toHaveURL(BASE_URL + arena)
-    await expect(page.locator('.frontier-shell')).toHaveAttribute('data-theme', 'dark')
+    expect(await readMainTheme()).toEqual(mainTheme)
     await page.getByRole('banner').getByRole('link', { name: '返回主站', exact: true }).click()
-    await expect(page).toHaveURL(BASE_URL + '/')
     await expectKnownRouteShell(page, '/')
     await expect(page.locator('.frontier-shell')).toHaveCount(0)
-    await expect.poll(() => page.locator('html').getAttribute('data-frontier-theme')).toBeNull()
-    await expect.poll(() => page.evaluate(() => ({
-      htmlClass: document.documentElement.className,
-      bodyClass: document.body.className,
-      colorScheme: document.documentElement.style.colorScheme,
-    }))).toEqual(mainTheme)
+    expect(await readMainTheme()).toEqual(mainTheme)
     await finishAudit(page, audit)
+  })
+
+  test('the complete reader preserves structure, rich interactions and local scrolling', async ({ page, isMobile }) => {
+    test.setTimeout(90_000)
+    if (!isMobile) await page.setViewportSize({ width: 1280, height: 704 })
+    const manual = await readFile(new URL('../../public/markdown/pages/markdown-components.md', import.meta.url), 'utf8')
+    await page.route(NOTES_SOURCE, route => route.fulfill({ contentType: 'text/markdown', body: FRONTIER_MARKDOWN_FIXTURE + manual }))
+    await gotoRoute(page, overview)
+    const reader = page.locator('.frontier-markdown .markdown-body')
+    await expect(reader.locator('h6')).toHaveText('六级标题')
+    for (const selector of ['strong', 'em', 's', 'blockquote', 'hr', 'ol', 'ul', '.task-list-item', '.md-footnotes', '.md-gallery', '.md-columns', '.md-chat', '.md-timeline', '.md-steps', '.md-link-card', '.md-progress']) {
+      await expect(reader.locator(selector).first()).toBeAttached()
+    }
+    const code = reader.locator('pre code').first()
+    await expect(code).toContainText("const spacecraft =")
+    await expect(code).toHaveCSS('white-space', 'pre')
+    await expect(reader.locator('.hljs-keyword').first()).toBeAttached()
+    await page.evaluate(() => { window.__frontierCopied = ''; Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.__frontierCopied = text } } }) })
+    await reader.locator('.copy-button').first().click()
+    await expect.poll(() => page.evaluate(() => window.__frontierCopied)).toContain('const spacecraft =')
+    const table = reader.locator('table').first()
+    await expect(table).toHaveCSS('overflow-x', 'auto')
+    await table.evaluate(el => { el.scrollLeft = 1000 })
+    expect(await table.evaluate(el => el.scrollLeft)).toBeGreaterThan(0)
+    const folding = reader.locator('.md-folding').first()
+    await folding.locator('summary').first().click()
+    await expect(folding).toHaveAttribute('open', '')
+    const nested = folding.locator('.md-folding').first()
+    await nested.locator('summary').click()
+    await expect(nested).toHaveAttribute('open', '')
+    const blur = reader.locator('.md-blur-inline').first()
+    await blur.click()
+    await expect(blur).toHaveClass(/is-revealed/)
+    const block = reader.locator('.md-blur-block').first()
+    await block.getByRole('button').click()
+    await expect(block).toHaveClass(/is-revealed/)
+    const stream = reader.locator('.md-stream-button').first()
+    await expect(stream).toHaveCSS('background-image', 'none')
+    await expect(stream.locator('.md-stream-button-field')).toBeHidden()
+    await expect(stream.locator('strong').first()).toHaveCSS('color', 'rgb(255, 249, 237)')
+    await reader.locator('.md-tip-inline').first().focus()
+    expect(await reader.locator('.md-tip-inline').first().evaluate(el => getComputedStyle(el, '::after').position)).toBe(page.viewportSize().width <= 680 ? 'fixed' : 'absolute')
+    await expectNoHorizontalOverflow(page)
+    await expect(reader.locator('.md-alert').first()).toHaveCSS('background-image', 'none')
+    const contents = page.locator('.frontier-contents details')
+    await contents.locator('summary').click()
+    await expect(contents).not.toHaveAttribute('open', '')
+    await contents.locator('summary').press('Enter')
+    await expect(contents).toHaveAttribute('open', '')
+    const lastChapter = contents.getByRole('link').last()
+    const chapterId = (await lastChapter.getAttribute('href')).slice(1)
+    await lastChapter.scrollIntoViewIfNeeded()
+    await expect(lastChapter).toBeInViewport()
+    expect(await contents.locator('ul').evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+    await lastChapter.click()
+    await expect(page.locator('[id="' + chapterId + '"]')).toBeInViewport()
+    await expectNoHorizontalOverflow(page)
+  })
+
+  test('Frontier math keeps short inline baselines and scrolls wide equations', async ({ page }) => {
+    test.setTimeout(90_000)
+    await page.route(NOTES_SOURCE, route => route.fulfill({ contentType: 'text/markdown', body: FRONTIER_MARKDOWN_FIXTURE }))
+    await gotoRoute(page, overview)
+    const reader = page.locator('.frontier-markdown .markdown-body')
+    const paragraph = reader.locator('p').filter({ hasText: '正常行内公式' })
+    await paragraph.scrollIntoViewIfNeeded()
+    const inline = paragraph.locator('mjx-container').first()
+    await expect(inline.locator('mjx-math mjx-c').first()).toBeAttached({ timeout: 45_000 })
+    await expect(inline).toHaveCSS('display', 'inline')
+    await expect(inline).toHaveCSS('overflow', 'visible')
+    await page.evaluate(() => document.fonts.ready)
+    const baselineDifference = await inline.evaluate(el => {
+      const p = el.closest('p')
+      const marker = document.createElement('span')
+      marker.style.cssText = 'display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline'
+      const reference = document.createElement('p')
+      reference.style.cssText = 'position:fixed;left:-10000px;top:0;margin:0;white-space:nowrap'
+      const style = getComputedStyle(p)
+      for (const property of ['font-family','font-size','font-weight','font-style','line-height','letter-spacing']) reference.style.setProperty(property,style.getPropertyValue(property))
+      const clone = el.cloneNode(true)
+      const cloneMarker = marker.cloneNode()
+      reference.append(clone,cloneMarker)
+      document.body.append(reference)
+      const run = document.createElement('span')
+      run.style.whiteSpace = 'nowrap'
+      el.before(run)
+      run.append(el,marker)
+      try {
+        return Math.abs((el.querySelector('mjx-math').getBoundingClientRect().bottom-marker.getBoundingClientRect().top)-(clone.querySelector('mjx-math').getBoundingClientRect().bottom-cloneMarker.getBoundingClientRect().top))
+      } finally { run.before(el); run.remove(); reference.remove() }
+    })
+    expect(baselineDifference).toBeLessThanOrEqual(1)
+    const longParagraph = reader.locator('p').filter({ hasText: '很长的行内公式' })
+    await longParagraph.scrollIntoViewIfNeeded()
+    const long = longParagraph.locator('mjx-container').first()
+    await expect(long.locator('mjx-math mjx-c').first()).toBeAttached({ timeout: 45_000 })
+    await expect(long).toHaveClass(/frontier-inline-overflow/)
+    const display = reader.locator('mjx-container[display="true"]').first()
+    await display.scrollIntoViewIfNeeded()
+    await expect(display.locator('mjx-math mjx-c').first()).toBeAttached({ timeout: 45_000 })
+    for (const formula of [long, display]) {
+      await formula.evaluate(el => { el.scrollLeft = 10000 })
+      await expect.poll(() => formula.evaluate(el => el.scrollLeft)).toBeGreaterThan(0)
+    }
+    await expectNoHorizontalOverflow(page)
   })
 
   test('a failed AVIS3 data request recovers after retry', async ({ page }) => {

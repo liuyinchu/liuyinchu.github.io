@@ -1,103 +1,103 @@
-.frontier-cover { display: grid; grid-template-columns: minmax(0, 1fr) 310px; align-items: center; gap: 60px; padding: 52px 0 44px; }
-.frontier-eyebrow { display: flex; align-items: center; gap: 8px; color: var(--f-muted); font-size: 11px; font-weight: 650; line-height: 1.5; letter-spacing: .09em; }
-.frontier-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--f-accent); }
-.frontier-cover h1 { font-size: clamp(34px, 3.5vw, 49px); font-weight: 760; line-height: 1.28; letter-spacing: -.06em; margin: 18px 0 14px; }
-.frontier-cover h1 > span { color: var(--f-accent); }
-.frontier-cover-copy > p { color: var(--f-muted); font-size: 15px; line-height: 1.85; margin: 0 0 22px; }
-.frontier-inline-link { display: inline-flex; gap: 12px; align-items: center; color: var(--f-accent); font-size: 13px; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
-.frontier-inline-link:hover { color: var(--f-accent); text-decoration: underline; text-underline-offset: 4px; }
-.frontier-overview-stats { border: 1px solid var(--f-line); background: var(--f-surface); border-radius: 18px; padding: 21px 24px 18px; }
-.frontier-stats-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12px; font-weight: 650; }
-.frontier-soft-badge { display: inline-flex; align-items: center; width: fit-content; padding: 5px 9px; background: var(--f-accent-soft); color: var(--f-accent); border-radius: 6px; font-size: 11px; font-weight: 550; line-height: 1.4; }
-.frontier-stats-numbers { display: grid; grid-template-columns: 1fr 1fr; padding: 18px 0; gap: 24px; }
-.frontier-stats-numbers > div { display: flex; flex-direction: column; gap: 5px; }
-.frontier-stats-numbers strong { font-size: 33px; line-height: 1.1; letter-spacing: -.06em; font-weight: 650; font-variant-numeric: tabular-nums; }
-.frontier-stats-numbers span { font-size: 11px; color: var(--f-muted); }
-.frontier-stats-foot { display: flex; justify-content: space-between; gap: 12px; padding-top: 13px; border-top: 1px solid var(--f-line); color: var(--f-muted); font-size: 11px; }
-.frontier-stats-foot > :last-child { color: var(--f-ink); font-variant-numeric: tabular-nums; }
-.frontier-section { margin-top: 22px; scroll-margin-top: 20px; }
-.frontier-section + .frontier-section { margin-top: 64px; }
-.frontier-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin-bottom: 22px; }
-.frontier-section-heading .frontier-eyebrow { font-size: 10px; color: var(--f-accent); letter-spacing: .12em; }
-.frontier-section-heading h2 { font-size: 25px; font-weight: 700; letter-spacing: -.04em; line-height: 1.4; margin: 8px 0 0; }
-.frontier-section-heading > p { font-size: 12px; color: var(--f-muted); line-height: 1.7; margin: 0 0 3px; }
-.frontier-shell .frontier-reading-grid { display: grid; grid-template-columns: minmax(0, 1fr) 208px; align-items: start; gap: 40px; max-width: 1120px; margin-inline: auto; }
-.frontier-shell .frontier-reading-card { min-width: 0; padding: 34px 40px 46px; border-radius: 12px; background: var(--f-surface); }
+.frontier-shell .frontier-cover { display: grid; grid-template-columns: minmax(0, 1fr) 330px; align-items: center; gap: 70px; padding: 60px 0 45px; }
+.frontier-shell .frontier-eyebrow { display: flex; align-items: center; gap: 8px; color: var(--f-muted); font-size: 11px; font-weight: 650; line-height: 1.5; letter-spacing: .09em; }
+.frontier-shell .frontier-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--f-accent); }
+.frontier-shell .frontier-cover h1 { font-size: clamp(34px, 3.5vw, 49px); font-weight: 760; line-height: 1.28; letter-spacing: -.06em; margin: 18px 0 14px; }
+.frontier-shell .frontier-cover h1 > span { color: var(--f-ink); }
+.frontier-shell .frontier-cover-copy > p { color: var(--f-muted); font-size: 15px; line-height: 1.85; margin: 0 0 22px; }
+.frontier-shell .frontier-inline-link { display: inline-flex; gap: 12px; align-items: center; color: var(--f-ink); font-size: 13px; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.frontier-shell .frontier-inline-link:hover { color: var(--f-ink); text-decoration: underline; text-underline-offset: 4px; }
+.frontier-shell .frontier-overview-stats { border: 1px solid var(--f-line); background: var(--f-surface); border-radius: 2px; padding: 21px 24px 18px; }
+.frontier-shell .frontier-stats-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12px; font-weight: 650; }
+.frontier-shell .frontier-soft-badge { display: inline-flex; align-items: center; width: fit-content; padding: 5px 9px; background: var(--f-accent-soft); color: var(--f-ink); border-radius: 2px; font-size: 11px; font-weight: 550; line-height: 1.4; }
+.frontier-shell .frontier-stats-numbers { display: grid; grid-template-columns: 1fr 1fr; padding: 18px 0; gap: 24px; }
+.frontier-shell .frontier-stats-numbers > div { display: flex; flex-direction: column; gap: 5px; }
+.frontier-shell .frontier-stats-numbers strong { font-size: 33px; line-height: 1.1; letter-spacing: -.06em; font-weight: 650; font-variant-numeric: tabular-nums; }
+.frontier-shell .frontier-stats-numbers span { font-size: 11px; color: var(--f-muted); }
+.frontier-shell .frontier-stats-foot { display: flex; justify-content: space-between; gap: 12px; padding-top: 13px; border-top: 1px solid var(--f-line); color: var(--f-muted); font-size: 11px; }
+.frontier-shell .frontier-stats-foot > :last-child { color: var(--f-ink); font-variant-numeric: tabular-nums; }
+.frontier-shell .frontier-section { margin-top: 22px; scroll-margin-top: var(--f-scroll-offset); }
+.frontier-shell .frontier-section + .frontier-section { margin-top: 64px; }
+.frontier-shell .frontier-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin-bottom: 22px; }
+.frontier-shell .frontier-section-heading .frontier-eyebrow { font-size: 10px; color: var(--f-ink); letter-spacing: .12em; }
+.frontier-shell .frontier-section-heading h2 { font-size: 25px; font-weight: 700; letter-spacing: -.04em; line-height: 1.4; margin: 8px 0 0; }
+.frontier-shell .frontier-section-heading > p { font-size: 12px; color: var(--f-muted); line-height: 1.7; margin: 0 0 3px; }
+.frontier-shell .frontier-reading-grid { display: grid; grid-template-columns: minmax(0, 1fr) 208px; align-items: start; gap: 40px; max-width: 1200px; margin-inline: auto; }
+.frontier-shell .frontier-reading-card { min-width: 0; padding: 34px 40px 46px; border: 1px solid var(--f-line); border-radius: 2px; background: var(--f-surface); }
 .frontier-shell .frontier-article-label { display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 46rem; margin: 0 auto 28px; padding-bottom: 16px; border-bottom: 1px solid var(--f-line); color: var(--f-muted); font-size: 11px; }
 .frontier-shell .frontier-article-label > :first-child { font-weight: 550; }
-.frontier-article-label a { color: var(--f-accent); text-decoration: none; }
-.frontier-article-label a:hover { text-decoration: underline; }
-.frontier-shell .frontier-reading-sidebar { position: sticky; top: 100px; min-width: 0; }
+.frontier-shell .frontier-article-label a { color: var(--f-ink); text-decoration: none; }
+.frontier-shell .frontier-article-label a:hover { text-decoration: underline; }
+.frontier-shell .frontier-reading-sidebar { position: sticky; top: var(--f-scroll-offset); min-width: 0; }
 .frontier-shell .frontier-sidebar-note { padding: 20px 0 0; margin-top: 18px; border-top: 1px solid var(--f-line); }
-.frontier-small-label { font-size: 12px; color: var(--f-ink); font-weight: 600; }
-.frontier-sidebar-note > p { color: var(--f-muted); font-size: 12px; line-height: 1.85; margin: 13px 0 18px; }
-.frontier-state { display: flex; align-items: center; justify-content: center; flex-direction: column; min-height: 240px; border: 1px solid var(--f-line); border-radius: 18px; background: var(--f-surface); color: var(--f-muted); font-size: 14px; padding: 24px; }
-.frontier-text-button { background: var(--f-accent); color: var(--f-on-accent); padding: 10px 18px; border: 0; border-radius: 9px; cursor: pointer; }
-.frontier-breadcrumb { display: flex; align-items: center; gap: 12px; margin: 29px 0 27px; color: var(--f-muted); font-size: 12px; }
-.frontier-breadcrumb a { color: var(--f-muted); text-decoration: none; }
-.frontier-breadcrumb a:hover { color: var(--f-accent); }
-.frontier-report-heading { display: flex; justify-content: space-between; align-items: center; gap: 40px; }
-.frontier-report-title { min-width: 0; }
-.frontier-report-tags { display: flex; align-items: center; gap: 12px; }
-.frontier-report-title h1 { font-size: clamp(29px, 3vw, 41px); line-height: 1.3; letter-spacing: -.045em; margin: 16px 0 14px; font-weight: 720; }
-.frontier-report-title > p { max-width: 760px; color: var(--f-muted); font-size: 14px; line-height: 1.8; margin: 0 0 17px; }
-.frontier-report-byline { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--f-muted); font-size: 11px; }
-.frontier-primary-link { display: inline-flex; justify-content: center; align-items: center; gap: 16px; flex-shrink: 0; background: var(--f-accent); color: var(--f-on-accent); border-radius: 9px; padding: 12px 18px; font-size: 12px; font-weight: 600; text-decoration: none; transition: transform .18s, filter .18s; }
-.frontier-primary-link:hover { color: var(--f-on-accent); text-decoration: none; filter: brightness(1.1); transform: translateY(-2px); }
-.frontier-report-meta { display: grid; grid-template-columns: 1.1fr .8fr 1fr; gap: 25px; padding: 21px 27px; margin: 29px 0 35px; border: 1px solid var(--f-line); border-radius: 14px; background: var(--f-surface); }
-.frontier-report-meta > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px 10px; border-right: 1px solid var(--f-line); }
-.frontier-report-meta > div:last-child { border: 0; }
-.frontier-report-meta > div > span { width: 100%; font-size: 11px; color: var(--f-muted); margin-bottom: 3px; }
-.frontier-report-meta strong { font-size: 17px; font-weight: 650; letter-spacing: -.03em; }
-.frontier-report-meta small { font-size: 11px; font-weight: 400; color: var(--f-muted); }
-.frontier-shell .frontier-sidebar-back { display: block; margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--f-line); color: var(--f-accent); font-size: 12px; text-decoration: none; }
-.frontier-sidebar-back:hover { color: var(--f-accent); text-decoration: underline; }
-.frontier-missing { text-align: center; padding: 110px 0; }
-.frontier-missing h1 { font-size: 100px; font-weight: 700; color: var(--f-accent); margin: 18px 0; }
-.frontier-missing p { color: var(--f-muted); font-size: 15px; margin-bottom: 30px; }
+.frontier-shell .frontier-small-label { font-size: 12px; color: var(--f-ink); font-weight: 600; }
+.frontier-shell .frontier-sidebar-note > p { color: var(--f-muted); font-size: 12px; line-height: 1.85; margin: 13px 0 18px; }
+.frontier-shell .frontier-state { display: flex; align-items: center; justify-content: center; flex-direction: column; min-height: 240px; border: 1px solid var(--f-line); border-radius: 2px; background: var(--f-surface); color: var(--f-muted); font-size: 14px; padding: 24px; }
+.frontier-shell .frontier-text-button { background: var(--f-accent); color: var(--f-on-accent); padding: 10px 18px; border: 0; border-radius: 2px; cursor: pointer; }
+.frontier-shell .frontier-breadcrumb { display: flex; align-items: center; gap: 12px; margin: 29px 0 27px; color: var(--f-muted); font-size: 12px; }
+.frontier-shell .frontier-breadcrumb a { color: var(--f-muted); text-decoration: none; }
+.frontier-shell .frontier-breadcrumb a:hover { color: var(--f-ink); }
+.frontier-shell .frontier-report-heading { display: flex; justify-content: space-between; align-items: center; gap: 40px; }
+.frontier-shell .frontier-report-title { min-width: 0; }
+.frontier-shell .frontier-report-tags { display: flex; align-items: center; gap: 12px; }
+.frontier-shell .frontier-report-title h1 { font-size: clamp(29px, 3vw, 41px); line-height: 1.3; letter-spacing: -.045em; margin: 16px 0 14px; font-weight: 720; }
+.frontier-shell .frontier-report-title > p { max-width: 760px; color: var(--f-muted); font-size: 14px; line-height: 1.8; margin: 0 0 17px; }
+.frontier-shell .frontier-report-byline { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--f-muted); font-size: 11px; }
+.frontier-shell .frontier-primary-link { display: inline-flex; justify-content: center; align-items: center; gap: 16px; flex-shrink: 0; background: var(--f-accent); color: var(--f-on-accent); border-radius: 2px; padding: 12px 18px; font-size: 12px; font-weight: 600; text-decoration: none; transition: background-color .18s; }
+.frontier-shell .frontier-primary-link:hover { color: var(--f-on-accent); text-decoration: none; background: var(--f-rust); }
+.frontier-shell .frontier-report-meta { display: grid; grid-template-columns: 1.1fr .8fr 1fr; gap: 25px; padding: 21px 27px; margin: 29px 0 35px; border: 1px solid var(--f-line); border-radius: 2px; background: var(--f-surface); }
+.frontier-shell .frontier-report-meta > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px 10px; border-right: 1px solid var(--f-line); }
+.frontier-shell .frontier-report-meta > div:last-child { border: 0; }
+.frontier-shell .frontier-report-meta > div > span { width: 100%; font-size: 11px; color: var(--f-muted); margin-bottom: 3px; }
+.frontier-shell .frontier-report-meta strong { font-size: 17px; font-weight: 650; letter-spacing: -.03em; }
+.frontier-shell .frontier-report-meta small { font-size: 11px; font-weight: 400; color: var(--f-muted); }
+.frontier-shell .frontier-sidebar-back { display: block; margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--f-line); color: var(--f-ink); font-size: 12px; text-decoration: none; }
+.frontier-shell .frontier-sidebar-back:hover { color: var(--f-ink); text-decoration: underline; }
+.frontier-shell .frontier-missing { text-align: center; padding: 110px 0; }
+.frontier-shell .frontier-missing h1 { font-size: 100px; font-weight: 700; color: var(--f-ink); margin: 18px 0; }
+.frontier-shell .frontier-missing p { color: var(--f-muted); font-size: 15px; margin-bottom: 30px; }
 
-.avis3-overview-card, .avis3-result-card, .avis3-round-card { padding: 28px; border: 1px solid var(--f-line); border-radius: 18px; background: var(--f-surface); min-width: 0; }
-.avis3-overview-intro { display: flex; justify-content: space-between; align-items: center; gap: 30px; padding-bottom: 24px; margin-bottom: 8px; }
-.avis3-overview-intro h3 { font-size: 28px; letter-spacing: -.035em; line-height: 1.4; margin: 14px 0 10px; }
-.avis3-overview-intro p { color: var(--f-muted); font-size: 13px; line-height: 1.8; margin: 0; max-width: 580px; }
-.avis3-leaderboard { min-width: 0; }
-.avis3-results-table { table-layout: fixed; width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-.avis3-results-table th { padding: 13px 16px; color: var(--f-muted); font-size: 11px; font-weight: 550; border-bottom: 1px solid var(--f-line); }
-.avis3-results-table td { padding: 19px 16px; border-bottom: 1px solid var(--f-line); vertical-align: middle; }
-.avis3-results-table th:first-child, .avis3-results-table td:first-child { padding-left: 0; }
-.avis3-results-table th:last-child, .avis3-results-table td:last-child { padding-right: 0; }
-.avis3-rank-heading { width: 48px; }
-.avis3-rank { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 650; color: var(--f-accent); }
-.avis3-contestant { min-width: 0; }
-.avis3-contestant > * { display: block; }
-.avis3-contestant strong { font-weight: 650; line-height: 1.55; overflow-wrap: anywhere; }
-.avis3-contestant-id { color: var(--f-muted); font-size: 10px; line-height: 1.5; margin-bottom: 5px; font-variant-numeric: tabular-nums; }
-.avis3-harness { color: var(--f-muted); font-size: 12px; line-height: 1.7; margin-top: 4px; }
-.avis3-result-score { width: 25%; font-variant-numeric: tabular-nums; }
-.avis3-result-score strong { overflow-wrap: anywhere; font-size: 17px; font-weight: 650; }
-.avis3-result-score small { color: var(--f-muted); font-size: 10px; margin-left: 5px; }
-.avis3-score-track { display: block; height: 5px; border-radius: 4px; margin-top: 10px; background: var(--f-panel); overflow: hidden; }
-.avis3-score-track > i { display: block; height: 100%; border-radius: inherit; background: var(--f-accent); opacity: .7; }
-.avis3-number { font-variant-numeric: tabular-nums; color: var(--f-muted); overflow-wrap: anywhere; }
-.avis3-round-status { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.avis3-round-status > * { display: block; }
-.avis3-round-status small { color: var(--f-muted); font-size: 11px; margin-top: 5px; }
-.avis3-pending-cell, .avis3-pending-message { color: var(--f-muted); font-size: 13px; line-height: 1.8; }
-.avis3-results-note { color: var(--f-muted); font-size: 11px; line-height: 1.8; margin: 18px 0 0; }
-.avis3-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.avis3-comparison-note { color: var(--f-muted); font-size: 13px; line-height: 1.8; margin: -7px 0 20px; }
-.avis3-round-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.avis3-round-card h3 { font-size: 15px; line-height: 1.55; margin: 0; }
-.avis3-round-card > p { color: var(--f-muted); font-size: 11px; line-height: 1.7; margin: 8px 0 20px; }
-.avis3-round-list { list-style: none; margin: 0; padding: 0; }
-.avis3-round-list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--f-line); font-size: 11px; font-variant-numeric: tabular-nums; }
-.avis3-round-list span { color: var(--f-muted); }
-.avis3-round-list strong { font-weight: 600; }
+.frontier-shell .avis3-overview-card, .frontier-shell .avis3-result-card, .frontier-shell .avis3-round-card { padding: 28px; border: 1px solid var(--f-line); border-radius: 2px; background: var(--f-surface); min-width: 0; }
+.frontier-shell .avis3-overview-intro { display: flex; justify-content: space-between; align-items: center; gap: 30px; padding-bottom: 24px; margin-bottom: 8px; }
+.frontier-shell .avis3-overview-intro h3 { font-size: 28px; letter-spacing: -.035em; line-height: 1.4; margin: 14px 0 10px; }
+.frontier-shell .avis3-overview-intro p { color: var(--f-muted); font-size: 13px; line-height: 1.8; margin: 0; max-width: 580px; }
+.frontier-shell .avis3-leaderboard { min-width: 0; }
+.frontier-shell .avis3-results-table { table-layout: fixed; width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+.frontier-shell .avis3-results-table th { padding: 13px 16px; color: var(--f-muted); font-size: 11px; font-weight: 550; border-bottom: 1px solid var(--f-line); }
+.frontier-shell .avis3-results-table td { padding: 19px 16px; border-bottom: 1px solid var(--f-line); vertical-align: middle; }
+.frontier-shell .avis3-results-table th:first-child, .frontier-shell .avis3-results-table td:first-child { padding-left: 0; }
+.frontier-shell .avis3-results-table th:last-child, .frontier-shell .avis3-results-table td:last-child { padding-right: 0; }
+.frontier-shell .avis3-rank-heading { width: 65px; white-space: nowrap; }
+.frontier-shell .avis3-rank { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 650; color: var(--f-ink); }
+.frontier-shell .avis3-contestant { min-width: 0; }
+.frontier-shell .avis3-contestant > * { display: block; }
+.frontier-shell .avis3-contestant strong { font-weight: 650; line-height: 1.55; overflow-wrap: anywhere; }
+.frontier-shell .avis3-contestant-id { color: var(--f-muted); font-size: 10px; line-height: 1.5; margin-bottom: 5px; font-variant-numeric: tabular-nums; }
+.frontier-shell .avis3-harness { color: var(--f-muted); font-size: 12px; line-height: 1.7; margin-top: 4px; }
+.frontier-shell .avis3-result-score { width: 25%; font-variant-numeric: tabular-nums; }
+.frontier-shell .avis3-result-score strong { overflow-wrap: anywhere; font-size: 17px; font-weight: 650; }
+.frontier-shell .avis3-result-score small { color: var(--f-muted); font-size: 10px; margin-left: 5px; }
+.frontier-shell .avis3-score-track { display: block; height: 5px; border-radius: 2px; margin-top: 10px; background: var(--f-panel); overflow: hidden; }
+.frontier-shell .avis3-score-track > i { display: block; height: 100%; border-radius: inherit; background: var(--f-accent); opacity: .7; }
+.frontier-shell .avis3-number { font-variant-numeric: tabular-nums; color: var(--f-muted); overflow-wrap: anywhere; }
+.frontier-shell .avis3-round-status { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.frontier-shell .avis3-round-status > * { display: block; }
+.frontier-shell .avis3-round-status small { color: var(--f-muted); font-size: 11px; margin-top: 5px; }
+.frontier-shell .avis3-pending-cell, .frontier-shell .avis3-pending-message { color: var(--f-muted); font-size: 13px; line-height: 1.8; }
+.frontier-shell .avis3-results-note { color: var(--f-muted); font-size: 11px; line-height: 1.8; margin: 18px 0 0; }
+.frontier-shell .avis3-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.frontier-shell .avis3-comparison-note { color: var(--f-muted); font-size: 13px; line-height: 1.8; margin: -7px 0 20px; }
+.frontier-shell .avis3-round-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.frontier-shell .avis3-round-card h3 { font-size: 15px; line-height: 1.55; margin: 0; }
+.frontier-shell .avis3-round-card > p { color: var(--f-muted); font-size: 11px; line-height: 1.7; margin: 8px 0 20px; }
+.frontier-shell .avis3-round-list { list-style: none; margin: 0; padding: 0; }
+.frontier-shell .avis3-round-list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--f-line); font-size: 11px; font-variant-numeric: tabular-nums; }
+.frontier-shell .avis3-round-list span { color: var(--f-muted); }
+.frontier-shell .avis3-round-list strong { font-weight: 600; }
 
 @media (max-width: 1050px) {
-  .frontier-cover { gap: 32px; grid-template-columns: minmax(0,1fr) 270px; }
+  .frontier-shell .frontier-cover { gap: 32px; grid-template-columns: minmax(0,1fr) 270px; }
   .frontier-shell .frontier-reading-card { padding: 30px 32px 40px; }
-  .avis3-round-grid { grid-template-columns: 1fr; }
+  .frontier-shell .avis3-round-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 980px) {
   .frontier-shell .frontier-reading-grid { grid-template-columns: 1fr; gap: 22px; max-width: 824px; }
@@ -105,45 +105,139 @@
   .frontier-shell .frontier-sidebar-note, .frontier-shell .frontier-sidebar-back { display: none; }
 }
 @media (max-width: 760px) {
-  .frontier-cover { grid-template-columns: 1fr; gap: 22px; padding: 30px 0; }
-  .frontier-cover h1 { font-size: 36px; }
-  .frontier-cover-copy > p { font-size: 13px; }
-  .frontier-overview-stats { padding: 17px 20px; }
-  .frontier-stats-numbers { padding: 13px 0; }
-  .frontier-stats-numbers strong { font-size: 26px; }
-  .frontier-section-heading > p { display: none; }
-  .frontier-section-heading h2 { font-size: 22px; }
-  .frontier-section + .frontier-section { margin-top: 44px; }
+  .frontier-shell .frontier-cover { grid-template-columns: 1fr; gap: 22px; padding: 30px 0; }
+  .frontier-shell .frontier-cover h1 { font-size: 36px; }
+  .frontier-shell .frontier-cover-copy > p { font-size: 13px; }
+  .frontier-shell .frontier-overview-stats { padding: 17px 20px; }
+  .frontier-shell .frontier-stats-numbers { padding: 13px 0; }
+  .frontier-shell .frontier-stats-numbers strong { font-size: 26px; }
+  .frontier-shell .frontier-section-heading > p { display: none; }
+  .frontier-shell .frontier-section-heading h2 { font-size: 22px; }
+  .frontier-shell .frontier-section + .frontier-section { margin-top: 44px; }
   .frontier-shell .frontier-reading-card { padding: 24px 20px 32px; }
   .frontier-shell .frontier-article-label { margin-bottom: 24px; padding-bottom: 14px; }
-  .frontier-report-heading, .avis3-overview-intro { flex-direction: column; gap: 22px; align-items: flex-start; }
-  .frontier-report-title h1 { font-size: 30px; }
-  .frontier-report-title > p { font-size: 13px; }
-  .frontier-report-meta { gap: 16px; padding: 18px; grid-template-columns: 1fr 1fr; }
-  .frontier-report-meta > div:nth-child(2) { border: 0; }
-  .frontier-report-meta > div:last-child { grid-column: 1 / -1; border-top: 1px solid var(--f-line); padding-top: 13px; }
-  .frontier-report-meta strong { font-size: 15px; }
-  .avis3-overview-card, .avis3-result-card, .avis3-round-card { padding: 20px; }
-  .avis3-results-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .avis3-results-table tbody { display: block; }
-  .avis3-results-table tr { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 14px 20px; padding: 20px 0; border-bottom: 1px solid var(--f-line); }
-  .avis3-results-table td { display: block; padding: 0; border: 0; }
-  .avis3-rank { grid-column: 1; grid-row: 1; }
-  .avis3-contestant { grid-column: 2 / -1; }
-  .avis3-results-table td[data-label]::before { content: attr(data-label); display: block; color: var(--f-muted); font-size: 10px; margin-bottom: 6px; }
-  .avis3-result-score, .avis3-number { grid-column: 2 / -1; display: flex !important; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
-  .avis3-result-score { width: auto; }
-  .avis3-score-track { width: 100%; margin-top: 0; }
-  .avis3-result-score strong { font-size: 16px; overflow-wrap: anywhere; }
-  .avis3-number { font-size: 12px; }
-  .avis3-round-status { grid-column: 2 / -1; display: flex !important; align-items: baseline; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--f-muted); }
-  .avis3-round-status small { margin: 0; }
-  .avis3-results-table .avis3-round-status::before { margin: 0; }
-  .avis3-pending-cell { grid-column: 2 / -1; }
+  .frontier-shell .frontier-report-heading, .frontier-shell .avis3-overview-intro { flex-direction: column; gap: 22px; align-items: flex-start; }
+  .frontier-shell .frontier-report-title h1 { font-size: 30px; }
+  .frontier-shell .frontier-report-title > p { font-size: 13px; }
+  .frontier-shell .frontier-report-meta { gap: 16px; padding: 18px; grid-template-columns: 1fr 1fr; }
+  .frontier-shell .frontier-report-meta > div:nth-child(2) { border: 0; }
+  .frontier-shell .frontier-report-meta > div:last-child { grid-column: 1 / -1; border-top: 1px solid var(--f-line); padding-top: 13px; }
+  .frontier-shell .frontier-report-meta strong { font-size: 15px; }
+  .frontier-shell .avis3-overview-card, .frontier-shell .avis3-result-card, .frontier-shell .avis3-round-card { padding: 20px; }
+  .frontier-shell .avis3-results-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .frontier-shell .avis3-results-table tbody { display: block; }
+  .frontier-shell .avis3-results-table tr { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 14px 20px; padding: 20px 0; border-bottom: 1px solid var(--f-line); }
+  .frontier-shell .avis3-results-table td { display: block; padding: 0; border: 0; }
+  .frontier-shell .avis3-rank { grid-column: 1; grid-row: 1; }
+  .frontier-shell .avis3-contestant { grid-column: 2 / -1; }
+  .frontier-shell .avis3-results-table td[data-label]::before { content: attr(data-label); display: block; color: var(--f-muted); font-size: 10px; margin-bottom: 6px; }
+  .frontier-shell .avis3-result-score, .frontier-shell .avis3-number { grid-column: 2 / -1; display: flex !important; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
+  .frontier-shell .avis3-result-score { width: auto; }
+  .frontier-shell .avis3-score-track { width: 100%; margin-top: 0; }
+  .frontier-shell .avis3-result-score strong { font-size: 16px; overflow-wrap: anywhere; }
+  .frontier-shell .avis3-number { font-size: 12px; }
+  .frontier-shell .avis3-round-status { grid-column: 2 / -1; display: flex !important; align-items: baseline; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--f-muted); }
+  .frontier-shell .avis3-round-status small { margin: 0; }
+  .frontier-shell .avis3-results-table .avis3-round-status::before { margin: 0; }
+  .frontier-shell .avis3-pending-cell { grid-column: 2 / -1; }
 }
 @media (max-width: 440px) {
   .frontier-shell .frontier-reading-card { padding: 22px 16px 30px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .frontier-primary-link { transition: none; }
+  .frontier-shell .frontier-primary-link { transition: none; }
+}
+
+/* Flight manual: each panel has a purpose, each colour identifies a material. */
+.frontier-shell .frontier-cover h1 { margin: 22px 0 24px; font: 800 clamp(58px, 6.5vw, 92px)/.91 var(--f-display); letter-spacing: .045em; }
+.frontier-shell .frontier-cover h1 > span { color: var(--f-ink); }
+.frontier-shell .frontier-cover h1 .frontier-cover-title-cn { display: block; margin-top: 23px; font: 600 20px/1.5 var(--f-font); letter-spacing: .14em; }
+.frontier-shell .frontier-cover-copy > p { max-width: 35rem; font-size: 14px; }
+.frontier-shell .frontier-eyebrow { font: 10px/1.6 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; }
+.frontier-shell .frontier-registration { margin-left: 18px; padding-left: 18px; border-left: 1px solid var(--f-line); font-size: 9px; }
+.frontier-shell .frontier-status-dot { width: 7px; height: 7px; background: var(--f-rust); border-radius: 0; }
+.frontier-shell .frontier-inline-link { padding-bottom: 4px; border-bottom: 1px solid var(--f-ink); font-size: 12px; }
+.frontier-shell .frontier-inline-link:hover { text-decoration: none; border-bottom-width: 2px; }
+.frontier-shell .frontier-overview-stats { position: relative; padding: 21px 24px 18px; border: 1px solid var(--f-ink); background: var(--f-panel); box-shadow: 4px 4px 0 #b6b0a1; }
+.frontier-shell .frontier-overview-stats::before, .frontier-shell .frontier-overview-stats::after { content: '+'; position: absolute; bottom: 4px; color: var(--f-muted); font: 10px/1 var(--f-mono); }
+.frontier-shell .frontier-overview-stats::before { left: 5px; } .frontier-shell .frontier-overview-stats::after { right: 5px; }
+.frontier-shell .frontier-stats-top, .frontier-shell .frontier-stats-foot, .frontier-shell .frontier-soft-badge { font-family: var(--f-mono); }
+.frontier-shell .frontier-stats-top { font-size: 10px; }
+.frontier-shell .frontier-soft-badge { border: 1px solid var(--f-line); background: var(--f-surface); color: var(--f-ink); font-size: 10px; border-radius: 0; }
+.frontier-shell .frontier-instrument { height: 135px; display: grid; place-items: center; position: relative; margin-top: 20px; overflow: hidden; border: 1px solid #b0aa9b; background: var(--f-paper); }
+.frontier-shell .frontier-instrument::before, .frontier-shell .frontier-instrument::after { content: ''; position: absolute; background: var(--f-line); }
+.frontier-shell .frontier-instrument::before { width: 1px; top: 9px; bottom: 9px; }
+.frontier-shell .frontier-instrument::after { height: 1px; left: 9px; right: 9px; }
+.frontier-shell .frontier-orbit { position: absolute; width: 150px; height: 70px; border: 1px solid var(--f-blue); border-radius: 50%; transform: rotate(-27deg); }
+.frontier-shell .frontier-orbit::after { content: ''; position: absolute; width: 91px; height: 91px; border: 1px solid var(--f-blue); border-radius: 50%; top: -12px; left: 28px; }
+.frontier-shell .frontier-crosshair { z-index: 1; color: var(--f-rust); font: 22px/1 var(--f-mono); background: var(--f-paper); }
+.frontier-shell .frontier-instrument-label { position: absolute; bottom: 7px; right: 8px; z-index: 1; padding-left: 4px; color: var(--f-muted); background: var(--f-paper); font: 7px/1.5 var(--f-mono); letter-spacing: .14em; }
+.frontier-shell .frontier-stats-numbers { gap: 0; padding-block: 20px; }
+.frontier-shell .frontier-stats-numbers > div + div { border-left: 1px solid var(--f-line); padding-left: 24px; }
+.frontier-shell .frontier-stats-numbers strong { font: 600 42px/1 var(--f-mono); letter-spacing: -.06em; }
+.frontier-shell .frontier-calibration { display: flex; align-items: stretch; height: 28px; margin-bottom: 43px; border-block: 1px solid var(--f-ink); }
+.frontier-shell .frontier-calibration::before { content: ''; width: 28px; flex: 0 0 28px; margin: 6px 12px 6px 0; background: repeating-linear-gradient(135deg, var(--f-ink) 0 3px, var(--f-paper) 3px 6px); }
+.frontier-shell .frontier-calibration span { display: flex; align-items: center; font: 9px/1.5 var(--f-mono); letter-spacing: .14em; }
+.frontier-shell .frontier-calibration span:first-child { margin-right: auto; }
+.frontier-shell .frontier-calibration span:last-child { margin-left: 18px; }
+.frontier-shell .frontier-calibration i { width: 36px; background: var(--f-blue); border-left: 3px solid var(--f-paper); }
+.frontier-shell .frontier-calibration i:nth-of-type(2) { background: var(--f-olive); }
+.frontier-shell .frontier-calibration i:nth-of-type(3) { background: var(--f-gold); }
+.frontier-shell .frontier-calibration i:nth-of-type(4) { background: var(--f-rust); }
+.frontier-shell .frontier-section-heading { border-top: 1px solid var(--f-ink); padding-top: 17px; }
+.frontier-shell .frontier-section-heading .frontier-eyebrow { color: var(--f-muted); font-family: var(--f-mono); }
+.frontier-shell .frontier-section-heading h2 { font-size: 24px; letter-spacing: .015em; }
+.frontier-shell .frontier-reading-card { position: relative; border: 1px solid var(--f-line); box-shadow: 3px 3px 0 #d5cdbc; }
+.frontier-shell .frontier-article-label { font-family: var(--f-mono); text-transform: uppercase; letter-spacing: .04em; }
+.frontier-shell .frontier-sidebar-note { padding: 20px 15px 12px; border: 1px solid #b9af94; background: #e5d8b6; }
+.frontier-shell .frontier-sidebar-note > p { color: #555345; }
+.frontier-shell .frontier-sidebar-note .frontier-small-label { font-family: var(--f-mono); font-size: 11px; }
+.frontier-shell .frontier-report-cover { padding-bottom: 8px; }
+.frontier-shell .frontier-report-tags { flex-wrap: wrap; }
+.frontier-shell .frontier-report-title h1 { font: 800 clamp(40px, 5.4vw, 72px)/1.05 var(--f-display); text-transform: uppercase; letter-spacing: .04em; }
+.frontier-shell .frontier-report-title > p { max-width: 44rem; }
+.frontier-shell .frontier-report-byline, .frontier-shell .frontier-breadcrumb { font-family: var(--f-mono); }
+.frontier-shell .frontier-report-meta { border: 1px solid var(--f-ink); border-top: 5px solid var(--f-blue); background: var(--f-panel); }
+.frontier-shell .frontier-report-meta strong { font-family: var(--f-mono); letter-spacing: 0; }
+.frontier-shell .frontier-primary-link { border: 1px solid #ae2e23; border-radius: 2px; box-shadow: 2px 2px 0 #bbafa0; padding: 13px 18px; color: var(--f-on-accent); }
+.frontier-shell .avis3-overview-card, .frontier-shell .avis3-result-card, .frontier-shell .avis3-round-card { border-radius: 2px; border-color: var(--f-line); background: var(--f-surface); }
+.frontier-shell .avis3-overview-intro h3 { font: 750 30px/1.15 var(--f-display); letter-spacing: .045em; text-transform: uppercase; }
+.frontier-shell .avis3-results-table th { background: var(--f-panel); font-family: var(--f-mono); border-block: 1px solid var(--f-line); }
+.frontier-shell .avis3-results-table th:first-child, .frontier-shell .avis3-results-table td:first-child { padding-left: 14px; }
+.frontier-shell .avis3-results-table th:last-child, .frontier-shell .avis3-results-table td:last-child { padding-right: 14px; }
+.frontier-shell .avis3-rank, .frontier-shell .avis3-result-score strong, .frontier-shell .avis3-number, .frontier-shell .avis3-contestant-id, .frontier-shell .avis3-round-status, .frontier-shell .avis3-round-list { font-family: var(--f-mono); }
+.frontier-shell .avis3-score-track { height: 7px; border: 1px solid var(--f-line); border-radius: 0; background: var(--f-panel); }
+.frontier-shell .avis3-score-track > i { background: var(--f-blue); opacity: 1; border-radius: 0; }
+.frontier-shell .avis3-results-table tr:nth-child(2) .avis3-score-track > i { background: var(--f-olive); }
+.frontier-shell .avis3-results-table tr:nth-child(3) .avis3-score-track > i { background: var(--f-rust); }
+.frontier-shell .avis3-round-card { border-top: 5px solid var(--f-blue); }
+.frontier-shell .avis3-round-card:nth-child(2) { border-top-color: var(--f-olive); }
+.frontier-shell .avis3-round-card:nth-child(3) { border-top-color: var(--f-rust); }
+.frontier-shell .avis3-round-list li { padding-inline: 8px; }
+.frontier-shell .avis3-round-list li:nth-child(odd) { background: #ece7dc; }
+.frontier-shell .avis3-comparison-note { border-left: 3px solid var(--f-gold); padding: 8px 12px; background: #e6dec9; }
+.frontier-shell .frontier-state { border-radius: 2px; border-top: 5px solid var(--f-gold); }
+.frontier-shell .frontier-missing { border-bottom: 1px solid var(--f-ink); }
+@media (max-width: 1050px) { .frontier-shell .frontier-cover { grid-template-columns: minmax(0,1fr) 285px; gap: 32px; } }
+@media (max-width: 760px) {
+  .frontier-shell .frontier-cover { grid-template-columns: 1fr; gap: 35px; padding: 35px 0 28px; }
+  .frontier-shell .frontier-cover h1 { font-size: clamp(49px, 12vw, 80px); letter-spacing: .02em; }
+  .frontier-shell .frontier-cover h1 .frontier-cover-title-cn { font-size: 18px; }
+  .frontier-shell .frontier-registration { margin-left: 6px; padding-left: 10px; font-size: 8px; }
+  .frontier-shell .frontier-overview-stats { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px 22px; padding: 17px 20px; }
+  .frontier-shell .frontier-stats-top, .frontier-shell .frontier-stats-foot { grid-column: 1/-1; }
+  .frontier-shell .frontier-instrument { height: 90px; margin: 0; }
+  .frontier-shell .frontier-stats-numbers { align-items: center; gap: 10px; padding: 0; }
+  .frontier-shell .frontier-stats-numbers > div + div { padding-left: 10px; }
+  .frontier-shell .frontier-stats-numbers strong { font-size: 30px; }
+  .frontier-shell .frontier-stats-numbers span { font-size: 9px; }
+  .frontier-shell .frontier-calibration { margin-bottom: 30px; }
+  .frontier-shell .frontier-calibration span { font-size: 8px; letter-spacing: .03em; }
+  .frontier-shell .frontier-calibration span:last-child { display: none; }
+  .frontier-shell .frontier-calibration i { width: 28px; }
+  .frontier-shell .frontier-section-heading h2 { font-size: 21px; }
+  .frontier-shell .frontier-report-title h1 { font-size: clamp(36px, 9vw, 54px); }
+  .frontier-shell .frontier-report-meta { padding: 18px; }
+  .frontier-shell .avis3-results-table th:first-child, .frontier-shell .avis3-results-table td:first-child { padding-left: 0; }
+  .frontier-shell .avis3-results-table th:last-child, .frontier-shell .avis3-results-table td:last-child { padding-right: 0; }
 }

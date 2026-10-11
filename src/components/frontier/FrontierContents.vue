@@ -8,7 +8,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
-const SCROLL_OFFSET = 108
+const scrollOffset = () => window.innerWidth <= 760 ? 146 : 108
 const activeId = ref('')
 const visibleItems = computed(() => {
   const items = props.items.filter((item) => item.level <= 2)
@@ -30,7 +30,7 @@ function updateActiveHeading() {
 
   let current = headings[0]
   for (const heading of headings) {
-    if (heading.getBoundingClientRect().top > SCROLL_OFFSET + 2) break
+    if (heading.getBoundingClientRect().top > scrollOffset() + 2) break
     current = heading
   }
   if (window.scrollY > 0 && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
@@ -60,7 +60,7 @@ async function goToHeading(event, item) {
   activeId.value = item.id
   await router.replace({ hash: '#' + item.id })
   window.scrollTo({
-    top: Math.max(0, window.scrollY + heading.getBoundingClientRect().top - SCROLL_OFFSET),
+    top: Math.max(0, window.scrollY + heading.getBoundingClientRect().top - scrollOffset()),
     behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
   })
 }
@@ -108,8 +108,10 @@ onBeforeUnmount(() => {
 <style scoped>
 .frontier-contents {
   min-width: 0;
-  padding: 6px 0;
-  background: transparent;
+  padding: 16px;
+  border: 1px solid var(--f-line);
+  border-top: 4px solid var(--f-blue);
+  background: var(--f-panel);
   color: var(--f-ink);
 }
 
@@ -140,7 +142,8 @@ onBeforeUnmount(() => {
 .frontier-contents__title {
   margin: 0;
   color: var(--f-muted);
-  font-size: 12px;
+  font-family: var(--f-mono);
+  font-size: 11px;
   font-weight: 600;
   line-height: 1.5;
 }
@@ -152,13 +155,18 @@ onBeforeUnmount(() => {
   padding: 0 0 0 10px;
   border-left: 1px solid var(--f-line);
   list-style: none;
+  max-height: calc(100dvh - var(--f-scroll-offset) - 100px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--f-muted) var(--f-panel);
 }
 
 .frontier-contents__link {
   position: relative;
   display: block;
   padding: 7px 10px;
-  border-radius: 5px;
+  border-radius: 0;
   color: var(--f-muted);
   font-size: 13px;
   line-height: 1.5;
@@ -177,8 +185,8 @@ onBeforeUnmount(() => {
 }
 
 .frontier-contents__link.is-active {
-  background: var(--f-accent-soft);
-  color: var(--f-accent);
+  background: var(--f-surface);
+  color: var(--f-ink);
   font-weight: 600;
 }
 
@@ -189,7 +197,7 @@ onBeforeUnmount(() => {
   left: -11px;
   width: 2px;
   border-radius: 3px;
-  background: var(--f-accent);
+  background: var(--f-ink);
   content: '';
 }
 
@@ -200,7 +208,7 @@ onBeforeUnmount(() => {
   line-height: 1.5;
 }
 @media (max-width: 980px) {
-  .frontier-contents { padding: 14px 18px; border: 1px solid var(--f-line); border-radius: 10px; }
+  .frontier-contents { padding: 14px 18px; border: 1px solid var(--f-line); border-radius: 0; }
   .frontier-contents__summary { padding: 0; }
   .frontier-contents__list {
     grid-template-columns: repeat(2, minmax(0, 1fr));

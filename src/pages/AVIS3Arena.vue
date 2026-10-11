@@ -28,7 +28,7 @@ const contestant = (id) => data.value.contestants.find(item => item.id === id)
         <nav class="frontier-breadcrumb" aria-label="当前位置"><RouterLink to="/ai-frontier">AI Frontier</RouterLink><span aria-hidden="true">/</span><span>AVIS3 Arena</span></nav>
         <div class="frontier-report-heading">
           <div class="frontier-report-title">
-            <div class="frontier-report-tags"><span class="frontier-soft-badge">内部 HPC 私有部署</span></div>
+            <div class="frontier-report-tags"><span class="frontier-eyebrow">TEST PROGRAM / AVIS3</span><span class="frontier-soft-badge">内部 HPC 私有部署</span></div>
             <h1>AVIS3 Arena</h1>
             <p>观察模型与运行工具组合在动力学控制任务中的表现。这里公开项目介绍、正式规则和核验后的成绩。</p>
             <div class="frontier-report-byline"><span>评测版本：{{ data.evaluationVersion || '待核验' }}</span><span v-if="data.release">· {{ data.release }}</span><span v-if="data.evaluatedAt">· 正式验收 <time>{{ data.evaluatedAt }}</time></span><span v-if="data.timezone">（{{ data.timezone }}）</span></div>

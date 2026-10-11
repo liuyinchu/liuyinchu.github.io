@@ -15,20 +15,22 @@ const contents = ref([])
   <FrontierShell>
     <header class="frontier-cover">
       <div class="frontier-cover-copy">
-        <div class="frontier-eyebrow"><span class="frontier-status-dot"></span> 个人 AI 观察站</div>
-        <h1>看见 AI 的<span>下一步。</span></h1>
+        <div class="frontier-eyebrow"><span class="frontier-status-dot"></span> 个人 AI 观察站 <span class="frontier-registration">OBSERVATION / 001</span></div>
+        <h1>AI<br><span>FRONTIER</span><span class="frontier-cover-title-cn">看见 AI 的下一步。</span></h1>
         <p>记录前沿进展，也用具体问题观察模型与工具的表现。</p>
         <a class="frontier-inline-link" href="#intelligence">阅读 AI 前沿札记 <span aria-hidden="true">↗</span></a>
       </div>
       <div class="frontier-overview-stats" aria-label="内容概览">
-        <div class="frontier-stats-top"><span>AVIS3 Arena</span><span class="frontier-soft-badge">内部评测</span></div>
-        <div class="frontier-stats-numbers">
+        <div class="frontier-stats-top"><span>AVIS3 / TELEMETRY</span><span class="frontier-soft-badge">内部评测</span></div>
+        <div class="frontier-instrument" aria-hidden="true"><span class="frontier-orbit"></span><span class="frontier-crosshair">+</span><span class="frontier-instrument-label">MODEL × HARNESS</span></div><div class="frontier-stats-numbers">
           <div><strong>{{ String(data?.contestants.length || 0).padStart(2, '0') }}</strong><span>组模型与工具</span></div>
           <div><strong>{{ String(data?.results.length || 0).padStart(2, '0') }}</strong><span>份核验记录</span></div>
         </div>
         <div class="frontier-stats-foot"><span>评测版本</span><span>{{ data?.evaluationVersion || '待核验' }}</span></div>
       </div>
     </header>
+
+    <div class="frontier-calibration" aria-hidden="true"><span>RESEARCH &amp; EVALUATION</span><i></i><i></i><i></i><i></i><span>FIELD OPERATIONS ↘</span></div>
 
     <section id="arena" class="frontier-section" aria-labelledby="frontier-arena-title">
       <div class="frontier-section-heading">

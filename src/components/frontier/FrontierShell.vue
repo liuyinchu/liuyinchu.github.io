@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 const props = defineProps({ title: { type: String, default: 'Ysy AI Frontier' } })
@@ -7,37 +7,8 @@ const route = useRoute()
 const isIntelligence = computed(() => route.path === '/ai-frontier' && Boolean(route.hash) && !['#arena', '#frontier-main'].includes(route.hash))
 const isOverview = computed(() => route.path === '/ai-frontier' && !isIntelligence.value)
 const isArena = computed(() => route.path.startsWith('/ai-frontier/arena/'))
-const STORAGE_KEY = 'ysy-ai-frontier-theme'
-function readTheme() {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === 'dark' ? 'dark' : 'light'
-  } catch {
-    return 'light'
-  }
-}
-
-const theme = ref(readTheme())
-const themeLabel = computed(() => theme.value === 'light' ? '切换到暗色模式' : '切换到浅色模式')
-let previousDocumentTheme = null
 let previousDocumentTitle = ''
 let mounted = false
-
-function applyDocumentTheme() {
-  document.documentElement.setAttribute('data-frontier-theme', theme.value)
-}
-
-function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
-  try {
-    window.localStorage.setItem(STORAGE_KEY, theme.value)
-  } catch {
-    // The current page can still switch when browser storage is unavailable.
-  }
-}
-
-watch(theme, () => {
-  if (mounted) applyDocumentTheme()
-})
 
 watch(() => props.title, (title) => {
   if (mounted) document.title = title
@@ -46,30 +17,23 @@ watch(() => props.title, (title) => {
 onMounted(() => {
   previousDocumentTitle = document.title
   document.title = props.title
-  previousDocumentTheme = document.documentElement.getAttribute('data-frontier-theme')
   mounted = true
-  applyDocumentTheme()
 })
 
 onBeforeUnmount(() => {
   mounted = false
   document.title = previousDocumentTitle
-  if (previousDocumentTheme === null) {
-    document.documentElement.removeAttribute('data-frontier-theme')
-  } else {
-    document.documentElement.setAttribute('data-frontier-theme', previousDocumentTheme)
-  }
 })
 </script>
 
 <template>
-  <div class="frontier-shell" :data-theme="theme">
+  <div class="frontier-shell" data-theme="light">
     <a class="frontier-skip" href="#frontier-main">跳至主要内容</a>
     <header class="frontier-masthead">
       <div class="frontier-masthead-inner">
         <RouterLink class="frontier-brand" to="/ai-frontier" aria-label="Ysy AI Frontier 首页">
-          <span class="frontier-brand-mark" aria-hidden="true">AI</span>
-          <span>Ysy AI Frontier</span>
+          <span class="frontier-brand-mark" aria-hidden="true">F<span>↗</span></span>
+          <span class="frontier-brand-wordmark">YSY AI FRONTIER<small>INDEPENDENT OBSERVATION UNIT</small></span>
         </RouterLink>
         <nav class="frontier-navigation" aria-label="AI Frontier 导航">
           <RouterLink class="frontier-nav-link" :class="{ 'is-active': isOverview }" :aria-current="isOverview ? 'page' : undefined" to="/ai-frontier">总览</RouterLink>
@@ -78,15 +42,7 @@ onBeforeUnmount(() => {
         </nav>
         <div class="frontier-utilities">
           <RouterLink class="frontier-return" to="/">返回主站 <span aria-hidden="true">↗</span></RouterLink>
-          <button class="frontier-theme-button" type="button" :aria-label="themeLabel" :title="themeLabel" @click="toggleTheme">
-            <svg v-if="theme === 'light'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M20.4 13A8.5 8.5 0 0 1 11 3.6 8.5 8.5 0 1 0 20.4 13Z" />
-            </svg>
-            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="3.8" />
-              <path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-            </svg>
-          </button>
+
         </div>
       </div>
     </header>
@@ -103,132 +59,53 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .frontier-shell {
-  --f-paper: #f5f7fb;
-  --f-panel: #f0f3fa;
-  --f-surface: #ffffff;
-  --f-ink: #182237;
-  --f-muted: #626f86;
-  --f-line: #e5eaf3;
-  --f-accent: #5261dc;
-  --f-on-accent: #ffffff;
-  --f-accent-soft: #edf0ff;
-  --f-font: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --f-paper: #ece5d6; --f-panel: #e2dac9; --f-surface: #f6f2e8;
+  --f-ink: #242520; --f-muted: #626258; --f-line: #aaa798; --f-accent: #d63a2c;
+  --f-on-accent: #fff9ed; --f-accent-soft: #eadbcd;
+  --f-blue: #4c5a68; --f-olive: #7a7f4e; --f-gold: #d2a85e; --f-rust: #a8432f;
+  --f-font: Arial, Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --f-display: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', sans-serif;
   --f-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
-  --f-display: var(--f-font);
-  --f-gutter: clamp(1.25rem, 4vw, 3rem);
-  min-height: 100svh;
-  color: var(--f-ink);
-  background: var(--f-paper);
-  font-family: var(--f-font);
-  font-size: 1rem;
-  line-height: 1.6;
-  color-scheme: light;
-  -webkit-font-smoothing: antialiased;
+  --f-gutter: clamp(1rem, 4vw, 3.5rem); --f-scroll-offset: 100px;
+  min-height: 100svh; color: var(--f-ink); background: var(--f-paper);
+  font: 1rem/1.6 var(--f-font); color-scheme: light; -webkit-font-smoothing: antialiased;
 }
-
-.frontier-shell[data-theme='dark'] {
-  --f-paper: #10141e;
-  --f-panel: #1b2231;
-  --f-surface: #171e2c;
-  --f-ink: #eef2fa;
-  --f-muted: #a0acc0;
-  --f-line: #2b3549;
-  --f-accent: #9aabff;
-  --f-on-accent: #131a35;
-  --f-accent-soft: #242e4d;
-  color-scheme: dark;
-}
-
-.frontier-masthead-inner,
-.frontier-main,
-.frontier-footer {
-  width: calc(100% - var(--f-gutter) * 2);
-  max-width: 1240px;
-  margin-inline: auto;
-  box-sizing: border-box;
-}
-
-.frontier-masthead {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  border-bottom: 1px solid var(--f-line);
-  background: color-mix(in srgb, var(--f-surface) 92%, transparent);
-  box-shadow: 0 2px 16px rgba(24, 34, 55, 0.025);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-}
-
-.frontier-masthead-inner { display: flex; align-items: center; min-height: 72px; gap: 2.5rem; }
-.frontier-brand { display: inline-flex; align-items: center; gap: 0.7rem; flex: 0 0 auto; color: var(--f-ink); font-size: 1.08rem; font-weight: 750; letter-spacing: -0.035em; text-decoration: none; white-space: nowrap; }
+.frontier-shell :deep(*) { box-sizing: border-box; }
+.frontier-shell :deep(button) { font-family: inherit; }
+.frontier-masthead-inner, .frontier-main, .frontier-footer { width: calc(100% - var(--f-gutter) * 2); max-width: 1280px; margin-inline: auto; }
+.frontier-masthead { position: sticky; top: 0; z-index: 50; background: var(--f-paper); border-bottom: 1px solid var(--f-ink); }
+.frontier-masthead-inner { display: flex; align-items: center; min-height: 82px; gap: 2rem; }
+.frontier-brand { display: inline-flex; align-items: center; gap: .75rem; flex: 0 0 auto; color: var(--f-ink); text-decoration: none; }
 .frontier-brand:hover { color: var(--f-ink); text-decoration: none; }
-.frontier-brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; color: var(--f-accent); background: var(--f-accent-soft); font-size: 0.9rem; font-weight: 800; letter-spacing: -0.045em; line-height: 1; }
-.frontier-navigation { display: flex; align-items: center; gap: 0.3rem; }
-.frontier-nav-link { padding: 0.5rem 0.85rem; border-radius: 9px; color: var(--f-muted); font-size: 0.875rem; font-weight: 550; text-decoration: none; white-space: nowrap; transition: color 160ms ease, background-color 160ms ease; }
-.frontier-nav-link:hover { color: var(--f-ink); background: var(--f-panel); text-decoration: none; }
-.frontier-nav-link.is-active { color: var(--f-accent); background: var(--f-accent-soft); font-weight: 650; }
-.frontier-utilities { display: flex; align-items: center; gap: 1.3rem; margin-left: auto; }
-.frontier-return { color: var(--f-muted); font-size: 0.83rem; font-weight: 500; text-decoration: none; white-space: nowrap; }
-.frontier-return span { margin-left: 0.15rem; }
-.frontier-return:hover { color: var(--f-accent); text-decoration: none; }
-
-.frontier-theme-button {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 auto;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--f-line);
-  border-radius: 10px;
-  color: var(--f-muted);
-  background: var(--f-surface);
-  cursor: pointer;
-  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
-}
-.frontier-theme-button svg { width: 18px; height: 18px; }
-.frontier-theme-button:hover { color: var(--f-accent); border-color: color-mix(in srgb, var(--f-accent) 30%, var(--f-line)); background: var(--f-accent-soft); }
+.frontier-brand-mark { position: relative; display: grid; place-items: center; width: 42px; height: 42px; border: 2px solid var(--f-ink); font: 900 30px/1 var(--f-display); }
+.frontier-brand-mark span { position: absolute; right: -5px; bottom: -5px; padding: 1px 3px; background: var(--f-paper); font: 700 17px/1 var(--f-font); }
+.frontier-brand-wordmark { font: 800 15px/1.35 var(--f-display); letter-spacing: .09em; }
+.frontier-brand-wordmark small { display: block; margin-top: 4px; font: 8px/1.4 var(--f-mono); letter-spacing: .12em; }
+.frontier-navigation { display: flex; align-items: stretch; gap: 0; margin-left: auto; }
+.frontier-nav-link { padding: .7rem 1rem; border: 1px solid transparent; color: var(--f-muted); font: 600 12px/1.5 var(--f-font); text-decoration: none; white-space: nowrap; }
+.frontier-nav-link:hover { color: var(--f-ink); text-decoration: none; background: var(--f-panel); }
+.frontier-nav-link.is-active { border-color: var(--f-ink); color: var(--f-ink); background: var(--f-surface); box-shadow: inset 0 -3px 0 var(--f-ink); }
+.frontier-utilities { display: flex; align-items: center; padding-left: 1.5rem; border-left: 1px solid var(--f-line); }
+.frontier-return { color: var(--f-ink); font-size: 11px; text-decoration: none; white-space: nowrap; }
+.frontier-return:hover { text-decoration: underline; text-underline-offset: 4px; }
 .frontier-main { min-height: 65svh; outline: none; }
-
-.frontier-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 1.5rem; margin-top: 3.5rem; padding-block: 1.5rem 2rem; border-top: 1px solid var(--f-line); color: var(--f-muted); font-size: 0.8rem; }
-.frontier-footer-brand { color: var(--f-ink); font-weight: 650; text-decoration: none; }
-.frontier-footer-return { margin-left: auto; color: var(--f-muted); text-decoration: none; }
-.frontier-footer-brand:hover,
-.frontier-footer-return:hover { color: var(--f-accent); text-decoration: none; }
-.frontier-skip { position: fixed; z-index: 10001; top: 0.65rem; left: 1rem; padding: 0.7rem 1rem; border-radius: 10px; color: var(--f-on-accent); background: var(--f-accent); font-size: 0.85rem; text-decoration: none; transform: translateY(calc(-100% - 1rem)); }
+.frontier-footer { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem 1.5rem; margin-top: 5rem; padding-block: 1.5rem 2rem; border-top: 2px solid var(--f-ink); color: var(--f-muted); font: 10px/1.7 var(--f-mono); }
+.frontier-footer-brand { color: var(--f-ink); font-weight: 700; letter-spacing: .08em; text-decoration: none; text-transform: uppercase; }
+.frontier-footer-return { margin-left: auto; color: var(--f-ink); text-decoration: none; }
+.frontier-footer a:hover { color: var(--f-ink); text-decoration: underline; }
+.frontier-skip { position: fixed; z-index: 10001; top: .65rem; left: 1rem; padding: .7rem 1rem; color: var(--f-on-accent); background: var(--f-accent); font-size: .85rem; text-decoration: none; transform: translateY(calc(-100% - 1rem)); }
 .frontier-skip:focus { transform: translateY(0); }
 .frontier-shell :deep(:focus-visible) { outline: 2px solid var(--f-accent); outline-offset: 4px; }
-.frontier-shell :deep(::selection) { color: var(--f-on-accent); background: var(--f-accent); text-shadow: none; }
-
+.frontier-shell :deep(::selection) { color: var(--f-on-accent); background: var(--f-rust); text-shadow: none; }
+@media (max-width: 900px) { .frontier-masthead-inner { gap: 1rem; } .frontier-nav-link { padding-inline: .7rem; } .frontier-utilities { padding-left: 1rem; } }
 @media (max-width: 760px) {
-  .frontier-masthead-inner { flex-wrap: wrap; gap: 0 1rem; padding-block: 0.8rem 0.55rem; }
-  .frontier-brand { font-size: 1rem; }
-  .frontier-utilities { gap: 0.8rem; }
-  .frontier-navigation { order: 3; width: 100%; margin-top: 0.6rem; }
-  .frontier-nav-link { padding-block: 0.35rem; }
-  .frontier-footer { gap: 0.5rem 1rem; }
+  .frontier-shell { --f-scroll-offset: 138px; }
+  .frontier-masthead-inner { flex-wrap: wrap; gap: 0 1rem; padding-block: .8rem .65rem; }
+  .frontier-brand-wordmark { font-size: 13px; } .frontier-brand-wordmark small { font-size: 7px; }
+  .frontier-utilities { margin-left: auto; padding-left: 0; border: 0; }
+  .frontier-navigation { order: 3; width: 100%; margin-top: .8rem; border-top: 1px solid var(--f-line); padding-top: .5rem; }
+  .frontier-nav-link { padding: .4rem .8rem; }
+  .frontier-footer { gap: .5rem 1rem; }
 }
-
-@media (max-width: 440px) {
-  .frontier-return { font-size: 0.75rem; }
-  .frontier-return span { display: none; }
-  .frontier-footer > span { width: 100%; order: 3; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .frontier-theme-button,
-  .frontier-nav-link { transition: none; }
-}
-</style>
-
-<style>
-html[data-frontier-theme='light'] { color-scheme: light; background: #f5f7fb; scrollbar-color: #a7b1c3 #f5f7fb; }
-html[data-frontier-theme='dark'] { color-scheme: dark; background: #10141e; scrollbar-color: #65718a #10141e; }
-html[data-frontier-theme] { scroll-padding-top: 88px; }
-html[data-frontier-theme] body { background: inherit; }
-html[data-frontier-theme='light']::-webkit-scrollbar-track { background: #f5f7fb; }
-html[data-frontier-theme='light']::-webkit-scrollbar-thumb { background: #a7b1c3; border-color: #f5f7fb; }
-html[data-frontier-theme='dark']::-webkit-scrollbar-track { background: #10141e; }
-html[data-frontier-theme='dark']::-webkit-scrollbar-thumb { background: #65718a; border-color: #10141e; }
-@media (max-width: 760px) { html[data-frontier-theme] { scroll-padding-top: 120px; } }
+@media (max-width: 440px) { .frontier-return { font-size: 10px; } .frontier-footer > span { width: 100%; order: 3; } }
 </style>
