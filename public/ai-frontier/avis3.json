@@ -1,0 +1,91 @@
+{
+  "evaluationVersion": "avis3-v1",
+  "publishedAt": null,
+  "scoring": {
+    "label": "原始积分均值",
+    "unit": "",
+    "higherIsBetter": true,
+    "theoreticalMax": 857.375,
+    "roundCount": 10
+  },
+  "contestants": [
+    {
+      "id": "contestant-1",
+      "model": "GPT-6-Astra Max",
+      "harness": "Codex"
+    },
+    {
+      "id": "contestant-2",
+      "model": "Claude Opus 5.5",
+      "harness": "Claude Code"
+    },
+    {
+      "id": "contestant-3",
+      "model": "DeepSeek V4.1 Flash",
+      "harness": "DeepSeek Harness"
+    }
+  ],
+  "results": [
+    {
+      "contestantId": "contestant-2",
+      "mean": 854.0119467536681,
+      "std": 3.534191515958316,
+      "rounds": 10,
+      "failures": 0,
+      "roundScores": [
+        850.4938703115673,
+        855.7918208156193,
+        856.1003766915081,
+        851.0573144924236,
+        856.3555479331942,
+        855.8214132318532,
+        856.04275725,
+        856.1198352236353,
+        846.1547182069196,
+        856.1818133799605
+      ]
+    },
+    {
+      "contestantId": "contestant-1",
+      "mean": 850.5193688422376,
+      "std": 5.412808270329571,
+      "rounds": 10,
+      "failures": 0,
+      "roundScores": [
+        847.8414673252039,
+        854.4198833882654,
+        855.3717003475208,
+        854.3210210925639,
+        844.4712601661079,
+        855.3761552401442,
+        839.8533271912448,
+        854.4020796249633,
+        852.0670981073855,
+        847.0696959389778
+      ]
+    },
+    {
+      "contestantId": "contestant-3",
+      "mean": 834.4561990493421,
+      "std": 6.157036011727188,
+      "rounds": 10,
+      "failures": 0,
+      "roundScores": [
+        828.7572980711792,
+        830.9120278410966,
+        840.634575918901,
+        843.095800278112,
+        832.1040663482642,
+        829.449813661346,
+        827.7214733650849,
+        838.0881344420441,
+        830.4866868244058,
+        843.3121137429877
+      ]
+    }
+  ],
+  "release": "0.1.0-candidate.3",
+  "evaluatedAt": "2026-10-09",
+  "verifiedAt": "2026-10-11",
+  "timezone": "Asia/Shanghai"
+}

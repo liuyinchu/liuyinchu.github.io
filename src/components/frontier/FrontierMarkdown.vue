@@ -28,7 +28,7 @@ watch(
     }
 
     try {
-      const response = await fetch(src, { signal: controller.signal })
+      const response = await fetch(src, { signal: controller.signal, cache: 'no-cache' })
       if (!response.ok) throw new Error(`Report load failed: ${response.status}`)
       if (response.headers.get('content-type')?.toLowerCase().includes('text/html')) {
         throw new Error('The report URL returned an HTML page')
@@ -53,11 +53,11 @@ watch(
   <div class="frontier-markdown" :aria-busy="loading">
     <div v-if="loading" class="frontier-markdown-state" role="status">
       <span class="frontier-markdown-state-label">正在加载</span>
-      <p>正在载入报告正文。</p>
+      <p>正在载入正文。</p>
     </div>
     <div v-else-if="loadFailed" class="frontier-markdown-state" role="alert">
       <span class="frontier-markdown-state-label">加载失败</span>
-      <p>报告正文暂时无法加载，请重试。</p>
+      <p>正文暂时无法加载，请重试。</p>
       <button type="button" @click="attempt += 1">重新加载 <span aria-hidden="true">↗</span></button>
     </div>
     <MarkdownViewer

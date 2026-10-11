@@ -8,7 +8,6 @@ const read = (file) => readFile(path.join(root, file), 'utf8')
 const html = await read('dist/index.html')
 const router = await read('src/router/index.js')
 const articles = JSON.parse(await read('public/articles.json'))
-const frontier = JSON.parse(await read('public/ai-frontier/benchmarks.json'))
 
 // Only actual page routes: omit comments, redirects, parameter patterns and 404.
 const routes = [...router.matchAll(/^\s*\{ path: '([^']+)', component:/gm)]
@@ -17,7 +16,7 @@ const routes = [...router.matchAll(/^\s*\{ path: '([^']+)', component:/gm)]
 const pages = [...new Set([
   ...routes,
   ...articles.map((article) => `/space1/${article.id}`),
-  ...frontier.benchmarks.map((benchmark) => `/ai-frontier/benchmarks/${benchmark.id}`),
+  '/ai-frontier/arena/avis3',
 ])]
 
 // GitHub Pages serves extensionless URLs from .html files. These real entries

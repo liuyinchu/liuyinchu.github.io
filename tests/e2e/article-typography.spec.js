@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { expectNoHorizontalOverflow, gotoRoute } from './test-helpers.js'
+import { mockFrontierNotes } from './frontier-fixture.js'
 
 const articlePath = '/space1/hinf_robust_control_tutorial'
 
@@ -46,6 +47,7 @@ test('article typography defaults to original and toggles with a full reload in 
 })
 
 test('the saved preference applies to other journal articles but not shared Markdown pages', async ({ page }) => {
+  await mockFrontierNotes(page)
   await gotoRoute(page, articlePath)
   await page.getByRole('button', { name: '切换至 Enhanced 排版', exact: true }).click()
   await expect(page.getByRole('button', { name: '切换至原版排版', exact: true })).toBeVisible()

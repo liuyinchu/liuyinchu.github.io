@@ -8,7 +8,7 @@ import Footer from './components/Footer.vue'
 const route = useRoute()
 const displayedPath = ref(route.path)
 const isHomeRoute = computed(() => route.path === '/')
-const isStandaloneRoute = computed(() => displayedPath.value === '/portal' || displayedPath.value === '/ai-frontier' || displayedPath.value.startsWith('/ai-frontier/benchmarks/'))
+const isStandaloneRoute = computed(() => displayedPath.value === '/portal' || displayedPath.value === '/ai-frontier' || displayedPath.value.startsWith('/ai-frontier/arena/'))
 const isTransitioning = ref(false)
 let leavingHeight = 0
 let enteringElement = null

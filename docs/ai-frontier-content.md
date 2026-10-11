@@ -1,87 +1,67 @@
-# AI 前沿内容维护
+# AI Frontier 内容维护
 
-AI 前沿把动态信息与榜单资料分开维护。日常编辑以 Markdown 和 JSON 为主；新增 benchmark 不需要为它新建 Vue 页面或单独注册路由。
+AI Frontier 公开 AVIS3 的项目介绍、正式评测规则、已核验成绩和 AI 前沿札记。页面继续使用独立浅色 / 深色主题、响应式排版与 Markdown 目录。
 
-总览地址：`/ai-frontier`。详情地址：`/ai-frontier/benchmarks/<id>`。主站的“代码与项目”已提供入口。
+## 页面与文件入口
 
-## 文件入口
+- 总览：`/ai-frontier`
+- AVIS3 详情：`/ai-frontier/arena/avis3`
+- AVIS3 数据：`public/ai-frontier/avis3.json`
+- AVIS3 说明：`public/ai-frontier/arena/avis3.md`
 
-- `public/ai-frontier/news.md`：信息区的唯一 Markdown 内容源。更新观察、新闻与编辑说明只需改这里。
-- `public/ai-frontier/benchmarks.json`：榜单目录、模型、分数与档位。
-- `public/ai-frontier/benchmarks/<id>.md`：某项 benchmark 的介绍、方法与完整说明。
-- 本文档：内容约定与新增流程。
+旧演示榜单、虚构数据、S/A/B/C/D 档位和站内札记样刊已移除。
 
-当前内容全部是演示：3 项 benchmark、每项 6 个虚构模型，模型名以 `DEMO` 开头，提供方以“虚构研究室”开头。分数为手工编写的展示数据，没有执行任何评测，也不构成真实或最新排名。`updatedAt` 表示内容更新日期，不是评测运行时间。
+## AI 前沿札记
 
-## JSON 契约
+札记在独立仓库 [liuyinchu/deepsight-ai-today](https://github.com/liuyinchu/deepsight-ai-today) 维护。浏览器进入页面时直接读取：
 
-根对象固定包含：
+`https://raw.githubusercontent.com/liuyinchu/deepsight-ai-today/main/index.md`
 
-| 字段 | 类型 | 含义 |
-| --- | --- | --- |
-| `edition` | string | 内容期号，当前为 `"001"`，保留前导零 |
-| `updatedAt` | string | `YYYY-MM-DD` 格式的更新日期 |
-| `demo` | boolean | 当前为 `true`，明确标识虚构演示 |
-| `benchmarks` | array | 按页面展示顺序维护的榜单 |
+使用 `cache: 'no-cache'`，没有轮询。更新 Markdown 不需要重新构建网站；已经打开的页面通过刷新或失败后的重试读取正文。GitHub Raw 可能有短时缓存，应以实际展示的正文确认更新。
 
-每项 benchmark 包含：
+内容采用普通 Markdown，无 front matter，所有来源链接和图片使用完整 HTTPS URL。渲染器不按远端 Markdown 地址解析相对资源。写作规范由札记仓库维护。
 
-| 字段 | 类型 | 含义 |
-| --- | --- | --- |
-| `id` | string | 唯一、稳定的标识，与详情文件名对应 |
-| `name` / `shortName` | string | 完整名称与简短名称 |
-| `category` | string | 任务分类 |
-| `description` | string | 一至两句说明 |
-| `version` | string | 评测或演示版本 |
-| `scoreLabel` / `unit` | string | 分数名称与单位 |
-| `maxScore` | number | 展示量程上限；当前全部为 `100` |
-| `higherIsBetter` | boolean | 比较方向；当前全部为 `true` |
-| `markdown` | string | 以 `/ai-frontier/benchmarks/` 开头的站内 Markdown 路径 |
-| `rankings` | array | 已按表现从好到差排好的模型数据 |
+初始内容是诚实的编辑说明，不是真实新闻。札记的内容状态与真实 AVIS3 结果分别维护，不对真实成绩添加演示标签。
 
-每个模型包含 `id`、`name`、`provider`、`score`、`tier`。`score` 必须是数值，不能写成 `"96.2分"`；单位放在 benchmark 的 `unit` 中。同一虚构模型跨榜复用相同 ID，便于辨认。
+## AVIS3 数据合同
 
-## 分数方向与档位
+根对象只维护一组评测版本下各选手最新的完整正式验收结果：
 
-当前三个演示榜全部使用百分制，**分数越高越好**：`higherIsBetter: true`，rankings 按 score 降序排列。页面也会按该方向排序。
-
-若后续收录耗时、误差等**数值越低越好**的指标，应使用 `higherIsBetter: false`，将 rankings 按 score 升序排列，并在详情里写明方向与单位。不要仅把数组倒序而保留错误的方向标记；修改后需检查页面的排名和图形表达是否一致。
-
-档位是作者提供的独立标签，不等于分数排序，也不应由读者自行猜测：
-
-| tier | 展示标签 |
+| 字段 | 含义 |
 | --- | --- |
-| `S` | 夯 |
-| `A` | 顶级 |
-| `B` | 人上人 |
-| `C` | NPC |
-| `D` | 拉完了 |
+| `evaluationVersion` | 评测条件版本，当前为 `avis3-v1` |
+| `release` | 发布版本，当前为 `0.1.0-candidate.3` |
+| `evaluatedAt` / `verifiedAt` | 最近完整验收日期 / 数据复核日期 |
+| `timezone` | 日期口径，当前为 `Asia/Shanghai` |
+| `publishedAt` | 网页发布时间；未确定时保留为 `null`，不冒用验收日期 |
+| `scoring` | 评价名称、单位、方向、理论上限和正式轮数 |
+| `contestants` | `id`、`model`、`harness`；编号只作身份标识 |
+| `results` | 已核验成绩；没有可公布数据时为空数组 |
 
-本演示手工采用 S ≥ 90、A ≥ 80、B ≥ 70、C ≥ 60、D < 60 的分档，并显式写入每条数据；这不是所有真实评测的统一标准。低值更好的指标需要另行定义档位，不能照搬这组阈值。
+`scoring` 包含 `label`、`unit`、`higherIsBetter`、`theoreticalMax`、`roundCount`。当前原始积分越高越好，理论上限为 857.375，正式验收为 10 轮。它不是百分制，标准差也不是置信区间。
 
-## 更新信息页
+每条结果包含：
 
-1. 编辑 `news.md`，使用标题、短段落、来源链接与必要的提示块。
-2. 把事件日期与页面编辑日期区分开；涉及排名时写明榜单版本与适用范围。
-3. 正式发布前移除相应的编辑占位文字。不要把演示数据或待证实消息改写成已发生的事实。
+| 字段 | 含义 |
+| --- | --- |
+| `contestantId` | 对应选手标识 |
+| `mean` | 原始积分均值，数值类型 |
+| `std` | 样本标准差，ddof = 1；未知时为 `null` |
+| `rounds` / `failures` | 正式轮数 / 失败轮数 |
+| `roundScores` | 按轮次排列的原始积分数组；未公布时为 `null` |
 
-榜单 JSON 与信息 Markdown 没有自动互相改写：如果某次更新同时影响两处，就分别编辑并核对。
+页面上的均值、标准差和逐轮分数统一展示四位小数，title 提供精确原始值；JSON 保留完整数值，排序、并列判断和柱长继续使用原始值。只在原始均值完全相等时并列，名次采用 1、1、3。并列时选手 ID 的字典序只决定显示顺序，不以标准差、失败数或编号破同分。
 
-## 新增或更新 benchmark
+每组必须完整终态后才能替换旧成绩，即使新均值更低也保留最新完整结果，不保留历史最高分。基础设施中断时继续保留上一完整结果。不同条件使用新版本，不混排不同版本。
 
-1. 选取新的唯一 ID，例如 `new-task-demo`；已有 ID 尽量保持稳定。
-2. 在 `benchmarks.json` 的 benchmarks 数组中增加完整对象，或修改已有对象。填写比较方向、量程与有序排名。
-3. 新建 `public/ai-frontier/benchmarks/<id>.md`，并把 JSON 的 markdown 指向 `/ai-frontier/benchmarks/<id>.md`。
-4. 详情至少包括介绍、方法流程、分数表，以及演示声明或可核验的真实数据来源。模型名称、顺序、分数、单位和档位须与 JSON 一致。
-5. 更新 edition / updatedAt，并通过页面检查列表入口、详情正文与排序。新增数据项无需改页面代码。
+当前结果是经内部主进程复核并获准公开的快照，最近完整验收为 2026-10-09，复核日期为 2026-10-11。各选手同编号轮次不是相同随机场景，逐轮展示不构成配对比较。
 
-详情 Markdown 可使用本站已有的 `:::note`、`::alert{type="info" title="标题"}`、`::folding{title="展开说明"}`、代码围栏与普通表格。折叠和 alert 以同数量的冒号结束。优先复用现有语法，不在内容文件中引入新的脚本。
+## 更新与发布核对
 
-## 发布前的最小核对
-
-- JSON 能正常解析，各 benchmark ID 唯一，模型 ID 在单榜内唯一。
-- 每个 markdown 路径都有对应文件，标题与内容相符。
-- score 为数值，排序遵循 higherIsBetter，tier 只使用 S/A/B/C/D。
-- JSON 与详情表格保持一致；只有演示数据时保留 `demo: true` 及显著的虚构声明。
-- 只有替换为可核验数据、补齐方法与来源并清理所有演示声明后，才考虑将整份数据标为非演示；不要把真假数据混在 `demo: false` 的总声明下。
-- 在桌面与窄屏各检查一次信息区、榜单表格与详情折叠块。
+1. 只收录获准公开且经过核验的模型名称、运行环境、规则与成绩。
+2. 同步 JSON 与说明 Markdown，核对选手、均值、样本标准差和逐轮记录。未知字段不补零或估算。
+3. AVIS3 在内部 HPC 私有部署，不添加公开仓库、公开参赛入口、内部地址或原始运行产物下载地址。
+4. 不把当前提交表现写成普遍 AI 产品排名，不将仿真写成实物验证，不宣称绝无过拟合。开发预算、人工帮助和完整开发过程未统一审计。
+5. 频谱诊断不参与积分评分，未核验的图像不作为性能证据。
+6. 检查总览和详情的完整数值、排序、量程、目录与主题，并验证桌面和手机排版。
+7. 运行构建、Markdown 检查和相关 E2E。札记测试拦截固定 raw URL，使用 fixture，不依赖当天线上正文。

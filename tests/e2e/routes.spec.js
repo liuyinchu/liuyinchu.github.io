@@ -1,5 +1,6 @@
 import { test } from '@playwright/test'
 import { STATIC_ROUTES } from './route-manifest.js'
+import { mockFrontierNotes } from './frontier-fixture.js'
 import {
   auditPage,
   expectKnownRouteShell,
@@ -8,6 +9,7 @@ import {
 } from './test-helpers.js'
 
 test.describe('known routes', () => {
+  test.beforeEach(async ({ page }) => { await mockFrontierNotes(page) })
   for (const route of STATIC_ROUTES) {
     test(route + ' renders without route-level failures', async ({ page }) => {
       const audit = auditPage(page)

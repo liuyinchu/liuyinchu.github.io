@@ -33,6 +33,7 @@ export const STATIC_ROUTES = Object.freeze([
   '/cli-tools',
   '/tzbox',
   '/ai-frontier',
+  '/ai-frontier/arena/avis3',
 ])
 
 export const DISABLED_ROUTES = Object.freeze([

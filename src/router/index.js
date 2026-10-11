@@ -39,7 +39,7 @@ const PrecisionPhyskit = () => import('../pages/PrecisionPhyskit.vue')
 const CliTools = () => import('../pages/CliTools.vue')
 const TZBox = () => import('../pages/TZBox.vue')
 const AIFrontier = () => import('../pages/AIFrontier.vue')
-const AIBenchmark = () => import('../pages/AIBenchmark.vue')
+const AVIS3Arena = () => import('../pages/AVIS3Arena.vue')
 const NotFound = () => import('../pages/NotFound.vue')
 
 
@@ -84,7 +84,7 @@ const routes = [
   { path: '/cli-tools', component: CliTools },
   { path: '/tzbox', component: TZBox },
   { path: '/ai-frontier', component: AIFrontier, meta: { anchorOffset: 108 } },
-  { path: '/ai-frontier/benchmarks/:benchmarkId', component: AIBenchmark, meta: { anchorOffset: 108 } },
+  { path: '/ai-frontier/arena/:arenaId', component: AVIS3Arena, meta: { anchorOffset: 108 } },
   { path: '/:pathMatch(.*)*', component: NotFound },
 ]
 

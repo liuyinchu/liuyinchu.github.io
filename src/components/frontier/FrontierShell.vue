@@ -4,8 +4,9 @@ import { RouterLink, useRoute } from 'vue-router'
 
 const props = defineProps({ title: { type: String, default: 'Ysy AI Frontier' } })
 const route = useRoute()
-const isIntelligence = computed(() => route.path === '/ai-frontier' && Boolean(route.hash) && !['#benchmarks', '#frontier-main'].includes(route.hash))
+const isIntelligence = computed(() => route.path === '/ai-frontier' && Boolean(route.hash) && !['#arena', '#frontier-main'].includes(route.hash))
 const isOverview = computed(() => route.path === '/ai-frontier' && !isIntelligence.value)
+const isArena = computed(() => route.path.startsWith('/ai-frontier/arena/'))
 const STORAGE_KEY = 'ysy-ai-frontier-theme'
 function readTheme() {
   try {
@@ -72,7 +73,8 @@ onBeforeUnmount(() => {
         </RouterLink>
         <nav class="frontier-navigation" aria-label="AI Frontier 导航">
           <RouterLink class="frontier-nav-link" :class="{ 'is-active': isOverview }" :aria-current="isOverview ? 'page' : undefined" to="/ai-frontier">总览</RouterLink>
-          <RouterLink class="frontier-nav-link" :class="{ 'is-active': isIntelligence }" :aria-current="isIntelligence ? 'location' : undefined" to="/ai-frontier#intelligence">信息简报</RouterLink>
+          <RouterLink class="frontier-nav-link" :class="{ 'is-active': isIntelligence }" :aria-current="isIntelligence ? 'location' : undefined" to="/ai-frontier#intelligence">前沿札记</RouterLink>
+          <RouterLink class="frontier-nav-link" :class="{ 'is-active': isArena }" :aria-current="isArena ? 'page' : undefined" to="/ai-frontier/arena/avis3">AVIS3 Arena</RouterLink>
         </nav>
         <div class="frontier-utilities">
           <RouterLink class="frontier-return" to="/">返回主站 <span aria-hidden="true">↗</span></RouterLink>
