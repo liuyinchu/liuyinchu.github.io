@@ -1,5 +1,13 @@
 [
   {
+    "id": "rq_worktrunk_note",
+    "title": "两个值得安利的开源工具：RQ 与 Worktrunk",
+    "author": "pifuyuini",
+    "date": "2026-10-11",
+    "desc": "最近给 RQ 和 Worktrunk 都贡献了 PR，借此介绍两个值得放进工具箱的开源项目：RQ 用简洁的 Python 接口把函数交给后台 worker，Worktrunk 让并行开发任务各有自己的工作目录。各留一个小例子，看看它们能帮你省下哪些麻烦。",
+    "image": "/bg/rq_worktrunk_note.jpg"
+  },
+  {
     "id": "knight_and_doctor",
     "title": "直到我冲向风车，你才想起我也姓唐",
     "author": "pifuyuini",
