@@ -15,3 +15,5 @@
 - [Skills For Real Engineers](https://github.com/mattpocock/skills)：Mattpocock Skills 。
 - [Karpathy Guidelines](https://github.com/multica-ai/andrej-karpathy-skills/blob/main/skills/karpathy-guidelines/SKILL.md)：减少LLM编码常见错误的行为准则。在编写、审查或重构代码时使用这些准则，可以避免代码过于复杂，进行精准修改，揭示潜在假设，并定义可验证的成功标准。
 - [活人感写作](https://github.com/KKKKhazix/human-writing)：让模型写出来的文章读起来像一个具体的人在说话——知道一些事，有判断，偶尔岔开一句，还能接回来。适用于知乎回答、公众号文章、博客、论坛帖、人物故事、科普、评测、小说、口播等大多数中文写作场景。:badge[用过]{tone="success"}
+- [thesis-polish](https://github.com/lmcggg/graduate-thesis-polish-and-write-skill)：一个专注毕业论文生产的 Claude Code skill，针对中文理工科毕业论文的写作风格调整和内容审校。目标是让论文读起来是有脑子的活人研究生写的。
+- [onetake](https://github.com/feitangyuan/onetake)：一镜到底的连贯动效。 做产品发布片、预告片、功能演示：每一个画面都从上一个画面里长出来，是一整条连续的镜头，而不是一张张轮流出场的"PPT"。
