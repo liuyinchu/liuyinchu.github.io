@@ -1,35 +1,5 @@
 # 使一颗心免于哀伤？
 
-## 整理一些热门的“降智“检测方法
-
-### 模型指纹
-
-[ModelTrace 工具](https://xqy2006.github.io/ModelTrace/)
-
-### 鹈鹕测试
-
-```markdown
-创建一个 HTML ，内容是 SVG 绘制一个鹈鹕骑自行车的 2D 动画。
-```
-
-```markdown
-创建一个 HTML ，内容是 SVG 绘制一个鹈鹕在泳池里洗澡的动画。
-```
-
-```markdown
-在一个黑色的袋子里放有三种口味的糖果，每种糖果有两种不同的形状（圆形和五角星形，不同的形状靠手感可以分辨）。现已知不同口味的糖和不同形状的数量统计如下表。参赛者需要在活动前决定摸出的糖果数目，那么，最少取出多少个糖果才能保证手中同时拥有不同形状的苹果味和桃子味的糖？（同时手中有圆形苹果味匹配五角星桃子味糖果，或者有圆形桃子味匹配五角星苹果味糖果都满足要求）
-
-苹果味 桃子味 西瓜味
-
-圆形 7 9 8
-
-五角星形 7 6 4
-
-禁止联网,禁止写代码算出答案.禁止使用外部工具
-```
-
----
-
 ## 小马过河
 
 <img src="/fig/Little_Horse_Crossing_the_River.png" alt="小马过河" width="40%">
@@ -67,45 +37,6 @@
 
 ---
 
-## Codex 小技巧
-
-**2026 年 9 月 4 日，GPT-6 Astra 发布，以下小技巧已失效。**
-
-这个[网站](https://chatgpt.com/codex/cloud/settings/analytics)可用于检测 Codex 的模型使用情况。
-
-[注意 GPT-5.6 有审查会拖慢速度](https://help.openai.com/en/articles/20001326-additional-safety-checks-for-biological-and-cybersecurity-requests-in-chatgpt-codex-and-the-api)。
-
-对于当前的 GPT-5.6，经验性的模型选择策略如下：
-
-- :tip[通用：Sol medium]{tip="搭配一些 Multi Agents 技巧也能有很好的效果。"}
-- 文献阅读等学术任务：Sol high
-- :tip[对于高智能、数理逻辑需求的科研任务：Sol max]{tip="思维链增长，适合深度推理任务。这个模型需要在设置里专门开启才能使用。"}
-- :tip[大型复杂任务：Sol ultra]{tip="max 等级的多子代理并行，很强，但是十分消耗额度。网页版也可在设置里开启这个模式。"}
-
----
-
-## Skill 收集
-
-- [Figures for Papers](https://github.com/ChenLiu-1996/figures4papers)：这是一个集中存储 Python 脚本的仓库，用于生成高质量的图表。
-- [NaturePanelForge](https://github.com/littlepeachs/NaturePanelForge/blob/main/README.zh-CN.md)：NaturePanelForge 是一个 code-first 工作流，用于把真实科学论文图像和开放获取 Nature 系列论文转化为 panel 级别、可执行绘图代码复现任务。
-- [codex-ppt-skill](https://github.com/ningzimu/codex-ppt-skill)：一个面向 Codex 的 PPT 生成 skill，也可在 Claude Code、OpenClaw、Hermes Agent 等支持 SKILL.md 的 agent 中使用；在这些非 Codex 环境中通常需要配置 gpt-image-2 或第三方 OpenAI 兼容格式的生图 API。它把文章、报告、论文、课程笔记等内容转换成“整页图片式”的演示文稿：先规划大纲和视觉风格，再生成每页幻灯片图片，最后用本地脚本组装为 .pptx。
-- [ScanSci PDF](https://skills.scansci.com/skills/scansci-pdf/)：ScanSci PDF 是一个学术论文下载的 MCP 服务器。它同时尝试 13+ 个数据源（arXiv、Sci-Hub、LibGen、Unpaywall 等），哪个先成功用哪个。支持 100+ 中国高校 WebVPN 和 CARSI 联邦认证，能获取绝大多数付费论文的全文 PDF。
-- [AI-research-SKILLs](https://github.com/Orchestra-Research/AI-research-SKILLs)：这是一个最全面的开源技能库，能够使AI代理自主开展人工智能研究，从提出想法到撰写论文。
-- [novel-generator](https://clawhub.ai/ityhg/skills/novel-generator)：这是一个中文爽文小说生成技能。用户只需提供一句话方向（如"写个都市重生爽文"），AI 代理即可自动完善提示词、规划大纲、逐章创作并输出为独立 Markdown 文件。:badge[用过]{tone="success"}
-- [ppt-master](https://hugohe3.github.io/ppt-master/)：AI 可以从任何文档生成可直接编辑的 PPTX 文件——真正的 PowerPoint 形状，而不是图像。
-- [Humanizer-zh](https://github.com/op7418/humanizer-zh)：Humanizer-zh 是一个用于去除文本中 AI 生成痕迹的工具，帮助你将 AI 生成的内容改写得更自然、更像人类书写的文本。:badge[用过]{tone="success"}
-- [Apple-Design](https://github.com/emilkowalski/skills/blob/main/skills/apple-design/SKILL.md)：苹果公司在界面设计和流畅的物理动画方面的理念，已应用于网页设计。可用于构建或审核手势驱动的用户界面、弹簧动画、拖拽/滑动/滑动交互、动量和可中断的过渡效果、半透明材质和深度、排版（光学尺寸、字距、行距）、减少动画，以及苹果风格界面背后的设计基础（反馈、空间一致性、克制）。:badge[用过]{tone="success"}
-- [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/main/README.zh.md)：一个为跨多平台和框架构建专业 UI/UX 提供设计智能的 AI 技能。
-- [GC Minimal Zine Poster](https://github.com/LiamGvchi/gc-minimal-zine-poster/tree/main)：这是一个 Codex 技能：它会把主题、句子、物件、情绪、文章构想、照片或内容简报，转化为一张安静、极简的 ZINE 风格编辑海报所需的提示词，并生成对应的位图图像。:badge[用过]{tone="success"}
-- [Photo to Zine Postcard](https://github.com/Whiplashzeb/photo-to-zine-postcard)：把你拍摄的照片转换成一套极简、留白充足、带手绘二创元素的 Zine 风格明信片。:badge[用过]{tone="success"}
-- [Photo Abstract Editorial](https://github.com/ZzzLc0405/photo-abstract-editorial/tree/main)：将一张照片转化为“原始摄影区域 + 抽象记忆面板 + 诗意英文标题”的竖向编辑作品的 Codex Skill。它保留照片的真实内容，并仅从照片本身提炼空间关系、构图节奏和色彩关系；它不是滤镜、照片重画或风格迁移。:badge[用过]{tone="success"}
-- [open-kimi-ppt-skill](https://github.com/jinwyp/open-ppt-skill)：逆向 Kimi Slides 实现的非官方演示文稿 Skill，让 AI Coding Agent 可以创建、编辑、复刻、读取并导出 PPT/PPTX。每次生成默认产出两份文件：可继续编辑的 PPTD 项目，以及嵌入字体、带淡入淡出翻页切换的 PPTX。支持页内元素动画和预设主题，附带本地浏览器编辑器，可随时手动导出 PPTX。支持 Codex、Claude Code、Cursor、WorkBuddy 等任何兼容 SKILL.md 规范的 Agent。
-- [Skills For Real Engineers](https://github.com/mattpocock/skills)：Mattpocock Skills 。
-- [Karpathy Guidelines](https://github.com/multica-ai/andrej-karpathy-skills/blob/main/skills/karpathy-guidelines/SKILL.md)：减少LLM编码常见错误的行为准则。在编写、审查或重构代码时使用这些准则，可以避免代码过于复杂，进行精准修改，揭示潜在假设，并定义可验证的成功标准。
-- [活人感写作](https://github.com/KKKKhazix/human-writing)：让模型写出来的文章读起来像一个具体的人在说话——知道一些事，有判断，偶尔岔开一句，还能接回来。适用于知乎回答、公众号文章、博客、论坛帖、人物故事、科普、评测、小说、口播等大多数中文写作场景。:badge[用过]{tone="success"}
-
----
-
 ## 记录一条 README 撰写守则
 
 :alert
@@ -120,26 +51,6 @@
 ::
 
 > README 要短，只保留帮助用户快速判断和开始使用的信息。详细文档、长示例、设计说明应放到单独页面。
-
----
-
-## 这是十分重要的让ChatGPT写代码的教训
-
-:alert
-让 ChatGPT 写代码是要明确指出从 .json文件中读参数——否则它会把参数写成从CLI中读，那是真的十分糟糕的体验（而且增大了工程量）！
-同时要显示地指出，序列数据最好用 .csv存储。
-一定要把数据的IO流和Pipeline明确给出来！
-一个问题是——要不要模块控制呢？要的话由谁来控制呢？？？
-用户可以通过参数精确控制流水线的每一步——这个参数不要由命令行给出，还是由.json文件给出。
-仿真和绘图间的耦合一定要分开，一定要先输出仿真数据（O），再导入数据（I）绘图。
-
-1. 从 .json文件中读参数，不要把参数写成从CLI中读；
-2. 序列数据最好用 .csv存储；
-3. 把数据的IO流和Pipeline明确给出来；
-4. 用户可以通过参数精确控制流水线的每一步——这个参数不要由命令行给出，还是由.json文件给出；
-5. 仿真和绘图间的耦合一定要分开，一定要先输出仿真数据（O），再导入数据（I）绘图
-
-::
 
 ---
 

@@ -1,0 +1,1 @@
+import{R as e}from"./ResourceDetailPage-D-rwN_bz.js";import{c as r,o as t}from"./index-8YaHqGlO.js";import"./index-BMSQkwth.js";const l={__name:"ResourceLiterature",setup(o){return(a,c)=>(t(),r(e,{title:"文献资源分享","json-file":"literature.json","category-id":"literature"}))}};export{l as default};
