@@ -89,7 +89,7 @@ onBeforeUnmount(() => controller?.abort())
     <p v-if="loading" class="spectra-state" role="status">正在读取 {{ contestantId }} 第 {{ roundIndex }} 轮频谱…</p>
     <div v-else-if="error" class="spectra-state" role="alert"><p>{{ error }}</p><button type="button" @click="load">重新加载频谱</button></div>
     <template v-else-if="source">
-      <div class="spectra-data-meta"><span>{{ source.frequency_hz.length.toLocaleString('en-US') }} 频率点 / 0.01–100 Hz</span><span>位移等效 ASD / m/√Hz</span><a :href="dataPath">当前轮频谱 JSON ↗</a></div>
+      <div class="spectra-data-meta"><span>{{ source.frequency_hz.length.toLocaleString('en-US') }} 频率点 / 0.01–100 Hz</span><span>位移等效 ASD / m/√Hz</span><a :href="dataPath">当前轮频谱 JSON</a></div>
       <div class="spectra-grid">
         <figure v-for="chart in charts" :key="chart.channel" class="spectra-plot" :data-channel="chart.channel">
           <figcaption><strong>{{ chart.channel }}</strong><span>LOG / LOG</span></figcaption>

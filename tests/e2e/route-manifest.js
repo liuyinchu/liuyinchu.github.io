@@ -33,6 +33,8 @@ export const STATIC_ROUTES = Object.freeze([
   '/cli-tools',
   '/tzbox',
   '/ai-frontier',
+  '/ai-frontier/skills',
+  '/ai-frontier/trivia',
   '/ai-frontier/arena/avis3',
 ])
 

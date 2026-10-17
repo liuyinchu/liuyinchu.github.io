@@ -39,6 +39,7 @@ const PrecisionPhyskit = () => import('../pages/PrecisionPhyskit.vue')
 const CliTools = () => import('../pages/CliTools.vue')
 const TZBox = () => import('../pages/TZBox.vue')
 const AIFrontier = () => import('../pages/AIFrontier.vue')
+const FrontierDocument = () => import('../pages/FrontierDocument.vue')
 const AVIS3Arena = () => import('../pages/AVIS3Arena.vue')
 const NotFound = () => import('../pages/NotFound.vue')
 
@@ -84,6 +85,8 @@ const routes = [
   { path: '/cli-tools', component: CliTools },
   { path: '/tzbox', component: TZBox },
   { path: '/ai-frontier', component: AIFrontier, meta: { anchorOffset: 108 } },
+  { path: '/ai-frontier/skills', component: FrontierDocument, props: { title: 'Skill 收集', eyebrow: 'SKILL COLLECTION', description: '收集值得参考的 Skill 与使用经验。', src: '/ai-frontier/skills.md' }, meta: { anchorOffset: 108 } },
+  { path: '/ai-frontier/trivia', component: FrontierDocument, props: { title: 'AI Trivia', eyebrow: 'AI TRIVIA', description: '关于 AI 的零散知识与发现。', src: '/ai-frontier/trivia.md' }, meta: { anchorOffset: 108 } },
   { path: '/ai-frontier/arena/:arenaId', component: AVIS3Arena, meta: { anchorOffset: 108 } },
   { path: '/:pathMatch(.*)*', component: NotFound },
 ]

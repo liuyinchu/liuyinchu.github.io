@@ -44,13 +44,67 @@ test.describe('AI Frontier', () => {
       await expect(row.locator('.avis3-result-score strong')).toHaveAttribute('title', String(result.mean))
       if (typeof result.std === 'number') await expect(row.locator('.avis3-number')).toHaveText(result.std.toFixed(4))
     }
-    await expect(page.getByRole('link', { name: '源仓库 ↗', exact: true })).toHaveAttribute('href', 'https://github.com/liuyinchu/deepsight-ai-today')
+    await expect(page.getByRole('link', { name: '源仓库', exact: true })).toHaveAttribute('href', 'https://github.com/liuyinchu/deepsight-ai-today')
     await expect(page.locator('.frontier-intelligence .markdown-body')).toContainText('用于页面验证的固定内容')
     await expect(page.locator('.benchmark-deck, .frontier-tier-list')).toHaveCount(0)
     await expect(page.locator('.frontier-shell')).not.toContainText('演示数据')
     if (!data.results.some(result => typeof result.std === 'number')) {
       await expect(leaderboard(page).getByRole('columnheader', { name: '样本标准差', exact: true })).toHaveCount(0)
     }
+    await finishAudit(page, audit)
+  })
+
+  test('editable collections keep their own Markdown and the Frontier shell', async ({ page }) => {
+    const audit = auditPage(page)
+    await openOverview(page)
+    const collections = page.getByRole('region', { name: '收集与记录', exact: true })
+    await expect(collections.getByRole('link', { name: /Skill 收集/ })).toHaveAttribute('href', overview + '/skills')
+    await expect(collections.getByRole('link', { name: /AI Trivia/ })).toHaveAttribute('href', overview + '/trivia')
+    await expect(page.locator('.frontier-shell')).not.toContainText('↗')
+    await collections.getByRole('link', { name: /Skill 收集/ }).click()
+    await expect(page).toHaveURL(BASE_URL + overview + '/skills')
+    await expectKnownRouteShell(page, overview + '/skills')
+    await expect(page).toHaveTitle('Skill 收集 · Ysy AI Frontier')
+    await expect(page.locator('.frontier-report-title h1')).toHaveText('Skill 收集')
+    await expect(page.getByRole('navigation', { name: 'AI Frontier 导航' }).getByRole('link', { name: 'Skill 收集', exact: true })).toHaveAttribute('aria-current', 'page')
+    const source = await readFile(new URL('../../public/ai-frontier/skills.md', import.meta.url), 'utf8')
+    const entries = [...source.matchAll(/^- \[([^\]]+)\]\(([^)]+)\)/gm)]
+    const reader = page.locator('.frontier-document .markdown-body')
+    expect(entries.length).toBeGreaterThan(0)
+    await expect(reader.locator('li')).toHaveCount(entries.length)
+    for (const [, name, href] of entries) {
+      await expect(reader.getByRole('link', { name, exact: true })).toHaveAttribute('href', href)
+    }
+    await expect(reader.locator('.md-badge').first()).toHaveText('用过')
+    await expect(page.locator('.frontier-shell')).not.toContainText('↗')
+    await finishAudit(page, audit)
+
+    await page.getByRole('navigation', { name: 'AI Frontier 导航' }).getByRole('link', { name: 'AI Trivia', exact: true }).click()
+    await expect(page).toHaveURL(BASE_URL + overview + '/trivia')
+    await expectKnownRouteShell(page, overview + '/trivia')
+    await expect(page).toHaveTitle('AI Trivia · Ysy AI Frontier')
+    await expect(page.locator('.frontier-report-title h1')).toHaveText('AI Trivia')
+    await expect(page.locator('.frontier-markdown')).toHaveAttribute('aria-busy', 'false')
+    await expect(reader).toBeEmpty()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    const trivia = await page.request.get(BASE_URL + '/ai-frontier/trivia.md')
+    expect(trivia.ok()).toBe(true)
+    expect(await trivia.text()).toBe('')
+    await page.reload()
+    await expect(page.locator('.frontier-report-title h1')).toHaveText('AI Trivia')
+    await expect(page.locator('.frontier-markdown')).toHaveAttribute('aria-busy', 'false')
+    await expect(reader).toBeEmpty()
+    await expect(page.locator('.frontier-shell')).toHaveCSS('background-color', 'rgb(236, 229, 214)')
+    await expect(page.locator('.frontier-shell')).not.toContainText('↗')
+    await finishAudit(page, audit)
+  })
+
+  test('talk no longer includes the migrated Skill collection and preserves adjacent notes', async ({ page }) => {
+    const audit = auditPage(page)
+    await gotoRoute(page, '/talk')
+    await expectKnownRouteShell(page, '/talk')
+    await expect(page.getByRole('heading', { name: /记录一条 README 撰写守则/ })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Skill 收集/ })).toHaveCount(0)
     await finishAudit(page, audit)
   })
 
@@ -65,6 +119,7 @@ test.describe('AI Frontier', () => {
     await expect(page.locator('.frontier-markdown .markdown-body')).toBeVisible()
     await expect(page.locator('.avis3-round-card')).toHaveCount(3)
     await expect(page.locator('.avis3-round-list li')).toHaveCount(30)
+    await expect(page.locator('.frontier-shell')).not.toContainText('↗')
     await expect(page.locator('.frontier-markdown').getByRole('heading').first()).toContainText('AVIS3')
     const folding = page.locator('.frontier-markdown details').first()
     await folding.locator('summary').click()
@@ -375,7 +430,7 @@ test.describe('AVIS3 spectra', () => {
         await expect(viewer.locator('.spectra-registration')).toHaveText(id + ' / ROUND ' + String(round).padStart(2, '0'))
         await expect(viewer.getByTestId('spectra-round-score')).toHaveText(score.toFixed(4))
         await expect(viewer.getByTestId('spectra-round-score')).toHaveAttribute('title', String(score))
-        await expect(viewer.getByRole('link', { name: '当前轮频谱 JSON ↗', exact: true })).toHaveAttribute('href', '/ai-frontier/arena/avis3/spectra/' + path)
+        await expect(viewer.getByRole('link', { name: '当前轮频谱 JSON', exact: true })).toHaveAttribute('href', '/ai-frontier/arena/avis3/spectra/' + path)
         await expect(plots).toHaveCount(3)
         const model = data.contestants.find(item => item.id === id).model
         for (const channel of fixture.channels) {
@@ -442,7 +497,7 @@ test.describe('AVIS3 spectra', () => {
       await error.getByRole('button', { name: '重新加载频谱', exact: true }).click()
       await expect(viewer.getByRole('img')).toHaveCount(3)
       await expect(error).toHaveCount(0)
-      await expect(viewer.getByRole('link', { name: '当前轮频谱 JSON ↗', exact: true })).toHaveAttribute('href', '/ai-frontier/arena/avis3/spectra/contestant-2/round-01.json')
+      await expect(viewer.getByRole('link', { name: '当前轮频谱 JSON', exact: true })).toHaveAttribute('href', '/ai-frontier/arena/avis3/spectra/contestant-2/round-01.json')
       await finishAudit(page, audit)
     })
   }

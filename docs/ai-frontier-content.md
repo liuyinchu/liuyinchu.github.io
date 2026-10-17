@@ -1,10 +1,12 @@
 # AI Frontier 内容维护
 
-AI Frontier 公开 AVIS3 的项目介绍、正式评测规则、已核验成绩和 AI 前沿札记。页面使用独立 NASA-punk 浅色主题、响应式排版与 Markdown 目录；不读取或改变主站主题。
+AI Frontier 公开 AVIS3 的项目介绍、正式评测规则、已核验成绩、AI 前沿札记、Skill 收集和 AI Trivia。页面使用独立 NASA-punk 浅色主题、响应式排版与 Markdown 目录；不读取或改变主站主题。
 
 ## 页面与文件入口
 
 - 总览：`/ai-frontier`
+- Skill 收集：`/ai-frontier/skills`，正文 `public/ai-frontier/skills.md`
+- AI Trivia：`/ai-frontier/trivia`，正文 `public/ai-frontier/trivia.md`
 - AVIS3 详情：`/ai-frontier/arena/avis3`
 - AVIS3 数据：`public/ai-frontier/avis3.json`
 - AVIS3 说明：`public/ai-frontier/arena/avis3.md`
@@ -12,6 +14,10 @@ AI Frontier 公开 AVIS3 的项目介绍、正式评测规则、已核验成绩�
 - 频谱数据：`public/ai-frontier/arena/avis3/spectra/contestant-N/round-XX.json`
 
 旧演示榜单、虚构数据、S/A/B/C/D 档位和站内札记样刊已移除。
+
+## Skill 收集与 AI Trivia
+
+两页共用 Frontier 的独立导航、报告页标题与 Markdown 阅读样式。Skill 收集从说说的同名章节迁入；AI Trivia 的 Markdown 初始为空，可直接编辑。标题与简介在路由中维护，正文文件不需要 front matter，也不必重复页面标题。正文按运行时请求读取，更新后刷新页面即可查看。
 
 ## AI 前沿札记
 

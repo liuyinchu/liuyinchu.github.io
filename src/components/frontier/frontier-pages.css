@@ -241,3 +241,17 @@
   .frontier-shell .avis3-results-table th:first-child, .frontier-shell .avis3-results-table td:first-child { padding-left: 0; }
   .frontier-shell .avis3-results-table th:last-child, .frontier-shell .avis3-results-table td:last-child { padding-right: 0; }
 }
+
+/* Editable collections share the Frontier report and reading surfaces. */
+.frontier-shell .frontier-collection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.frontier-shell .frontier-collection-card { display: block; min-width: 0; padding: 28px; border: 1px solid var(--f-line); border-top: 4px solid var(--f-blue); background: var(--f-surface); color: var(--f-ink); text-decoration: none; }
+.frontier-shell .frontier-collection-card:nth-child(2) { border-top-color: var(--f-olive); }
+.frontier-shell .frontier-collection-card:hover { color: var(--f-ink); border-color: var(--f-ink); text-decoration: none; }
+.frontier-shell .frontier-collection-card h3 { margin: 16px 0 10px; font: 750 28px/1.3 var(--f-display); }
+.frontier-shell .frontier-collection-card p { margin: 0 0 24px; color: var(--f-muted); font-size: 13px; }
+.frontier-shell .frontier-document .frontier-reading-card { min-height: 12rem; }
+.frontier-shell .frontier-document-single { grid-template-columns: minmax(0, 1fr); max-width: 824px; }
+@media (max-width: 680px) {
+  .frontier-shell .frontier-collection-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .frontier-shell .frontier-collection-card { padding: 22px 20px; }
+}

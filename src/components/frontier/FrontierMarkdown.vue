@@ -91,7 +91,7 @@ watch(
     <div v-else-if="loadFailed" class="frontier-markdown-state" role="alert">
       <span class="frontier-markdown-state-label">加载失败</span>
       <p>正文暂时无法加载，请重试。</p>
-      <button type="button" @click="attempt += 1">重新加载 <span aria-hidden="true">↗</span></button>
+      <button type="button" @click="attempt += 1">重新加载</button>
     </div>
     <MarkdownViewer
       v-else

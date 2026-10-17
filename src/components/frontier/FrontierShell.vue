@@ -6,6 +6,8 @@ const props = defineProps({ title: { type: String, default: 'Ysy AI Frontier' } 
 const route = useRoute()
 const isIntelligence = computed(() => route.path === '/ai-frontier' && Boolean(route.hash) && !['#arena', '#frontier-main'].includes(route.hash))
 const isOverview = computed(() => route.path === '/ai-frontier' && !isIntelligence.value)
+const isSkills = computed(() => route.path === '/ai-frontier/skills')
+const isTrivia = computed(() => route.path === '/ai-frontier/trivia')
 const isArena = computed(() => route.path.startsWith('/ai-frontier/arena/'))
 let previousDocumentTitle = ''
 let mounted = false
@@ -32,16 +34,18 @@ onBeforeUnmount(() => {
     <header class="frontier-masthead">
       <div class="frontier-masthead-inner">
         <RouterLink class="frontier-brand" to="/ai-frontier" aria-label="Ysy AI Frontier 首页">
-          <span class="frontier-brand-mark" aria-hidden="true">F<span>↗</span></span>
+          <span class="frontier-brand-mark" aria-hidden="true">F</span>
           <span class="frontier-brand-wordmark">YSY AI FRONTIER<small>INDEPENDENT OBSERVATION UNIT</small></span>
         </RouterLink>
         <nav class="frontier-navigation" aria-label="AI Frontier 导航">
           <RouterLink class="frontier-nav-link" :class="{ 'is-active': isOverview }" :aria-current="isOverview ? 'page' : undefined" to="/ai-frontier">总览</RouterLink>
           <RouterLink class="frontier-nav-link" :class="{ 'is-active': isIntelligence }" :aria-current="isIntelligence ? 'location' : undefined" to="/ai-frontier#intelligence">前沿札记</RouterLink>
+          <RouterLink class="frontier-nav-link" :class="{ 'is-active': isSkills }" :aria-current="isSkills ? 'page' : undefined" to="/ai-frontier/skills">Skill 收集</RouterLink>
+          <RouterLink class="frontier-nav-link" :class="{ 'is-active': isTrivia }" :aria-current="isTrivia ? 'page' : undefined" to="/ai-frontier/trivia">AI Trivia</RouterLink>
           <RouterLink class="frontier-nav-link" :class="{ 'is-active': isArena }" :aria-current="isArena ? 'page' : undefined" to="/ai-frontier/arena/avis3">AVIS3 Arena</RouterLink>
         </nav>
         <div class="frontier-utilities">
-          <RouterLink class="frontier-return" to="/">返回主站 <span aria-hidden="true">↗</span></RouterLink>
+          <RouterLink class="frontier-return" to="/">返回主站</RouterLink>
 
         </div>
       </div>
@@ -52,7 +56,7 @@ onBeforeUnmount(() => {
     <footer class="frontier-footer">
       <RouterLink class="frontier-footer-brand" to="/ai-frontier">Ysy AI Frontier</RouterLink>
       <span>AI 研究、评测与一线动态</span>
-      <RouterLink class="frontier-footer-return" to="/">返回主站 <span aria-hidden="true">↗</span></RouterLink>
+      <RouterLink class="frontier-footer-return" to="/">返回主站</RouterLink>
     </footer>
   </div>
 </template>
@@ -78,7 +82,6 @@ onBeforeUnmount(() => {
 .frontier-brand { display: inline-flex; align-items: center; gap: .75rem; flex: 0 0 auto; color: var(--f-ink); text-decoration: none; }
 .frontier-brand:hover { color: var(--f-ink); text-decoration: none; }
 .frontier-brand-mark { position: relative; display: grid; place-items: center; width: 42px; height: 42px; border: 2px solid var(--f-ink); font: 900 30px/1 var(--f-display); }
-.frontier-brand-mark span { position: absolute; right: -5px; bottom: -5px; padding: 1px 3px; background: var(--f-paper); font: 700 17px/1 var(--f-font); }
 .frontier-brand-wordmark { font: 800 15px/1.35 var(--f-display); letter-spacing: .09em; }
 .frontier-brand-wordmark small { display: block; margin-top: 4px; font: 8px/1.4 var(--f-mono); letter-spacing: .12em; }
 .frontier-navigation { display: flex; align-items: stretch; gap: 0; margin-left: auto; }
@@ -103,8 +106,8 @@ onBeforeUnmount(() => {
   .frontier-masthead-inner { flex-wrap: wrap; gap: 0 1rem; padding-block: .8rem .65rem; }
   .frontier-brand-wordmark { font-size: 13px; } .frontier-brand-wordmark small { font-size: 7px; }
   .frontier-utilities { margin-left: auto; padding-left: 0; border: 0; }
-  .frontier-navigation { order: 3; width: 100%; margin-top: .8rem; border-top: 1px solid var(--f-line); padding-top: .5rem; }
-  .frontier-nav-link { padding: .4rem .8rem; }
+  .frontier-navigation { order: 3; width: 100%; flex-wrap: wrap; margin-top: .8rem; border-top: 1px solid var(--f-line); padding-top: .5rem; }
+  .frontier-nav-link { padding: .4rem .55rem; font-size: 11px; }
   .frontier-footer { gap: .5rem 1rem; }
 }
 @media (max-width: 440px) { .frontier-return { font-size: 10px; } .frontier-footer > span { width: 100%; order: 3; } }
