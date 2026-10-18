@@ -1,5 +1,13 @@
 [
   {
+    "id": "claude_mem_intro",
+    "title": "给 AI 编程助手补一份项目记忆：聊聊 claude-mem",
+    "author": "pifuyuini",
+    "date": "2026-10-18",
+    "desc": "最近给 claude-mem 贡献的 PR 已随 v13.40.0 正式发布，借此介绍这个让编程助手保留跨会话上下文的开源项目：自动整理工作记录、按需检索历史，以及一个可以动手试试的最小使用流程。",
+    "image": "/bg/claude_mem_intro.png"
+  },
+  {
     "id": "rq_worktrunk_note",
     "title": "两个值得安利的开源工具：RQ 与 Worktrunk",
     "author": "pifuyuini",
