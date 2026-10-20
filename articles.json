@@ -29,7 +29,7 @@
     "author": "pifuyuini",
     "date": "2026-08-12",
     "desc": "我听闻，行人离开一座城，并不等于道路断绝，只是熟悉的路牌渐渐少了。本科毕业之后，我的生活也是如此：没有忽然崩塌，只是原先清楚的方向慢慢隐去。有人便说，方向不明就是人生失序；这话看似有理，却只看见迷雾，没有看见人仍可行走。我仍读书、学习、思考，也走出去，看见世间的善与恶。未来是什么，我不能预知，却仍愿意期待；正因不能预知，难道就该先判它无可期待吗？又有人把“相见”安置在遥远终点，仿佛抵达之后才算相逢。若每个真正活过的时刻都不算相见，那么终点到了，又凭什么称为相见？所以道路未明时，我至少要守住三件事：感受世界的心，帮助他人的手，以及继续前行的脚。如此，未找到道路只是暂时无名，并非失去行程。",
-    "image": "/bg/blog_cover_rainbow_4k.jpg"
+    "image": "/bg/article-covers/in_our_time.jpg"
   }, 
   {
     "id": "eyeglasses_note_2026",
@@ -37,7 +37,7 @@
     "author": "pifuyuini",
     "date": "2026-08-12",
     "desc": "我听说，古人裁衣，先要量身；同一把尺子落在不同人身上，便不能裁出同样合身的衣服。配镜也是如此。本文只记录我在2026年亲历的一次配镜过程，愿作一份个人记事，供人参考，却不作诊断，不开处方，也不替任何人提出针对个人的医疗建议。文中所写的度数、瞳距、瞳高、镜框范围和产品选择，都只与我的眼睛和当时的需要相应，未必适合另一双眼睛。尤其是儿童、青少年、有眼病史的朋友，若突然出现视力下降、闪光、飞蚊、幕帘样黑影、复视或眼痛等情形，还请先接受专业评估，再作配镜打算。眼睛之事宁可多问一步，也不必急着照搬别人的经验；先把自身情况看清，才是对自己最稳妥的照顾。",
-    "image": "/bg/blog_cover_black_deep_space_4k.jpg"
+    "image": "/bg/article-covers/eyeglasses_note_2026.jpg"
   }, 
   {
     "id": "precision_physkit_blog",
@@ -45,7 +45,7 @@
     "author": "pifuyuini",
     "date": "2026-08-01",
     "desc": "我听闻做实验的人有个讲究：数据出了门，处理的过程就要跟着见人。可如今许多脚本，缺口怎么补、滤波怎么选、频谱参数为何定，都像旧时账房先生的心算，只在他自己脑子里。等到复核论文或换一批数据，重写 FFT 倒不费事，难的是把当时那番盘算从记忆里请出来。这实在是名分不清、交接无节的隐患。",
-    "image": "/bg/blog_cover_purple_white_4k.jpg"
+    "image": "/bg/article-covers/precision_physkit_blog.jpg"
   }, 
   {
     "id": "lab_guide_intro",
@@ -53,7 +53,7 @@
     "author": "pifuyuini",
     "date": "2026-06-29",
     "desc": "导论的核心任务，是把实验课中常见的平均值、标准差、误差、最小二乘和不确定度，放到同一个参数估计框架中理解。",
-    "image": "/bg/heroine.jpg"
+    "image": "/bg/article-covers/lab_guide_intro.jpg"
   }, 
   {
     "id": "keyboard",
@@ -69,7 +69,7 @@
     "author": "pifuyuini",
     "date": "2026-06-19",
     "desc": "本文面向已经熟悉经典反馈控制和线性系统基础的读者，按“性能度量、环路分析、鲁棒性建模、标准合成、工程设计方法”的顺序介绍 H∞ 鲁棒控制。",
-    "image": "/bg/Qingming_Xi.JPG"
+    "image": "/bg/article-covers/hinf_robust_control_tutorial.jpg"
   }, 
   {
     "id": "modernity_and_diet",
@@ -77,7 +77,7 @@
     "author": "pifuyuini",
     "date": "2026-06-09",
     "desc": "我们以为自己只是吃了一顿饭，其实是把整个世界的迁移、欲望、劳动与不可驯服的生命，一口一口吃进身体。",
-    "image": "/bg/thinking_and_writing.png"
+    "image": "/bg/article-covers/modernity_and_diet.jpg"
   }, 
   {
     "id": "system_identification_teaching",
@@ -85,7 +85,7 @@
     "author": "pifuyuini",
     "date": "2026-06-08",
     "desc": "这篇教程重点解释为什么 PRBS 激励常用于工业辨识，怎样把最小二乘写成紧凑矩阵形式，以及 N4SID 类子空间方法如何从输入输出数据中恢复状态空间模型。",
-    "image": "/bg/Qingming_Xi.JPG"
+    "image": "/bg/article-covers/system_identification_teaching.jpg"
   }, 
   {
     "id": "ai_agent_blog",
@@ -93,7 +93,7 @@
     "author": "pifuyuini",
     "date": "2026-05-26",
     "desc": "AI Agent 不是“更会聊天的 AI”，而是一个能进入你的工作区，读取文件、执行命令、修改内容、观察结果，并继续推进任务的本地协作者。本文不绑定某一个具体产品，适用于 Codex、Claude Code、Kilo Code、OpenCode 以及类似的 Agent 工具。",
-    "image": "/bg/random_gradient_blue_1.jpg"
+    "image": "/bg/article-covers/ai_agent_blog.jpg"
   }, 
   {
     "id": "measured_psd_to_noise_generator",
@@ -101,7 +101,7 @@
     "author": "pifuyuini",
     "date": "2026-05-16",
     "desc": "本文给出一种由已知功率谱密度构造随机时域序列的通用方法。",
-    "image": "/bg/heroine.jpg"
+    "image": "/bg/article-covers/measured_psd_to_noise_generator.jpg"
   }, 
   {
     "id": "raman_ms_gate_note",
@@ -109,7 +109,7 @@
     "author": "pifuyuini",
     "date": "2026-05-15",
     "desc": "从受激拉曼跃迁的有效耦合出发，沿着近似、边带与 Magnus 展开的链条，推导离子阱 Mølmer-Sørensen 门的物理来源。",
-    "image": "/bg/visitor.jpeg"
+    "image": "/bg/article-covers/raman_ms_gate_note.jpg"
   }, 
   {
     "id": "rl_intro",
@@ -117,7 +117,7 @@
     "author": "pifuyuini",
     "date": "2026-03-15",
     "desc": "以 MDP 为起点，把价值函数、Actor-Critic、PPO 与 SAC 串成一条从交互学习到连续控制的清晰路径。",
-    "image": "/bg/research.png"
+    "image": "/bg/article-covers/rl_intro.jpg"
   }, 
   {
     "id": "uv_cheatsheet",
@@ -125,7 +125,7 @@
     "author": "pifuyuini",
     "date": "2026-03-15",
     "desc": "一份面向日常开发的 uv 速查手册：用最少命令完成项目、工具、Python 版本与 pip 兼容工作流的统一管理。",
-    "image": "/bg/spring.jpg"
+    "image": "/bg/article-covers/uv_cheatsheet.jpg"
   }, 
   {
     "id": "t_f_analysis",
@@ -133,7 +133,7 @@
     "author": "pifuyuini",
     "date": "2026-01-25",
     "desc": "从时间—频率分辨率的权衡出发，用 STFT、CWT 与 Hilbert 方法理解非平稳信号如何展开其频谱结构。",
-    "image": "/bg/heroine.jpg"
+    "image": "/bg/article-covers/t_f_analysis.jpg"
   }, 
   {
     "id": "learn_python_dev",
@@ -141,7 +141,7 @@
     "author": "pifuyuini",
     "date": "2026-01-22",
     "desc": "以 uv 为核心，梳理现代 Python 项目管理、依赖环境与工具链配置的实用路线。",
-    "image": "/bg/spring.jpg"
+    "image": "/bg/article-covers/learn_python_dev.jpg"
   }, 
   {
     "id": "learn_python_data_analysis",
@@ -149,7 +149,7 @@
     "author": "pifuyuini",
     "date": "2026-01-22",
     "desc": "围绕 Plotly 与科学计算可视化，把数据分析中的画图、交互展示与工程封装整理成可复用的实践笔记。",
-    "image": "/bg/spring.jpg"
+    "image": "/bg/article-covers/learn_python_data_analysis.jpg"
   }, 
   {
     "id": "latex_cheatsheet",
@@ -157,7 +157,7 @@
     "author": "pifuyuini",
     "date": "2026-01-15",
     "desc": "面向科研论文的个人 LaTeX 小技巧合集。",
-    "image": "/bg/Skadi_by_the_Sea.jpg"
+    "image": "/bg/article-covers/latex_cheatsheet.jpg"
   }, 
   {
     "id": "ddm_intro",
@@ -165,7 +165,7 @@
     "author": "pifuyuini",
     "date": "2026-01-11",
     "desc": "智能增强的非线性动力学数据驱动建模旨在融合物理机理与数据学习，构建兼具精度、可解释性与外推能力的动力学模型。其核心是在建模与辨识协同框架下，通过稀疏结构、算子学习与深度网络等方法实现结构与参数的联合发现。",
-    "image": "/bg/Qingming_Xi.JPG"
+    "image": "/bg/article-covers/ddm_intro.jpg"
   },
   {
     "id": "A_First_Look_at_A4_Layout",
@@ -173,7 +173,7 @@
     "author": "pifuyuini",
     "date": "2025-12-25",
     "desc": "本笔记以标准 A4 纸张为起点，基于一组具体的页面参数，对正文区域、图像尺寸以及常用排版单位之间的关系进行严格计算和说明。",
-    "image": "/bg/Skadi_by_the_Sea.jpg"
+    "image": "/bg/article-covers/A_First_Look_at_A4_Layout.jpg"
   },
   {
     "id": "svd_intro",
@@ -181,7 +181,7 @@
     "author": "pifuyuini",
     "date": "2025-12-07",
     "desc": "一篇介绍 SVD 的基础笔记。",
-    "image": "/bg/Qingming_Xi.JPG"
+    "image": "/bg/article-covers/svd_intro.jpg"
   },
   {
     "id": "deep_learning_playnote",
@@ -189,7 +189,7 @@
     "author": "pifuyuini",
     "date": "2025-11-25",
     "desc": "从指标、数据划分、baseline 到超参数搜索与误差分析，整理一套面向深度学习实验调优的工程化方法论。",
-    "image": "/bg/neighbor.jpeg"
+    "image": "/bg/article-covers/deep_learning_playnote.jpg"
   },
   {
     "id": "learn_pytorch",
@@ -197,7 +197,7 @@
     "author": "pifuyuini",
     "date": "2025-11-14",
     "desc": "以 Tensor 为核心入口，连接索引、形状、运算、设备、自动求导与 DQN 实例，建立 PyTorch 的实践骨架。",
-    "image": "/bg/research.png"
+    "image": "/bg/article-covers/learn_pytorch.jpg"
   },
   {
     "id": "control_personal_note",
@@ -205,7 +205,7 @@
     "author": "pifuyuini",
     "date": "2025-11-01",
     "desc": "以两级质量—弹簧—阻尼系统为贯穿例子，从动力学建模、状态空间到噪声与控制分析建立一套可计算的系统框架。",
-    "image": "/bg/Qingming_Xi.JPG"
+    "image": "/bg/article-covers/control_personal_note.jpg"
   },
   {
     "id": "astro_ml_guide",
@@ -213,7 +213,7 @@
     "author": "pifuyuini",
     "date": "2025-11-01",
     "desc": "以科学问题为中心，把 AI4S 项目拆解为决策目标、物理一致的数据工程、可解释评估与可复现实验管理。",
-    "image": "/bg/neighbor.jpeg"
+    "image": "/bg/article-covers/astro_ml_guide.jpg"
   },
   {
     "id": "Introduction_to_the_Two_Stage_Torsion_Pendulum",
@@ -221,7 +221,7 @@
     "author": "pifuyuini",
     "date": "2025-09-27",
     "desc": "从一级扭摆的直觉出发，解释两级扭摆如何通过共模隔离与差模响应服务于精密测量。",
-    "image": "/bg/Qingming_Xi.JPG"
+    "image": "/bg/article-covers/Introduction_to_the_Two_Stage_Torsion_Pendulum.jpg"
   },
   {
     "id": "learn_rust",
@@ -229,7 +229,7 @@
     "author": "liuyinchu",
     "date": "2025-09-20",
     "desc": "从 rustup 与 Cargo 启动，沿着所有权、借用、模式匹配与错误处理理解 Rust 的安全编程模型。",
-    "image": "/bg/sakura_valley.png"
+    "image": "/bg/article-covers/learn_rust.jpg"
   },
   {
     "id": "note_of_configure_server",
@@ -237,7 +237,7 @@
     "author": "liuyinchu",
     "date": "2025-09-06",
     "desc": "一份从 SSH 登录、shell 环境、包管理到开发工具配置的云服务器搭建记录，保留实际踩坑与迁移细节。",
-    "image": "/bg/sakura_valley.png"
+    "image": "/bg/article-covers/note_of_configure_server.jpg"
   },
   {
     "id": "kitty_config_log",
@@ -245,7 +245,7 @@
     "author": "pifuyuini",
     "date": "2025-07-19",
     "desc": "把终端调成顺手的工作台：从字体、主题、光标到 kitten 与 SSH，记录 kitty 的配置与使用细节。",
-    "image": "/bg/sakura_valley.png"
+    "image": "/bg/article-covers/kitty_config_log.jpg"
   },
   {
     "id": "solid_physics_note2",
@@ -253,7 +253,7 @@
     "author": "pifuyuini",
     "date": "2025-07-01",
     "desc": "从局域轨道到布洛赫波，本篇梳理周期性晶格如何将孤立能级展开为能带，并建立倒空间与布里渊区的基本语言。",
-    "image": "/bg/visitor.jpeg"
+    "image": "/bg/article-covers/solid_physics_note2.jpg"
   },
   {
     "id": "solid_physics_note3",
@@ -261,7 +261,7 @@
     "author": "pifuyuini",
     "date": "2025-07-01",
     "desc": "以费米面为主线，本篇说明布洛赫电子在能带、电场、磁场与散射中的运动规律，以及这些规律如何决定材料的导电性质。",
-    "image": "/bg/visitor.jpeg"
+    "image": "/bg/article-covers/solid_physics_note3.jpg"
   },
   {
     "id": "solid_physics_note4",
@@ -269,7 +269,7 @@
     "author": "pifuyuini",
     "date": "2025-07-01",
     "desc": "从一维原子链到连续弹性场，本篇介绍晶格振动如何形成声子，并展示声子在相变、谱学和材料输运中的核心作用。",
-    "image": "/bg/visitor.jpeg"
+    "image": "/bg/article-covers/solid_physics_note4.jpg"
   },
   {
     "id": "naming_guide",
@@ -277,7 +277,7 @@
     "author": "pifuyuini",
     "date": "2025-03-01",
     "desc": "规范命名对于代码的可读性和长期维护至关重要。本文将探讨一些常见的命名场景并给出建议。",
-    "image": "/bg/neighbor.jpeg"
+    "image": "/bg/article-covers/naming_guide.jpg"
   },
   {
     "id": "learn_python",
@@ -285,6 +285,6 @@
     "author": "pifuyuini",
     "date": "2025-01-01",
     "desc": "人生苦短，我学 Python ！",
-    "image": "/bg/spring.jpg"
+    "image": "/bg/article-covers/learn_python.jpg"
   }
 ]
