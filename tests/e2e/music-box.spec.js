@@ -100,6 +100,105 @@ async function dragPart(page, part, isMobile) {
   }
 }
 
+
+async function clickControl(page, id, isMobile) {
+  const control = page.getByTestId(id)
+  if (isMobile) await control.tap()
+  else await control.click()
+}
+
+async function placePart(page, type, isMobile, position = { x: 0.32, y: 0.4 }) {
+  const parts = page.getByTestId('music-part')
+  const count = await parts.count()
+  await clickControl(page, 'music-add-' + type, isMobile)
+  await expect(page.getByTestId('music-add-' + type)).toHaveAttribute('aria-pressed', 'true')
+  await expect(parts).toHaveCount(count)
+  const board = page.getByTestId('music-board')
+  await board.scrollIntoViewIfNeeded()
+  const point = await board.evaluate((svg, relative) => {
+    const view = svg.viewBox.baseVal
+    const world = { x: view.x + view.width * relative.x, y: view.y + view.height * relative.y }
+    const client = new DOMPoint(world.x, world.y).matrixTransform(svg.getScreenCTM())
+    return { world, client: { x: client.x, y: client.y } }
+  }, position)
+  if (isMobile) await page.touchscreen.tap(point.client.x, point.client.y)
+  else await page.mouse.click(point.client.x, point.client.y)
+  await expect(parts).toHaveCount(count + 1)
+  await expect(page.getByTestId('music-tool-select')).toHaveAttribute('aria-pressed', 'true')
+  const id = await page.getByTestId('music-selection').inputValue()
+  expect(id).not.toBe('')
+  const part = page.locator('[data-testid="music-part"][data-part-id="' + id + '"]')
+  await expect(part).toHaveAttribute('data-type', type)
+  expect(Math.abs(Number(await part.getAttribute('data-x')) - point.world.x)).toBeLessThan(3)
+  expect(Math.abs(Number(await part.getAttribute('data-y')) - point.world.y)).toBeLessThan(3)
+  return { id, part }
+}
+
+async function expectNearbyMobileEditing(page, isMobile) {
+  if (!isMobile) return
+  const ids = ['music-board', 'music-audition', 'music-duplicate', 'music-delete', 'music-undo', 'music-redo']
+  const boxes = []
+  for (const id of ids) {
+    const control = page.getByTestId(id)
+    await expect(control).toBeVisible()
+    boxes.push(await control.boundingBox())
+  }
+  const top = Math.min(...boxes.map((box) => box.y))
+  const bottom = Math.max(...boxes.map((box) => box.y + box.height))
+  expect(bottom - top, 'board and frequent edit actions should fit together near one phone viewport')
+    .toBeLessThanOrEqual(page.viewportSize().height - 64)
+  await expectNoHorizontalOverflow(page)
+}
+
+async function installAudioProbe(page) {
+  await page.addInitScript(() => {
+    const NativeAudioContext = window.AudioContext
+    const probe = { contexts: [], taps: [] }
+    window.__musicAudioProbe = probe
+    window.AudioContext = class extends NativeAudioContext {
+      constructor(...args) {
+        super(...args)
+        probe.contexts.push(this)
+      }
+
+      createDynamicsCompressor(...args) {
+        const compressor = super.createDynamicsCompressor(...args)
+        const analyser = this.createAnalyser()
+        analyser.fftSize = 2048
+        // A read-only branch leaves the original destination connection intact.
+        compressor.connect(analyser)
+        probe.taps.push({ analyser, samples: new Float32Array(analyser.fftSize) })
+        return compressor
+      }
+    }
+  })
+}
+
+function readAudio(page) {
+  return page.evaluate(() => {
+    const probe = window.__musicAudioProbe
+    let peak = 0
+    for (const { analyser, samples } of probe.taps) {
+      analyser.getFloatTimeDomainData(samples)
+      for (const sample of samples) peak = Math.max(peak, Math.abs(sample))
+    }
+    return {
+      states: probe.contexts.map((context) => context.state),
+      peak,
+      hits: Number(document.querySelector('[data-testid="music-hit-count"]').textContent),
+    }
+  })
+}
+
+async function expectAudible(page) {
+  let peak = 0
+  await expect.poll(async () => {
+    peak = Math.max(peak, (await readAudio(page)).peak)
+    return peak
+  }, { intervals: [25, 50, 100], timeout: 10_000 }).toBeGreaterThan(0.0001)
+  return peak
+}
+
 test('the Code project card opens Music Box in its existing navigation section', async ({
   page,
   isMobile,
@@ -127,69 +226,95 @@ test('the Code project card opens Music Box in its existing navigation section',
   await popup.close()
 })
 
-test('real marble collisions play, pause in place, resume, and reset', async ({ page }) => {
+test('the default parade uses several entrances, advances sections, and pauses in place', async ({ page }) => {
   const audit = await openBox(page)
+  await expect(page.getByTestId('music-preset')).toHaveValue('parade')
+  const score = page.getByTestId('music-score-state')
+  await expect(score).toContainText('整队')
   const play = page.getByTestId('music-play')
   await play.click()
   await expect(play).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(() => page.getByTestId('music-ball').count()).toBeGreaterThan(0)
   const startingPositions = await ballPositions(page)
+  const entrances = []
+  await expect.poll(async () => {
+    const upperBalls = await page.getByTestId('music-ball').evaluateAll((balls) =>
+      balls.filter((ball) => Number(ball.getAttribute('cy')) <= 50)
+        .map((ball) => Number(ball.getAttribute('cx'))),
+    )
+    for (const x of upperBalls) {
+      if (entrances.every((known) => Math.abs(known - x) > 60)) entrances.push(x)
+    }
+    return entrances.length
+  }, { intervals: [25, 50, 75], timeout: 6_000 }).toBeGreaterThanOrEqual(3)
   await expect.poll(() => ballPositions(page)).not.toEqual(startingPositions)
   await expect.poll(() => hitCount(page), { timeout: 10_000 }).toBeGreaterThan(0)
+  await expect(score).toContainText('起行', { timeout: 10_000 })
 
   await play.click()
   await expect(play).toHaveAttribute('aria-pressed', 'false')
   const pausedHits = await hitCount(page)
   const pausedPositions = await ballPositions(page)
+  const pausedScore = await score.textContent()
   expect(pausedPositions.length).toBeGreaterThan(0)
-  // Several animation frames must pass without either physics or hits advancing.
+  // Several animation frames must pass without physics or the score advancing.
   await page.waitForTimeout(350)
   expect(await hitCount(page)).toBe(pausedHits)
   expect(await ballPositions(page)).toEqual(pausedPositions)
+  await expect(score).toHaveText(pausedScore)
 
   await play.click()
   await expect.poll(() => hitCount(page), { timeout: 10_000 }).toBeGreaterThan(pausedHits)
+  await expect.poll(() => score.textContent()).not.toBe(pausedScore)
   await page.getByTestId('music-reset').click()
   await expectStopped(page)
+  await expect(score).toContainText('整队')
   await finishAudit(page, audit)
 })
 
-test('parts can be added, dragged, tuned, removed, and restored after saving', async ({
+test('placing, auditioning, copying, undoing, and saving form one editing loop', async ({
   page,
   isMobile,
 }) => {
+  await installAudioProbe(page)
   const audit = await openBox(page)
   await page.getByTestId('music-preset').selectOption('blank')
   const parts = page.getByTestId('music-part')
   await expect(parts).toHaveCount(0)
 
-  await page.getByTestId('music-add-bell').click()
-  await expect(parts).toHaveCount(1)
-  const bellId = await page.getByTestId('music-selection').inputValue()
-  expect(bellId).not.toBe('')
-  const bell = page.locator('[data-testid="music-part"][data-part-id="' + bellId + '"]')
-  await page.getByTestId('music-note').selectOption('5')
-  const beforeDrag = (await layoutSnapshot(page))[0]
-  await dragPart(page, bell, isMobile)
-  await expect.poll(async () => {
-    const after = (await layoutSnapshot(page))[0]
-    return Math.hypot(after.x - beforeDrag.x, after.y - beforeDrag.y)
-  }).toBeGreaterThan(30)
+  const { id: bellId } = await placePart(page, 'bell', isMobile)
+  await expectNearbyMobileEditing(page, isMobile)
+  await clickControl(page, 'music-note-5', isMobile)
+  await expect(page.getByTestId('music-note')).toHaveValue('5')
+  await expectAudible(page)
+  await expectStopped(page)
+  await expect.poll(async () => (await readAudio(page)).peak, { timeout: 5_000 })
+    .toBeLessThan(0.00001)
+  await clickControl(page, 'music-audition', isMobile)
+  await expectAudible(page)
+  await expectStopped(page)
 
-  await page.getByTestId('music-add-ramp').click()
+  await clickControl(page, 'music-duplicate', isMobile)
   await expect(parts).toHaveCount(2)
-  const rampId = await page.getByTestId('music-selection').inputValue()
+  await expect(page.getByTestId('music-note')).toHaveValue('5')
+  const copiedLayout = await layoutSnapshot(page)
+  expect(copiedLayout[0].x === copiedLayout[1].x && copiedLayout[0].y === copiedLayout[1].y).toBe(false)
+  await clickControl(page, 'music-undo', isMobile)
+  await expect(parts).toHaveCount(1)
+  await clickControl(page, 'music-redo', isMobile)
+  await expect.poll(() => layoutSnapshot(page)).toEqual(copiedLayout)
+
+  const { id: rampId } = await placePart(page, 'ramp', isMobile, { x: 0.62, y: 0.64 })
   const angle = page.getByTestId('music-angle')
   const oldAngle = Number(await angle.inputValue())
-  await angle.focus()
-  await angle.press('ArrowRight')
-  await expect(angle).toHaveValue(String(oldAngle + 1))
+  await clickControl(page, 'music-angle-more', isMobile)
+  await expect(angle).toHaveValue(String(oldAngle + 15))
   const savedAngle = await angle.inputValue()
 
-  await page.getByTestId('music-add-drum').click()
+  await placePart(page, 'drum', isMobile, { x: 0.76, y: 0.3 })
+  await expect(parts).toHaveCount(4)
+  await clickControl(page, 'music-delete', isMobile)
   await expect(parts).toHaveCount(3)
-  await page.getByTestId('music-delete').click()
-  await expect(parts).toHaveCount(2)
   await expect(page.locator('[data-testid="music-part"][data-type="drum"]')).toHaveCount(0)
 
   const savedLayout = await layoutSnapshot(page)
@@ -199,7 +324,7 @@ test('parts can be added, dragged, tuned, removed, and restored after saving', a
   // Unsaved removal must not replace the layout explicitly saved by the user.
   await page.getByTestId('music-selection').selectOption(rampId)
   await page.getByTestId('music-delete').click()
-  await expect(parts).toHaveCount(1)
+  await expect(parts).toHaveCount(2)
 
   await page.reload({ waitUntil: 'domcontentloaded' })
   await expect(page.getByTestId('music-box')).toBeVisible()
@@ -212,23 +337,19 @@ test('parts can be added, dragged, tuned, removed, and restored after saving', a
   await finishAudit(page, audit)
 })
 
-test('the second musical preset supports a single marble without continuous playback', async ({
-  page,
-}) => {
+test('a single marble does not start the parade sequence', async ({ page }) => {
   const audit = await openBox(page)
-  const preset = page.getByTestId('music-preset')
-  const alternative = await preset.locator('option').evaluateAll((options) =>
-    options.map((option) => option.value).find((value) => !['cascade', 'blank'].includes(value)),
-  )
-  expect(alternative).toBeTruthy()
-  await preset.selectOption(alternative)
+  await page.getByTestId('music-preset').selectOption('parade')
   await expectStopped(page)
   await expect.poll(() => page.getByTestId('music-part').count()).toBeGreaterThan(0)
+  const score = page.getByTestId('music-score-state')
+  const idleScore = await score.textContent()
   await page.getByTestId('music-drop').click()
   await expect(page.getByTestId('music-ball')).toHaveCount(1)
   await expect.poll(() => hitCount(page), { timeout: 10_000 }).toBeGreaterThan(0)
   await expect(page.getByTestId('music-ball')).toHaveCount(0, { timeout: 15_000 })
   await expect(page.getByTestId('music-play')).toHaveAttribute('aria-pressed', 'false')
+  await expect(score).toHaveText(idleScore)
   const completedHits = await hitCount(page)
   await page.waitForTimeout(800)
   await expect(page.getByTestId('music-ball')).toHaveCount(0)
@@ -247,6 +368,7 @@ test('sound and tempo controls remain operable at the current viewport', async (
   await mute.click()
   await expect(mute).toHaveAttribute('aria-pressed', 'false')
 
+  await page.getByTestId('music-settings').locator('summary').click()
   for (const id of ['music-volume', 'music-tempo']) {
     const slider = page.getByTestId(id)
     const oldValue = Number(await slider.inputValue())
@@ -254,6 +376,13 @@ test('sound and tempo controls remain operable at the current viewport', async (
     await slider.press('ArrowLeft')
     await expect(slider).toHaveValue(String(oldValue - 1))
   }
+  // Range inputs retain focus after editing but have no native undo history.
+  const tempo = page.getByTestId('music-tempo')
+  const editedTempo = Number(await tempo.inputValue())
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect(tempo).toHaveValue(String(editedTempo + 1))
+  await page.keyboard.press('ControlOrMeta+Shift+z')
+  await expect(tempo).toHaveValue(String(editedTempo))
   await expectStopped(page)
   await finishAudit(page, audit)
 })
@@ -287,51 +416,13 @@ test('actual Web Audio produces PCM, mutes during collisions, and closes on rout
   page,
   isMobile,
 }, testInfo) => {
-  await page.addInitScript(() => {
-    const NativeAudioContext = window.AudioContext
-    const probe = { contexts: [], taps: [] }
-    window.__musicAudioProbe = probe
-    window.AudioContext = class extends NativeAudioContext {
-      constructor(...args) {
-        super(...args)
-        probe.contexts.push(this)
-      }
-
-      createDynamicsCompressor(...args) {
-        const compressor = super.createDynamicsCompressor(...args)
-        const analyser = this.createAnalyser()
-        analyser.fftSize = 2048
-        // A read-only branch leaves the original destination connection intact.
-        compressor.connect(analyser)
-        probe.taps.push({ analyser, samples: new Float32Array(analyser.fftSize) })
-        return compressor
-      }
-    }
-  })
-
+  await installAudioProbe(page)
   const audit = await openBox(page)
   expect(await page.evaluate(() => window.__musicAudioProbe.contexts.length)).toBe(0)
-  const readAudio = () => page.evaluate(() => {
-    const probe = window.__musicAudioProbe
-    let peak = 0
-    for (const { analyser, samples } of probe.taps) {
-      analyser.getFloatTimeDomainData(samples)
-      for (const sample of samples) peak = Math.max(peak, Math.abs(sample))
-    }
-    return {
-      states: probe.contexts.map((context) => context.state),
-      peak,
-      hits: Number(document.querySelector('[data-testid="music-hit-count"]').textContent),
-    }
-  })
 
   await page.getByTestId('music-play').click()
-  await expect.poll(async () => (await readAudio()).states).toContain('running')
-  let audiblePeak = 0
-  await expect.poll(async () => {
-    audiblePeak = Math.max(audiblePeak, (await readAudio()).peak)
-    return audiblePeak
-  }, { intervals: [25, 50, 100], timeout: 10_000 }).toBeGreaterThan(0.0001)
+  await expect.poll(async () => (await readAudio(page)).states).toContain('running')
+  const audiblePeak = await expectAudible(page)
 
   await page.getByTestId('music-mute').click()
   await expect(page.getByTestId('music-mute')).toHaveAttribute('aria-pressed', 'true')
@@ -340,7 +431,7 @@ test('actual Web Audio produces PCM, mutes during collisions, and closes on rout
   let mutedPeak = 0
   let mutedHits = 0
   await expect.poll(async () => {
-    const sample = await readAudio()
+    const sample = await readAudio(page)
     if (sample.peak > 0.00001) {
       quietStartHits = null
       quietSamples = 0
@@ -356,11 +447,7 @@ test('actual Web Audio produces PCM, mutes during collisions, and closes on rout
   }, { intervals: [25, 50, 100], timeout: 10_000 }).toBe(true)
 
   await page.getByTestId('music-mute').click()
-  let restoredPeak = 0
-  await expect.poll(async () => {
-    restoredPeak = Math.max(restoredPeak, (await readAudio()).peak)
-    return restoredPeak
-  }, { intervals: [25, 50, 100], timeout: 10_000 }).toBeGreaterThan(0.0001)
+  const restoredPeak = await expectAudible(page)
 
   const codeLink = await codeNavigation(page, isMobile)
   await codeLink.click()
@@ -385,7 +472,7 @@ test('deleting a held part and releasing outside the board allows another drag',
 }) => {
   const audit = await openBox(page)
   await page.getByTestId('music-preset').selectOption('blank')
-  await page.getByTestId('music-add-bell').click()
+  await placePart(page, 'bell', isMobile)
   const parts = page.getByTestId('music-part')
   await expect(parts).toHaveCount(1)
   const heldPart = parts.first()
@@ -438,7 +525,7 @@ test('deleting a held part and releasing outside the board allows another drag',
     }
   }
 
-  await page.getByTestId('music-add-drum').click()
+  await placePart(page, 'drum', isMobile)
   await expect(parts).toHaveCount(1)
   const beforeDrag = (await layoutSnapshot(page))[0]
   await dragPart(page, parts.first(), isMobile)
@@ -446,5 +533,104 @@ test('deleting a held part and releasing outside the board allows another drag',
     const after = (await layoutSnapshot(page))[0]
     return Math.hypot(after.x - beforeDrag.x, after.y - beforeDrag.y)
   }).toBeGreaterThan(30)
+  await finishAudit(page, audit)
+})
+
+test('one undo restores a whole drag and history shortcuts respect native controls', async ({
+  page,
+  isMobile,
+}) => {
+  const audit = await openBox(page)
+  await page.getByTestId('music-preset').selectOption('blank')
+  const { part } = await placePart(page, 'bell', isMobile)
+  const beforeDrag = await layoutSnapshot(page)
+  await dragPart(page, part, isMobile)
+  await expect.poll(() => layoutSnapshot(page)).not.toEqual(beforeDrag)
+  const afterDrag = await layoutSnapshot(page)
+
+  // Undo belongs to the focused form control, not the canvas history.
+  await page.getByTestId('music-note').focus()
+  await page.keyboard.press('ControlOrMeta+z')
+  expect(await layoutSnapshot(page)).toEqual(afterDrag)
+
+  await clickControl(page, 'music-undo', isMobile)
+  await expect.poll(() => layoutSnapshot(page)).toEqual(beforeDrag)
+  await clickControl(page, 'music-redo', isMobile)
+  await expect.poll(() => layoutSnapshot(page)).toEqual(afterDrag)
+  await page.getByTestId('music-tool-select').focus()
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect.poll(() => layoutSnapshot(page)).toEqual(beforeDrag)
+  await page.keyboard.press('ControlOrMeta+Shift+z')
+  await expect.poll(() => layoutSnapshot(page)).toEqual(afterDrag)
+
+  await clickControl(page, 'music-clear', isMobile)
+  await expect(page.getByTestId('music-part')).toHaveCount(0)
+  await clickControl(page, 'music-undo', isMobile)
+  await expect.poll(() => layoutSnapshot(page)).toEqual(afterDrag)
+  await page.getByTestId('music-preset').selectOption('cascade')
+  await expect.poll(() => page.getByTestId('music-part').count()).toBeGreaterThan(1)
+  await clickControl(page, 'music-undo', isMobile)
+  await expect.poll(() => layoutSnapshot(page)).toEqual(afterDrag)
+  await finishAudit(page, audit)
+})
+
+test('a saved v1 layout without a score restores its instruments and free rhythm', async ({ page }) => {
+  const legacy = {
+    version: 1,
+    emitterX: 240,
+    tempo: 108,
+    parts: [
+      { id: 'legacy-bell', type: 'bell', x: 240, y: 220, note: 2 },
+      { id: 'legacy-ramp', type: 'ramp', x: 410, y: 350, angle: 25, length: 132 },
+    ],
+  }
+  await page.addInitScript(({ key, layout }) => {
+    localStorage.setItem(key, JSON.stringify(layout))
+  }, { key: LAYOUT_KEY, layout: legacy })
+  const audit = await openBox(page)
+  await expect(page.getByTestId('music-part')).toHaveCount(2)
+  expect(await layoutSnapshot(page)).toEqual(legacy.parts.map(({ id, type, x, y }) => ({ id, type, x, y })))
+  await expect(page.getByTestId('music-tempo')).toHaveValue('108')
+  await page.getByTestId('music-selection').selectOption('legacy-bell')
+  await expect(page.getByTestId('music-note')).toHaveValue('2')
+  await page.getByTestId('music-selection').selectOption('legacy-ramp')
+  await expect(page.getByTestId('music-angle')).toHaveValue('25')
+  await page.getByTestId('music-save').click()
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).score, LAYOUT_KEY)).toBeNull()
+  await finishAudit(page, audit)
+})
+
+test('an explicitly selected parade keeps its complete score and edits after reload', async ({ page }) => {
+  await installAudioProbe(page)
+  const audit = await openBox(page)
+  await page.getByTestId('music-preset').selectOption('cascade')
+  await page.getByTestId('music-preset').selectOption('parade')
+  await expect(page.getByTestId('music-tempo')).toHaveValue('144')
+  const bellId = await page.locator('[data-testid="music-part"][data-type="bell"]').first()
+    .getAttribute('data-part-id')
+  await page.getByTestId('music-selection').selectOption(bellId)
+  await page.getByTestId('music-note').selectOption('7')
+  const savedLayout = await layoutSnapshot(page)
+  await page.getByTestId('music-save').click()
+  const savedScore = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).score, LAYOUT_KEY)
+  expect(savedScore).toMatchObject({ id: 'parade', lengthBeats: 32, beatsPerBar: 4 })
+  expect(new Set(savedScore.emitters.map((emitter) => emitter.x)).size).toBeGreaterThanOrEqual(3)
+  expect(savedScore.events.length).toBeGreaterThan(0)
+
+  await page.getByTestId('music-preset').selectOption('blank')
+  await expect(page.getByTestId('music-part')).toHaveCount(0)
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await expect(page.getByTestId('music-box')).toBeVisible()
+  await expectStopped(page)
+  await expect.poll(() => layoutSnapshot(page)).toEqual(savedLayout)
+  await page.getByTestId('music-selection').selectOption(bellId)
+  await expect(page.getByTestId('music-note')).toHaveValue('7')
+  await page.getByTestId('music-save').click()
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).score, LAYOUT_KEY)).toEqual(savedScore)
+  await page.getByTestId('music-play').click()
+  await expectAudible(page)
+  await expect(page.getByTestId('music-score-state')).toContainText('起行', { timeout: 10_000 })
+  await page.getByTestId('music-reset').click()
+  await expectStopped(page)
   await finishAudit(page, audit)
 })

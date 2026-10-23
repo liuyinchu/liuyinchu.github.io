@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { createPreset, createPart, NOTES } from '../src/components/music-box/presets.js'
 import { createSimulation } from '../src/components/music-box/simulation.js'
 import { createAudioEngine } from '../src/components/music-box/audio.js'
+import { createSequencer } from '../src/components/music-box/sequencer.js'
 
 function run(simulation, seconds, frame = 1 / 60) {
   for (let time = 0; time < seconds; time += frame) simulation.step(frame)
@@ -120,4 +121,68 @@ test('audio is lazy, safely silent before unlock, and reports absent browser sup
   audio.setMuted(true)
   await audio.dispose()
   assert.equal(await audio.unlock(), false)
+})
+
+test('parade score copies can be edited without changing future presets or free layouts', () => {
+  const first = createPreset('parade')
+  const second = createPreset('parade')
+  first.score.emitters[0].x = 400
+  first.score.events[0].beat = 5
+  first.score.sections[0].label = 'Changed'
+  assert.equal(second.score.emitters[0].x, 92)
+  assert.equal(second.score.events[0].beat, 0)
+  assert.equal(second.score.sections[0].label, '整队')
+  for (const name of ['cascade', 'garden', 'blank']) assert.equal(createPreset(name).score, null)
+})
+
+test('parade performs two complete loops with stable drums and real alternating bell voices', () => {
+  const preset = createPreset('parade')
+  const drops = new Map()
+  const hits = []
+  let time = 0
+  let peakBalls = 0
+  const simulation = createSimulation({
+    parts: preset.parts,
+    onHit: hit => hits.push({ ...hit, time }),
+  })
+  const sequencer = createSequencer({
+    onDrop: event => drops.set(simulation.drop(event.x), { ...event, time }),
+  })
+  sequencer.setScore(preset.score)
+  sequencer.step(0, preset.tempo)
+  const frames = Math.round(2 * preset.score.lengthBeats * 60 / preset.tempo * 240)
+  for (let frame = 1; frame < frames; frame++) {
+    time = frame / 240
+    sequencer.step(1 / 240, preset.tempo)
+    simulation.step(1 / 240)
+    peakBalls = Math.max(peakBalls, simulation.getBalls().length)
+  }
+  for (let frame = 0; frame < 5 * 240; frame++) {
+    time += 1 / 240
+    simulation.step(1 / 240)
+  }
+
+  assert.equal(drops.size, preset.score.events.length * 2)
+  const firstHits = new Map()
+  for (const hit of hits) if (!firstHits.has(hit.ballId)) firstHits.set(hit.ballId, hit)
+  assert.equal(firstHits.size, drops.size, 'every scheduled marble must sound')
+  for (const [ballId, drop] of drops) {
+    const first = firstHits.get(ballId)
+    const targetIndex = preset.score.emitters.findIndex(emitter => emitter.id === drop.emitterId)
+    assert.equal(first.part.id, preset.parts[targetIndex].id, 'each entrance must play its intended voice')
+    assert.ok(first.time - drop.time > 0.38 && first.time - drop.time < 0.45, 'first strikes stay within one short beat of the score')
+  }
+
+  const pulseHits = [...firstHits.values()].filter(hit => drops.get(hit.ballId).emitterId === 'pulse')
+  assert.equal(pulseHits.length, 64, 'the bass drum must keep all sixty-four quarter-note beats')
+  for (let index = 1; index < pulseHits.length; index++) {
+    const interval = pulseHits[index].time - pulseHits[index - 1].time
+    assert.ok(Math.abs(interval - 60 / preset.tempo) < 0.025, 'the main drum pulse must remain steady')
+  }
+  const bellNotes = new Set(hits.filter(hit => hit.part.type === 'bell').map(hit => hit.part.note))
+  assert.ok([0, 3, 5, 6, 7].every(note => bellNotes.has(note)), 'low C/G and high C/D/E phrases must all be audible')
+  assert.equal(new Set(hits.filter(hit => hit.part.type === 'drum').map(hit => hit.part.note)).size, 2)
+  assert.ok(hits.length > drops.size * 2, 'lower rails must produce secondary collision phrases')
+  assert.ok(peakBalls < 24, 'the composed tempo must leave room for every ongoing trajectory')
+  assert.equal(simulation.getBalls().length, 0, 'the last phrase must naturally leave the board')
 })
