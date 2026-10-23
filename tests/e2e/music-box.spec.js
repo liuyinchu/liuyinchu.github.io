@@ -226,8 +226,9 @@ test('the Code project card opens Music Box in its existing navigation section',
   await popup.close()
 })
 
-test('the default parade uses several entrances, advances sections, and pauses in place', async ({ page }) => {
+test('the original parade uses several entrances, advances sections, and pauses in place', async ({ page }) => {
   const audit = await openBox(page)
+  await page.getByTestId('music-preset').selectOption('parade')
   await expect(page.getByTestId('music-preset')).toHaveValue('parade')
   const score = page.getByTestId('music-score-state')
   await expect(score).toContainText('整队')
@@ -630,6 +631,111 @@ test('an explicitly selected parade keeps its complete score and edits after rel
   await page.getByTestId('music-play').click()
   await expectAudible(page)
   await expect(page.getByTestId('music-score-state')).toContainText('起行', { timeout: 10_000 })
+  await page.getByTestId('music-reset').click()
+  await expectStopped(page)
+  await finishAudit(page, audit)
+})
+
+test('a placed string sounds and vibrates on collision, edits, and survives saving', async ({
+  page,
+  isMobile,
+}) => {
+  await installAudioProbe(page)
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  const audit = await openBox(page)
+  await page.getByTestId('music-preset').selectOption('blank')
+  const { id: stringId, part } = await placePart(page, 'string', isMobile, { x: 0.5, y: 0.4 })
+  await expectNearbyMobileEditing(page, isMobile)
+  const parts = page.getByTestId('music-part')
+  await expect(parts).toHaveCount(1)
+  await expect(page.getByTestId('music-note')).toHaveValue('8')
+  await expect(page.getByTestId('music-angle')).toHaveValue('0')
+  const wire = part.getByTestId('music-string-vibration')
+  await expect(wire).toBeVisible()
+  await expect(wire).toHaveAttribute('data-strike', '0')
+
+  // This board has only a string and has never been auditioned.
+  await clickControl(page, 'music-drop', isMobile)
+  await Promise.all([
+    expectAudible(page),
+    expect.poll(() => hitCount(page), { intervals: [25, 50, 100] }).toBeGreaterThan(0),
+    expect.poll(async () => Number(await wire.getAttribute('data-strike')), {
+      intervals: [25, 50, 100],
+    }).toBeGreaterThan(0),
+    expect.poll(() => wire.evaluate((element) =>
+      element.getAnimations().some((animation) => animation.playState === 'running'),
+    ), { intervals: [25, 50], timeout: 5_000 }).toBe(true),
+  ])
+  await page.getByTestId('music-reset').click()
+  await expectStopped(page)
+  await expect.poll(async () => (await readAudio(page)).peak, { timeout: 5_000 })
+    .toBeLessThan(0.00001)
+
+  await clickControl(page, 'music-note-12', isMobile)
+  await expect(page.getByTestId('music-note')).toHaveValue('12')
+  await expectAudible(page)
+  await expectStopped(page)
+  await clickControl(page, 'music-angle-more', isMobile)
+  await expect(page.getByTestId('music-angle')).toHaveValue('15')
+  await clickControl(page, 'music-duplicate', isMobile)
+  await expect(parts).toHaveCount(2)
+  const copiedId = await page.getByTestId('music-selection').inputValue()
+  expect(copiedId).not.toBe(stringId)
+  await clickControl(page, 'music-undo', isMobile)
+  await expect(parts).toHaveCount(1)
+  await clickControl(page, 'music-redo', isMobile)
+  await expect(parts).toHaveCount(2)
+  await page.getByTestId('music-selection').selectOption(copiedId)
+  await expect(page.getByTestId('music-note')).toHaveValue('12')
+  await expect(page.getByTestId('music-angle')).toHaveValue('15')
+
+  const savedLayout = await layoutSnapshot(page)
+  expect(savedLayout.every((item) => item.type === 'string')).toBe(true)
+  await page.getByTestId('music-save').click()
+  await page.getByTestId('music-delete').click()
+  await expect(parts).toHaveCount(1)
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await expect(page.getByTestId('music-box')).toBeVisible()
+  await expectStopped(page)
+  await expect.poll(() => layoutSnapshot(page)).toEqual(savedLayout)
+  for (const id of [stringId, copiedId]) {
+    await page.getByTestId('music-selection').selectOption(id)
+    await expect(page.getByTestId('music-note')).toHaveValue('12')
+    await expect(page.getByTestId('music-angle')).toHaveValue('15')
+  }
+  await finishAudit(page, audit)
+})
+
+test('the new string parade is a quiet default and performs several string voices', async ({
+  page,
+  isMobile,
+}) => {
+  await installAudioProbe(page)
+  const audit = await openBox(page)
+  const preset = page.getByTestId('music-preset')
+  const strings = page.locator('[data-testid="music-part"][data-type="string"]')
+  await expect(preset).toHaveValue('string-parade')
+  await expect.poll(() => strings.count()).toBeGreaterThanOrEqual(3)
+  expect(await page.evaluate(() => window.__musicAudioProbe.contexts.length)).toBe(0)
+
+  await preset.selectOption('parade')
+  await expect(strings).toHaveCount(0)
+  await preset.selectOption('string-parade')
+  await expectStopped(page)
+  await expect.poll(() => strings.count()).toBeGreaterThanOrEqual(3)
+  const score = page.getByTestId('music-score-state')
+  const initialScore = await score.textContent()
+  await clickControl(page, 'music-play', isMobile)
+  await Promise.all([
+    expectAudible(page),
+    expect.poll(() => strings.evaluateAll((parts) =>
+      parts.filter((part) =>
+        Number(part.querySelector('[data-testid="music-string-vibration"]').getAttribute('data-strike')) > 0,
+      ).length,
+    ), { intervals: [50, 100], timeout: 10_000 }).toBeGreaterThanOrEqual(3),
+  ])
+  await expect.poll(() => hitCount(page)).toBeGreaterThan(0)
+  await expect.poll(() => score.textContent()).not.toBe(initialScore)
   await page.getByTestId('music-reset').click()
   await expectStopped(page)
   await finishAudit(page, audit)

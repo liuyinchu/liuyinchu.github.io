@@ -186,3 +186,76 @@ test('parade performs two complete loops with stable drums and real alternating 
   assert.ok(peakBalls < 24, 'the composed tempo must leave room for every ongoing trajectory')
   assert.equal(simulation.getBalls().length, 0, 'the last phrase must naturally leave the board')
 })
+
+test('string parts keep saved note indices compatible and support real rotated-line collisions', () => {
+  assert.deepEqual(NOTES.slice(0, 8).map(note => note.label), ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5'])
+  const string = createPart('string', 400, 220)
+  assert.equal(string.angle, 0)
+  assert.equal(NOTES[string.note].label, 'C3')
+  const hits = []
+  const simulation = createSimulation({ parts: [string], onHit: hit => hits.push(hit) })
+  simulation.drop(400)
+  run(simulation, 0.8)
+  assert.equal(hits.length, 1)
+  assert.equal(hits[0].part.type, 'string')
+  assert.ok(simulation.getBalls()[0].vy < 0, 'the marble must rebound from the string')
+
+  simulation.reset()
+  simulation.setParts([{ ...string, angle: 30 }])
+  simulation.drop(400)
+  run(simulation, 0.8)
+  assert.ok(simulation.getBalls()[0].vx > 100, 'rotating the string must redirect the marble')
+  assert.ok(hits.length >= 2)
+})
+
+test('a marble resting on a string plucks once instead of buzzing with repeated impacts', () => {
+  const string = createPart('string', 400, 220)
+  const hits = []
+  const simulation = createSimulation({ parts: [string], onHit: hit => hits.push(hit) })
+  simulation.drop(10)
+  simulation.drop(400, 204)
+  run(simulation, 1.2)
+  assert.equal(hits.length, 1)
+})
+
+test('string parade keeps the original score available and plays all three strings through two loops', () => {
+  const original = createPreset('parade')
+  const preset = createPreset('string-parade')
+  assert.equal(original.score.name, '焰火游行')
+  assert.ok(original.parts.every(part => part.type !== 'string'))
+  assert.deepEqual(preset.score.events, original.score.events)
+  const drops = new Map()
+  const hits = []
+  let time = 0
+  let peakBalls = 0
+  const simulation = createSimulation({ parts: preset.parts, onHit: hit => hits.push({ ...hit, time }) })
+  const sequencer = createSequencer({ onDrop: event => drops.set(simulation.drop(event.x), event) })
+  sequencer.setScore(preset.score)
+  sequencer.step(0, preset.tempo)
+  const frames = Math.round(64 * 60 / preset.tempo * 240)
+  for (let frame = 1; frame < frames; frame++) {
+    time = frame / 240
+    sequencer.step(1 / 240, preset.tempo)
+    simulation.step(1 / 240)
+    peakBalls = Math.max(peakBalls, simulation.getBalls().length)
+  }
+  for (let frame = 0; frame < 5 * 240; frame++) {
+    time += 1 / 240
+    simulation.step(1 / 240)
+  }
+  const firstHits = new Map()
+  for (const hit of hits) if (!firstHits.has(hit.ballId)) firstHits.set(hit.ballId, hit)
+  assert.equal(drops.size, original.score.events.length * 2)
+  assert.equal(firstHits.size, drops.size)
+  for (const [ballId, hit] of firstHits) {
+    const entrance = preset.score.emitters.findIndex(emitter => emitter.id === drops.get(ballId).emitterId)
+    assert.equal(hit.part.id, preset.parts[entrance].id, 'the arranged entrance must still play its intended voice')
+  }
+  const strings = preset.parts.filter(part => part.type === 'string')
+  assert.equal(strings.length, 3)
+  assert.ok(strings.every(part => hits.some(hit => hit.part.id === part.id && hit.time < 4)), 'all three strings enter the opening phrase')
+  assert.ok(hits.filter(hit => hit.part.type === 'string').length >= 40)
+  assert.ok(hits.some(hit => hit.part.type === 'bell') && hits.some(hit => hit.part.type === 'drum'))
+  assert.ok(peakBalls < 24, 'the string arrangement must leave room for ongoing trajectories')
+  assert.equal(simulation.getBalls().length, 0)
+})

@@ -10,9 +10,15 @@ export const NOTES = [
   { label: 'C5', frequency: 523.25 },
   { label: 'D5', frequency: 587.33 },
   { label: 'E5', frequency: 659.25 },
+  { label: 'C3', frequency: 130.81 },
+  { label: 'D3', frequency: 146.83 },
+  { label: 'E3', frequency: 164.81 },
+  { label: 'G3', frequency: 196.0 },
+  { label: 'A3', frequency: 220.0 },
 ]
 
 export const PRESETS = [
+  { id: 'string-parade', name: '弦上焰火', description: '低音拨弦托起鼓点，高铃穿过余韵；让七路弹珠奏出更温暖的焰火。' },
   { id: 'parade', name: '焰火游行', description: '七路弹珠、四段推进；让鼓点领路，让高低铃声点亮夜空。' },
   { id: 'cascade', name: '铃声瀑布', description: '顺着斜坡落下，让五声音阶一层层亮起。' },
   { id: 'garden', name: '午后庭院', description: '木鼓和清铃交错，弹珠奏出轻盈的节拍。' },
@@ -26,7 +32,7 @@ export function createPart(type, x, y) {
     x,
     y,
     angle: type === 'ramp' ? 20 : 0,
-    note: 0,
+    note: type === 'string' ? 8 : 0,
   }
 }
 
@@ -95,7 +101,20 @@ function createParade() {
   }
 }
 
-export function createPreset(id = 'parade') {
+function createStringParade() {
+  const preset = createParade()
+  preset.parts[2] = arrange('string', 295, 104, 8, 44)
+  preset.parts[4] = arrange('string', 511, 104, 11, 44)
+  preset.parts[7] = arrange('string', 260, 332, 10, -20)
+  preset.score.id = 'string-parade'
+  preset.score.name = '弦上焰火'
+  preset.score.emitters[2].label = 'C3 弦'
+  preset.score.emitters[4].label = 'G3 弦'
+  return preset
+}
+
+export function createPreset(id = 'string-parade') {
+  if (id === 'string-parade') return createStringParade()
   if (id === 'parade') return createParade()
   if (id === 'blank') return { parts: [], emitterX: 400, tempo: 88, score: null }
   if (id === 'garden') {

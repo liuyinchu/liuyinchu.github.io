@@ -1,4 +1,5 @@
 import { NOTES } from './presets.js'
+import { createStringSamples } from './string-synthesis.js'
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
@@ -11,6 +12,7 @@ export function createAudioEngine() {
   let muted = false
   let disposed = false
   const voices = new Set()
+  const stringBuffers = new Map()
 
   function updateVolume() {
     if (!context || !master) return
@@ -88,6 +90,24 @@ export function createAudioEngine() {
     trackVoice([body, noise], [body, noise, bodyEnvelope, noiseEnvelope, filter], now + 0.24)
   }
 
+  function playString(frequency, strength) {
+    let buffer = stringBuffers.get(frequency)
+    if (!buffer) {
+      const samples = createStringSamples({ frequency, sampleRate: context.sampleRate })
+      buffer = context.createBuffer(1, samples.length, context.sampleRate)
+      buffer.copyToChannel(samples, 0)
+      stringBuffers.set(frequency, buffer)
+    }
+    const now = context.currentTime
+    const pluck = context.createBufferSource()
+    const gain = context.createGain()
+    pluck.buffer = buffer
+    gain.gain.setValueAtTime(0.3 * strength, now)
+    pluck.connect(gain)
+    gain.connect(master)
+    trackVoice([pluck], [pluck, gain], now + buffer.duration)
+  }
+
   return {
     async unlock() {
       if (disposed) return false
@@ -123,6 +143,7 @@ export function createAudioEngine() {
       const strength = clamp(speed / 650, 0.16, 1)
       if (part.type === 'bell') playBell(frequency, strength)
       else if (part.type === 'drum') playDrum(frequency, strength)
+      else if (part.type === 'string') playString(frequency, strength)
     },
     setVolume(nextVolume) {
       volume = clamp(nextVolume, 0, 1)
@@ -140,6 +161,7 @@ export function createAudioEngine() {
         for (const node of voice.nodes) node.disconnect()
       }
       voices.clear()
+      stringBuffers.clear()
       if (master) master.disconnect()
       if (compressor) compressor.disconnect()
       if (context && context.state !== 'closed') await context.close()

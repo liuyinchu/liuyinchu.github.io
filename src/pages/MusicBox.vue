@@ -8,12 +8,12 @@ import { createSequencer } from '../components/music-box/sequencer.js'
 
 const STORAGE_KEY = 'music-box-layout-v1'
 const MAX_PARTS = 64
-const initial = createPreset('parade')
+const initial = createPreset('string-parade')
 const parts = ref(initial.parts)
 const emitterX = ref(initial.emitterX)
 const tempo = ref(initial.tempo)
 const score = ref(initial.score || null)
-const presetId = ref('parade')
+const presetId = ref('string-parade')
 const selectedId = ref('')
 const activeTool = ref('select')
 const placementPoint = ref(null)
@@ -34,12 +34,14 @@ const hasSavedLayout = ref(false)
 const draggingId = ref('')
 const undoStack = shallowRef([])
 const redoStack = shallowRef([])
-const notice = ref('先听「焰火游行」，再选一个零件，改写自己的旋律。')
+const notice = ref('先听「弦上焰火」，再拨动一根弦，改写自己的旋律。')
 const partTypes = [
   { type: 'bell', name: '铃铛', hint: '清亮的音符' },
   { type: 'drum', name: '鼓', hint: '温暖的节拍' },
+  { type: 'string', name: '弦', hint: '温柔的拨弦音' },
   { type: 'ramp', name: '斜坡', hint: '改变弹珠方向' },
 ]
+const pitchOrderedNotes = NOTES.map((note, index) => ({ ...note, index })).sort((a, b) => a.frequency - b.frequency)
 const selectedPart = computed(() => parts.value.find(part => part.id === selectedId.value) || null)
 const isRunning = computed(() => isPlaying.value || isPreviewing.value)
 const stateLabel = computed(() => isPlaying.value ? '演奏中' : isPreviewing.value ? '单次试奏' : hasStarted.value ? '已暂停' : '准备就绪')
@@ -210,7 +212,7 @@ function setTool(type) {
 }
 function selectPart(id) { finishRangeEdit(); selectedId.value = id }
 function boundedPosition(part, x, y) {
-  const margin = part.type === 'ramp' ? 66 : 34
+  const margin = part.type === 'string' ? 78 : part.type === 'ramp' ? 66 : 34
   return { x: Math.round(clamp(x, margin, BOARD_WIDTH - margin)), y: Math.round(clamp(y, 70, BOARD_HEIGHT - margin)) }
 }
 function placePart(type, x, y) {
@@ -230,7 +232,7 @@ function updateSelected(field, value, rememberChange = true) {
   if (!part || part[field] === value) return
   const before = rememberChange ? editorSnapshot() : null
   setParts(parts.value.map(item => item.id === part.id ? { ...item, [field]: value } : item))
-  if (before) remember(before, field === 'note' ? '更改音符' : '旋转斜坡')
+  if (before) remember(before, field === 'note' ? '更改音符' : `旋转${typeName(part.type)}`)
 }
 function audition(part = selectedPart.value) {
   if (!part || part.type === 'ramp') return
@@ -241,7 +243,7 @@ function audition(part = selectedPart.value) {
   })
 }
 function setNote(value) { finishRangeEdit(); updateSelected('note', Number(value)); audition() }
-function rotateSelected(delta) { finishRangeEdit(); if (selectedPart.value?.type === 'ramp') updateSelected('angle', clamp(selectedPart.value.angle + delta, -75, 75)) }
+function rotateSelected(delta) { finishRangeEdit(); if (['ramp', 'string'].includes(selectedPart.value?.type)) updateSelected('angle', clamp(selectedPart.value.angle + delta, -75, 75)) }
 function duplicateSelected() {
   finishDrag(); finishRangeEdit()
   const source = selectedPart.value
@@ -318,7 +320,7 @@ function updateRange(field, raw) {
 function finishRangeEdit() {
   if (!rangeEdit) return
   const edit = rangeEdit; rangeEdit = null
-  remember(edit.before, { angle: '旋转斜坡', tempo: '调整速度', emitterX: '调整落球位置' }[edit.field])
+  remember(edit.before, { angle: '调整倾角', tempo: '调整速度', emitterX: '调整落球位置' }[edit.field])
 }
 function updateVolume() { audio.setVolume(volume.value / 100) }
 function toggleMuted() { muted.value = !muted.value; audio.setMuted(muted.value); notice.value = muted.value ? '已静音，演奏继续。' : '声音已开启。' }
@@ -341,11 +343,11 @@ function loadLayout(automatic = false) {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) { if (!automatic) notice.value = '此浏览器还没有保存的编排。'; return }
     const layout = JSON.parse(raw)
-    if (layout?.version !== 1 || !Array.isArray(layout.parts) || layout.parts.length > MAX_PARTS || !Number.isFinite(layout.emitterX) || !Number.isFinite(layout.tempo) || !validScore(layout.score) || !layout.parts.every(part => part && ['bell', 'drum', 'ramp'].includes(part.type) && typeof part.id === 'string' && Number.isFinite(part.x) && Number.isFinite(part.y) && (part.angle == null || Number.isFinite(part.angle)) && (part.note == null || Number.isInteger(part.note) && part.note >= 0 && part.note < NOTES.length))) throw new Error('Invalid saved layout')
+    if (layout?.version !== 1 || !Array.isArray(layout.parts) || layout.parts.length > MAX_PARTS || !Number.isFinite(layout.emitterX) || !Number.isFinite(layout.tempo) || !validScore(layout.score) || !layout.parts.every(part => part && ['bell', 'drum', 'ramp', 'string'].includes(part.type) && typeof part.id === 'string' && Number.isFinite(part.x) && Number.isFinite(part.y) && (part.angle == null || Number.isFinite(part.angle)) && (part.note == null || Number.isInteger(part.note) && part.note >= 0 && part.note < NOTES.length))) throw new Error('Invalid saved layout')
     finishDrag(); finishRangeEdit()
     const before = editorSnapshot()
     resetPerformance(false)
-    setParts(layout.parts.map(part => ({ ...part, ...boundedPosition(part, part.x, part.y), note: part.note ?? 0, angle: clamp(part.angle ?? (part.type === 'ramp' ? 20 : 0), -75, 75) })), false)
+    setParts(layout.parts.map(part => ({ ...part, ...boundedPosition(part, part.x, part.y), note: part.note ?? (part.type === 'string' ? 8 : 0), angle: clamp(part.angle ?? (part.type === 'ramp' ? 20 : 0), -75, 75) })), false)
     emitterX.value = clamp(layout.emitterX, 64, BOARD_WIDTH - 64); tempo.value = clamp(layout.tempo, 30, 180); score.value = layout.score || null
     sequencer.setScore(score.value); scoreState.value = sequencer.getState()
     selectedId.value = ''; activeTool.value = 'select'; presetId.value = 'custom'
@@ -421,7 +423,7 @@ onBeforeUnmount(() => {
             <div class="placement-tools" role="group" aria-label="选择放置工具">
               <button class="placement-tool" data-testid="music-tool-select" type="button" :aria-pressed="activeTool === 'select'" title="选择与移动零件（Esc）" @click="setTool('select')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 3 13 9-6 1-3 6Z"/><path d="m13 13 4 7"/></svg><span>选择</span></button>
               <button v-for="item in partTypes" :key="item.type" class="placement-tool" :data-testid="`music-add-${item.type}`" type="button" :aria-label="`放置${item.name}：选择后点击画板，或按 Enter 在中央加入`" :aria-pressed="activeTool === item.type" @click="setTool(item.type)" @keydown.enter.stop="onToolEnter($event, item.type)">
-                <svg viewBox="0 0 32 28" aria-hidden="true"><g v-if="item.type === 'bell'"><circle cx="16" cy="14" r="9" fill="#d6b97a" stroke="#ae8d50"/><circle cx="16" cy="14" r="5.8" fill="none" stroke="#a38248"/><circle cx="16" cy="10" r="1" fill="#8d6d39"/></g><g v-else-if="item.type === 'drum'"><circle cx="16" cy="14" r="10" fill="#b78e70" stroke="#957057"/><circle cx="16" cy="14" r="7" fill="#e8d7bc"/><path d="M13 12h6m-6 4h6" stroke="#ad906c"/></g><g v-else transform="rotate(-20 16 14)"><rect x="2" y="11" width="28" height="6" rx="3" fill="#b18c5d" stroke="#8d6b43"/><path d="M6 13h20" stroke="#e2c48a"/></g></svg><span>{{ item.name }}</span>
+                <svg viewBox="0 0 32 28" aria-hidden="true"><g v-if="item.type === 'bell'"><circle cx="16" cy="14" r="9" fill="#d6b97a" stroke="#ae8d50"/><circle cx="16" cy="14" r="5.8" fill="none" stroke="#a38248"/><circle cx="16" cy="10" r="1" fill="#8d6d39"/></g><g v-else-if="item.type === 'drum'"><circle cx="16" cy="14" r="10" fill="#b78e70" stroke="#957057"/><circle cx="16" cy="14" r="7" fill="#e8d7bc"/><path d="M13 12h6m-6 4h6" stroke="#ad906c"/></g><g v-else-if="item.type === 'string'"><path d="M4 18Q16 23 28 18" fill="none" stroke="#c5b797" stroke-width="3"/><rect x="2" y="9" width="5" height="12" rx="2" fill="#b6aa85"/><rect x="25" y="9" width="5" height="12" rx="2" fill="#b6aa85"/><path d="M4 13H28" stroke="#b08740" stroke-width="1.7"/><path d="M15 11v5" stroke="#8f7246" stroke-width="2"/></g><g v-else transform="rotate(-20 16 14)"><rect x="2" y="11" width="28" height="6" rx="3" fill="#b18c5d" stroke="#8d6b43"/><path d="M6 13h20" stroke="#e2c48a"/></g></svg><span>{{ item.name }}</span>
               </button>
             </div>
             <div class="history-tools"><button class="icon-button" data-testid="music-undo" type="button" :disabled="!undoStack.length" aria-label="撤销（Ctrl 或 Command + Z）" :title="undoStack.length ? `撤销：${undoStack.at(-1).label}` : '撤销'" @click="undo"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4-4 4 4 4M3 8h8a5 5 0 0 1 0 10"/></svg></button><button class="icon-button" data-testid="music-redo" type="button" :disabled="!redoStack.length" aria-label="重做（Ctrl 或 Command + Shift + Z）" :title="redoStack.length ? `重做：${redoStack.at(-1).label}` : '重做'" @click="redo"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m13 4 4 4-4 4m4-4H9a5 5 0 0 0 0 10"/></svg></button></div>
@@ -494,7 +496,7 @@ onBeforeUnmount(() => {
                   :data-type="part.type"
                   :data-x="part.x"
                   :data-y="part.y"
-                  :transform="`translate(${part.x} ${part.y}) rotate(${part.type === 'ramp' ? part.angle : 0})`"
+                  :transform="`translate(${part.x} ${part.y}) rotate(${['ramp', 'string'].includes(part.type) ? part.angle : 0})`"
                   tabindex="0"
                   role="button"
                   :aria-label="`${partName(part, index)}，位置 ${Math.round(part.x)}，${Math.round(part.y)}；可拖动或用方向键移动`"
@@ -514,6 +516,24 @@ onBeforeUnmount(() => {
                       <path d="M-47 3H47" stroke="#66472f" stroke-width="0.8" opacity="0.55"/>
                       <circle v-for="x in [-50, 50]" :key="x" :cx="x" r="3.2" fill="#caaa68" stroke="#795832" stroke-width="0.8"/>
                       <path d="M-52 0h4m96 0h4" stroke="#76512d" stroke-width="0.8"/>
+                    </g>
+                  </template>
+                  <template v-else-if="part.type === 'string'">
+                    <rect x="-78" y="-38" width="156" height="76" rx="10" fill="transparent"/>
+                    <rect v-if="selectedId === part.id" class="selection-outline" x="-77" y="-22" width="154" height="64" rx="10"/>
+                    <g pointer-events="none">
+                      <path d="M-66 11Q0 22 66 11" fill="none" stroke="#c1b99c" stroke-width="8" stroke-linecap="round" filter="url(#music-part-shadow)"/>
+                      <path d="M-61 10Q0 19 61 10" fill="none" stroke="#efe5c6" stroke-width="1.3"/>
+                      <g v-for="postX in [-66, 66]" :key="postX" :transform="`translate(${postX} 0)`">
+                        <rect x="-7" y="-11" width="14" height="25" rx="4" fill="#ddd5b9" stroke="#a79d7c" stroke-width="1.1"/>
+                        <circle r="4.5" fill="url(#music-brass)" stroke="#947744" stroke-width="1"/>
+                        <path d="M-2-2 2 2" stroke="#8f744b" stroke-width="1"/>
+                      </g>
+                      <path d="M-6 5-4-4H4L6 5Z" fill="#b99462" stroke="#9c794b" stroke-width="0.8"/>
+                      <path d="M-66 1.4H66" fill="none" stroke="#75633e" stroke-width="3.2" opacity="0.2"/>
+                      <path d="M-66 0H66" class="string-rest"/>
+                      <path :key="`string-${part.id}-${hitFlashes[part.id] || 0}`" data-testid="music-string-vibration" :data-strike="hitFlashes[part.id] || 0" class="string-vibration" :class="{ 'is-struck': !!hitFlashes[part.id] }" d="M-66 0Q-33-7 0 0T66 0"/>
+                      <text y="29" dominant-baseline="central" text-anchor="middle" class="string-note">{{ NOTES[part.note]?.label }}</text>
                     </g>
                   </template>
                   <template v-else>
@@ -539,7 +559,7 @@ onBeforeUnmount(() => {
                   </template>
                 </g>
 
-                <g v-if="placementPoint && activeTool !== 'select'" :transform="`translate(${placementPoint.x} ${placementPoint.y})`" class="placement-preview" pointer-events="none" aria-hidden="true"><rect v-if="activeTool === 'ramp'" x="-58" y="-6" width="116" height="12" rx="5" transform="rotate(20)"/><circle v-else :r="activeTool === 'drum' ? 26 : 22"/><path d="M-8 0H8M0-8V8"/></g>
+                <g v-if="placementPoint && activeTool !== 'select'" :transform="`translate(${placementPoint.x} ${placementPoint.y})`" class="placement-preview" pointer-events="none" aria-hidden="true"><rect v-if="activeTool === 'ramp'" x="-58" y="-6" width="116" height="12" rx="5" transform="rotate(20)"/><path v-else-if="activeTool === 'string'" d="M-66 0H66M-66-9V9M66-9V9" stroke-width="3"/><circle v-else :r="activeTool === 'drum' ? 26 : 22"/><path d="M-8 0H8M0-8V8"/></g>
                 <g class="marbles" pointer-events="none" aria-hidden="true">
                   <polyline v-for="ball in balls" :key="`trail-${ball.id}`" class="marble-trail" :points="trailPoints(ball)"/>
                   <circle v-for="ball in balls" :key="ball.id" data-testid="music-ball" :cx="ball.x" :cy="ball.y" r="7" fill="url(#music-marble)" stroke="#285b4f" stroke-width="0.8"/>
@@ -558,18 +578,20 @@ onBeforeUnmount(() => {
           <p class="status-message" role="status"><span aria-hidden="true">↳</span>{{ notice }}</p>
         </section>
         <aside class="editor-console" aria-label="快捷调音与设置">
-          <section class="quick-panel">
+          <section class="quick-panel" :class="{ 'has-selection': !!selectedPart, 'has-notes': selectedPart && selectedPart.type !== 'ramp' }">
             <div class="panel-heading"><h2>随手调一调</h2><span>{{ selectedPart ? typeName(selectedPart.type) : `${parts.length} 枚零件` }}</span></div>
             <label class="sr-only" for="music-selection">选择要调整的零件</label><select id="music-selection" :value="selectedId" data-testid="music-selection" @change="selectPart($event.target.value)"><option value="">点选画板零件，或从这里选取</option><option v-for="(part, index) in parts" :key="part.id" :value="part.id">{{ partName(part, index) }}</option></select>
             <div v-if="selectedPart" class="selected-properties">
-              <template v-if="selectedPart.type === 'ramp'">
-                <div class="angle-heading"><label for="music-angle">斜坡角度 <output>{{ selectedPart.angle }}°</output></label><div><button class="small-button" data-testid="music-angle-less" type="button" aria-label="斜坡减少15度" @click="rotateSelected(-15)">−15°</button><button class="small-button" data-testid="music-angle-more" type="button" aria-label="斜坡增加15度" @click="rotateSelected(15)">＋15°</button></div></div>
-                <input id="music-angle" data-testid="music-angle" type="range" min="-75" max="75" step="1" :value="selectedPart.angle" @input="updateRange('angle', $event.target.value)" @change="finishRangeEdit" @blur="finishRangeEdit"/><div class="range-labels"><span>左低</span><span>水平</span><span>右低</span></div><p class="property-tip">一点倾斜，让旋律转个弯。</p>
+              <template v-if="selectedPart.type !== 'ramp'">
+                <div class="note-heading"><label for="music-note">音符 <select id="music-note" data-testid="music-note" :value="selectedPart.note" @change="setNote($event.target.value)"><option v-for="note in pitchOrderedNotes" :key="note.label" :value="note.index">{{ note.label }}</option></select></label><button class="audition-button" data-testid="music-audition" type="button" @click="audition()"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3v10l-4-3H3ZM14 6a6 6 0 0 1 0 8m3-10a9 9 0 0 1 0 12"/></svg>试听</button></div>
+                <div class="note-pads" role="group" aria-label="从低音到高音选择音符并试听"><button v-for="note in pitchOrderedNotes" :key="note.label" :data-testid="`music-note-${note.index}`" type="button" :aria-pressed="selectedPart.note === note.index" :aria-label="`音符 ${note.label}，点击试听`" @click="setNote(note.index)">{{ note.label }}</button></div>
+                <p v-if="selectedPart.type !== 'string'" class="property-tip">从低到高排列，点音符即可试听。</p>
               </template>
-              <template v-else>
-                <div class="note-heading"><label for="music-note">音符 <select id="music-note" data-testid="music-note" :value="selectedPart.note" @change="setNote($event.target.value)"><option v-for="(note, index) in NOTES" :key="note.label" :value="index">{{ note.label }}</option></select></label><button class="audition-button" data-testid="music-audition" type="button" @click="audition()"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3v10l-4-3H3ZM14 6a6 6 0 0 1 0 8m3-10a9 9 0 0 1 0 12"/></svg>试听</button></div>
-                <div class="note-pads" role="group" aria-label="选择音符并试听"><button v-for="(note, index) in NOTES" :key="note.label" :data-testid="`music-note-${index}`" type="button" :aria-pressed="selectedPart.note === index" :aria-label="`音符 ${note.label}，点击试听`" @click="setNote(index)">{{ note.label }}</button></div><p class="property-tip">点音符即试听，五声音阶怎么搭都好听。</p>
-              </template>
+              <div v-if="['ramp', 'string'].includes(selectedPart.type)" class="angle-panel" :class="{ 'string-angle': selectedPart.type === 'string' }">
+                <div class="angle-heading"><label for="music-angle">{{ selectedPart.type === 'string' ? '弦倾角' : '斜坡角度' }} <output>{{ selectedPart.angle }}°</output></label><div><button class="small-button" data-testid="music-angle-less" type="button" :aria-label="`${typeName(selectedPart.type)}减少15度`" @click="rotateSelected(-15)">−15°</button><button class="small-button" data-testid="music-angle-more" type="button" :aria-label="`${typeName(selectedPart.type)}增加15度`" @click="rotateSelected(15)">＋15°</button></div></div>
+                <input id="music-angle" data-testid="music-angle" type="range" min="-75" max="75" step="1" :value="selectedPart.angle" @input="updateRange('angle', $event.target.value)" @change="finishRangeEdit" @blur="finishRangeEdit"/>
+                <template v-if="selectedPart.type === 'ramp'"><div class="range-labels"><span>左低</span><span>水平</span><span>右低</span></div><p class="property-tip">一点倾斜，让旋律转个弯。</p></template>
+              </div>
               <div class="part-actions"><button class="raised-button" data-testid="music-duplicate" type="button" @click="duplicateSelected"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V3H3v10h4"/></svg>复制</button><button class="quiet-button delete-button" data-testid="music-delete" type="button" @click="removeSelected"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M7 5V2h6v3M5 5l1 12h8l1-12M8 8v6m4-6v6"/></svg>删除</button><span class="part-position">{{ Math.round(selectedPart.x) }}, {{ Math.round(selectedPart.y) }}</span></div>
             </div>
             <div v-else class="selection-placeholder"><svg viewBox="0 0 96 66" aria-hidden="true"><path d="m17 48 56-17" stroke="#b29461" stroke-width="7" stroke-linecap="round"/><circle cx="48" cy="17" r="9" fill="#89ae9c" stroke="#628f7a"/><circle cx="73" cy="50" r="10" fill="#e0c385" stroke="#b69a62"/><circle cx="73" cy="50" r="6" fill="none" stroke="#b69a62"/><path d="M50 29v6" stroke="#9fae9f" stroke-dasharray="2 2"/></svg><p><strong>点一枚零件，马上调音。</strong>或用上方工具，在画板任意位置<br>放下你的第一枚小零件。</p></div>
@@ -1356,7 +1378,7 @@ option {
 
 .note-pads {
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(5,minmax(0,1fr));
   gap:8px
 }
 
@@ -2070,7 +2092,7 @@ kbd {
     font-size:11px
   }
   .note-pads {
-    grid-template-columns:repeat(4,minmax(0,1fr));
+    grid-template-columns:repeat(5,minmax(0,1fr));
     gap:6px
   }
   .note-pads button {
@@ -2239,6 +2261,86 @@ kbd {
   .marble-trail {
     display:none
   }
+}
+
+
+/* A taut 132-unit string shares the physics segment and keeps both ends fixed. */
+.string-rest { fill:none; stroke:#a77c38; stroke-width:2.3; stroke-linecap:round; }
+.string-vibration { fill:none; stroke:#d19d44; stroke-width:2.3; stroke-linecap:round; opacity:0; transform-origin:0 0; vector-effect:non-scaling-stroke; }
+.string-vibration.is-struck { animation:string-pluck 480ms ease-out both; }
+@keyframes string-pluck {
+  0% { opacity:1; transform:scaleY(1); }
+  14% { transform:scaleY(-0.84); }
+  29% { transform:scaleY(0.66); }
+  44% { transform:scaleY(-0.47); }
+  59% { opacity:0.8; transform:scaleY(0.3); }
+  74% { transform:scaleY(-0.17); }
+  87% { transform:scaleY(0.07); }
+  100% { opacity:0; transform:scaleY(0); }
+}
+.string-note { fill:#6b7655; font:600 20px ui-monospace,SFMono-Regular,Consolas,monospace; }
+.placement-tool { padding-inline:8px; min-width:44px; }
+.string-angle { display:grid; grid-template-columns:auto minmax(30px,1fr) auto; align-items:center; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid #ced9c3; }
+.string-angle .angle-heading { display:contents; }
+.string-angle .angle-heading > label { grid-column:1; grid-row:1; font-size:9px; white-space:nowrap; }
+.string-angle .angle-heading output { display:block; margin:3px 0 0; font-size:12px; }
+.string-angle .angle-heading > div { grid-column:3; grid-row:1; gap:4px; }
+.string-angle input { grid-column:2; grid-row:1; min-width:0; }
+.string-angle .small-button { min-width:38px; padding-inline:3px; }
+@media (max-width:600px) {
+  .placement-tool { padding-inline:3px; }
+  .note-pads { gap:5px; }
+  .string-note { font-size:24px; }
+  .string-angle { margin-top:8px; padding-top:8px; }
+  .string-angle .angle-heading > label { font-size:10px; }
+  .string-angle .angle-heading output { font-size:13px; }
+  .string-angle .small-button { min-width:44px; min-height:44px; font-size:10px; }
+}
+@media (max-width:350px) {
+  .tool-strip { flex-wrap:wrap; }
+  .placement-tools { flex:1 1 100%; }
+  .history-tools { margin-left:auto; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .string-vibration.is-struck { animation:none; opacity:0; }
+}
+
+
+/* On phones, selection and audition share one row instead of repeating a heading. */
+@media (max-width:600px) {
+  .quick-panel.has-selection {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px;
+    align-items:center;
+  }
+  .quick-panel.has-selection .panel-heading { display:none; }
+  .quick-panel.has-selection #music-selection {
+    grid-column:1;
+    grid-row:1;
+    min-height:44px;
+    min-width:0;
+  }
+  .quick-panel.has-selection:not(.has-notes) #music-selection { grid-column:1 / -1; }
+  .quick-panel.has-selection .selected-properties { display:contents; margin:0; }
+  .quick-panel.has-selection .note-heading {
+    grid-column:2;
+    grid-row:1;
+    gap:6px;
+    min-width:0;
+    margin:0;
+  }
+  .quick-panel.has-selection .note-heading label { gap:4px; font-size:10px; }
+  .quick-panel.has-selection .note-heading select { width:56px; min-height:44px; padding-inline:5px; }
+  .quick-panel.has-selection .audition-button { min-width:48px; min-height:44px; padding-inline:8px; font-size:10px; }
+  .quick-panel.has-selection .audition-button svg { display:none; }
+  .quick-panel.has-selection .note-pads,
+  .quick-panel.has-selection .angle-panel,
+  .quick-panel.has-selection .part-actions { grid-column:1 / -1; }
+  .quick-panel.has-selection .property-tip { display:none; }
+  .quick-panel.has-selection .string-angle { margin-top:0; }
+  .quick-panel.has-selection .part-actions { margin-top:0; }
+  .quick-panel.has-selection .part-actions button { min-height:44px; }
 }
 
 </style>

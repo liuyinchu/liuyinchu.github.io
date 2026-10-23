@@ -76,18 +76,20 @@ export function createSimulation({ parts: initialParts = [], onHit = () => {} } 
       }
 
       for (const part of parts) {
-        if (part.type === 'ramp') {
+        if (part.type === 'ramp' || part.type === 'string') {
+          const isString = part.type === 'string'
+          const length = isString ? 132 : 116
           const radians = part.angle * Math.PI / 180
-          const halfX = Math.cos(radians) * 58
-          const halfY = Math.sin(radians) * 58
+          const halfX = Math.cos(radians) * length / 2
+          const halfY = Math.sin(radians) * length / 2
           const startX = part.x - halfX
           const startY = part.y - halfY
           const along = clamp(
-            ((ball.x - startX) * halfX * 2 + (ball.y - startY) * halfY * 2) / (116 * 116),
+            ((ball.x - startX) * halfX * 2 + (ball.y - startY) * halfY * 2) / (length * length),
             0,
             1,
           )
-          contact(ball, part, startX + halfX * 2 * along, startY + halfY * 2 * along, 6, 0.64)
+          contact(ball, part, startX + halfX * 2 * along, startY + halfY * 2 * along, isString ? 4 : 6, isString ? 0.48 : 0.64)
         } else if (CIRCLE_RADIUS[part.type]) {
           contact(ball, part, part.x, part.y, CIRCLE_RADIUS[part.type], part.type === 'bell' ? 0.72 : 0.56)
         }
