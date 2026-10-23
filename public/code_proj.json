@@ -1,5 +1,12 @@
 [
   {
+    "name": "音乐机关盒",
+    "desc": "摆放音铃、鼓面和斜坡，让弹珠沿重力轨迹奏响旋律；支持拖动编排、音符调整和本地保存。",
+    "homepage": "/music-box",
+    "repo": "",
+    "category": "toy"
+  },
+  {
     "name": "Genea",
     "desc": "本地家谱画布，用人物卡片、代际排布和关系路径浏览与整理家族结构；提供《红楼梦》在线只读 Demo。",
     "homepage": "https://pifuyuini.github.io/genea/",

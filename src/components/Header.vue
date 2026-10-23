@@ -107,6 +107,7 @@ const navItems = [
     to: '/code',
     match: [
       '/code',
+      '/music-box',
       '/stellar-field',
       '/labreport',
       '/life-tree',

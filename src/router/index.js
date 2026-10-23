@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '../pages/Home.vue'
 const Code = () => import('../pages/Code.vue')
+const MusicBox = () => import('../pages/MusicBox.vue')
 const StellarField = () => import('../pages/StellarField.vue')
 const Resource = () => import('../pages/Resource.vue')
 // import Notes from '../pages/Notes.vue'
@@ -47,6 +48,7 @@ const NotFound = () => import('../pages/NotFound.vue')
 const routes = [
   { path: '/', component: Home },
   { path: '/code', component: Code },
+  { path: '/music-box', component: MusicBox },
   { path: '/stellar-field', component: StellarField },
   { path: '/resource', component: Resource },
   // { path: '/notes', component: Notes },

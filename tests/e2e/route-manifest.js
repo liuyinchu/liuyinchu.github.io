@@ -1,6 +1,7 @@
 export const STATIC_ROUTES = Object.freeze([
   '/',
   '/code',
+  '/music-box',
   '/resource',
   '/space1',
   '/space2',
