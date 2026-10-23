@@ -667,6 +667,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .music-workshop {
+  --site-header-height:0px;
   --desk:#e6ebe7;
   --panel:#e5eae4;
   --ink:#2e453b;
@@ -674,7 +675,7 @@ onBeforeUnmount(() => {
   --accent:#4d755d;
   --line:#c6d0c4;
   --soft-shadow:5px 5px 13px #bcc6bd85,-5px -5px 13px #ffffffb0;
-  min-height:calc(100vh - 72px);
+  min-height:100vh;
   padding:12px clamp(14px,2.7vw,40px) 22px;
   background:radial-gradient(ellipse at 25% 0%,#f1f3eec0,transparent 70%),var(--desk);
   color:var(--ink);
@@ -946,7 +947,7 @@ option {
 }
 
 .workbench {
-  max-width:calc(clamp(440px,calc(133.333svh - 388px),756px) + 298px);
+  max-width:calc(clamp(440px,calc(133.333svh - 292px),756px) + 298px);
   margin-inline:auto;
   display:grid;
   grid-template-columns:minmax(0,1fr) 278px;
@@ -1072,7 +1073,7 @@ option {
 }
 
 .stage-bed {
-  width:min(100%,clamp(440px,calc(133.333svh - 388px),756px));
+  width:min(100%,clamp(440px,calc(133.333svh - 292px),756px));
   margin-inline:auto;
   display:flex;
   align-items:center;

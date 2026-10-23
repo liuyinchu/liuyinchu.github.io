@@ -50,15 +50,9 @@ async function layoutSnapshot(page) {
   )
 }
 
-async function codeNavigation(page, isMobile) {
+async function codeNavigation(page) {
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
-  if (isMobile) {
-    await page.getByRole('button', { name: 'Toggle navigation' }).click()
-    return page.getByRole('navigation', { name: 'Mobile navigation' })
-      .getByRole('link', { name: '代码与项目' })
-  }
-  return page.getByRole('navigation', { name: 'Primary navigation' })
-    .getByRole('link', { name: '代码与项目' })
+  return page.getByRole('link', { name: '返回代码与项目', exact: true })
 }
 
 async function dragPart(page, part, isMobile) {
@@ -208,10 +202,7 @@ async function expectAudible(page) {
   return peak
 }
 
-test('the Code project card opens Music Box in its existing navigation section', async ({
-  page,
-  isMobile,
-}) => {
+test('the Code project opens a standalone Music Box and restores site chrome on return', async ({ page }) => {
   const audit = auditPage(page)
   await gotoRoute(page, '/code')
   await expect(page.getByText('音乐机关盒', { exact: true })).toBeVisible()
@@ -225,11 +216,18 @@ test('the Code project card opens Music Box in its existing navigation section',
   await expect(popup).toHaveURL(BASE_URL + '/music-box')
   await expect(popup.getByTestId('music-box')).toBeVisible()
   await expectStopped(popup)
-  const codeLink = await codeNavigation(popup, isMobile)
-  await expect(codeLink).toHaveClass(/is-active/)
-  if (isMobile) {
-    await popup.getByRole('button', { name: 'Toggle navigation' }).click()
-  }
+  await expect(popup.locator('.site-header, .site-footer')).toHaveCount(0)
+  const codeLink = await codeNavigation(popup)
+  await expect(codeLink).toHaveAttribute('href', '/code')
+  await codeLink.click()
+  await expect(popup).toHaveURL(BASE_URL + '/code')
+  await expect(popup.locator('.site-header')).toBeVisible()
+  await expect(popup.locator('.site-footer')).toBeVisible()
+  await popup.goBack()
+  await expect(popup).toHaveURL(BASE_URL + '/music-box')
+  await expect(popup.getByTestId('music-box')).toBeVisible()
+  await expect(popup.locator('.site-header, .site-footer')).toHaveCount(0)
+  await expectStopped(popup)
   await finishAudit(popup, popupAudit)
   await finishAudit(page, audit)
   await popup.close()
@@ -397,14 +395,11 @@ test('sound and tempo controls remain operable at the current viewport', async (
   await finishAudit(page, audit)
 })
 
-test('leaving a running box and returning creates a quiet, usable scene', async ({
-  page,
-  isMobile,
-}) => {
+test('leaving a running box and returning creates a quiet, usable scene', async ({ page }) => {
   const audit = await openBox(page)
   await page.getByTestId('music-play').click()
   await expect.poll(() => hitCount(page), { timeout: 10_000 }).toBeGreaterThan(0)
-  const codeLink = await codeNavigation(page, isMobile)
+  const codeLink = await codeNavigation(page)
   await codeLink.click()
   await expect(page).toHaveURL(BASE_URL + '/code')
   await expect(page.getByTestId('music-box')).toHaveCount(0)
@@ -422,10 +417,7 @@ test('leaving a running box and returning creates a quiet, usable scene', async 
   await finishAudit(page, audit)
 })
 
-test('actual Web Audio produces PCM, mutes during collisions, and closes on route exit', async ({
-  page,
-  isMobile,
-}, testInfo) => {
+test('actual Web Audio produces PCM, mutes during collisions, and closes on route exit', async ({ page }, testInfo) => {
   await installAudioProbe(page)
   const audit = await openBox(page)
   expect(await page.evaluate(() => window.__musicAudioProbe.contexts.length)).toBe(0)
@@ -459,7 +451,7 @@ test('actual Web Audio produces PCM, mutes during collisions, and closes on rout
   await page.getByTestId('music-mute').click()
   const restoredPeak = await expectAudible(page)
 
-  const codeLink = await codeNavigation(page, isMobile)
+  const codeLink = await codeNavigation(page)
   await codeLink.click()
   await expect(page).toHaveURL(BASE_URL + '/code')
   let closedStates = []
