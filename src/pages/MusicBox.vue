@@ -8,12 +8,12 @@ import { createSequencer } from '../components/music-box/sequencer.js'
 
 const STORAGE_KEY = 'music-box-layout-v1'
 const MAX_PARTS = 64
-const initial = createPreset('string-parade')
+const initial = createPreset('lantern-ensemble')
 const parts = ref(initial.parts)
 const emitterX = ref(initial.emitterX)
 const tempo = ref(initial.tempo)
 const score = ref(initial.score || null)
-const presetId = ref('string-parade')
+const presetId = ref('lantern-ensemble')
 const selectedId = ref('')
 const activeTool = ref('select')
 const placementPoint = ref(null)
@@ -27,6 +27,8 @@ const hasStarted = ref(false)
 const hitCount = ref(0)
 const lastNote = ref('—')
 const hitFlashes = ref({})
+const bowedGates = ref({})
+const bowTimers = new Map()
 const volume = ref(60)
 const muted = ref(false)
 const dirty = ref(false)
@@ -34,17 +36,20 @@ const hasSavedLayout = ref(false)
 const draggingId = ref('')
 const undoStack = shallowRef([])
 const redoStack = shallowRef([])
-const notice = ref('先听「弦上焰火」，再拨动一根弦，改写自己的旋律。')
+const notice = ref('先听「灯火弦歌」，让持续的弓弦与清亮的拨弦相遇。')
 const partTypes = [
   { type: 'bell', name: '铃铛', hint: '清亮的音符' },
   { type: 'drum', name: '鼓', hint: '温暖的节拍' },
   { type: 'string', name: '弦', hint: '温柔的拨弦音' },
+  { type: 'bowed', name: '弓弦', hint: '小提琴与大提琴的持续旋律' },
   { type: 'ramp', name: '斜坡', hint: '改变弹珠方向' },
 ]
 const pitchOrderedNotes = NOTES.map((note, index) => ({ ...note, index })).sort((a, b) => a.frequency - b.frequency)
 const selectedPart = computed(() => parts.value.find(part => part.id === selectedId.value) || null)
-const isRunning = computed(() => isPlaying.value || isPreviewing.value)
-const stateLabel = computed(() => isPlaying.value ? '演奏中' : isPreviewing.value ? '单次试奏' : hasStarted.value ? '已暂停' : '准备就绪')
+const hasBowVoices = computed(() => Object.keys(bowedGates.value).length > 0)
+const quickNotes = computed(() => selectedPart.value?.type === 'bowed' ? pitchOrderedNotes.filter(note => note.label.slice(-1) === NOTES[selectedPart.value.note]?.label.slice(-1)) : pitchOrderedNotes)
+const isRunning = computed(() => isPlaying.value || isPreviewing.value || hasBowVoices.value)
+const stateLabel = computed(() => isPlaying.value ? '演奏中' : isPreviewing.value ? '单次试奏' : hasBowVoices.value ? '延音中' : hasStarted.value ? '已暂停' : '准备就绪')
 const currentPreset = computed(() => PRESETS.find(preset => preset.id === presetId.value))
 const activeEmitters = computed(() => score.value?.emitters || [{ id: 'manual', label: '落球', x: emitterX.value }])
 const scoreProgress = computed(() => score.value ? scoreState.value.beat / score.value.lengthBeats * 100 : 0)
@@ -59,7 +64,7 @@ let flashSequence = 0
 let drag = null
 let rangeEdit = null
 let savedLayoutKey = ''
-const simulation = createSimulation({ parts: parts.value, onHit({ part, speed }) { hitCount.value += 1; flashPart(part); audio.hit(part, speed) } })
+const simulation = createSimulation({ parts: parts.value, onHit({ part, speed }) { hitCount.value += 1; flashPart(part); audio.hit(part, speed, { tempo: tempo.value }) } })
 const sequencer = createSequencer({ onDrop: ({ x }) => simulation.drop(x) })
 sequencer.setScore(score.value)
 scoreState.value = sequencer.getState()
@@ -77,6 +82,9 @@ function editorSnapshot() { return clone({ ...layoutData(), presetId: presetId.v
 function historyKey(state) { const { selectedId: ignoredSelection, ...layout } = state; return JSON.stringify(layout) }
 function refreshDirty() { dirty.value = JSON.stringify(layoutData()) !== savedLayoutKey }
 function setParts(next, edited = true) {
+  for (const id of Object.keys(bowedGates.value)) {
+    if (!next.some(part => part.id === id && part.type === 'bowed')) releaseBowed(id)
+  }
   parts.value = next
   simulation.setParts(next)
   if (edited) { presetId.value = 'custom'; refreshDirty() }
@@ -119,7 +127,33 @@ function redo() {
   restoreEditor(entry.state)
   notice.value = `已重做：${entry.label}。`
 }
+function beginBowGate(part) {
+  const duration = (part.holdBeats || 4) * 60 / tempo.value * 1000
+  clearTimeout(bowTimers.get(part.id))
+  bowedGates.value = { ...bowedGates.value, [part.id]: performance.now() + duration }
+  bowTimers.set(part.id, setTimeout(() => {
+    bowTimers.delete(part.id)
+    const next = { ...bowedGates.value }
+    delete next[part.id]
+    bowedGates.value = next
+  }, duration))
+}
+function releaseBowed(partId) {
+  audio.releaseBows(partId)
+  if (partId) {
+    clearTimeout(bowTimers.get(partId))
+    bowTimers.delete(partId)
+    const next = { ...bowedGates.value }
+    delete next[partId]
+    bowedGates.value = next
+  } else {
+    for (const timer of bowTimers.values()) clearTimeout(timer)
+    bowTimers.clear()
+    bowedGates.value = {}
+  }
+}
 function flashPart(part) {
+  if (part.type === 'bowed') beginBowGate(part)
   lastNote.value = part.type === 'drum' ? `鼓 · ${NOTES[part.note]?.label || 'C4'}` : NOTES[part.note]?.label || 'C4'
   hitFlashes.value = { ...hitFlashes.value, [part.id]: ++flashSequence }
 }
@@ -142,13 +176,14 @@ function frame(time) {
   snapshotBalls()
   if (isPreviewing.value && !balls.value.length) {
     isPreviewing.value = false; previousTime = 0
-    notice.value = '试奏结束。再投一颗，或开始连续演奏。'
+    notice.value = hasBowVoices.value ? '弹珠已落下，弓弦正在延音；点击暂停可收音。' : '试奏结束。再投一颗，或开始连续演奏。'
     return
   }
   frameId = requestAnimationFrame(frame)
 }
 function ensureFrame() { if (!frameId && mounted) { previousTime = 0; frameId = requestAnimationFrame(frame) } }
 function pausePlayback(message = '已暂停。弹珠与曲目进度留在原处。') {
+  releaseBowed()
   interactionEpoch += 1
   isUnlocking.value = false; isPlaying.value = false; isPreviewing.value = false
   if (frameId) cancelAnimationFrame(frameId)
@@ -212,7 +247,7 @@ function setTool(type) {
 }
 function selectPart(id) { finishRangeEdit(); selectedId.value = id }
 function boundedPosition(part, x, y) {
-  const margin = part.type === 'string' ? 78 : part.type === 'ramp' ? 66 : 34
+  const margin = ['string', 'bowed'].includes(part.type) ? 78 : part.type === 'ramp' ? 66 : 34
   return { x: Math.round(clamp(x, margin, BOARD_WIDTH - margin)), y: Math.round(clamp(y, 70, BOARD_HEIGHT - margin)) }
 }
 function placePart(type, x, y) {
@@ -232,25 +267,27 @@ function updateSelected(field, value, rememberChange = true) {
   if (!part || part[field] === value) return
   const before = rememberChange ? editorSnapshot() : null
   setParts(parts.value.map(item => item.id === part.id ? { ...item, [field]: value } : item))
-  if (before) remember(before, field === 'note' ? '更改音符' : `旋转${typeName(part.type)}`)
+  if (before) remember(before, { note: '更改音符', voice: '切换弓弦音色', holdBeats: '调整延音时值' }[field] || `旋转${typeName(part.type)}`)
 }
 function audition(part = selectedPart.value) {
   if (!part || part.type === 'ramp') return
   const playedPart = { ...part }
   withAudio(() => {
-    audio.hit(playedPart, 270); flashPart(playedPart)
+    audio.hit(playedPart, 270, { tempo: tempo.value }); flashPart(playedPart)
+    if (playedPart.type === 'bowed') hasStarted.value = true
     notice.value = muted.value ? `已试听 ${NOTES[playedPart.note].label}，当前处于静音。` : `试听 ${typeName(playedPart.type)} · ${NOTES[playedPart.note].label}。`
   })
 }
+function setBowSetting(field, value) { finishRangeEdit(); updateSelected(field, value); audition() }
 function setNote(value) { finishRangeEdit(); updateSelected('note', Number(value)); audition() }
-function rotateSelected(delta) { finishRangeEdit(); if (['ramp', 'string'].includes(selectedPart.value?.type)) updateSelected('angle', clamp(selectedPart.value.angle + delta, -75, 75)) }
+function rotateSelected(delta) { finishRangeEdit(); if (['ramp', 'string', 'bowed'].includes(selectedPart.value?.type)) updateSelected('angle', clamp(selectedPart.value.angle + delta, -75, 75)) }
 function duplicateSelected() {
   finishDrag(); finishRangeEdit()
   const source = selectedPart.value
   if (!source) return
   if (parts.value.length >= MAX_PARTS) { notice.value = '零件数量已达上限，先移除一个再复制。'; return }
   const before = editorSnapshot()
-  const part = { ...createPart(source.type, source.x + 40, source.y + 40), note: source.note, angle: source.angle }
+  const part = { ...createPart(source.type, source.x + 40, source.y + 40), note: source.note, angle: source.angle, ...(source.type === 'bowed' ? { voice: source.voice, holdBeats: source.holdBeats } : {}) }
   Object.assign(part, boundedPosition(part, part.x, part.y))
   setParts([...parts.value, part]); selectedId.value = part.id
   remember(before, `复制${typeName(source.type)}`)
@@ -343,11 +380,11 @@ function loadLayout(automatic = false) {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) { if (!automatic) notice.value = '此浏览器还没有保存的编排。'; return }
     const layout = JSON.parse(raw)
-    if (layout?.version !== 1 || !Array.isArray(layout.parts) || layout.parts.length > MAX_PARTS || !Number.isFinite(layout.emitterX) || !Number.isFinite(layout.tempo) || !validScore(layout.score) || !layout.parts.every(part => part && ['bell', 'drum', 'ramp', 'string'].includes(part.type) && typeof part.id === 'string' && Number.isFinite(part.x) && Number.isFinite(part.y) && (part.angle == null || Number.isFinite(part.angle)) && (part.note == null || Number.isInteger(part.note) && part.note >= 0 && part.note < NOTES.length))) throw new Error('Invalid saved layout')
+    if (layout?.version !== 1 || !Array.isArray(layout.parts) || layout.parts.length > MAX_PARTS || !Number.isFinite(layout.emitterX) || !Number.isFinite(layout.tempo) || !validScore(layout.score) || !layout.parts.every(part => part && ['bell', 'drum', 'ramp', 'string', 'bowed'].includes(part.type) && typeof part.id === 'string' && Number.isFinite(part.x) && Number.isFinite(part.y) && (part.angle == null || Number.isFinite(part.angle)) && (part.note == null || Number.isInteger(part.note) && part.note >= 0 && part.note < NOTES.length) && (part.type !== 'bowed' || (part.voice == null || ['violin', 'cello'].includes(part.voice)) && (part.holdBeats == null || [2, 4, 8].includes(part.holdBeats))))) throw new Error('Invalid saved layout')
     finishDrag(); finishRangeEdit()
     const before = editorSnapshot()
     resetPerformance(false)
-    setParts(layout.parts.map(part => ({ ...part, ...boundedPosition(part, part.x, part.y), note: part.note ?? (part.type === 'string' ? 8 : 0), angle: clamp(part.angle ?? (part.type === 'ramp' ? 20 : 0), -75, 75) })), false)
+    setParts(layout.parts.map(part => ({ ...part, ...boundedPosition(part, part.x, part.y), note: part.note ?? (part.type === 'bowed' ? 3 : part.type === 'string' ? 8 : 0), ...(part.type === 'bowed' ? { voice: part.voice || 'violin', holdBeats: part.holdBeats || 4 } : {}), angle: clamp(part.angle ?? (part.type === 'ramp' ? 20 : 0), -75, 75) })), false)
     emitterX.value = clamp(layout.emitterX, 64, BOARD_WIDTH - 64); tempo.value = clamp(layout.tempo, 30, 180); score.value = layout.score || null
     sequencer.setScore(score.value); scoreState.value = sequencer.getState()
     selectedId.value = ''; activeTool.value = 'select'; presetId.value = 'custom'
@@ -423,7 +460,7 @@ onBeforeUnmount(() => {
             <div class="placement-tools" role="group" aria-label="选择放置工具">
               <button class="placement-tool" data-testid="music-tool-select" type="button" :aria-pressed="activeTool === 'select'" title="选择与移动零件（Esc）" @click="setTool('select')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 3 13 9-6 1-3 6Z"/><path d="m13 13 4 7"/></svg><span>选择</span></button>
               <button v-for="item in partTypes" :key="item.type" class="placement-tool" :data-testid="`music-add-${item.type}`" type="button" :aria-label="`放置${item.name}：选择后点击画板，或按 Enter 在中央加入`" :aria-pressed="activeTool === item.type" @click="setTool(item.type)" @keydown.enter.stop="onToolEnter($event, item.type)">
-                <svg viewBox="0 0 32 28" aria-hidden="true"><g v-if="item.type === 'bell'"><circle cx="16" cy="14" r="9" fill="#d6b97a" stroke="#ae8d50"/><circle cx="16" cy="14" r="5.8" fill="none" stroke="#a38248"/><circle cx="16" cy="10" r="1" fill="#8d6d39"/></g><g v-else-if="item.type === 'drum'"><circle cx="16" cy="14" r="10" fill="#b78e70" stroke="#957057"/><circle cx="16" cy="14" r="7" fill="#e8d7bc"/><path d="M13 12h6m-6 4h6" stroke="#ad906c"/></g><g v-else-if="item.type === 'string'"><path d="M4 18Q16 23 28 18" fill="none" stroke="#c5b797" stroke-width="3"/><rect x="2" y="9" width="5" height="12" rx="2" fill="#b6aa85"/><rect x="25" y="9" width="5" height="12" rx="2" fill="#b6aa85"/><path d="M4 13H28" stroke="#b08740" stroke-width="1.7"/><path d="M15 11v5" stroke="#8f7246" stroke-width="2"/></g><g v-else transform="rotate(-20 16 14)"><rect x="2" y="11" width="28" height="6" rx="3" fill="#b18c5d" stroke="#8d6b43"/><path d="M6 13h20" stroke="#e2c48a"/></g></svg><span>{{ item.name }}</span>
+                <svg viewBox="0 0 32 28" aria-hidden="true"><g v-if="item.type === 'bell'"><circle cx="16" cy="14" r="9" fill="#d6b97a" stroke="#ae8d50"/><circle cx="16" cy="14" r="5.8" fill="none" stroke="#a38248"/><circle cx="16" cy="10" r="1" fill="#8d6d39"/></g><g v-else-if="item.type === 'drum'"><circle cx="16" cy="14" r="10" fill="#b78e70" stroke="#957057"/><circle cx="16" cy="14" r="7" fill="#e8d7bc"/><path d="M13 12h6m-6 4h6" stroke="#ad906c"/></g><g v-else-if="item.type === 'bowed'"><path d="M4 17Q16 22 28 17" fill="none" stroke="#a7b691" stroke-width="3"/><path d="M4 12H28" stroke="#a19655" stroke-width="2"/><path d="M12 3 19 25" stroke="#92714e" stroke-width="2"/><path d="M15 3 21 24" stroke="#e9dab0" stroke-width="1.3"/><circle cx="4" cy="12" r="2.5" fill="#b8a575"/><circle cx="28" cy="12" r="2.5" fill="#b8a575"/></g><g v-else-if="item.type === 'string'"><path d="M4 18Q16 23 28 18" fill="none" stroke="#c5b797" stroke-width="3"/><rect x="2" y="9" width="5" height="12" rx="2" fill="#b6aa85"/><rect x="25" y="9" width="5" height="12" rx="2" fill="#b6aa85"/><path d="M4 13H28" stroke="#b08740" stroke-width="1.7"/><path d="M15 11v5" stroke="#8f7246" stroke-width="2"/></g><g v-else transform="rotate(-20 16 14)"><rect x="2" y="11" width="28" height="6" rx="3" fill="#b18c5d" stroke="#8d6b43"/><path d="M6 13h20" stroke="#e2c48a"/></g></svg><span>{{ item.name }}</span>
               </button>
             </div>
             <div class="history-tools"><button class="icon-button" data-testid="music-undo" type="button" :disabled="!undoStack.length" aria-label="撤销（Ctrl 或 Command + Z）" :title="undoStack.length ? `撤销：${undoStack.at(-1).label}` : '撤销'" @click="undo"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4-4 4 4 4M3 8h8a5 5 0 0 1 0 10"/></svg></button><button class="icon-button" data-testid="music-redo" type="button" :disabled="!redoStack.length" aria-label="重做（Ctrl 或 Command + Shift + Z）" :title="redoStack.length ? `重做：${redoStack.at(-1).label}` : '重做'" @click="redo"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m13 4 4 4-4 4m4-4H9a5 5 0 0 0 0 10"/></svg></button></div>
@@ -496,7 +533,7 @@ onBeforeUnmount(() => {
                   :data-type="part.type"
                   :data-x="part.x"
                   :data-y="part.y"
-                  :transform="`translate(${part.x} ${part.y}) rotate(${['ramp', 'string'].includes(part.type) ? part.angle : 0})`"
+                  :transform="`translate(${part.x} ${part.y}) rotate(${['ramp', 'string', 'bowed'].includes(part.type) ? part.angle : 0})`"
                   tabindex="0"
                   role="button"
                   :aria-label="`${partName(part, index)}，位置 ${Math.round(part.x)}，${Math.round(part.y)}；可拖动或用方向键移动`"
@@ -516,6 +553,22 @@ onBeforeUnmount(() => {
                       <path d="M-47 3H47" stroke="#66472f" stroke-width="0.8" opacity="0.55"/>
                       <circle v-for="x in [-50, 50]" :key="x" :cx="x" r="3.2" fill="#caaa68" stroke="#795832" stroke-width="0.8"/>
                       <path d="M-52 0h4m96 0h4" stroke="#76512d" stroke-width="0.8"/>
+                    </g>
+                  </template>
+                  <template v-else-if="part.type === 'bowed'">
+                    <rect x="-80" y="-44" width="160" height="92" rx="10" fill="transparent"/>
+                    <rect v-if="selectedId === part.id" class="selection-outline" x="-78" y="-41" width="156" height="89" rx="10"/>
+                    <g pointer-events="none">
+                      <path d="M-66 12Q0 26 66 12" fill="none" stroke="#a9b79a" stroke-width="10" stroke-linecap="round" filter="url(#music-part-shadow)"/>
+                      <path d="M-60 10Q0 23 60 10" fill="none" stroke="#e1e8ce" stroke-width="1.5"/>
+                      <g v-for="postX in [-66, 66]" :key="postX" :transform="`translate(${postX} 0)`"><rect x="-7" y="-12" width="14" height="27" rx="4" fill="#c5d0b6" stroke="#899d7b" stroke-width="1.1"/><circle r="4.5" fill="url(#music-brass)" stroke="#947744"/><path d="M-2-2 2 2" stroke="#8f744b"/></g>
+                      <path d="M-7 6-4-4H4L7 6Z" fill="#b19b6b" stroke="#7e784e" stroke-width="0.8"/>
+                      <path d="M-66 0H66" class="bowed-rest"/>
+                      <g class="bowed-activity" data-testid="music-bowed-activity" :class="{ 'is-active': !!bowedGates[part.id] }" :data-active="!!bowedGates[part.id]" :data-state="bowedGates[part.id] ? 'sounding' : 'idle'" :data-until="bowedGates[part.id] || 0" :data-voice="part.voice" :data-hold-beats="part.holdBeats" :style="{ '--bow-period': `${120 / tempo}s` }">
+                        <path d="M-66 0H66" class="bowed-glow"/>
+                        <g class="bowed-bow"><path d="M-13-32Q-5 1 12 33" fill="none" stroke="#8f704c" stroke-width="3.4" stroke-linecap="round"/><path d="M-9-31 15 31" fill="none" stroke="#f3e6bc" stroke-width="2"/><path d="M-14-32-8-32M10 32H16" stroke="#9b8159" stroke-width="3" stroke-linecap="round"/><rect x="7" y="22" width="9" height="13" rx="2" transform="rotate(-20 11.5 28.5)" fill="#6a7560" stroke="#515f49" stroke-width="0.8"/></g>
+                      </g>
+                      <text y="42" dominant-baseline="central" text-anchor="middle" class="bowed-note">{{ NOTES[part.note]?.label }}</text>
                     </g>
                   </template>
                   <template v-else-if="part.type === 'string'">
@@ -559,7 +612,7 @@ onBeforeUnmount(() => {
                   </template>
                 </g>
 
-                <g v-if="placementPoint && activeTool !== 'select'" :transform="`translate(${placementPoint.x} ${placementPoint.y})`" class="placement-preview" pointer-events="none" aria-hidden="true"><rect v-if="activeTool === 'ramp'" x="-58" y="-6" width="116" height="12" rx="5" transform="rotate(20)"/><path v-else-if="activeTool === 'string'" d="M-66 0H66M-66-9V9M66-9V9" stroke-width="3"/><circle v-else :r="activeTool === 'drum' ? 26 : 22"/><path d="M-8 0H8M0-8V8"/></g>
+                <g v-if="placementPoint && activeTool !== 'select'" :transform="`translate(${placementPoint.x} ${placementPoint.y})`" class="placement-preview" pointer-events="none" aria-hidden="true"><rect v-if="activeTool === 'ramp'" x="-58" y="-6" width="116" height="12" rx="5" transform="rotate(20)"/><path v-else-if="['string', 'bowed'].includes(activeTool)" d="M-66 0H66M-66-9V9M66-9V9" stroke-width="3"/><circle v-else :r="activeTool === 'drum' ? 26 : 22"/><path d="M-8 0H8M0-8V8"/></g>
                 <g class="marbles" pointer-events="none" aria-hidden="true">
                   <polyline v-for="ball in balls" :key="`trail-${ball.id}`" class="marble-trail" :points="trailPoints(ball)"/>
                   <circle v-for="ball in balls" :key="ball.id" data-testid="music-ball" :cx="ball.x" :cy="ball.y" r="7" fill="url(#music-marble)" stroke="#285b4f" stroke-width="0.8"/>
@@ -583,12 +636,16 @@ onBeforeUnmount(() => {
             <label class="sr-only" for="music-selection">选择要调整的零件</label><select id="music-selection" :value="selectedId" data-testid="music-selection" @change="selectPart($event.target.value)"><option value="">点选画板零件，或从这里选取</option><option v-for="(part, index) in parts" :key="part.id" :value="part.id">{{ partName(part, index) }}</option></select>
             <div v-if="selectedPart" class="selected-properties">
               <template v-if="selectedPart.type !== 'ramp'">
-                <div class="note-heading"><label for="music-note">音符 <select id="music-note" data-testid="music-note" :value="selectedPart.note" @change="setNote($event.target.value)"><option v-for="note in pitchOrderedNotes" :key="note.label" :value="note.index">{{ note.label }}</option></select></label><button class="audition-button" data-testid="music-audition" type="button" @click="audition()"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3v10l-4-3H3ZM14 6a6 6 0 0 1 0 8m3-10a9 9 0 0 1 0 12"/></svg>试听</button></div>
-                <div class="note-pads" role="group" aria-label="从低音到高音选择音符并试听"><button v-for="note in pitchOrderedNotes" :key="note.label" :data-testid="`music-note-${note.index}`" type="button" :aria-pressed="selectedPart.note === note.index" :aria-label="`音符 ${note.label}，点击试听`" @click="setNote(note.index)">{{ note.label }}</button></div>
-                <p v-if="selectedPart.type !== 'string'" class="property-tip">从低到高排列，点音符即可试听。</p>
+                <div class="note-heading"><label for="music-note">{{ selectedPart.type === 'bowed' ? '全音域' : '音符' }} <select id="music-note" data-testid="music-note" :value="selectedPart.note" @change="setNote($event.target.value)"><option v-for="note in pitchOrderedNotes" :key="note.label" :value="note.index">{{ note.label }}</option></select></label><button class="audition-button" data-testid="music-audition" type="button" @click="audition()"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3v10l-4-3H3ZM14 6a6 6 0 0 1 0 8m3-10a9 9 0 0 1 0 12"/></svg>试听</button></div>
+                <div class="note-pads" role="group" aria-label="从低音到高音选择音符并试听"><button v-for="note in quickNotes" :key="note.label" :data-testid="`music-note-${note.index}`" type="button" :aria-pressed="selectedPart.note === note.index" :aria-label="`音符 ${note.label}，点击试听`" @click="setNote(note.index)">{{ note.label }}</button></div>
+                <p v-if="!['string', 'bowed'].includes(selectedPart.type)" class="property-tip">从低到高排列，点音符即可试听。</p>
               </template>
-              <div v-if="['ramp', 'string'].includes(selectedPart.type)" class="angle-panel" :class="{ 'string-angle': selectedPart.type === 'string' }">
-                <div class="angle-heading"><label for="music-angle">{{ selectedPart.type === 'string' ? '弦倾角' : '斜坡角度' }} <output>{{ selectedPart.angle }}°</output></label><div><button class="small-button" data-testid="music-angle-less" type="button" :aria-label="`${typeName(selectedPart.type)}减少15度`" @click="rotateSelected(-15)">−15°</button><button class="small-button" data-testid="music-angle-more" type="button" :aria-label="`${typeName(selectedPart.type)}增加15度`" @click="rotateSelected(15)">＋15°</button></div></div>
+              <div v-if="selectedPart.type === 'bowed'" class="bowed-settings">
+                <label for="music-voice">音色 <select id="music-voice" data-testid="music-voice" :value="selectedPart.voice" @change="setBowSetting('voice', $event.target.value)"><option value="violin">小提琴</option><option value="cello">大提琴</option></select></label>
+                <label for="music-hold">延音 <select id="music-hold" data-testid="music-hold" :value="selectedPart.holdBeats" @change="setBowSetting('holdBeats', Number($event.target.value))"><option :value="2">2 拍</option><option :value="4">4 拍</option><option :value="8">8 拍</option></select></label>
+              </div>
+              <div v-if="['ramp', 'string', 'bowed'].includes(selectedPart.type)" class="angle-panel" :class="{ 'string-angle': ['string', 'bowed'].includes(selectedPart.type) }">
+                <div class="angle-heading"><label for="music-angle">{{ selectedPart.type === 'ramp' ? '斜坡角度' : '弦倾角' }} <output>{{ selectedPart.angle }}°</output></label><div><button class="small-button" data-testid="music-angle-less" type="button" :aria-label="`${typeName(selectedPart.type)}减少15度`" @click="rotateSelected(-15)">−15°</button><button class="small-button" data-testid="music-angle-more" type="button" :aria-label="`${typeName(selectedPart.type)}增加15度`" @click="rotateSelected(15)">＋15°</button></div></div>
                 <input id="music-angle" data-testid="music-angle" type="range" min="-75" max="75" step="1" :value="selectedPart.angle" @input="updateRange('angle', $event.target.value)" @change="finishRangeEdit" @blur="finishRangeEdit"/>
                 <template v-if="selectedPart.type === 'ramp'"><div class="range-labels"><span>左低</span><span>水平</span><span>右低</span></div><p class="property-tip">一点倾斜，让旋律转个弯。</p></template>
               </div>
@@ -2341,6 +2398,31 @@ kbd {
   .quick-panel.has-selection .string-angle { margin-top:0; }
   .quick-panel.has-selection .part-actions { margin-top:0; }
   .quick-panel.has-selection .part-actions button { min-height:44px; }
+}
+
+
+/* Bow movement lasts for the same renewable gate as the sustained voice. */
+.bowed-rest { fill:none; stroke:#8f8c4f; stroke-width:2.6; stroke-linecap:round; }
+.bowed-glow { fill:none; stroke:#c6ad55; stroke-width:8; stroke-linecap:round; opacity:0; transition:opacity 180ms ease; }
+.bowed-activity.is-active .bowed-glow { opacity:0.38; }
+.bowed-activity.is-active .bowed-bow { animation:bow-stroke var(--bow-period,1.2s) ease-in-out infinite; }
+@keyframes bow-stroke { 0%,100% { transform:translateX(-23px); } 50% { transform:translateX(23px); } }
+.bowed-note { fill:#586c49; font:600 20px ui-monospace,SFMono-Regular,Consolas,monospace; }
+.bowed-settings { display:flex; align-items:center; gap:10px; margin-top:10px; }
+.bowed-settings label { display:flex; align-items:center; gap:6px; min-width:0; color:#6c805c; font-size:10px; }
+.bowed-settings label:first-child { flex:1.3; }
+.bowed-settings label:last-child { flex:1; }
+.bowed-settings select { flex:1; min-width:0; min-height:44px; padding-inline:7px; font-size:11px; }
+.tool-strip { flex-wrap:wrap; }
+@media (max-width:600px) {
+  .placement-tools { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); flex:1 1 100%; }
+  .history-tools { margin-left:auto; }
+  .bowed-note { font-size:24px; }
+  .quick-panel.has-selection .bowed-settings { grid-column:1 / -1; margin-top:0; gap:12px; }
+  .bowed-settings label { font-size:11px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .bowed-activity.is-active .bowed-bow { animation:none; transform:none; }
 }
 
 </style>

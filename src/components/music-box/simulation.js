@@ -76,8 +76,8 @@ export function createSimulation({ parts: initialParts = [], onHit = () => {} } 
       }
 
       for (const part of parts) {
-        if (part.type === 'ramp' || part.type === 'string') {
-          const isString = part.type === 'string'
+        if (part.type === 'ramp' || part.type === 'string' || part.type === 'bowed') {
+          const isString = part.type === 'string' || part.type === 'bowed'
           const length = isString ? 132 : 116
           const radians = part.angle * Math.PI / 180
           const halfX = Math.cos(radians) * length / 2

@@ -18,6 +18,7 @@ export const NOTES = [
 ]
 
 export const PRESETS = [
+  { id: 'lantern-ensemble', name: '灯火弦歌', description: '大提琴铺开长音，小提琴接过旋律；拨弦、铃声与鼓点层层汇成灯火。' },
   { id: 'string-parade', name: '弦上焰火', description: '低音拨弦托起鼓点，高铃穿过余韵；让七路弹珠奏出更温暖的焰火。' },
   { id: 'parade', name: '焰火游行', description: '七路弹珠、四段推进；让鼓点领路，让高低铃声点亮夜空。' },
   { id: 'cascade', name: '铃声瀑布', description: '顺着斜坡落下，让五声音阶一层层亮起。' },
@@ -32,7 +33,8 @@ export function createPart(type, x, y) {
     x,
     y,
     angle: type === 'ramp' ? 20 : 0,
-    note: type === 'string' ? 8 : 0,
+    note: type === 'string' ? 8 : type === 'bowed' ? 3 : 0,
+    ...(type === 'bowed' ? { voice: 'violin', holdBeats: 4 } : {}),
   }
 }
 
@@ -113,7 +115,76 @@ function createStringParade() {
   return preset
 }
 
-export function createPreset(id = 'string-parade') {
+function createLanternEnsemble() {
+  const bowed = (x, y, note, voice, holdBeats, angle = 44) => ({
+    ...arrange('bowed', x, y, note, angle), voice, holdBeats,
+  })
+  const emitters = [
+    { id: 'cello-root', label: '大提琴 C3', x: 92 },
+    { id: 'pluck', label: '拨弦 E3', x: 184 },
+    { id: 'violin-g', label: '小提琴 G4', x: 276 },
+    { id: 'drum', label: '鼓', x: 368 },
+    { id: 'violin-c', label: '小提琴 C5', x: 460 },
+    { id: 'bell', label: '铃 E5', x: 552 },
+    { id: 'violin-d', label: '小提琴 D5', x: 644 },
+    { id: 'cello-fifth', label: '大提琴 G3', x: 736 },
+  ]
+  const events = []
+  const phrase = (emitterId, beats) => beats.forEach(beat => events.push({ beat, emitterId }))
+
+  // Eight-beat cello foundations open into a two-note pedal at the climax.
+  phrase('cello-root', [0, 16, 32, 40, 48, 56])
+  phrase('cello-fifth', [8, 24, 32, 40, 56])
+  phrase('violin-g', [4, 16, 28, 32, 36, 40, 44, 52, 60])
+  phrase('violin-c', [12, 20, 34, 38, 42, 46, 48, 56])
+  phrase('violin-d', [24, 35.5, 39.5, 43.5, 47])
+  phrase('pluck', [2, 6, 10, 14, 17, 19, 21, 23, 25, 27, 29, 31,
+    32.5, 34.5, 36.5, 38.5, 40.5, 42.5, 44.5, 46.5, 49.5, 53.5, 57.5, 61.5])
+  phrase('bell', [7.5, 15.5, 22.5, 30.5, 33.5, 37.5, 41.5, 45.5, 51, 59, 63.5])
+  // The opening breathes; a half-time walk grows into the full beat and recedes.
+  phrase('drum', [16, 18, 20, 22, 24, 26, 28, 30, 31.5,
+    ...Array.from({ length: 16 }, (_, beat) => beat + 32), 47.5, 48, 52, 56, 60])
+  events.sort((left, right) => left.beat - right.beat)
+
+  return {
+    emitterX: 276,
+    tempo: 116,
+    parts: [
+      bowed(81, 104, 8, 'cello', 8),
+      arrange('string', 173, 104, 10, 44),
+      bowed(265, 104, 3, 'violin', 4),
+      arrange('drum', 348, 121, 0),
+      bowed(449, 104, 5, 'violin', 4),
+      arrange('bell', 534, 119, 7),
+      bowed(633, 104, 6, 'violin', 2),
+      bowed(722, 104, 11, 'cello', 8),
+      arrange('string', 258, 330, 0, -22),
+      arrange('bell', 412, 302, 4),
+      arrange('string', 548, 338, 2, 22),
+      arrange('bell', 688, 388, 5),
+      arrange('ramp', 180, 438, 0, 22),
+      arrange('ramp', 600, 465, 0, -22),
+      arrange('bell', 350, 505, 0),
+    ],
+    score: {
+      id: 'lantern-ensemble',
+      name: '灯火弦歌',
+      lengthBeats: 64,
+      beatsPerBar: 4,
+      emitters,
+      events,
+      sections: [
+        { beat: 0, label: '序幕' },
+        { beat: 16, label: '行进' },
+        { beat: 32, label: '盛放' },
+        { beat: 48, label: '余辉' },
+      ],
+    },
+  }
+}
+
+export function createPreset(id = 'lantern-ensemble') {
+  if (id === 'lantern-ensemble') return createLanternEnsemble()
   if (id === 'string-parade') return createStringParade()
   if (id === 'parade') return createParade()
   if (id === 'blank') return { parts: [], emitterX: 400, tempo: 88, score: null }

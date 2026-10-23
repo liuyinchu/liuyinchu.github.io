@@ -259,3 +259,20 @@ test('string parade keeps the original score available and plays all three strin
   assert.ok(peakBalls < 24, 'the string arrangement must leave room for ongoing trajectories')
   assert.equal(simulation.getBalls().length, 0)
 })
+
+test('bowed parts carry playable defaults and a tilted bow triggers once before the marble leaves', () => {
+  const part = createPart('bowed', 400, 240)
+  assert.equal(part.voice, 'violin')
+  assert.equal(part.holdBeats, 4)
+  assert.equal(NOTES[part.note].label, 'G4')
+  assert.equal(part.angle, 0)
+  part.angle = 60
+  const hits = []
+  const simulation = createSimulation({ parts: [part], onHit: hit => hits.push(hit) })
+  simulation.drop(400)
+  run(simulation, 5)
+  assert.equal(hits.length, 1, 'one clear crossing must not keep retriggering the sustained voice')
+  assert.equal(hits[0].part.voice, 'violin')
+  assert.ok(hits[0].speed > 100)
+  assert.equal(simulation.getBalls().length, 0)
+})

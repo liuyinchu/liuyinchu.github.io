@@ -1,5 +1,6 @@
 import { NOTES } from './presets.js'
 import { createStringSamples } from './string-synthesis.js'
+import { createBowedInstrument } from './bowed-synthesis.js'
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
@@ -8,6 +9,7 @@ export function createAudioEngine() {
   let master = null
   let compressor = null
   let noiseBuffer = null
+  let bowed = null
   let volume = 0.38
   let muted = false
   let disposed = false
@@ -137,13 +139,20 @@ export function createAudioEngine() {
         return false
       }
     },
-    hit(part, speed) {
+    hit(part, speed, { tempo = 120 } = {}) {
       if (disposed || muted || !context || context.state !== 'running') return
       const frequency = NOTES[part.note]?.frequency ?? NOTES[0].frequency
       const strength = clamp(speed / 650, 0.16, 1)
       if (part.type === 'bell') playBell(frequency, strength)
       else if (part.type === 'drum') playDrum(frequency, strength)
       else if (part.type === 'string') playString(frequency, strength)
+      else if (part.type === 'bowed') {
+        if (!bowed) bowed = createBowedInstrument(context, master)
+        bowed.hit(part, frequency, strength, tempo)
+      }
+    },
+    releaseBows(partId) {
+      bowed?.release(partId)
     },
     setVolume(nextVolume) {
       volume = clamp(nextVolume, 0, 1)
@@ -156,6 +165,8 @@ export function createAudioEngine() {
     async dispose() {
       if (disposed) return
       disposed = true
+      bowed?.dispose()
+      bowed = null
       for (const voice of voices) {
         for (const source of voice.sources) source.stop()
         for (const node of voice.nodes) node.disconnect()

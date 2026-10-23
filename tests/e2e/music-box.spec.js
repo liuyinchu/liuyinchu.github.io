@@ -153,12 +153,19 @@ async function expectNearbyMobileEditing(page, isMobile) {
 async function installAudioProbe(page) {
   await page.addInitScript(() => {
     const NativeAudioContext = window.AudioContext
-    const probe = { contexts: [], taps: [] }
+    const probe = { contexts: [], taps: [], oscillators: new Set() }
     window.__musicAudioProbe = probe
     window.AudioContext = class extends NativeAudioContext {
       constructor(...args) {
         super(...args)
         probe.contexts.push(this)
+      }
+
+      createOscillator(...args) {
+        const oscillator = super.createOscillator(...args)
+        probe.oscillators.add(oscillator)
+        oscillator.addEventListener('ended', () => probe.oscillators.delete(oscillator), { once: true })
+        return oscillator
       }
 
       createDynamicsCompressor(...args) {
@@ -184,6 +191,8 @@ function readAudio(page) {
     }
     return {
       states: probe.contexts.map((context) => context.state),
+      time: Math.max(0, ...probe.contexts.map((context) => context.currentTime)),
+      activeOscillators: probe.oscillators.size,
       peak,
       hits: Number(document.querySelector('[data-testid="music-hit-count"]').textContent),
     }
@@ -706,12 +715,13 @@ test('a placed string sounds and vibrates on collision, edits, and survives savi
   await finishAudit(page, audit)
 })
 
-test('the new string parade is a quiet default and performs several string voices', async ({
+test('the original string parade stays quiet until played and performs several string voices', async ({
   page,
   isMobile,
 }) => {
   await installAudioProbe(page)
   const audit = await openBox(page)
+  await page.getByTestId('music-preset').selectOption('string-parade')
   const preset = page.getByTestId('music-preset')
   const strings = page.locator('[data-testid="music-part"][data-type="string"]')
   await expect(preset).toHaveValue('string-parade')
@@ -738,5 +748,161 @@ test('the new string parade is a quiet default and performs several string voice
   await expect.poll(() => score.textContent()).not.toBe(initialScore)
   await page.getByTestId('music-reset').click()
   await expectStopped(page)
+  await finishAudit(page, audit)
+})
+
+test('an isolated bowed voice sustains, renews without stacking, releases, and saves its settings', async ({
+  page,
+  isMobile,
+}, testInfo) => {
+  await installAudioProbe(page)
+  const audit = await openBox(page)
+  await page.getByTestId('music-preset').selectOption('blank')
+  const { id: bowedId, part } = await placePart(page, 'bowed', isMobile, { x: 0.5, y: 0.4 })
+  await expectNearbyMobileEditing(page, isMobile)
+  await expect(page.getByTestId('music-part')).toHaveCount(1)
+  await expect(page.getByTestId('music-voice')).toHaveValue('violin')
+  await expect(page.getByTestId('music-hold')).toHaveValue('4')
+  for (let step = 0; step < 4; step += 1) await clickControl(page, 'music-angle-more', isMobile)
+  await expect(page.getByTestId('music-angle')).toHaveValue('60')
+  await page.getByTestId('music-settings').locator('summary').click()
+  await page.getByTestId('music-tempo').focus()
+  await page.getByTestId('music-tempo').press('Home')
+  await expect(page.getByTestId('music-tempo')).toHaveValue('30')
+  await page.getByTestId('music-hold').selectOption('8')
+
+  // Changing hold auditions the voice; clear that sound before the real collision.
+  await page.getByTestId('music-reset').click()
+  await expectStopped(page)
+  await expect.poll(async () => (await readAudio(page)).peak, {
+    intervals: [25, 50, 100], timeout: 1_000,
+  }).toBeLessThan(0.00001)
+  await expect.poll(async () => (await readAudio(page)).activeOscillators).toBe(0)
+  const activity = part.getByTestId('music-bowed-activity')
+  await expect(activity).toHaveAttribute('data-active', 'false')
+  await clickControl(page, 'music-drop', isMobile)
+  await expect.poll(() => hitCount(page), { intervals: [25, 50, 100] }).toBe(1)
+  await expectAudible(page)
+  await expect(activity).toHaveAttribute('data-active', 'true')
+  const first = await readAudio(page)
+  const firstUntil = Number(await activity.getAttribute('data-until'))
+  expect(first.activeOscillators).toBeGreaterThan(0)
+  let minimumPeak = first.peak
+  let sustainedSamples = 0
+  await expect.poll(async () => {
+    const sample = await readAudio(page)
+    minimumPeak = Math.min(minimumPeak, sample.peak)
+    sustainedSamples += 1
+    return sample.time - first.time >= 3.2
+      && sample.hits === 1
+      && minimumPeak > 0.0001
+      && sample.activeOscillators === first.activeOscillators
+  }, { intervals: [50, 100], timeout: 6_000 }).toBe(true)
+  expect(await hitCount(page)).toBe(1)
+  await expect(activity).toHaveAttribute('data-active', 'true')
+
+  // More real marbles renew this same part, without adding simultaneous voices.
+  for (const expectedHits of [2, 3]) {
+    await clickControl(page, 'music-drop', isMobile)
+    await expect.poll(() => hitCount(page), { intervals: [25, 50, 100] }).toBe(expectedHits)
+    await expect.poll(async () => (await readAudio(page)).activeOscillators, {
+      timeout: 1_000,
+    }).toBe(first.activeOscillators)
+  }
+  expect(Number(await activity.getAttribute('data-until'))).toBeGreaterThan(firstUntil)
+  await expectAudible(page)
+  await expect(page.getByTestId('music-play')).toHaveAttribute('aria-pressed', 'true')
+  await clickControl(page, 'music-play', isMobile)
+  await expect(page.getByTestId('music-play')).toHaveAttribute('aria-pressed', 'false')
+  await expect(activity).toHaveAttribute('data-active', 'false')
+  await expect.poll(async () => (await readAudio(page)).peak, {
+    intervals: [25, 50, 100], timeout: 1_000,
+  }).toBeLessThan(0.00001)
+  await expect.poll(async () => (await readAudio(page)).activeOscillators).toBe(0)
+
+  await page.getByTestId('music-reset').click()
+  await expectStopped(page)
+  await page.getByTestId('music-voice').selectOption('cello')
+  await page.getByTestId('music-note').selectOption('8')
+  await clickControl(page, 'music-audition', isMobile)
+  await expectAudible(page)
+  await expect(activity).toHaveAttribute('data-voice', 'cello')
+  await expect(activity).toHaveAttribute('data-hold-beats', '8')
+  await expect(activity).toHaveAttribute('data-active', 'true')
+  await expect(page.getByTestId('music-play')).toHaveAttribute('aria-pressed', 'true')
+  expect(await hitCount(page)).toBe(0)
+  await clickControl(page, 'music-play', isMobile)
+  await expect.poll(async () => (await readAudio(page)).peak, {
+    intervals: [25, 50, 100], timeout: 1_000,
+  }).toBeLessThan(0.00001)
+  await expectStopped(page)
+
+  const savedLayout = await layoutSnapshot(page)
+  await page.getByTestId('music-save').click()
+  await page.getByTestId('music-voice').selectOption('violin')
+  await page.getByTestId('music-hold').selectOption('2')
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await expect(page.getByTestId('music-box')).toBeVisible()
+  await expectStopped(page)
+  await expect.poll(() => layoutSnapshot(page)).toEqual(savedLayout)
+  await page.getByTestId('music-selection').selectOption(bowedId)
+  await expect(page.getByTestId('music-voice')).toHaveValue('cello')
+  await expect(page.getByTestId('music-hold')).toHaveValue('8')
+  await expect(page.getByTestId('music-note')).toHaveValue('8')
+  await expect(page.getByTestId('music-angle')).toHaveValue('60')
+  expect(await page.evaluate(() => window.__musicAudioProbe.contexts.length)).toBe(0)
+  await testInfo.attach('bowed-sustain-observation', {
+    body: JSON.stringify({ minimumPeak, sustainedSamples, oscillatorBaseline: first.activeOscillators }, null, 2),
+    contentType: 'application/json',
+  })
+  await finishAudit(page, audit)
+})
+
+test('the lantern ensemble is a quiet default and brings in both bowed voices and the next section', async ({
+  page,
+  isMobile,
+}) => {
+  await installAudioProbe(page)
+  const audit = await openBox(page)
+  const preset = page.getByTestId('music-preset')
+  const activity = page.getByTestId('music-bowed-activity')
+  await expect(preset).toHaveValue('lantern-ensemble')
+  expect(await page.evaluate(() => window.__musicAudioProbe.contexts.length)).toBe(0)
+  await preset.selectOption('string-parade')
+  await expect(activity).toHaveCount(0)
+  await expect.poll(() => page.getByTestId('music-string-vibration').count()).toBeGreaterThan(0)
+  await preset.selectOption('parade')
+  await expect(activity).toHaveCount(0)
+  await expect(page.getByTestId('music-string-vibration')).toHaveCount(0)
+  await preset.selectOption('lantern-ensemble')
+  await expectStopped(page)
+  await expect(page.getByTestId('music-tempo')).toHaveValue('116')
+  // The complete preset must survive the same bounds normalization as user edits.
+  const savedEnsemble = await layoutSnapshot(page)
+  await page.getByTestId('music-save').click()
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await expect(page.getByTestId('music-box')).toBeVisible()
+  await expectStopped(page)
+  await expect.poll(() => layoutSnapshot(page)).toEqual(savedEnsemble)
+  const score = page.getByTestId('music-score-state')
+  await expect(score).toContainText('序幕')
+  await clickControl(page, 'music-play', isMobile)
+  await expectAudible(page)
+  for (const voice of ['cello', 'violin']) {
+    const voiceActivity = page.locator('[data-testid="music-bowed-activity"][data-voice="' + voice + '"]')
+    await expect.poll(() => voiceActivity.evaluateAll((nodes) =>
+      nodes.some((node) => node.getAttribute('data-active') === 'true'),
+    ), { intervals: [50, 100], timeout: 8_000 }).toBe(true)
+  }
+  await expect.poll(() => page.getByTestId('music-string-vibration').evaluateAll((strings) =>
+    strings.some((string) => Number(string.getAttribute('data-strike')) > 0),
+  )).toBe(true)
+  await expect.poll(() => hitCount(page)).toBeGreaterThan(0)
+  await expect(score).toContainText('行进', { timeout: 12_000 })
+  await page.getByTestId('music-reset').click()
+  await expectStopped(page)
+  await expect.poll(() => activity.evaluateAll((nodes) =>
+    nodes.every((node) => node.getAttribute('data-active') === 'false'),
+  )).toBe(true)
   await finishAudit(page, audit)
 })
