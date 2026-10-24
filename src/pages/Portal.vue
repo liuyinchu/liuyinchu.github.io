@@ -1,49 +1,22 @@
 <script setup>
-import APlayer from 'aplayer'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import Calendar from '../components/Calendar.vue'
-import ToDoList from '../components/ToDoList.vue'
-import Weather from '../components/Weather.vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { portalApps } from '../portal/apps.js'
+import {
+  canTileWorkspace,
+  createWorkspace,
+  moveRect,
+  reduceWorkspace,
+  resizeRect,
+  restoreWorkspace,
+  serializeWorkspace,
+} from '../portal/windowModel.mjs'
 
 // Apple macOS Big Sur / 512 Pixels wallpaper archive: https://512pixels.net/projects/default-mac-wallpapers-in-5k/
 const wallpaper = '/bg/macos-big-sur-light.jpg'
 const chatGptUrl = 'https://chat.openai.com/'
 const ipInfoUrl = 'https://ipinfo.io/what-is-my-ip'
 
-const topApps = [
-  {
-    id: 'todo',
-    label: 'TODO',
-    title: 'TODO List',
-    icon: '/portal-icons/reminders.svg',
-    align: 'left',
-    windowClass: 'window-todo',
-  },
-  {
-    id: 'music',
-    label: 'Music',
-    title: 'Music',
-    icon: '/portal-icons/music.svg',
-    align: 'right',
-    windowClass: 'window-music',
-  },
-  {
-    id: 'weather',
-    label: 'Weather',
-    title: 'Weather',
-    icon: '/portal-icons/weather.svg',
-    align: 'right',
-    windowClass: 'window-weather',
-  },
-  {
-    id: 'calendar',
-    label: 'Calendar',
-    title: 'Calendar',
-    icon: '/portal-icons/calendar.svg',
-    align: 'right',
-    windowClass: 'window-calendar',
-  },
-]
+const topApps = portalApps
 
 const bottomApps = [
   {
@@ -249,13 +222,13 @@ const fallbackSearchItems = [
   },
 ]
 
-const activeWindow = ref(null)
+const desktopArea = ref({ x: 8, y: 36, width: 1264, height: 650 })
+const workspace = ref(createWorkspace(topApps, desktopArea.value))
+const activeWindow = computed(() => workspace.value.focusedId)
 const activeOverlay = ref(null)
-const minimizedWindow = ref(null)
 const now = ref(new Date())
 const dockGroups = ref([])
 const musicTracks = ref([])
-const aplayerContainer = ref(null)
 const spotlightQuery = ref('')
 const launchpadQuery = ref('')
 const spotlightSelectedIndex = ref(0)
@@ -263,7 +236,6 @@ const searchItems = ref([])
 const loadingData = ref(true)
 const dataError = ref('')
 const portalDesktopRef = ref(null)
-const windowRef = ref(null)
 const spotlightInput = ref(null)
 const launchpadInput = ref(null)
 const launchpadPanel = ref(null)
@@ -775,28 +747,23 @@ void main() {
   fragmentColor = vec4(outputColor * alpha, alpha);
 }
 `
-const windowPos = ref({ x: 0, y: 0 })
-const restoreWindowPos = ref({ x: 0, y: 0 })
-const dragDelta = ref({ x: 0, y: 0 })
-const windowPositioned = ref(false)
-const windowMaximized = ref(false)
-const windowBodyScrolled = ref(false)
-const dragging = ref(false)
 const compactLayout = ref(false)
-const isMinimizing = ref(false)
-const isRestoring = ref(false)
+const windowElements = new Map()
+const windowReturnFocus = new Map()
+const windowScrollState = reactive({})
+const windowAnimations = reactive(Object.fromEntries(topApps.map(app => [
+  app.id, { phase: null, x: 0, y: 0, scale: 0.15 },
+])))
+const pointerInteraction = shallowRef(null)
+const resizeEdges = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw']
+const windowMotionTimers = new Map()
 const activeMenu = ref(null)
-const windowDockTransform = ref({ x: 0, y: 0, scale: 0.15 })
-let minimizedWindowRect
 const desktopFocused = ref(true)
-const lastFocusedElement = ref(null)
-const overlayReturnFocus = ref(null)
+const overlayReturnFocus = shallowRef(null)
 let clockTimer
-let player
-let dragPointerId = null
-let dragCaptureTarget = null
-let dragStart = { pointerX: 0, pointerY: 0, originX: 0, originY: 0 }
-let windowPositionUserAdjusted = false
+let viewportSaveTimer
+let lastDesktopViewport = null
+let workspaceHydrated = false
 let dockAnimationFrame
 let dockSettleTimer
 let liquidLightAnimationFrame
@@ -812,19 +779,26 @@ let liquidPointerActive = false
 let liquidLightTarget = { x: 0, y: 0 }
 let liquidLightCurrent = { x: 0, y: 0 }
 
-const allWindowApps = computed(() => [...topApps, ...bottomApps])
-const activeWindowApp = computed(() => topApps.find((app) => app.id === activeWindow.value))
-const activeOverlayApp = computed(() => bottomApps.find((app) => app.id === activeOverlay.value))
+const activeWindowApp = computed(() => topApps.find(app => app.id === activeWindow.value))
+const activeOverlayApp = computed(() => bottomApps.find(app => app.id === activeOverlay.value))
 const activeApp = computed(
-  () => activeOverlayApp.value || (desktopFocused.value && !minimizedWindow.value ? activeWindowApp.value : null),
+  () => activeOverlayApp.value || (desktopFocused.value ? activeWindowApp.value : null),
 )
-const minimizedApp = computed(() => allWindowApps.value.find((app) => app.id === minimizedWindow.value))
-const dockWindowApps = computed(() => [
-  bottomApps[0],
-  ...topApps.filter((app) => app.id !== 'todo'),
-  bottomApps[1],
-])
-const visibleWindow = computed(() => Boolean(activeWindowApp.value && minimizedWindow.value !== activeWindow.value && !activeOverlay.value))
+const minimizedApps = computed(() => workspace.value.order
+  .filter(id => workspace.value.windows[id].open && workspace.value.windows[id].minimized)
+  .map(id => topApps.find(app => app.id === id)))
+const minimizedApp = computed(() => minimizedApps.value.at(-1))
+const dockWindowApps = computed(() => [bottomApps[0], ...topApps, bottomApps[1]])
+const visibleWindow = computed(() => {
+  const current = workspace.value.windows[activeWindow.value]
+  return Boolean(current?.open && !current.minimized && !activeOverlay.value)
+})
+const visibleWindowCount = computed(() => topApps.filter(app => {
+  const current = workspace.value.windows[app.id]
+  return current.open && !current.minimized
+}).length)
+const tileAvailable = computed(() => !compactLayout.value && visibleWindowCount.value > 1
+  && canTileWorkspace(workspace.value, topApps, desktopArea.value))
 const portalMenus = computed(() => [
   { id: 'go', label: 'Go', items: [
     { label: 'Spotlight', app: 'map', shortcut: '⌘K' },
@@ -835,9 +809,12 @@ const portalMenus = computed(() => [
   { id: 'window', label: 'Window', items: [
     ...topApps.map(app => ({ label: app.title, app: app.id })),
     { label: 'Minimize', action: 'minimize', disabled: !visibleWindow.value, separator: true },
-    { label: 'Restore minimized window', action: 'restore', disabled: !minimizedWindow.value },
-    { label: windowMaximized.value ? 'Restore size' : 'Zoom', action: 'zoom', disabled: !visibleWindow.value || compactLayout.value },
+    { label: 'Restore minimized window', action: 'restore', disabled: !minimizedApps.value.length },
+    { label: workspace.value.windows[activeWindow.value]?.maximized ? 'Restore size' : 'Zoom', action: 'zoom', disabled: !visibleWindow.value || compactLayout.value },
     { label: 'Close window', action: 'close', disabled: !visibleWindow.value },
+    { label: 'Tile Windows', action: 'tile', disabled: !tileAvailable.value,
+      title: !compactLayout.value && visibleWindowCount.value > 1 && !tileAvailable.value ? 'Not enough space for these windows' : undefined, separator: true },
+    { label: 'Reset Window Positions', action: 'reset', disabled: compactLayout.value || !workspace.value.order.length },
   ] },
   { id: 'help', label: 'Help', items: [
     { label: 'Search this site', app: 'map' },
@@ -886,6 +863,8 @@ async function activateMenuItem(item) {
     await focusActiveSurface()
   }
   else if (item.action === 'close') await closeWindow()
+  else if (item.action === 'tile') arrangeWindows('tile')
+  else if (item.action === 'reset') arrangeWindows('resetLayout')
 }
 
 function handleMenuKeydown(event, id) {
@@ -985,35 +964,51 @@ const menuTime = computed(() => {
   const time = now.value.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
   return `${monthDay} ${weekday} ${time}`
 })
-const windowStyle = computed(() => {
-  const motion = {
-    '--window-dock-x': windowDockTransform.value.x + 'px',
-    '--window-dock-y': windowDockTransform.value.y + 'px',
-    '--window-dock-scale': windowDockTransform.value.scale,
-  }
-  if (compactLayout.value || !windowPositioned.value) return motion
+function windowZIndex(id) {
+  return 100 + Math.max(0, workspace.value.order.indexOf(id))
+}
 
-  if (windowMaximized.value) {
-    return {
-      ...motion,
-      top: 'var(--portal-window-max-top, 34px)',
-      left: 'var(--portal-window-max-inset, 8px)',
-      width: 'calc(100vw - var(--portal-window-max-gutter, 16px))',
-      height: 'calc(100dvh - var(--portal-window-max-height-offset, 112px))',
-      maxHeight: 'none',
-    }
-  }
+function presentedWindowRect(id) {
+  const current = workspace.value.windows[id]
+  return current.maximized ? desktopArea.value : current.rect
+}
 
+function windowStyle(id) {
+  const motion = windowAnimations[id]
   const style = {
-    ...motion,
-    top: `${windowPos.value.y}px`,
-    left: `${windowPos.value.x}px`,
+    zIndex: windowZIndex(id),
+    '--window-dock-x': motion.x + 'px',
+    '--window-dock-y': motion.y + 'px',
+    '--window-dock-scale': motion.scale,
   }
-  if (dragging.value) {
-    style.transform = `translate3d(${dragDelta.value.x}px, ${dragDelta.value.y}px, 0)`
+  if (compactLayout.value) return style
+  const rect = presentedWindowRect(id)
+  return {
+    ...style,
+    top: rect.y + 'px',
+    left: rect.x + 'px',
+    width: rect.width + 'px',
+    height: rect.height + 'px',
+    minWidth: '0px',
+    minHeight: '0px',
+    maxWidth: 'none',
+    maxHeight: 'none',
   }
-  return style
-})
+}
+
+function isWindowVisible(id) {
+  const current = workspace.value.windows[id]
+  return current.open && !current.minimized && (!compactLayout.value || activeWindow.value === id)
+}
+
+function setWindowElement(id, element) {
+  if (element) windowElements.set(id, element)
+  else windowElements.delete(id)
+}
+
+function applicationProps(app) {
+  return app.props?.({ musicTracks: musicTracks.value, loadingData: loadingData.value }) || {}
+}
 
 function iconForUrl(url, size = 256) {
   return `https://www.google.com/s2/favicons?sz=${size}&domain_url=${encodeURIComponent(url)}`
@@ -1226,157 +1221,187 @@ function isOrdinaryWindow(id) {
   return Boolean(id && id !== 'map' && id !== 'dock')
 }
 
-function rememberCurrentFocus(target = lastFocusedElement, preferred = null) {
-  const element = preferred || document.activeElement
-  if (element instanceof HTMLElement && !element.closest('.menu-dropdown')
-    && (target === overlayReturnFocus || !windowRef.value?.contains(element))) {
-    target.value = element
+function persistWorkspace() {
+  if (!workspaceHydrated) return
+  try {
+    window.localStorage.setItem('portal.workspace.v1', serializeWorkspace(workspace.value))
+  } catch (error) {
+    console.warn('Portal layout could not be saved:', error)
   }
 }
 
-async function restorePreviousFocus(target = lastFocusedElement, appId = null) {
-  await nextTick()
-  const usable = element => element?.isConnected && element.getClientRects().length
-    && !element.closest('[inert]')
-  const fallback = dockRef.value?.querySelector('[data-app-id="' + appId + '"]')
-    || portalDesktopRef.value?.querySelector('[data-app-id="' + appId + '"]')
-  const element = usable(target.value) ? target.value : usable(fallback) ? fallback : dockRef.value
-  element?.focus({ preventScroll: true })
+function applyWorkspaceAction(action, { persist = true, animate = 260 } = {}) {
+  const next = reduceWorkspace(workspace.value, action, topApps, desktopArea.value)
+  if (next === workspace.value) return
+  workspace.value = next
+  if (persist) persistWorkspace()
+  requestLiquidGlassRender(animate)
 }
 
+function readDesktopViewport() {
+  const root = portalDesktopRef.value
+  return { width: root.clientWidth, height: root.clientHeight }
+}
+
+function readDesktopArea() {
+  const root = portalDesktopRef.value
+  if (!root) return desktopArea.value
+  const menu = root.querySelector('.portal-menu-bar')
+  const dock = dockRef.value
+  // Layout offsets exclude visual transforms and Dock magnification.
+  const top = Math.max(8, (menu ? menu.offsetTop + menu.offsetHeight : 28) + 8)
+  const bottom = Math.min(root.clientHeight - 8, (dock ? dock.offsetTop : root.clientHeight - 76) - 12)
+  return { x: 8, y: top, width: Math.max(1, root.clientWidth - 16), height: Math.max(1, bottom - top) }
+}
 
 function updateCompactLayout() {
-  compactLayout.value = window.matchMedia(
+  const next = window.matchMedia(
     '(max-width: 1100px), (max-width: 1366px) and (hover: none) and (pointer: coarse)',
   ).matches
-
-  if (compactLayout.value) {
-    cancelWindowDrag()
-  }
+  if (next && !compactLayout.value) finishWindowInteraction()
+  compactLayout.value = next
 }
 
-function clampWindowPosition(x, y, rect = windowRef.value?.getBoundingClientRect()) {
-  if (!rect) return { x, y }
-  const visibleTitlebar = 40
-  const minX = visibleTitlebar - rect.width
-  const maxX = window.innerWidth - visibleTitlebar
-  const minY = 28
-  const maxY = Math.max(minY, window.innerHeight - visibleTitlebar)
-
-  return {
-    x: Math.min(Math.max(x, minX), maxX),
-    y: Math.min(Math.max(y, minY), maxY),
+function restoreSavedWorkspace() {
+  updateCompactLayout()
+  if (!compactLayout.value) {
+    desktopArea.value = readDesktopArea()
+    lastDesktopViewport = readDesktopViewport()
   }
+  let raw = null
+  try {
+    raw = window.localStorage.getItem('portal.workspace.v1')
+  } catch {
+    // The workspace remains usable when browser storage is unavailable.
+  }
+  workspace.value = restoreWorkspace(raw, topApps, desktopArea.value, {
+    preserveRects: compactLayout.value,
+  })
+  workspaceHydrated = true
 }
 
-function windowLayoutRect() {
-  const element = windowRef.value
-  const root = portalDesktopRef.value
-  if (!element || !root) return null
-  const origin = root.getBoundingClientRect()
-  return {
-    left: origin.left + element.offsetLeft,
-    top: origin.top + element.offsetTop,
-    width: element.offsetWidth,
-    height: element.offsetHeight,
-  }
-}
-
-async function centerWindow() {
-  if (!isOrdinaryWindow(activeWindow.value) || compactLayout.value) return
-  await nextTick()
-  const rect = windowLayoutRect()
-  if (!rect) return
-
-  windowPos.value = clampWindowPosition(
-    Math.max(8, (window.innerWidth - rect.width) / 2),
-    Math.max(34, (window.innerHeight - rect.height) / 2),
-    rect,
-  )
-  restoreWindowPos.value = { ...windowPos.value }
-  windowPositioned.value = true
-  windowPositionUserAdjusted = false
-  requestLiquidGlassRender(220)
+function focusWindow(id) {
+  const current = workspace.value.windows[id]
+  if (!current?.open || current.minimized) return
+  desktopFocused.value = true
+  if (activeWindow.value !== id) applyWorkspaceAction({ type: 'focus', id }, { animate: 180 })
 }
 
 async function focusActiveSurface() {
   await nextTick()
-
   if (activeOverlay.value === 'map') {
     spotlightInput.value?.focus({ preventScroll: true })
   } else if (activeOverlay.value === 'dock') {
-    const touchFirstLayout = compactLayout.value
-      || window.matchMedia('(hover: none) and (pointer: coarse)').matches
-    if (touchFirstLayout) launchpadPanel.value?.focus({ preventScroll: true })
+    const touchFirst = compactLayout.value || window.matchMedia('(hover: none) and (pointer: coarse)').matches
+    if (touchFirst) launchpadPanel.value?.focus({ preventScroll: true })
     else launchpadInput.value?.focus({ preventScroll: true })
-  } else if (isOrdinaryWindow(activeWindow.value) && minimizedWindow.value !== activeWindow.value) {
-    windowRef.value?.focus({ preventScroll: true })
+  } else if (activeWindow.value && isWindowVisible(activeWindow.value)) {
+    windowElements.get(activeWindow.value)?.focus({ preventScroll: true })
   }
+}
+
+async function restoreSurfaceFocus(candidate = null, fallbackId = null) {
+  await nextTick()
+  if (candidate?.isConnected && candidate.getClientRects().length && !candidate.closest('[inert]')) {
+    candidate.focus({ preventScroll: true })
+    return
+  }
+  if (activeWindow.value && isWindowVisible(activeWindow.value)) {
+    windowElements.get(activeWindow.value)?.focus({ preventScroll: true })
+    return
+  }
+  const dockTarget = dockRef.value?.querySelector('[data-app-id="' + fallbackId + '"]')
+  const destination = dockTarget || dockRef.value
+  destination?.focus({ preventScroll: true })
+}
+
+function clearWindowMotion(id) {
+  window.clearTimeout(windowMotionTimers.get(id))
+  windowMotionTimers.delete(id)
+  if (windowAnimations[id]) windowAnimations[id].phase = null
+}
+
+function startWindowMotion(id, phase) {
+  clearWindowMotion(id)
+  if (liquidGlassMotionQuery?.matches) return
+  windowAnimations[id].phase = phase
+  if (phase === 'zooming') {
+    windowMotionTimers.set(id, window.setTimeout(() => {
+      clearWindowMotion(id)
+      requestLiquidGlassRender(0)
+    }, 240))
+  }
+}
+
+function updateWindowDockTransform(id) {
+  const target = dockRef.value?.querySelector('[data-app-id="' + id + '"]')
+  const root = portalDesktopRef.value
+  if (!target || !root) return
+  const dock = target.getBoundingClientRect()
+  const origin = root.getBoundingClientRect()
+  const rect = presentedWindowRect(id)
+  Object.assign(windowAnimations[id], {
+    x: dock.left - origin.left + root.scrollLeft + dock.width / 2 - rect.x - rect.width / 2,
+    y: dock.top - origin.top + root.scrollTop + dock.height / 2 - rect.y - rect.height / 2,
+    scale: Math.max(0.08, Math.min(0.2, dock.width / rect.width)),
+  })
 }
 
 async function openWindow(id, returnTarget = null) {
   if (!id) return
-  cancelWindowDrag()
+  finishWindowInteraction()
   closeMenu()
-
   if (!isOrdinaryWindow(id)) {
-    if (!activeOverlay.value) rememberCurrentFocus(overlayReturnFocus, returnTarget)
+    if (!activeOverlay.value) {
+      overlayReturnFocus.value = {
+        element: returnTarget || document.activeElement,
+        windowId: activeWindow.value,
+      }
+    }
     activeOverlay.value = id
     spotlightSelectedIndex.value = 0
     await focusActiveSurface()
     return
   }
 
-  desktopFocused.value = true
+  const current = workspace.value.windows[id]
+  if (!current) return
+  if (!current.open) windowReturnFocus.set(id, returnTarget || document.activeElement)
+  if (current.minimized) {
+    startWindowMotion(id, 'restoring')
+    updateWindowDockTransform(id)
+  } else {
+    clearWindowMotion(id)
+  }
   activeOverlay.value = null
-  if (activeWindow.value === id && minimizedWindow.value === id) {
-    await restoreMinimizedWindow()
-    return
-  }
-
-  const changingWindow = activeWindow.value !== id
-  if (changingWindow) {
-    rememberCurrentFocus(lastFocusedElement, returnTarget)
-    minimizedWindow.value = null
-    isMinimizing.value = false
-    isRestoring.value = false
-    windowMaximized.value = false
-    windowPositioned.value = false
-    windowPositionUserAdjusted = false
-    windowBodyScrolled.value = false
-  }
-
-  activeWindow.value = id
-  spotlightSelectedIndex.value = 0
-
-  if (isOrdinaryWindow(id) && !windowPositioned.value) {
-    await centerWindow()
-  }
+  desktopFocused.value = true
+  applyWorkspaceAction({ type: 'open', id })
+  await nextTick()
+  if (windowAnimations[id].phase === 'restoring') updateWindowDockTransform(id)
   await focusActiveSurface()
 }
 
-async function closeWindow() {
-  if (activeOverlay.value) {
-    const closingApp = activeOverlay.value
+async function closeWindow(id = null) {
+  if (!id && activeOverlay.value) {
+    const closingOverlay = activeOverlay.value
+    const previous = overlayReturnFocus.value
     activeOverlay.value = null
-    await restorePreviousFocus(overlayReturnFocus, closingApp)
     overlayReturnFocus.value = null
+    const previousWindow = workspace.value.windows[previous?.windowId]
+    if (previousWindow?.open && !previousWindow.minimized) focusWindow(previous.windowId)
+    await restoreSurfaceFocus(previous?.element, closingOverlay)
     return
   }
-
-  if (!activeWindow.value) return
-  cancelWindowDrag()
-  const closingApp = activeWindow.value
-  isMinimizing.value = false
-  isRestoring.value = false
-  activeWindow.value = null
-  minimizedWindow.value = null
-  windowMaximized.value = false
-  windowPositioned.value = false
-  windowPositionUserAdjusted = false
-  windowBodyScrolled.value = false
-  desktopFocused.value = false
-  await restorePreviousFocus(lastFocusedElement, closingApp)
+  const closingId = id || activeWindow.value
+  if (!workspace.value.windows[closingId]?.open) return
+  finishWindowInteraction()
+  clearWindowMotion(closingId)
+  const returnTarget = windowReturnFocus.get(closingId)
+  applyWorkspaceAction({ type: 'close', id: closingId }, { animate: 180 })
+  windowReturnFocus.delete(closingId)
+  delete windowScrollState[closingId]
+  desktopFocused.value = Boolean(activeWindow.value)
+  await restoreSurfaceFocus(activeWindow.value ? null : returnTarget, closingId)
 }
 
 async function handleDesktopPointerDown() {
@@ -1384,212 +1409,170 @@ async function handleDesktopPointerDown() {
     await closeWindow()
     return
   }
-
   desktopFocused.value = false
 }
 
-function activateWindowSurface() {
-  desktopFocused.value = true
-}
-
-function updateWindowDockTransform(rect = minimizedWindowRect) {
-  const target = dockRef.value?.querySelector('[data-app-id="' + activeWindow.value + '"]')
-    || portalDesktopRef.value?.querySelector('[data-app-id="' + activeWindow.value + '"]')
-  if (!rect || !target) return
-  const dock = target.getBoundingClientRect()
-  windowDockTransform.value = {
-    x: dock.left + dock.width / 2 - rect.left - rect.width / 2,
-    y: dock.top + dock.height / 2 - rect.top - rect.height / 2,
-    scale: Math.max(0.08, Math.min(0.2, dock.width / rect.width)),
-  }
-}
-
-async function minimizeWindow() {
-  if (!visibleWindow.value) return
-  cancelWindowDrag()
-  minimizedWindowRect = windowRef.value?.getBoundingClientRect()
-  isMinimizing.value = true
-  isRestoring.value = false
-  desktopFocused.value = false
-  minimizedWindow.value = activeWindow.value
+async function minimizeWindow(id = activeWindow.value) {
+  const current = workspace.value.windows[id]
+  if (!current?.open || current.minimized) return
+  finishWindowInteraction()
+  startWindowMotion(id, 'minimizing')
+  updateWindowDockTransform(id)
+  applyWorkspaceAction({ type: 'minimize', id })
+  desktopFocused.value = Boolean(activeWindow.value)
   await nextTick()
-  updateWindowDockTransform()
-  requestLiquidGlassRender(260)
-  await restorePreviousFocus({ value: null }, activeWindow.value)
+  updateWindowDockTransform(id)
+  await restoreSurfaceFocus(null, id)
 }
 
-function handleWindowAfterLeave() {
-  isMinimizing.value = false
+async function restoreMinimizedWindow(id = minimizedApp.value?.id) {
+  if (id) await openWindow(id)
+}
+
+function handleWindowAfterEnter(id) {
+  if (windowAnimations[id].phase === 'restoring') clearWindowMotion(id)
   requestLiquidGlassRender(0)
 }
 
-async function restoreMinimizedWindow() {
-  if (!minimizedWindow.value) return
-  cancelWindowDrag()
-  closeMenu()
-  activeOverlay.value = null
-  updateWindowDockTransform()
-  isRestoring.value = true
-  desktopFocused.value = true
-  activeWindow.value = minimizedWindow.value
-  minimizedWindow.value = null
-  isMinimizing.value = false
-  await nextTick()
-  if (!compactLayout.value) {
-    const rect = windowLayoutRect()
-    if (!windowPositionUserAdjusted && !windowMaximized.value) await centerWindow()
-    else if (rect) windowPos.value = clampWindowPosition(windowPos.value.x, windowPos.value.y, rect)
-    await nextTick()
-    if (dockRef.value?.querySelector('[data-app-id="' + activeWindow.value + '"]')) {
-      updateWindowDockTransform(windowLayoutRect())
-    }
-  }
+function handleWindowAfterLeave(id) {
+  if (windowAnimations[id].phase === 'minimizing') clearWindowMotion(id)
+  requestLiquidGlassRender(0)
+}
+
+function handleWindowLeaveCancelled(id) {
+  if (windowAnimations[id].phase === 'minimizing') clearWindowMotion(id)
   requestLiquidGlassRender(260)
-  await focusActiveSurface()
 }
 
-async function toggleMaximizeWindow() {
-  if (!visibleWindow.value || compactLayout.value) return
-  cancelWindowDrag()
-
-  if (windowMaximized.value) {
-    windowMaximized.value = false
-    await nextTick()
-    const rect = windowRef.value?.getBoundingClientRect()
-    windowPos.value = clampWindowPosition(
-      restoreWindowPos.value.x,
-      restoreWindowPos.value.y,
-      rect,
-    )
-    restoreWindowPos.value = { ...windowPos.value }
-    return
-  }
-
-  const rect = windowRef.value?.getBoundingClientRect()
-  if (rect) {
-    windowPos.value = { x: rect.left, y: rect.top }
-    restoreWindowPos.value = { ...windowPos.value }
-    windowPositioned.value = true
-  }
-  windowMaximized.value = true
+function toggleMaximizeWindow(id = activeWindow.value) {
+  const current = workspace.value.windows[id]
+  if (compactLayout.value || !current?.open || current.minimized) return
+  finishWindowInteraction()
+  focusWindow(id)
+  startWindowMotion(id, 'zooming')
+  applyWorkspaceAction({ type: 'toggleMaximize', id })
 }
 
-function startWindowDrag(event) {
-  if (
-    event.button !== 0
-    || compactLayout.value
-    || windowMaximized.value
-    || event.target.closest('.traffic-lights')
-  ) return
-
-  const rect = windowRef.value?.getBoundingClientRect()
-  if (!rect) return
-
-  desktopFocused.value = true
-  cancelWindowDrag()
-  windowPos.value = { x: rect.left, y: rect.top }
-  windowPositioned.value = true
-  dragStart = {
-    pointerX: event.clientX,
-    pointerY: event.clientY,
-    originX: rect.left,
-    originY: rect.top,
+function arrangeWindows(type) {
+  if (compactLayout.value || (type === 'tile' && !tileAvailable.value)) return
+  finishWindowInteraction()
+  activeOverlay.value = null
+  for (const app of topApps) {
+    const current = workspace.value.windows[app.id]
+    if (current.open && !current.minimized) startWindowMotion(app.id, 'zooming')
   }
-  dragDelta.value = { x: 0, y: 0 }
-  dragging.value = true
-  dragPointerId = event.pointerId
-  dragCaptureTarget = event.currentTarget
-  dragCaptureTarget.setPointerCapture(event.pointerId)
-  window.addEventListener('pointermove', moveWindowDrag)
-  window.addEventListener('pointerup', endWindowDrag)
-  window.addEventListener('pointercancel', endWindowDrag)
+  applyWorkspaceAction({ type })
+  focusActiveSurface()
 }
 
-function moveWindowDrag(event) {
-  if (!dragging.value || event.pointerId !== dragPointerId) return
-  const rect = windowRef.value?.getBoundingClientRect()
-  const proposed = clampWindowPosition(
-    dragStart.originX + event.clientX - dragStart.pointerX,
-    dragStart.originY + event.clientY - dragStart.pointerY,
-    rect
-      ? { width: rect.width, height: rect.height }
-      : undefined,
-  )
-  dragDelta.value = {
-    x: proposed.x - dragStart.originX,
-    y: proposed.y - dragStart.originY,
+function startWindowInteraction(event, id, edge = null) {
+  const current = workspace.value.windows[id]
+  if (event.button !== 0 || compactLayout.value || !current?.open || current.maximized
+    || (!edge && event.target.closest('.traffic-lights'))) return
+  finishWindowInteraction()
+  focusWindow(id)
+  clearWindowMotion(id)
+  const element = windowElements.get(id)
+  const root = portalDesktopRef.value
+  if (!element || !root) return
+  const rect = element.getBoundingClientRect()
+  const origin = root.getBoundingClientRect()
+  pointerInteraction.value = {
+    id,
+    kind: edge ? 'resize' : 'drag',
+    edge,
+    // Pointer geometry uses root layout coordinates, not a scrolled viewport.
+    startRect: {
+      x: rect.left - origin.left + root.scrollLeft,
+      y: rect.top - origin.top + root.scrollTop,
+      width: rect.width,
+      height: rect.height,
+    },
+    startPointer: { x: event.clientX, y: event.clientY },
+    pointerId: event.pointerId,
+    captureTarget: event.currentTarget,
   }
-  requestLiquidGlassRender(90)
+  event.currentTarget.setPointerCapture(event.pointerId)
+  window.addEventListener('pointermove', moveWindowInteraction)
+  window.addEventListener('pointerup', finishWindowInteraction)
+  window.addEventListener('pointercancel', finishWindowInteraction)
+  if (edge) event.preventDefault()
 }
 
-function endWindowDrag(event) {
-  if (!dragging.value || event.pointerId !== dragPointerId) return
-  const completedPointerId = dragPointerId
-  const captureTarget = dragCaptureTarget
-  if (dragDelta.value.x !== 0 || dragDelta.value.y !== 0) {
-    windowPositionUserAdjusted = true
+function moveWindowInteraction(event) {
+  const session = pointerInteraction.value
+  if (!session || event.pointerId !== session.pointerId) return
+  const app = topApps.find(item => item.id === session.id)
+  const delta = {
+    x: event.clientX - session.startPointer.x,
+    y: event.clientY - session.startPointer.y,
   }
-  windowPos.value = {
-    x: dragStart.originX + dragDelta.value.x,
-    y: dragStart.originY + dragDelta.value.y,
-  }
-  restoreWindowPos.value = { ...windowPos.value }
-  dragging.value = false
-  dragDelta.value = { x: 0, y: 0 }
-  dragPointerId = null
-  dragCaptureTarget = null
-  removeWindowDragListeners()
-
-  if (captureTarget?.hasPointerCapture(completedPointerId)) {
-    captureTarget.releasePointerCapture(completedPointerId)
-  }
-  requestLiquidGlassRender(220)
+  const rect = session.kind === 'resize'
+    ? resizeRect(session.startRect, session.edge, delta, desktopArea.value, app.minSize)
+    : moveRect(session.startRect, delta, desktopArea.value, app.minSize)
+  applyWorkspaceAction({ type: 'setRect', id: session.id, rect }, { persist: false, animate: 0 })
 }
 
-function removeWindowDragListeners() {
-  window.removeEventListener('pointermove', moveWindowDrag)
-  window.removeEventListener('pointerup', endWindowDrag)
-  window.removeEventListener('pointercancel', endWindowDrag)
+function finishWindowInteraction(event = null) {
+  const session = pointerInteraction.value
+  if (!session || (event && event.pointerId !== session.pointerId)) return
+  // Pointerup can carry a final position not delivered by pointermove.
+  if (event?.type === 'pointerup') moveWindowInteraction(event)
+  pointerInteraction.value = null
+  window.removeEventListener('pointermove', moveWindowInteraction)
+  window.removeEventListener('pointerup', finishWindowInteraction)
+  window.removeEventListener('pointercancel', finishWindowInteraction)
+  if (session.captureTarget.hasPointerCapture(session.pointerId)) {
+    session.captureTarget.releasePointerCapture(session.pointerId)
+  }
+  persistWorkspace()
+  requestLiquidGlassRender(0)
 }
 
-function cancelWindowDrag() {
-  const cancelledPointerId = dragPointerId
-  const captureTarget = dragCaptureTarget
-  dragging.value = false
-  dragDelta.value = { x: 0, y: 0 }
-  dragPointerId = null
-  dragCaptureTarget = null
-  removeWindowDragListeners()
-
-  if (
-    cancelledPointerId !== null
-    && captureTarget?.hasPointerCapture(cancelledPointerId)
-  ) {
-    captureTarget.releasePointerCapture(cancelledPointerId)
+function handleWindowResizeKeydown(event, id) {
+  if (compactLayout.value || event.metaKey || event.ctrlKey || event.altKey) return
+  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
+  event.preventDefault()
+  event.stopPropagation()
+  const current = workspace.value.windows[id]
+  if (!current?.open || current.maximized) return
+  finishWindowInteraction()
+  focusWindow(id)
+  clearWindowMotion(id)
+  const step = event.shiftKey ? 40 : 10
+  const delta = {
+    x: event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0,
+    y: event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0,
   }
+  const app = topApps.find(item => item.id === id)
+  const rect = resizeRect(current.rect, 'se', delta, desktopArea.value, app.minSize)
+  applyWorkspaceAction({ type: 'setRect', id, rect }, { animate: 0 })
 }
 
 async function handleViewportResize() {
-  const wasCompactLayout = compactLayout.value
+  const wasCompact = compactLayout.value
   updateCompactLayout()
-  requestLiquidGlassRender(320)
   if (window.innerWidth <= 900) resetDockMagnification()
-  if (wasCompactLayout !== compactLayout.value) await nextTick()
-  if (
-    compactLayout.value
-    || windowMaximized.value
-    || !windowPositioned.value
-    || !isOrdinaryWindow(activeWindow.value)
-    || minimizedWindow.value === activeWindow.value
-  ) return
-
-  const rect = windowRef.value?.getBoundingClientRect()
-  if (!windowPositionUserAdjusted) {
-    await centerWindow()
-    return
+  if (wasCompact !== compactLayout.value) await nextTick()
+  if (!compactLayout.value) {
+    const viewport = readDesktopViewport()
+    const previous = lastDesktopViewport
+    const changed = !previous || viewport.width !== previous.width || viewport.height !== previous.height
+    if (changed) {
+      desktopArea.value = readDesktopArea()
+      lastDesktopViewport = viewport
+      // A phone-first session has no known desktop size: fit on its first
+      // desktop entry. Returning to an unchanged known desktop preserves rects.
+      if (!previous || viewport.width < previous.width || viewport.height < previous.height) {
+        applyWorkspaceAction({ type: 'fit' }, { persist: false, animate: 0 })
+        window.clearTimeout(viewportSaveTimer)
+        viewportSaveTimer = window.setTimeout(persistWorkspace, 180)
+      }
+    }
   }
-  windowPos.value = clampWindowPosition(windowPos.value.x, windowPos.value.y, rect)
+  requestLiquidGlassRender(260)
 }
+
 
 function trapFocus(event, root) {
   if (event.key !== 'Tab' || !root) return
@@ -1626,8 +1609,8 @@ function handleDialogKeydown(event) {
   }
 }
 
-function handleWindowBodyScroll(event) {
-  windowBodyScrolled.value = event.currentTarget.scrollTop > 0
+function handleWindowBodyScroll(event, id) {
+  windowScrollState[id] = event.currentTarget.scrollTop > 0
 }
 
 async function activateSpotlightResult(item) {
@@ -1812,7 +1795,7 @@ function liquidSurfaceZIndex(surface) {
   if (surface.matches('.portal-menu-bar')) return 200
   if (surface.matches('.launcher-tooltip')) return 190
   if (surface.matches('.bottom-launcher')) return 180
-  if (surface.matches('.mac-window')) return 120
+  if (surface.matches('.mac-window')) return Number(surface.dataset.windowOrder) || 100
   return 100
 }
 
@@ -2022,19 +2005,25 @@ function drawLiquidGlass(renderer) {
     cssWidth,
     cssHeight,
   } = renderer
+  // Read every surface before adaptive foreground styles write to the DOM.
   const surfaces = [...root.querySelectorAll('[data-liquid-surface]')]
-    .filter((surface) => {
+    .map(surface => {
       const rect = surface.getBoundingClientRect()
-      return (
-        rect.width > 0
-        && rect.height > 0
-        && surface.getClientRects().length > 0
-        && window.getComputedStyle(surface).visibility !== 'hidden'
-      )
+      if (!rect.width || !rect.height || !surface.getClientRects().length) return null
+      const style = window.getComputedStyle(surface)
+      if (style.visibility === 'hidden') return null
+      return {
+        surface,
+        rect,
+        radius: Number.parseFloat(style.borderTopLeftRadius),
+        opacity: liquidSurfaceOpacity(surface, root),
+        order: liquidSurfaceZIndex(surface),
+      }
     })
-    .sort((first, second) => liquidSurfaceZIndex(first) - liquidSurfaceZIndex(second))
+    .filter(Boolean)
+    .sort((first, second) => first.order - second.order)
 
-  syncLiquidSurfaceObservers(renderer, surfaces)
+  syncLiquidSurfaceObservers(renderer, surfaces.map(entry => entry.surface))
 
   const coverScale = Math.max(
     cssWidth / image.naturalWidth,
@@ -2073,8 +2062,7 @@ function drawLiquidGlass(renderer) {
   )
   gl.enable(gl.SCISSOR_TEST)
 
-  surfaces.forEach((surface) => {
-    const rect = surface.getBoundingClientRect()
+  surfaces.forEach(({ surface, rect, radius: computedRadius, opacity }) => {
     const kind = surface.dataset.liquidKind
     const preset = liquidMaterialPresets[kind]
     if (!preset) return
@@ -2089,15 +2077,13 @@ function drawLiquidGlass(renderer) {
     const bottom = Math.min(canvas.height, Math.ceil(y + height))
     if (right <= left || bottom <= top) return
 
-    const computedStyle = window.getComputedStyle(surface)
-    const computedRadius = Number.parseFloat(computedStyle.borderTopLeftRadius)
     const cssRadius = Number.isFinite(computedRadius)
       ? computedRadius
       : preset.radius
     const scale = (scaleX + scaleY) / 2
     const contrastMode = liquidGlassContrastQuery?.matches
-    const surfaceOpacity = liquidSurfaceOpacity(surface, root) * preset.opacity
-    const brightness = surface.classList.contains('is-receded') ? 0.84 : 1.02
+    const surfaceOpacity = opacity * preset.opacity
+    const brightness = surface.classList.contains('is-receded') ? 1.0 : 1.02
     const surfaceStatistics = sampleLiquidSurfaceLuminance(
       renderer,
       rect,
@@ -2375,8 +2361,12 @@ async function initializeLiquidGlassRenderer() {
     canvas.addEventListener('webglcontextrestored', handleContextRestored)
     renderer.resizeObserver = new ResizeObserver(() => requestLiquidGlassRender(240))
     renderer.resizeObserver.observe(root)
-    renderer.mutationObserver = new MutationObserver(() => {
-      requestLiquidGlassRender(320)
+    renderer.mutationObserver = new MutationObserver(records => {
+      const surfacesChanged = records.some(record => [...record.addedNodes, ...record.removedNodes]
+        .some(node => node instanceof Element && (
+          node.matches('[data-liquid-surface]') || node.querySelector('[data-liquid-surface]')
+        )))
+      if (surfacesChanged) requestLiquidGlassRender(320)
     })
     renderer.mutationObserver.observe(root, {
       childList: true,
@@ -2418,6 +2408,7 @@ function handleLiquidGlassPreferenceChange() {
 function handleLiquidMotionPreferenceChange() {
   liquidPointerActive = false
   resetDockMagnification()
+  if (liquidGlassMotionQuery?.matches) topApps.forEach(app => clearWindowMotion(app.id))
   requestLiquidGlassRender(0)
 }
 
@@ -2500,83 +2491,6 @@ async function loadPortalData() {
   }
 }
 
-function destroyPlayer() {
-  const current = player
-  player = null
-  if (!current) return
-  // A queued APlayer error-skip callback must see an empty list after teardown.
-  current.list.clear()
-  current.destroy()
-}
-
-function labelPlayerControls(container) {
-  const labels = {
-    '.aplayer-icon-back': 'Previous track',
-    '.aplayer-icon-forward': 'Next track',
-    '.aplayer-icon-play': 'Play',
-    '.aplayer-icon-pause': 'Pause',
-    '.aplayer-icon-order': 'Change playback order',
-    '.aplayer-icon-loop': 'Change repeat mode',
-    '.aplayer-icon-volume-down': 'Mute or unmute',
-    '.aplayer-icon-menu': 'Show or hide track list',
-    '.aplayer-pic .aplayer-button': player?.audio.paused ? 'Play' : 'Pause',
-  }
-  for (const [selector, label] of Object.entries(labels)) {
-    container.querySelectorAll(selector).forEach(control => {
-      control.setAttribute('aria-label', label)
-      control.title = label
-      if (control.tagName !== 'BUTTON') {
-        control.setAttribute('role', 'button')
-        control.tabIndex = 0
-      }
-    })
-  }
-}
-
-async function mountPlayer() {
-  await nextTick()
-  if (loadingData.value || activeWindow.value !== 'music' || !aplayerContainer.value || !musicTracks.value.length || player) return
-
-  player = new APlayer({
-    container: aplayerContainer.value,
-    autoplay: false,
-    theme: '#89b4fa',
-    listFolded: false,
-    listMaxHeight: '246px',
-    audio: musicTracks.value,
-  })
-  const container = aplayerContainer.value
-  const updateLabels = () => labelPlayerControls(container)
-  updateLabels()
-  player.on('play', updateLabels)
-  player.on('pause', updateLabels)
-  container.addEventListener('keydown', event => {
-    if (['Enter', ' '].includes(event.key) && event.target.matches('[role="button"]')) {
-      event.preventDefault()
-      event.target.click()
-    }
-  })
-}
-
-async function handleWindowAfterEnter() {
-  isRestoring.value = false
-  if (!windowPositionUserAdjusted && !windowMaximized.value) {
-    await centerWindow()
-  }
-  if (activeWindow.value === 'music') await mountPlayer()
-  await focusActiveSurface()
-  requestLiquidGlassRender(220)
-}
-
-watch(activeWindow, async (next) => {
-  if (next !== 'music') destroyPlayer()
-  else await mountPlayer()
-})
-
-watch([musicTracks, loadingData], async () => {
-  if (activeWindow.value === 'music') await mountPlayer()
-})
-
 watch(spotlightQuery, () => {
   spotlightSelectedIndex.value = 0
 })
@@ -2588,17 +2502,14 @@ watch(spotlightFlatLinks, (links) => {
   )
 })
 
-watch(
-  [activeWindow, activeOverlay, minimizedWindow, windowMaximized],
-  async () => {
-    await nextTick()
-    requestLiquidGlassRender(360)
-  },
-)
+watch(activeOverlay, async () => {
+  await nextTick()
+  requestLiquidGlassRender(260)
+})
 
 onMounted(async () => {
   loadPortalData()
-  updateCompactLayout()
+  restoreSavedWorkspace()
   liquidGlassMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   liquidGlassTransparencyQuery = window.matchMedia('(prefers-reduced-transparency: reduce)')
   liquidGlassForcedColorsQuery = window.matchMedia('(forced-colors: active)')
@@ -2620,8 +2531,9 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  destroyPlayer()
-  cancelWindowDrag()
+  finishWindowInteraction()
+  window.clearTimeout(viewportSaveTimer)
+  windowMotionTimers.forEach(timer => window.clearTimeout(timer))
   window.clearInterval(clockTimer)
   window.clearTimeout(dockSettleTimer)
   window.cancelAnimationFrame(dockAnimationFrame)
@@ -2727,6 +2639,7 @@ onBeforeUnmount(() => {
                   role="menuitem"
                   tabindex="-1"
                   :disabled="item.disabled"
+                  :title="item.title"
                   @click="activateMenuItem(item)"
                 >
                   <span>{{ item.label }}</span>
@@ -2748,19 +2661,19 @@ onBeforeUnmount(() => {
           title="Spotlight (⌘K)"
           @click="openWindow('map')"
         >
-<img class="menu-tool-icon" src="/portal-icons/spotlight.svg" alt="">
+          <img class="menu-tool-icon" src="/portal-icons/spotlight.svg" alt="">
         </button>
         <button
           class="menu-glyph-button control-center-glyph"
           type="button"
-          :class="{ 'is-active': activeWindow === 'todo' && minimizedWindow !== 'todo' }"
+          :class="{ 'is-active': activeWindow === 'todo' && !activeOverlay }"
           aria-label="Open TODO List"
           data-app-id="todo"
           aria-haspopup="dialog"
           title="TODO List"
           @click="openWindow('todo')"
         >
-<img class="menu-tool-icon" src="/portal-icons/reminders.svg" alt="">
+          <img class="menu-tool-icon" src="/portal-icons/reminders.svg" alt="">
         </button>
         <a
           class="menu-status-glyph menu-status-action"
@@ -2785,7 +2698,7 @@ onBeforeUnmount(() => {
         <button
           class="menu-clock menu-clock-action"
           type="button"
-          :class="{ 'is-active': activeWindow === 'calendar' && minimizedWindow !== 'calendar' }"
+          :class="{ 'is-active': activeWindow === 'calendar' && !activeOverlay }"
           aria-label="Open Calendar"
           data-app-id="calendar"
           aria-haspopup="dialog"
@@ -2796,124 +2709,123 @@ onBeforeUnmount(() => {
     </header>
 
     <Transition
+      v-for="app in topApps"
+      :key="app.id"
       name="window-shell"
       appear
       @before-enter="requestLiquidGlassRender(260)"
       @before-leave="requestLiquidGlassRender(260)"
-      @after-enter="handleWindowAfterEnter"
-      @after-leave="handleWindowAfterLeave"
-      @leave-cancelled="handleWindowAfterLeave"
+      @after-enter="handleWindowAfterEnter(app.id)"
+      @after-leave="handleWindowAfterLeave(app.id)"
+      @leave-cancelled="handleWindowLeaveCancelled(app.id)"
     >
       <section
-        v-if="activeWindowApp"
-        v-show="minimizedWindow !== activeWindow"
-        :key="activeWindowApp.id"
-        ref="windowRef"
+        v-if="workspace.windows[app.id].open"
+        v-show="isWindowVisible(app.id)"
+        :id="'portal-window-' + app.id"
+        :ref="element => setWindowElement(app.id, element)"
         class="mac-window liquid-surface"
         data-liquid-surface
         data-liquid-kind="window"
+        :data-window-id="app.id"
+        :data-window-order="windowZIndex(app.id)"
         :class="[
-          activeWindowApp.windowClass,
+          app.windowClass,
           {
-            'is-positioned': windowPositioned && !compactLayout,
-            'is-maximized': windowMaximized,
-            'is-dragging': dragging,
-            'is-minimizing': isMinimizing,
-            'is-restoring': isRestoring,
-            'is-receded': activeOverlay || !desktopFocused,
+            'is-positioned': !compactLayout,
+            'is-maximized': workspace.windows[app.id].maximized && !compactLayout,
+            'is-interacting': pointerInteraction?.id === app.id,
+            'is-dragging': pointerInteraction?.id === app.id && pointerInteraction.kind === 'drag',
+            'is-resizing': pointerInteraction?.id === app.id && pointerInteraction.kind === 'resize',
+            'is-minimizing': windowAnimations[app.id].phase === 'minimizing',
+            'is-restoring': windowAnimations[app.id].phase === 'restoring',
+            'is-zooming': windowAnimations[app.id].phase === 'zooming',
+            'is-receded': activeOverlay || !desktopFocused || activeWindow !== app.id,
           },
         ]"
-        :style="windowStyle"
-        :aria-label="activeWindowApp.title"
+        :style="windowStyle(app.id)"
+        :aria-label="app.title"
         role="dialog"
         aria-modal="false"
-        :aria-hidden="activeOverlay ? 'true' : undefined"
-        :inert="Boolean(activeOverlay)"
+        :aria-hidden="activeOverlay || !isWindowVisible(app.id) ? 'true' : undefined"
+        :inert="Boolean(activeOverlay) || !isWindowVisible(app.id)"
         tabindex="-1"
-        @pointerdown.stop="activateWindowSurface"
+        @pointerdown.capture="focusWindow(app.id)"
+        @focusin="focusWindow(app.id)"
         @keydown="handleDialogKeydown"
       >
         <div
           class="window-titlebar"
-          :class="{ 'has-scrolled-divider': windowBodyScrolled }"
-          @pointerdown="startWindowDrag"
-          @lostpointercapture="endWindowDrag"
-          @dblclick="toggleMaximizeWindow"
+          :class="{ 'has-scrolled-divider': windowScrollState[app.id] }"
+          @pointerdown="startWindowInteraction($event, app.id)"
+          @lostpointercapture="finishWindowInteraction"
+          @dblclick="toggleMaximizeWindow(app.id)"
         >
-          <div class="traffic-lights" aria-label="Window controls" @pointerdown.stop>
+          <div class="traffic-lights" aria-label="Window controls" @pointerdown.stop @dblclick.stop>
             <button
               class="traffic-light close"
               type="button"
-              aria-label="Close window"
-              @pointerdown.stop
-              @click.stop="closeWindow"
+              :aria-label="'Close ' + app.title"
+              @click.stop="closeWindow(app.id)"
             ></button>
             <button
               class="traffic-light minimize"
               type="button"
-              aria-label="Minimize window"
-              @pointerdown.stop
-              @click.stop="minimizeWindow"
+              :aria-label="'Minimize ' + app.title"
+              @click.stop="minimizeWindow(app.id)"
             ></button>
             <button
               class="traffic-light zoom"
               type="button"
-              :aria-label="windowMaximized ? 'Restore window' : 'Maximize window'"
+              :aria-label="workspace.windows[app.id].maximized ? 'Restore ' + app.title : 'Maximize ' + app.title"
               :disabled="compactLayout"
-              @pointerdown.stop
-              @click.stop="toggleMaximizeWindow"
+              @click.stop="toggleMaximizeWindow(app.id)"
             ></button>
           </div>
           <div class="window-title">
-            <img class="window-title-glyph" :src="activeWindowApp.icon" alt="">
-            <span>{{ activeWindowApp.title }}</span>
+            <img class="window-title-glyph" :src="app.icon" alt="" draggable="false">
+            <span>{{ app.title }}</span>
           </div>
         </div>
 
-        <div
-          class="window-body"
-          @scroll.passive="handleWindowBodyScroll"
-        >
+        <div class="window-body" @scroll.passive="handleWindowBodyScroll($event, app.id)">
           <div v-if="dataError" class="portal-error" role="alert">{{ dataError }}</div>
-
-          <section
-            v-if="activeWindow === 'music'"
-            class="mac-app-content music-app"
-          >
-            <div v-if="loadingData" class="portal-loading" role="status">Loading music library...</div>
-            <div v-else ref="aplayerContainer" class="aplayer-mount"></div>
-          </section>
-
-          <section v-else-if="activeWindow === 'weather'" class="mac-app-content widget-shell weather-shell">
-            <Weather
-              class="portal-widget weather-widget"
-            />
-          </section>
-
-          <section v-else-if="activeWindow === 'calendar'" class="mac-app-content widget-shell calendar-shell">
-            <Calendar
-              class="portal-widget calendar-widget"
-            />
-          </section>
-
-          <section v-else-if="activeWindow === 'todo'" class="mac-app-content widget-shell todo-shell">
-            <header
-              class="todo-overview"
-            >
+          <section class="mac-app-content" :class="app.shellClass">
+            <header v-if="app.intro" class="todo-overview">
               <div>
-                <p>REMINDERS</p>
-                <h2>My Tasks</h2>
-                <span>Keep the next thing clear and close at hand.</span>
+                <p>{{ app.intro.eyebrow }}</p>
+                <h2>{{ app.intro.title }}</h2>
+                <span>{{ app.intro.description }}</span>
               </div>
               <span class="todo-overview-mark" aria-hidden="true">
-<img src="/portal-icons/reminders.svg" alt="">
+                <img :src="app.icon" alt="">
               </span>
             </header>
-            <ToDoList
-              class="portal-widget todo-widget"
+            <component
+              :is="app.component"
+              v-bind="applicationProps(app)"
+              class="portal-widget"
+              :class="app.id + '-widget'"
             />
           </section>
         </div>
+
+        <template v-if="!compactLayout && !workspace.windows[app.id].maximized">
+          <span
+            v-for="edge in resizeEdges"
+            :key="edge"
+            class="window-resize-handle"
+            :class="'resize-' + edge"
+            :role="edge === 'se' ? 'button' : undefined"
+            :tabindex="edge === 'se' ? 0 : -1"
+            :aria-hidden="edge === 'se' ? undefined : 'true'"
+            :aria-label="edge === 'se' ? 'Resize ' + app.title + ' with arrow keys' : undefined"
+            :title="edge === 'se' ? 'Resize window · arrow keys, Shift for larger steps' : undefined"
+            @pointerdown.stop.prevent="startWindowInteraction($event, app.id, edge)"
+            @lostpointercapture="finishWindowInteraction"
+            @keydown="handleWindowResizeKeydown($event, app.id)"
+          ></span>
+        </template>
       </section>
     </Transition>
 
@@ -2921,7 +2833,7 @@ onBeforeUnmount(() => {
       <div
         v-if="activeOverlay === 'map'"
         class="spotlight-overlay"
-        @pointerdown.self="closeWindow"
+        @pointerdown.self.prevent="closeWindow()"
       >
         <section
           class="spotlight-panel liquid-surface"
@@ -2938,7 +2850,7 @@ onBeforeUnmount(() => {
             class="spotlight-close"
             type="button"
             aria-label="Close Spotlight"
-            @click="closeWindow"
+            @click="closeWindow()"
           >×</button>
           <label
             class="spotlight-search liquid-surface"
@@ -3039,7 +2951,7 @@ onBeforeUnmount(() => {
       <div
         v-if="activeOverlay === 'dock'"
         class="launchpad-overlay"
-        @click.self="closeWindow"
+        @pointerdown.self.prevent="closeWindow()"
       >
         <section
           ref="launchpadPanel"
@@ -3048,7 +2960,7 @@ onBeforeUnmount(() => {
           role="dialog"
           aria-modal="true"
           tabindex="-1"
-          @click.self="closeWindow"
+          @pointerdown.self.prevent="closeWindow()"
           @keydown="handleDialogKeydown"
         >
           <button
@@ -3057,7 +2969,7 @@ onBeforeUnmount(() => {
             data-liquid-kind="circle"
             type="button"
             aria-label="Close Launchpad"
-            @click="closeWindow"
+            @click="closeWindow()"
           >
             ×
           </button>
@@ -3084,16 +2996,16 @@ onBeforeUnmount(() => {
             class="launchpad-groups liquid-surface"
             data-liquid-surface
             data-liquid-kind="panel"
-            @click.self="closeWindow"
+            @pointerdown.self.prevent="closeWindow()"
           >
             <section
               v-for="group in filteredDockGroups"
               :key="group.name"
               class="link-group"
-              @click.self="closeWindow"
+              @pointerdown.self.prevent="closeWindow()"
             >
               <h2>{{ group.name }}</h2>
-              <div class="launchpad-grid" @click.self="closeWindow">
+              <div class="launchpad-grid" @pointerdown.self.prevent="closeWindow()">
                 <a
                   v-for="site in group.links"
                   :key="site.url"
@@ -3101,7 +3013,7 @@ onBeforeUnmount(() => {
                   class="launchpad-tile"
                   target="_blank"
                   rel="noopener noreferrer"
-                  @click="closeWindow"
+                  @click="closeWindow()"
                 >
                   <img
                     :src="iconForUrl(site.url)"
@@ -3141,10 +3053,10 @@ onBeforeUnmount(() => {
         :data-app-id="app.id"
         :class="{
           'is-active': isOrdinaryWindow(app.id)
-            ? activeWindow === app.id && minimizedWindow !== app.id
+            ? activeWindow === app.id && desktopFocused && !activeOverlay
             : activeOverlay === app.id,
           'is-running': isOrdinaryWindow(app.id)
-            ? activeWindow === app.id || minimizedWindow === app.id
+            ? workspace.windows[app.id].open
             : activeOverlay === app.id,
         }"
         :aria-label="`Open ${app.label}`"
@@ -3185,25 +3097,21 @@ onBeforeUnmount(() => {
         >{{ site.name }}</span>
       </a>
 
-      <template v-if="minimizedApp">
+      <template v-for="minimized in minimizedApps" :key="'minimized-' + minimized.id">
         <span class="launcher-divider" aria-hidden="true"></span>
         <button
           class="launcher-item minimized-window-preview"
           type="button"
-          :data-app-id="minimizedApp.id"
-          :aria-label="`Restore ${minimizedApp.title}`"
-          @click="restoreMinimizedWindow"
+          :data-app-id="minimized.id"
+          :aria-label="'Restore ' + minimized.title"
+          @click="restoreMinimizedWindow(minimized.id)"
         >
-          <img
-            class="portal-app-icon"
-            :src="minimizedApp.icon"
-            alt=""
-          >
+          <img class="portal-app-icon" :src="minimized.icon" alt="">
           <span
             class="launcher-tooltip liquid-surface"
             data-liquid-surface
             data-liquid-kind="search"
-          >Restore {{ minimizedApp.title }}</span>
+          >Restore {{ minimized.title }}</span>
         </button>
       </template>
     </nav>
@@ -3275,7 +3183,7 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100vw;
   height: 100dvh;
-  overflow: hidden;
+  overflow: clip;
   color: var(--portal-text);
   background: #181825;
   font-family: var(--portal-system-font);
@@ -3399,6 +3307,7 @@ onBeforeUnmount(() => {
 
 .mac-window {
   position: absolute;
+  box-sizing: border-box;
   top: 50%;
   left: 50%;
   z-index: 12;
@@ -3496,6 +3405,7 @@ onBeforeUnmount(() => {
   padding-bottom: 1.1rem;
 }
 
+.music-app :deep(.portal-loading),
 .portal-loading,
 .portal-error {
   padding: 2rem;
@@ -3518,7 +3428,7 @@ onBeforeUnmount(() => {
   min-height: auto;
 }
 
-.aplayer-mount {
+.music-app :deep(.aplayer-mount) {
   min-height: 0;
 }
 
@@ -3601,34 +3511,18 @@ onBeforeUnmount(() => {
 }
 
 .spotlight-magnifier {
-  position: relative;
-  display: inline-flex;
-  width: 1.32rem;
-  height: 1.32rem;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  align-self: center;
+  color: currentColor;
+  background: currentColor;
+  -webkit-mask: url('/portal-icons/spotlight.svg') center / contain no-repeat;
+  mask: url('/portal-icons/spotlight.svg') center / contain no-repeat;
 }
 
-.spotlight-magnifier::before {
-  content: '';
-  width: 0.82rem;
-  height: 0.82rem;
-  border: 2px solid rgba(245, 246, 255, 0.72);
-  border-radius: 50%;
-}
 
-.spotlight-magnifier::after {
-  content: '';
-  position: absolute;
-  right: 0.18rem;
-  bottom: 0.18rem;
-  width: 0.48rem;
-  height: 2px;
-  border-radius: 999px;
-  background: rgba(245, 246, 255, 0.72);
-  transform: rotate(45deg);
-}
 
 .spotlight-input {
   width: 100%;
@@ -3981,6 +3875,7 @@ onBeforeUnmount(() => {
     0 1px 12px rgba(0, 0, 0, 0.12);
   -webkit-backdrop-filter: var(--portal-material-blur);
   backdrop-filter: var(--portal-material-blur);
+  z-index: 200;
 }
 
 .menu-left,
@@ -4067,7 +3962,7 @@ onBeforeUnmount(() => {
 }
 
 .portal-desktop.has-open-menu .portal-menu-bar {
-  z-index: 60;
+  z-index: 500;
 }
 
 .portal-desktop.has-liquid-webgl .menu-dropdown.liquid-surface::before {
@@ -4233,12 +4128,63 @@ onBeforeUnmount(() => {
   transition: none !important;
 }
 
+.mac-window.is-interacting {
+  user-select: none;
+  transition: none !important;
+}
+
+.mac-window.is-zooming {
+  transition:
+    top 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    left 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    width 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    height 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.mac-window > .window-resize-handle {
+  position: absolute;
+  z-index: 6;
+  display: block;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+}
+
+.mac-window > :is(.resize-n, .resize-s) {
+  left: 18px;
+  width: calc(100% - 36px);
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.mac-window > :is(.resize-e, .resize-w) {
+  top: 18px;
+  width: 6px;
+  height: calc(100% - 36px);
+  cursor: ew-resize;
+}
+
+.mac-window > :is(.resize-ne, .resize-se, .resize-sw, .resize-nw) {
+  width: 18px;
+  height: 18px;
+}
+
+.mac-window > :is(.resize-n, .resize-ne, .resize-nw) { top: 0; }
+.mac-window > :is(.resize-s, .resize-se, .resize-sw) { bottom: 0; }
+.mac-window > :is(.resize-e, .resize-ne, .resize-se) { right: 0; }
+.mac-window > :is(.resize-w, .resize-nw, .resize-sw) { left: 0; }
+.mac-window > :is(.resize-ne, .resize-sw) { cursor: nesw-resize; }
+.mac-window > :is(.resize-nw, .resize-se) { cursor: nwse-resize; }
+
+.mac-window > .window-resize-handle:focus-visible {
+  border-radius: 5px;
+  outline: 2px solid var(--portal-text-accent);
+  outline-offset: -4px;
+}
+
 .mac-window.is-receded {
-  border-color: rgba(255, 255, 255, 0.09);
-  filter: saturate(0.68) brightness(0.82);
-  box-shadow:
-    0 0 0 0.5px rgba(0, 0, 0, 0.28),
-    0 16px 48px rgba(0, 0, 0, 0.26);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 36px rgba(8, 15, 30, 0.16);
 }
 
 .window-music {
@@ -4809,6 +4755,7 @@ onBeforeUnmount(() => {
   transform: none;
 }
 
+.music-app :deep(.portal-loading),
 .portal-loading,
 .portal-error {
   color: var(--portal-text-secondary);
@@ -4912,13 +4859,7 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 
-.spotlight-magnifier::before {
-  border-color: var(--portal-text-secondary);
-}
 
-.spotlight-magnifier::after {
-  background: var(--portal-text-secondary);
-}
 
 .spotlight-input {
   color: var(--portal-text-primary);
@@ -5191,9 +5132,10 @@ onBeforeUnmount(() => {
 }
 
 .launchpad-search .spotlight-magnifier {
-  width: 15px;
-  height: 15px;
-  transform: scale(0.78);
+  width: 18px;
+  height: 18px;
+  flex-basis: 18px;
+  transform: none;
 }
 
 .launchpad-search input {
@@ -5330,6 +5272,7 @@ onBeforeUnmount(() => {
     0 18px 50px rgba(0, 0, 0, 0.26);
   -webkit-backdrop-filter: saturate(175%) blur(24px);
   backdrop-filter: saturate(175%) blur(24px);
+  z-index: 180;
 }
 
 .launcher-item {
@@ -5542,11 +5485,11 @@ onBeforeUnmount(() => {
   box-shadow:
     inset 0 0.5px 0 rgba(255, 255, 255, 0.16),
     inset 0 0 0 0.5px rgba(255, 255, 255, 0.04);
+  container-type: inline-size;
 }
 
-.mac-window.is-receded :is(.window-titlebar, .window-body) {
-  filter: saturate(0.72) brightness(0.82);
-  opacity: 0.56;
+.mac-window.is-receded .window-title {
+  color: var(--portal-text-tertiary);
 }
 
 .menu-home-link:hover,
@@ -5688,7 +5631,16 @@ onBeforeUnmount(() => {
 }
 
 /* Calendar */
+.calendar-shell {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .calendar-shell :deep(.calendar) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 12px;
   border-width: 0.5px;
   border-style: solid;
@@ -6735,7 +6687,7 @@ onBeforeUnmount(() => {
 .window-music .window-body {
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 55%),
-    rgba(18, 23, 32, 0.28);
+    rgba(18, 23, 32, 0.18);
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.055);
   text-shadow:
     0 1px 2px rgba(0, 0, 0, 0.26);
@@ -6852,6 +6804,10 @@ onBeforeUnmount(() => {
 }
 
 .calendar-shell :deep(.calendar-grid) {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   border: 0;
   background: transparent;
   grid-auto-rows: 36px;
@@ -7068,6 +7024,7 @@ onBeforeUnmount(() => {
     rgba(12, 17, 26, 0.14);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
+  z-index: 400;
 }
 
 .spotlight-panel.liquid-surface {
@@ -7097,6 +7054,7 @@ onBeforeUnmount(() => {
     rgba(12, 17, 26, 0.14);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
+  z-index: 340;
 }
 
 .launchpad-groups.liquid-surface {
@@ -7183,6 +7141,16 @@ onBeforeUnmount(() => {
   opacity: 0.72;
 }
 
+/* Wallpaper optics sit below every DOM window. This local material also
+ * softens lower windows, keeping overlapping application content readable. */
+.portal-desktop.has-liquid-webgl .mac-window.liquid-surface::before {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), transparent 55%),
+    rgba(25, 30, 40, 0.42);
+  -webkit-backdrop-filter: blur(18px) saturate(112%) !important;
+  backdrop-filter: blur(18px) saturate(112%) !important;
+}
+
 .portal-desktop:not(.has-liquid-webgl) .liquid-surface::before {
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.12), transparent 55%),
@@ -7224,6 +7192,62 @@ onBeforeUnmount(() => {
 
 .mac-window:focus {
   outline: none;
+}
+
+/* App contents respond to the window width, independently of the viewport. */
+@container (max-width: 420px) {
+  .calendar-shell :deep(.calendar-grid) {
+    padding-inline: 0;
+    column-gap: 2px;
+  }
+
+  .weather-shell :deep(.details-list) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .weather-shell :deep(.details-list li:last-child) {
+    grid-column: auto;
+  }
+
+  .todo-shell :deep(.mode-switch) {
+    width: 100%;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+  }
+
+  .todo-shell :deep(.mode-btn) {
+    min-width: 0;
+    flex: 1 1 90px;
+  }
+
+  .calendar-shell :deep(.calendar-header) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .calendar-shell :deep(.calendar-header > .nav-btn:first-child) {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .calendar-shell :deep(.month-title) {
+    grid-row: 1;
+    grid-column: 2 / span 4;
+  }
+
+  .calendar-shell :deep(.calendar-header > .nav-btn:nth-of-type(2)) {
+    grid-row: 1;
+    grid-column: 6;
+  }
+
+  .calendar-shell :deep(.today-btn) {
+    grid-row: 2;
+    grid-column: 1 / span 3;
+  }
+
+  .calendar-shell :deep(.mark-btn) {
+    grid-row: 2;
+    grid-column: 4 / span 3;
+  }
 }
 
 @media (max-width: 1100px) and (min-width: 701px) {
@@ -7489,7 +7513,13 @@ onBeforeUnmount(() => {
     height: 44px;
   }
 
+  .calendar-shell :deep(.calendar) {
+    padding-inline: 0;
+  }
+
   .calendar-shell :deep(.calendar-grid) {
+    padding-inline: 0;
+    column-gap: 0;
     grid-auto-rows: 44px;
   }
 
@@ -8101,7 +8131,7 @@ onBeforeUnmount(() => {
 
   .calendar-shell :deep(.calendar-grid) {
     grid-auto-rows: 44px;
-    column-gap: 2px;
+    column-gap: 0;
     row-gap: 4px;
   }
 
@@ -8572,6 +8602,7 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .mac-window.is-zooming,
   .liquid-glass-canvas,
   .window-shell-enter-active,
   .window-shell-leave-active,
