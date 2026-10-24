@@ -5,7 +5,8 @@ import Calendar from '../components/Calendar.vue'
 import ToDoList from '../components/ToDoList.vue'
 import Weather from '../components/Weather.vue'
 
-const wallpaper = '/bg/Firefly_Paper_Airplane.png'
+// Apple macOS Big Sur / 512 Pixels wallpaper archive: https://512pixels.net/projects/default-mac-wallpapers-in-5k/
+const wallpaper = '/bg/macos-big-sur-light.jpg'
 const chatGptUrl = 'https://chat.openai.com/'
 const ipInfoUrl = 'https://ipinfo.io/what-is-my-ip'
 
@@ -273,98 +274,98 @@ const liquidMaterialPresets = Object.freeze({
   strip: {
     radius: 0,
     bevel: 6,
-    refraction: 3.2,
-    dispersion: 0.16,
-    tint: 0.045,
-    highlight: 0.44,
+    refraction: 2.4,
+    dispersion: 0.06,
+    tint: 0.08,
+    highlight: 0.6,
     opacity: 0.92,
     interaction: 0.08,
     ior: 1.22,
     normalStrength: 0.82,
     shininess: 76,
     adaptivity: 0.34,
-    softness: 0.6,
-    tintColor: [0.055, 0.105, 0.17],
+    softness: 7,
+    tintColor: [0.13, 0.15, 0.19],
   },
   window: {
     radius: 14,
-    bevel: 16,
-    refraction: 9.5,
-    dispersion: 0.38,
-    tint: 0.082,
-    highlight: 0.7,
+    bevel: 20,
+    refraction: 6.5,
+    dispersion: 0.12,
+    tint: 0.14,
+    highlight: 0.86,
     opacity: 0.97,
     interaction: 0.16,
     ior: 1.34,
-    normalStrength: 1.06,
-    shininess: 72,
+    normalStrength: 0.9,
+    shininess: 48,
     adaptivity: 0.76,
-    softness: 1.3,
-    tintColor: [0.035, 0.065, 0.105],
+    softness: 20,
+    tintColor: [0.12, 0.14, 0.18],
   },
   panel: {
     radius: 22,
-    bevel: 18,
-    refraction: 10.5,
-    dispersion: 0.42,
-    tint: 0.09,
-    highlight: 0.68,
+    bevel: 22,
+    refraction: 7,
+    dispersion: 0.12,
+    tint: 0.15,
+    highlight: 0.84,
     opacity: 0.97,
     interaction: 0.2,
     ior: 1.36,
-    normalStrength: 1.12,
-    shininess: 66,
+    normalStrength: 0.96,
+    shininess: 46,
     adaptivity: 0.86,
-    softness: 1.5,
-    tintColor: [0.035, 0.06, 0.1],
+    softness: 22,
+    tintColor: [0.12, 0.14, 0.18],
   },
   dock: {
-    radius: 20,
-    bevel: 15,
-    refraction: 14,
-    dispersion: 0.62,
-    tint: 0.048,
-    highlight: 0.88,
+    radius: 24,
+    bevel: 17,
+    refraction: 8.5,
+    dispersion: 0.18,
+    tint: 0.075,
+    highlight: 0.9,
     opacity: 0.98,
-    interaction: 0.78,
+    interaction: 0.38,
     ior: 1.48,
-    normalStrength: 1.38,
-    shininess: 92,
+    normalStrength: 1.1,
+    shininess: 64,
     adaptivity: 0.48,
-    softness: 0.95,
-    tintColor: [0.045, 0.075, 0.12],
+    softness: 10,
+    tintColor: [0.2, 0.22, 0.26],
   },
   search: {
     radius: 999,
     bevel: 10,
-    refraction: 10,
-    dispersion: 0.46,
-    tint: 0.065,
+    refraction: 6,
+    dispersion: 0.1,
+    tint: 0.095,
     highlight: 0.74,
     opacity: 0.96,
-    interaction: 0.52,
+    interaction: 0.28,
     ior: 1.44,
-    normalStrength: 1.28,
-    shininess: 86,
+    normalStrength: 1.04,
+    shininess: 58,
     adaptivity: 0.56,
-    softness: 0.78,
-    tintColor: [0.045, 0.075, 0.12],
+    softness: 12,
+    tintColor: [0.14, 0.16, 0.2],
   },
   circle: {
     radius: 999,
     bevel: 9,
-    refraction: 11,
-    dispersion: 0.55,
-    tint: 0.05,
+    refraction: 6.5,
+    dispersion: 0.12,
+    tint: 0.09,
     highlight: 0.8,
     opacity: 0.97,
-    interaction: 0.6,
+    interaction: 0.32,
     ior: 1.5,
-    normalStrength: 1.44,
-    shininess: 96,
+    normalStrength: 1.1,
+    shininess: 64,
     adaptivity: 0.5,
-    softness: 0.7,
-    tintColor: [0.045, 0.075, 0.12],
+    softness: 9,
+    tintColor: [0.17, 0.19, 0.23],
   },
 })
 
@@ -479,21 +480,35 @@ vec3 sampleSoftenedRefraction(
   float edge,
   float materialization
 ) {
+  // Prefilter detail before the reconstruction kernel. Convert screen pixels
+  // to texture texels so the material stays consistent across resize and DPR.
+  vec2 texelsPerPixel = vec2(textureSize(uWallpaper, 0)) / uWallpaperRect.zw;
+  float blurLod = max(0.0, log2(max(
+    softness * max(texelsPerPixel.x, texelsPerPixel.y) * 0.7,
+    1.0
+  )));
+  vec2 spread = vec2(softness * 0.42, 0.0);
+  vec3 softened = srgbToLinear(textureLod(
+    uWallpaper, wallpaperUv(screenPosition), blurLod
+  ).rgb) * 0.4;
+  softened += srgbToLinear(textureLod(
+    uWallpaper, wallpaperUv(screenPosition + spread.xy), blurLod
+  ).rgb) * 0.15;
+  softened += srgbToLinear(textureLod(
+    uWallpaper, wallpaperUv(screenPosition - spread.xy), blurLod
+  ).rgb) * 0.15;
+  softened += srgbToLinear(textureLod(
+    uWallpaper, wallpaperUv(screenPosition + spread.yx), blurLod
+  ).rgb) * 0.15;
+  softened += srgbToLinear(textureLod(
+    uWallpaper, wallpaperUv(screenPosition - spread.yx), blurLod
+  ).rgb) * 0.15;
   vec3 crisp = srgbToLinear(sampleRefractedWallpaper(
     screenPosition,
     dispersionAxis,
     dispersion
   ));
-  vec2 firstAxis = vec2(0.8660254, 0.5) * softness;
-  vec2 secondAxis = vec2(-0.5, 0.8660254) * softness;
-  vec3 softened = (
-    srgbToLinear(sampleWallpaper(screenPosition + firstAxis))
-    + srgbToLinear(sampleWallpaper(screenPosition - firstAxis))
-    + srgbToLinear(sampleWallpaper(screenPosition + secondAxis))
-    + srgbToLinear(sampleWallpaper(screenPosition - secondAxis))
-  ) * 0.25;
-  float softnessMix = mix(0.26, 0.08, edge) * materialization;
-  return mix(crisp, softened, softnessMix);
+  return mix(crisp, softened, (1.0 - edge * 0.16) * materialization);
 }
 
 float glassHeight(
@@ -660,7 +675,7 @@ void main() {
   vec3 saturated = mix(
     vec3(sourceLuminance),
     refracted,
-    1.06
+    1.03
   );
   float brightBackdrop = smoothstep(0.42, 0.82, localMean);
   float complexBackdrop = smoothstep(0.035, 0.16, localContrast);
@@ -675,8 +690,8 @@ void main() {
     srgbToLinear(uTintColor),
     clamp(adaptiveTint, 0.0, 0.26)
   );
-  glassColor *= mix(1.018, 0.85, brightBackdrop * uOptics.w);
-  glassColor *= mix(1.0, 0.94, complexBackdrop * uOptics.w);
+  glassColor *= mix(1.018, 0.93, brightBackdrop * uOptics.w);
+  glassColor *= mix(1.0, 0.97, complexBackdrop * uOptics.w);
 
   vec2 keyLightVector = vec2(
     uResolution.x * 0.22,
@@ -732,9 +747,9 @@ void main() {
     vec3(1.0)
   );
   float highlightEnergy = (
-      keySpecular * 0.24
-      + interactiveSpecular * 0.34
-      + innerRim * 0.038
+      keySpecular * 0.3
+      + interactiveSpecular * 0.24
+      + innerRim * 0.075
     )
     * uMaterial.y
     * materialization
@@ -745,13 +760,13 @@ void main() {
     clamp(highlightEnergy, 0.0, 0.58)
   );
   float fresnelEnergy = fresnel
-    * 0.055
+    * 0.1
     * uMaterial.y
     * materialization
     * uBrightness;
   glassColor = mix(
     glassColor,
-    srgbToLinear(vec3(0.48, 0.69, 1.0)),
+    srgbToLinear(vec3(0.86, 0.92, 1.0)),
     clamp(fresnelEnergy, 0.0, 0.16)
   );
 
@@ -2008,10 +2023,9 @@ function renderLiquidGlassFrame(timestamp) {
 
 function requestLiquidGlassRender(animateMilliseconds = 0) {
   if (!liquidRenderer || document.visibilityState === 'hidden') return
-  liquidRenderUntil = Math.max(
-    liquidRenderUntil,
-    performance.now() + animateMilliseconds,
-  )
+  liquidRenderUntil = liquidGlassMotionQuery?.matches
+    ? 0
+    : Math.max(liquidRenderUntil, performance.now() + animateMilliseconds)
   if (!liquidLightAnimationFrame) {
     liquidLightAnimationFrame = window.requestAnimationFrame(renderLiquidGlassFrame)
   }
@@ -2122,7 +2136,7 @@ async function initializeLiquidGlassRenderer() {
     if (!texture) throw new Error('Unable to allocate the wallpaper texture')
     gl.bindTexture(gl.TEXTURE_2D, texture)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
@@ -2134,6 +2148,7 @@ async function initializeLiquidGlassRenderer() {
       gl.UNSIGNED_BYTE,
       image,
     )
+    gl.generateMipmap(gl.TEXTURE_2D)
 
     const uniform = (name) => {
       const location = gl.getUniformLocation(program, name)
@@ -2983,7 +2998,7 @@ onBeforeUnmount(() => {
     0 0 0 0.5px var(--portal-stroke-outer),
     0 34px 96px rgba(0, 0, 0, 0.38),
     0 10px 30px rgba(0, 0, 0, 0.24);
-  --portal-radius-window: 14px;
+  --portal-radius-window: 18px;
   --portal-radius-control: 9px;
   --portal-radius-icon: 22.5%;
   --portal-spring-settle: linear(
@@ -6033,7 +6048,7 @@ onBeforeUnmount(() => {
 }
 
 .bottom-launcher.liquid-surface {
-  --lg-surface-radius: 20px;
+  --lg-surface-radius: 24px;
   height: 65px;
   min-height: 0;
   box-sizing: border-box;
@@ -6042,7 +6057,7 @@ onBeforeUnmount(() => {
   padding: 6px 10px;
   overflow: visible;
   border-color: rgba(255, 255, 255, 0.28);
-  border-radius: 20px;
+  border-radius: var(--lg-surface-radius);
   box-shadow:
     0 0 0 0.5px rgba(0, 0, 0, 0.2),
     0 20px 55px rgba(0, 0, 0, 0.26);
@@ -6050,7 +6065,7 @@ onBeforeUnmount(() => {
 
 .bottom-launcher.liquid-surface::before,
 .bottom-launcher.liquid-surface::after {
-  clip-path: inset(0 round 20px);
+  clip-path: inset(0 round var(--lg-surface-radius));
 }
 
 .bottom-launcher.liquid-surface::before {
@@ -6147,7 +6162,6 @@ onBeforeUnmount(() => {
   .spotlight-search,
   .spotlight-results,
   .spotlight-footer,
-  .launchpad-overlay,
   .launchpad-groups,
   .launchpad-search,
   .launchpad-close,
@@ -6245,11 +6259,11 @@ onBeforeUnmount(() => {
 
 .mac-window.liquid-surface {
   --lg-surface-radius: var(--portal-radius-window);
-  border-color: rgba(255, 255, 255, 0.17);
+  border-color: rgba(255, 255, 255, 0.22);
   box-shadow:
-    0 0 0 0.5px rgba(0, 0, 0, 0.22),
-    0 30px 88px rgba(0, 0, 0, 0.25),
-    0 9px 25px rgba(0, 0, 0, 0.14);
+    0 0 0 0.5px rgba(12, 18, 30, 0.16),
+    0 34px 90px rgba(8, 15, 30, 0.24),
+    0 8px 28px rgba(8, 15, 30, 0.12);
 }
 
 .mac-window.liquid-surface::before {
@@ -6265,8 +6279,8 @@ onBeforeUnmount(() => {
 
 .window-titlebar {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent),
-    rgba(8, 15, 25, 0.045);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent),
+    rgba(20, 24, 33, 0.2);
   box-shadow:
     inset 0 -0.5px 0 rgba(0, 0, 0, 0.11);
 }
@@ -6275,12 +6289,11 @@ onBeforeUnmount(() => {
 .window-todo .window-body,
 .window-music .window-body {
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.018), transparent 48%),
-    rgba(5, 11, 19, 0.135);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 55%),
+    rgba(18, 23, 32, 0.28);
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.055);
   text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.42),
-    0 0 8px rgba(0, 0, 0, 0.08);
+    0 1px 2px rgba(0, 0, 0, 0.26);
 }
 
 .widget-shell :deep(.weather-container),
@@ -6442,15 +6455,14 @@ onBeforeUnmount(() => {
   background: transparent;
 }
 
-/* Keep the media information layer stable over the refractive window. */
+/* One quiet content plane; the header and track list share its material. */
 .window-music :deep(.aplayer) {
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.07), transparent 38%),
-    rgba(8, 14, 24, 0.32);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.14),
-    0 10px 28px rgba(2, 7, 14, 0.12);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), transparent 55%),
+    rgba(20, 25, 34, 0.18);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
 }
 
 .window-music :deep(.aplayer-body) {
@@ -6462,16 +6474,12 @@ onBeforeUnmount(() => {
 }
 
 .window-music :deep(.aplayer-info) {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.065), transparent 54%),
-    rgba(12, 19, 31, 0.28);
+  background: transparent;
 }
 
 .window-music :deep(.aplayer-list) {
   border-top: 0;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 30%),
-    rgba(5, 11, 20, 0.27);
+  background: transparent;
 }
 
 .window-music :deep(.aplayer-list ol li) {
@@ -6488,7 +6496,7 @@ onBeforeUnmount(() => {
 .window-music :deep(.aplayer-list-light) {
   color: rgba(255, 255, 255, 0.98) !important;
   background:
-    linear-gradient(90deg, rgba(76, 154, 255, 0.32), rgba(76, 154, 255, 0.14))
+    linear-gradient(90deg, rgba(112, 169, 235, 0.24), rgba(112, 169, 235, 0.1))
     !important;
 }
 
@@ -6537,13 +6545,18 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.24);
 }
 
+/* The wallpaper shader cannot sample DOM windows beneath a modal. Soften
+ * that backdrop once at the scrim; keep the modal's content and rim sharp. */
 .spotlight-overlay {
   background:
     radial-gradient(
       ellipse 720px 500px at 50% 18%,
       rgba(4, 9, 18, 0.075),
       transparent 78%
-    );
+    ),
+    rgba(12, 17, 26, 0.14);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
 }
 
 .spotlight-panel.liquid-surface {
@@ -6559,7 +6572,7 @@ onBeforeUnmount(() => {
 }
 
 .spotlight-results {
-  background: rgba(5, 11, 19, 0.075);
+  background: rgba(18, 23, 32, 0.18);
 }
 
 .spotlight-footer {
@@ -6569,7 +6582,9 @@ onBeforeUnmount(() => {
 .launchpad-overlay {
   background:
     radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.025), transparent 42rem),
-    rgba(5, 10, 18, 0.095);
+    rgba(12, 17, 26, 0.14);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
 }
 
 .launchpad-groups.liquid-surface {
@@ -6593,12 +6608,13 @@ onBeforeUnmount(() => {
 }
 
 .bottom-launcher.liquid-surface {
-  --lg-surface-radius: 20px;
+  --lg-surface-radius: 24px;
   border-color: rgba(255, 255, 255, 0.18);
   background: transparent;
   box-shadow:
-    0 0 0 0.5px rgba(0, 0, 0, 0.16),
-    0 18px 48px rgba(0, 0, 0, 0.2);
+    0 0 0 0.5px rgba(8, 15, 30, 0.14),
+    0 18px 48px rgba(8, 15, 30, 0.18),
+    0 4px 14px rgba(8, 15, 30, 0.08);
 }
 
 .bottom-launcher.liquid-surface::before {
@@ -6633,21 +6649,34 @@ onBeforeUnmount(() => {
 }
 
 .portal-desktop.has-liquid-webgl .liquid-surface::before {
-  background: rgba(8, 15, 25, 0.018) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.055),
+    rgba(255, 255, 255, 0.008) 45%,
+    rgba(12, 18, 28, 0.025)
+  );
   box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.07),
-    inset 0 -0.5px 0 rgba(0, 0, 0, 0.06);
+    inset 0 0.75px 0 rgba(255, 255, 255, 0.27),
+    inset 0 -0.75px 0 rgba(235, 242, 255, 0.12);
 }
 
 .portal-desktop.has-liquid-webgl .liquid-surface::after {
-  background: rgba(255, 255, 255, 0.14) !important;
-  opacity: 0.22 !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.52),
+    rgba(255, 255, 255, 0.08) 32%,
+    rgba(255, 255, 255, 0.035) 62%,
+    rgba(235, 242, 255, 0.32)
+  );
+  opacity: 0.72;
 }
 
 .portal-desktop:not(.has-liquid-webgl) .liquid-surface::before {
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.09), transparent 44%),
-    rgba(24, 31, 42, 0.88);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), transparent 55%),
+    rgba(28, 34, 45, 0.68);
+  -webkit-backdrop-filter: blur(20px) saturate(125%) !important;
+  backdrop-filter: blur(20px) saturate(125%) !important;
 }
 
 .portal-desktop :is(
@@ -7256,17 +7285,17 @@ onBeforeUnmount(() => {
   }
 
   .bottom-launcher.liquid-surface {
-    --lg-surface-radius: 30px;
+    --lg-surface-radius: 35px;
     bottom: 20px;
     height: 98px;
     gap: 5px;
     padding: 8px 15px;
-    border-radius: 30px;
+    border-radius: var(--lg-surface-radius);
   }
 
   .bottom-launcher.liquid-surface::before,
   .bottom-launcher.liquid-surface::after {
-    clip-path: inset(0 round 30px);
+    clip-path: inset(0 round var(--lg-surface-radius));
   }
 
   .launcher-item {
@@ -7346,16 +7375,16 @@ onBeforeUnmount(() => {
   }
 
   .bottom-launcher.liquid-surface {
-    --lg-surface-radius: 18px;
+    --lg-surface-radius: 21px;
     bottom: max(7px, env(safe-area-inset-bottom));
     height: 57px;
     padding: 4px 8px;
-    border-radius: 18px;
+    border-radius: var(--lg-surface-radius);
   }
 
   .bottom-launcher.liquid-surface::before,
   .bottom-launcher.liquid-surface::after {
-    clip-path: inset(0 round 18px);
+    clip-path: inset(0 round var(--lg-surface-radius));
   }
 
   .launcher-item {
@@ -7792,8 +7821,8 @@ onBeforeUnmount(() => {
 
   .launchpad-overlay {
     background: rgba(7, 12, 20, 0.34);
-    -webkit-backdrop-filter: blur(28px) brightness(0.68) saturate(122%);
-    backdrop-filter: blur(28px) brightness(0.68) saturate(122%);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
   }
 
   .launchpad-panel {
@@ -7946,7 +7975,7 @@ onBeforeUnmount(() => {
 }
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .liquid-surface::before {
+  .portal-desktop:not(.has-liquid-webgl) .liquid-surface::before {
     background: rgba(35, 40, 50, 0.96);
     filter: none !important;
   }
@@ -8129,11 +8158,11 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .liquid-surface::before {
+  .portal-desktop:not(.has-liquid-webgl) .liquid-surface::before {
     background: rgb(43, 43, 47);
     filter: none !important;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 
   .liquid-surface::after {
