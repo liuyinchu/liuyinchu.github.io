@@ -1,0 +1,13 @@
+Lucide Icons — https://lucide.dev
+Source: https://github.com/lucide-icons/lucide/tree/main/icons
+Retrieved: 2026-10-25
+License: ISC; Feather-derived icons also retain MIT notice in LICENSE.txt.
+
+spotlight.svg <- search.svg
+music.svg <- eighth-notes.svg
+weather.svg <- cloud-sun.svg
+calendar.svg <- calendar-days.svg
+launchpad.svg <- layout-grid.svg
+reminders.svg <- list-todo.svg
+chevron-left.svg <- chevron-left.svg
+chevron-right.svg <- chevron-right.svg

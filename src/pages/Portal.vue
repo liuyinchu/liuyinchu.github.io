@@ -15,7 +15,7 @@ const topApps = [
     id: 'todo',
     label: 'TODO',
     title: 'TODO List',
-    icon: 'https://www.google.com/s2/favicons?sz=256&domain_url=https://todoist.com/',
+    icon: '/portal-icons/reminders.svg',
     align: 'left',
     windowClass: 'window-todo',
   },
@@ -23,7 +23,7 @@ const topApps = [
     id: 'music',
     label: 'Music',
     title: 'Music',
-    icon: '/music/cover/default.jpg',
+    icon: '/portal-icons/music.svg',
     align: 'right',
     windowClass: 'window-music',
   },
@@ -31,7 +31,7 @@ const topApps = [
     id: 'weather',
     label: 'Weather',
     title: 'Weather',
-    icon: 'https://www.google.com/s2/favicons?sz=256&domain_url=https://www.qweather.com/',
+    icon: '/portal-icons/weather.svg',
     align: 'right',
     windowClass: 'window-weather',
   },
@@ -39,7 +39,7 @@ const topApps = [
     id: 'calendar',
     label: 'Calendar',
     title: 'Calendar',
-    icon: 'https://www.google.com/s2/favicons?sz=256&domain_url=https://calendar.google.com/',
+    icon: '/portal-icons/calendar.svg',
     align: 'right',
     windowClass: 'window-calendar',
   },
@@ -50,13 +50,13 @@ const bottomApps = [
     id: 'map',
     label: 'Spotlight',
     title: 'Spotlight',
-    icon: '/favicon_liuyin.svg',
+    icon: '/portal-icons/spotlight.svg',
   },
   {
     id: 'dock',
     label: 'Launchpad',
     title: 'Launchpad',
-    icon: '/icons/portal-launchpad.png',
+    icon: '/portal-icons/launchpad.svg',
   },
 ]
 
@@ -784,6 +784,10 @@ const windowBodyScrolled = ref(false)
 const dragging = ref(false)
 const compactLayout = ref(false)
 const isMinimizing = ref(false)
+const isRestoring = ref(false)
+const activeMenu = ref(null)
+const windowDockTransform = ref({ x: 0, y: 0, scale: 0.15 })
+let minimizedWindowRect
 const desktopFocused = ref(true)
 const lastFocusedElement = ref(null)
 const overlayReturnFocus = ref(null)
@@ -795,7 +799,6 @@ let dragStart = { pointerX: 0, pointerY: 0, originX: 0, originY: 0 }
 let windowPositionUserAdjusted = false
 let dockAnimationFrame
 let dockSettleTimer
-let minimizeTimer
 let liquidLightAnimationFrame
 let liquidRenderer
 let liquidRendererGeneration = 0
@@ -813,7 +816,7 @@ const allWindowApps = computed(() => [...topApps, ...bottomApps])
 const activeWindowApp = computed(() => topApps.find((app) => app.id === activeWindow.value))
 const activeOverlayApp = computed(() => bottomApps.find((app) => app.id === activeOverlay.value))
 const activeApp = computed(
-  () => activeOverlayApp.value || (desktopFocused.value ? activeWindowApp.value : null),
+  () => activeOverlayApp.value || (desktopFocused.value && !minimizedWindow.value ? activeWindowApp.value : null),
 )
 const minimizedApp = computed(() => allWindowApps.value.find((app) => app.id === minimizedWindow.value))
 const dockWindowApps = computed(() => [
@@ -821,6 +824,120 @@ const dockWindowApps = computed(() => [
   ...topApps.filter((app) => app.id !== 'todo'),
   bottomApps[1],
 ])
+const visibleWindow = computed(() => Boolean(activeWindowApp.value && minimizedWindow.value !== activeWindow.value && !activeOverlay.value))
+const portalMenus = computed(() => [
+  { id: 'go', label: 'Go', items: [
+    { label: 'Spotlight', app: 'map', shortcut: '⌘K' },
+    { label: 'Launchpad', app: 'dock' },
+    { label: 'Home', href: '/', separator: true },
+    { label: 'Articles', href: '/space1' },
+  ] },
+  { id: 'window', label: 'Window', items: [
+    ...topApps.map(app => ({ label: app.title, app: app.id })),
+    { label: 'Minimize', action: 'minimize', disabled: !visibleWindow.value, separator: true },
+    { label: 'Restore minimized window', action: 'restore', disabled: !minimizedWindow.value },
+    { label: windowMaximized.value ? 'Restore size' : 'Zoom', action: 'zoom', disabled: !visibleWindow.value || compactLayout.value },
+    { label: 'Close window', action: 'close', disabled: !visibleWindow.value },
+  ] },
+  { id: 'help', label: 'Help', items: [
+    { label: 'Search this site', app: 'map' },
+    { label: 'Open ChatGPT', href: chatGptUrl, separator: true },
+    { label: 'IP information', href: ipInfoUrl },
+  ] },
+])
+
+function menuTrigger(id = activeMenu.value) {
+  return portalDesktopRef.value?.querySelector('[data-portal-menu="' + id + '"]')
+}
+
+async function closeMenu(restoreFocus = false) {
+  const trigger = menuTrigger()
+  activeMenu.value = null
+  if (restoreFocus) {
+    await nextTick()
+    trigger?.focus({ preventScroll: true })
+  }
+}
+
+async function openMenu(id, focusPosition = null) {
+  activeMenu.value = id
+  await nextTick()
+  if (focusPosition !== null) {
+    const items = [...portalDesktopRef.value.querySelectorAll('.menu-dropdown :is(a, button)[role="menuitem"]:not(:disabled)')]
+    items[focusPosition === 'last' ? items.length - 1 : 0]?.focus({ preventScroll: true })
+  }
+}
+
+function toggleMenu(id) {
+  if (activeMenu.value === id) closeMenu()
+  else openMenu(id)
+}
+
+async function activateMenuItem(item) {
+  if (item.disabled) return
+  const trigger = menuTrigger()
+  await closeMenu()
+  trigger?.focus({ preventScroll: true })
+  if (item.app) await openWindow(item.app, trigger)
+  else if (item.action === 'minimize') await minimizeWindow()
+  else if (item.action === 'restore') await restoreMinimizedWindow()
+  else if (item.action === 'zoom') {
+    await toggleMaximizeWindow()
+    await focusActiveSurface()
+  }
+  else if (item.action === 'close') await closeWindow()
+}
+
+function handleMenuKeydown(event, id) {
+  if (event.metaKey || event.ctrlKey || event.altKey) return
+  const key = event.key
+  if (key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    closeMenu(true)
+    return
+  }
+  if (key === 'Tab') {
+    event.preventDefault()
+    closeMenu().then(() => {
+      const next = event.shiftKey ? menuTrigger(id)
+        : portalDesktopRef.value?.querySelector('.menu-right button')
+      next?.focus({ preventScroll: true })
+    })
+    return
+  }
+  if (key === 'ArrowLeft' || key === 'ArrowRight') {
+    event.preventDefault()
+    const menus = portalMenus.value
+    const index = menus.findIndex(menu => menu.id === id)
+    const next = menus[(index + (key === 'ArrowRight' ? 1 : -1) + menus.length) % menus.length]
+    if (activeMenu.value) openMenu(next.id, 'first')
+    else menuTrigger(next.id)?.focus({ preventScroll: true })
+    return
+  }
+  if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(key)) return
+  event.preventDefault()
+  if (activeMenu.value !== id) {
+    openMenu(id, key === 'ArrowUp' || key === 'End' ? 'last' : 'first')
+    return
+  }
+  const items = [...event.currentTarget.querySelectorAll(':is(a, button)[role="menuitem"]:not(:disabled)')]
+  const index = items.indexOf(document.activeElement)
+  const next = key === 'Home' ? 0 : key === 'End' ? items.length - 1
+    : index < 0 ? (key === 'ArrowUp' ? items.length - 1 : 0)
+      : (index + (key === 'ArrowDown' ? 1 : -1) + items.length) % items.length
+  items[next]?.focus({ preventScroll: true })
+}
+
+function handleMenuOutsidePointerDown(event) {
+  if (!activeMenu.value || event.target.closest('.menu-commands')) return
+  const focusedMenuItem = document.activeElement?.closest('.menu-dropdown')
+  const focusableTarget = event.target.closest(
+    'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex], [contenteditable="true"]',
+  )
+  closeMenu(Boolean(focusedMenuItem && !focusableTarget))
+}
+
 const normalizedSearchItems = computed(() => {
   const source = searchItems.value.length ? searchItems.value : fallbackSearchItems
   return source.map(normalizeSearchItem).filter((item) => item.name && item.path)
@@ -869,10 +986,16 @@ const menuTime = computed(() => {
   return `${monthDay} ${weekday} ${time}`
 })
 const windowStyle = computed(() => {
-  if (compactLayout.value || !windowPositioned.value) return {}
+  const motion = {
+    '--window-dock-x': windowDockTransform.value.x + 'px',
+    '--window-dock-y': windowDockTransform.value.y + 'px',
+    '--window-dock-scale': windowDockTransform.value.scale,
+  }
+  if (compactLayout.value || !windowPositioned.value) return motion
 
   if (windowMaximized.value) {
     return {
+      ...motion,
       top: 'var(--portal-window-max-top, 34px)',
       left: 'var(--portal-window-max-inset, 8px)',
       width: 'calc(100vw - var(--portal-window-max-gutter, 16px))',
@@ -882,6 +1005,7 @@ const windowStyle = computed(() => {
   }
 
   const style = {
+    ...motion,
     top: `${windowPos.value.y}px`,
     left: `${windowPos.value.x}px`,
   }
@@ -1102,17 +1226,22 @@ function isOrdinaryWindow(id) {
   return Boolean(id && id !== 'map' && id !== 'dock')
 }
 
-function rememberCurrentFocus(target = lastFocusedElement) {
-  if (document.activeElement instanceof HTMLElement) {
-    target.value = document.activeElement
+function rememberCurrentFocus(target = lastFocusedElement, preferred = null) {
+  const element = preferred || document.activeElement
+  if (element instanceof HTMLElement && !element.closest('.menu-dropdown')
+    && (target === overlayReturnFocus || !windowRef.value?.contains(element))) {
+    target.value = element
   }
 }
 
-async function restorePreviousFocus(target = lastFocusedElement) {
+async function restorePreviousFocus(target = lastFocusedElement, appId = null) {
   await nextTick()
-  if (target.value?.isConnected) {
-    target.value.focus({ preventScroll: true })
-  }
+  const usable = element => element?.isConnected && element.getClientRects().length
+    && !element.closest('[inert]')
+  const fallback = dockRef.value?.querySelector('[data-app-id="' + appId + '"]')
+    || portalDesktopRef.value?.querySelector('[data-app-id="' + appId + '"]')
+  const element = usable(target.value) ? target.value : usable(fallback) ? fallback : dockRef.value
+  element?.focus({ preventScroll: true })
 }
 
 
@@ -1140,10 +1269,23 @@ function clampWindowPosition(x, y, rect = windowRef.value?.getBoundingClientRect
   }
 }
 
+function windowLayoutRect() {
+  const element = windowRef.value
+  const root = portalDesktopRef.value
+  if (!element || !root) return null
+  const origin = root.getBoundingClientRect()
+  return {
+    left: origin.left + element.offsetLeft,
+    top: origin.top + element.offsetTop,
+    width: element.offsetWidth,
+    height: element.offsetHeight,
+  }
+}
+
 async function centerWindow() {
   if (!isOrdinaryWindow(activeWindow.value) || compactLayout.value) return
   await nextTick()
-  const rect = windowRef.value?.getBoundingClientRect()
+  const rect = windowLayoutRect()
   if (!rect) return
 
   windowPos.value = clampWindowPosition(
@@ -1172,11 +1314,13 @@ async function focusActiveSurface() {
   }
 }
 
-async function openWindow(id) {
+async function openWindow(id, returnTarget = null) {
   if (!id) return
+  cancelWindowDrag()
+  closeMenu()
 
   if (!isOrdinaryWindow(id)) {
-    if (!activeOverlay.value) rememberCurrentFocus(overlayReturnFocus)
+    if (!activeOverlay.value) rememberCurrentFocus(overlayReturnFocus, returnTarget)
     activeOverlay.value = id
     spotlightSelectedIndex.value = 0
     await focusActiveSurface()
@@ -1190,10 +1334,12 @@ async function openWindow(id) {
     return
   }
 
-  rememberCurrentFocus()
   const changingWindow = activeWindow.value !== id
   if (changingWindow) {
+    rememberCurrentFocus(lastFocusedElement, returnTarget)
     minimizedWindow.value = null
+    isMinimizing.value = false
+    isRestoring.value = false
     windowMaximized.value = false
     windowPositioned.value = false
     windowPositionUserAdjusted = false
@@ -1211,14 +1357,18 @@ async function openWindow(id) {
 
 async function closeWindow() {
   if (activeOverlay.value) {
+    const closingApp = activeOverlay.value
     activeOverlay.value = null
-    await restorePreviousFocus(overlayReturnFocus)
+    await restorePreviousFocus(overlayReturnFocus, closingApp)
     overlayReturnFocus.value = null
     return
   }
 
   if (!activeWindow.value) return
   cancelWindowDrag()
+  const closingApp = activeWindow.value
+  isMinimizing.value = false
+  isRestoring.value = false
   activeWindow.value = null
   minimizedWindow.value = null
   windowMaximized.value = false
@@ -1226,7 +1376,7 @@ async function closeWindow() {
   windowPositionUserAdjusted = false
   windowBodyScrolled.value = false
   desktopFocused.value = false
-  await restorePreviousFocus()
+  await restorePreviousFocus(lastFocusedElement, closingApp)
 }
 
 async function handleDesktopPointerDown() {
@@ -1242,37 +1392,65 @@ function activateWindowSurface() {
   desktopFocused.value = true
 }
 
+function updateWindowDockTransform(rect = minimizedWindowRect) {
+  const target = dockRef.value?.querySelector('[data-app-id="' + activeWindow.value + '"]')
+    || portalDesktopRef.value?.querySelector('[data-app-id="' + activeWindow.value + '"]')
+  if (!rect || !target) return
+  const dock = target.getBoundingClientRect()
+  windowDockTransform.value = {
+    x: dock.left + dock.width / 2 - rect.left - rect.width / 2,
+    y: dock.top + dock.height / 2 - rect.top - rect.height / 2,
+    scale: Math.max(0.08, Math.min(0.2, dock.width / rect.width)),
+  }
+}
+
 async function minimizeWindow() {
-  if (!isOrdinaryWindow(activeWindow.value)) return
+  if (!visibleWindow.value) return
+  cancelWindowDrag()
+  minimizedWindowRect = windowRef.value?.getBoundingClientRect()
   isMinimizing.value = true
+  isRestoring.value = false
+  desktopFocused.value = false
   minimizedWindow.value = activeWindow.value
-  window.clearTimeout(minimizeTimer)
-  minimizeTimer = window.setTimeout(() => {
-    isMinimizing.value = false
-  }, 220)
   await nextTick()
-  dockRef.value
-    ?.querySelector(`[data-app-id="${activeWindow.value}"]`)
-    ?.focus({ preventScroll: true })
+  updateWindowDockTransform()
+  requestLiquidGlassRender(260)
+  await restorePreviousFocus({ value: null }, activeWindow.value)
+}
+
+function handleWindowAfterLeave() {
+  isMinimizing.value = false
+  requestLiquidGlassRender(0)
 }
 
 async function restoreMinimizedWindow() {
   if (!minimizedWindow.value) return
+  cancelWindowDrag()
+  closeMenu()
+  activeOverlay.value = null
+  updateWindowDockTransform()
+  isRestoring.value = true
   desktopFocused.value = true
   activeWindow.value = minimizedWindow.value
   minimizedWindow.value = null
   isMinimizing.value = false
   await nextTick()
   if (!compactLayout.value) {
-    const rect = windowRef.value?.getBoundingClientRect()
-    if (!windowPositionUserAdjusted) await centerWindow()
+    const rect = windowLayoutRect()
+    if (!windowPositionUserAdjusted && !windowMaximized.value) await centerWindow()
     else if (rect) windowPos.value = clampWindowPosition(windowPos.value.x, windowPos.value.y, rect)
+    await nextTick()
+    if (dockRef.value?.querySelector('[data-app-id="' + activeWindow.value + '"]')) {
+      updateWindowDockTransform(windowLayoutRect())
+    }
   }
+  requestLiquidGlassRender(260)
   await focusActiveSurface()
 }
 
 async function toggleMaximizeWindow() {
-  if (!isOrdinaryWindow(activeWindow.value) || compactLayout.value) return
+  if (!visibleWindow.value || compactLayout.value) return
+  cancelWindowDrag()
 
   if (windowMaximized.value) {
     windowMaximized.value = false
@@ -1492,14 +1670,11 @@ function handleGlobalKeydown(event) {
 
   if (commandKey && event.key.toLowerCase() === 'k') {
     event.preventDefault()
-    openWindow('map')
-  } else if (
-    commandKey
-    && event.key.toLowerCase() === 'w'
-    && (activeWindow.value || activeOverlay.value)
-  ) {
+    const returnTarget = activeMenu.value ? menuTrigger() : null
+    openWindow('map', returnTarget)
+  } else if (event.key === 'Escape' && activeMenu.value) {
     event.preventDefault()
-    closeWindow()
+    closeMenu(true)
   } else if (event.key === 'Escape' && (activeWindow.value || activeOverlay.value)) {
     event.preventDefault()
     closeWindow()
@@ -1566,6 +1741,7 @@ function resetDockMagnification() {
   dockSettleTimer = window.setTimeout(() => {
     dock.classList.remove('is-settling')
   }, 260)
+  requestLiquidGlassRender(260)
 }
 
 function compileLiquidShader(gl, shaderType, source) {
@@ -1626,6 +1802,7 @@ function createLiquidProgram(gl) {
 }
 
 function liquidSurfaceZIndex(surface) {
+  if (surface.matches('.menu-dropdown')) return 500
   if (surface.closest('.spotlight-overlay')) {
     return surface.matches('.spotlight-panel') ? 400 : 401
   }
@@ -2240,6 +2417,7 @@ function handleLiquidGlassPreferenceChange() {
 
 function handleLiquidMotionPreferenceChange() {
   liquidPointerActive = false
+  resetDockMagnification()
   requestLiquidGlassRender(0)
 }
 
@@ -2323,15 +2501,41 @@ async function loadPortalData() {
 }
 
 function destroyPlayer() {
-  if (player) {
-    player.destroy()
-    player = null
+  const current = player
+  player = null
+  if (!current) return
+  // A queued APlayer error-skip callback must see an empty list after teardown.
+  current.list.clear()
+  current.destroy()
+}
+
+function labelPlayerControls(container) {
+  const labels = {
+    '.aplayer-icon-back': 'Previous track',
+    '.aplayer-icon-forward': 'Next track',
+    '.aplayer-icon-play': 'Play',
+    '.aplayer-icon-pause': 'Pause',
+    '.aplayer-icon-order': 'Change playback order',
+    '.aplayer-icon-loop': 'Change repeat mode',
+    '.aplayer-icon-volume-down': 'Mute or unmute',
+    '.aplayer-icon-menu': 'Show or hide track list',
+    '.aplayer-pic .aplayer-button': player?.audio.paused ? 'Play' : 'Pause',
+  }
+  for (const [selector, label] of Object.entries(labels)) {
+    container.querySelectorAll(selector).forEach(control => {
+      control.setAttribute('aria-label', label)
+      control.title = label
+      if (control.tagName !== 'BUTTON') {
+        control.setAttribute('role', 'button')
+        control.tabIndex = 0
+      }
+    })
   }
 }
 
 async function mountPlayer() {
   await nextTick()
-  if (activeWindow.value !== 'music' || !aplayerContainer.value || !musicTracks.value.length || player) return
+  if (loadingData.value || activeWindow.value !== 'music' || !aplayerContainer.value || !musicTracks.value.length || player) return
 
   player = new APlayer({
     container: aplayerContainer.value,
@@ -2341,9 +2545,21 @@ async function mountPlayer() {
     listMaxHeight: '246px',
     audio: musicTracks.value,
   })
+  const container = aplayerContainer.value
+  const updateLabels = () => labelPlayerControls(container)
+  updateLabels()
+  player.on('play', updateLabels)
+  player.on('pause', updateLabels)
+  container.addEventListener('keydown', event => {
+    if (['Enter', ' '].includes(event.key) && event.target.matches('[role="button"]')) {
+      event.preventDefault()
+      event.target.click()
+    }
+  })
 }
 
 async function handleWindowAfterEnter() {
+  isRestoring.value = false
   if (!windowPositionUserAdjusted && !windowMaximized.value) {
     await centerWindow()
   }
@@ -2357,7 +2573,7 @@ watch(activeWindow, async (next) => {
   else await mountPlayer()
 })
 
-watch(musicTracks, async () => {
+watch([musicTracks, loadingData], async () => {
   if (activeWindow.value === 'music') await mountPlayer()
 })
 
@@ -2393,6 +2609,7 @@ onMounted(async () => {
   liquidGlassMotionQuery.addEventListener('change', handleLiquidMotionPreferenceChange)
   liquidGlassContrastQuery.addEventListener('change', handleLiquidContrastPreferenceChange)
   document.addEventListener('visibilitychange', handleLiquidVisibilityChange)
+  document.addEventListener('pointerdown', handleMenuOutsidePointerDown, true)
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('resize', handleViewportResize)
   await nextTick()
@@ -2406,7 +2623,6 @@ onBeforeUnmount(() => {
   destroyPlayer()
   cancelWindowDrag()
   window.clearInterval(clockTimer)
-  window.clearTimeout(minimizeTimer)
   window.clearTimeout(dockSettleTimer)
   window.cancelAnimationFrame(dockAnimationFrame)
   window.cancelAnimationFrame(liquidLightAnimationFrame)
@@ -2416,6 +2632,7 @@ onBeforeUnmount(() => {
   liquidGlassMotionQuery?.removeEventListener('change', handleLiquidMotionPreferenceChange)
   liquidGlassContrastQuery?.removeEventListener('change', handleLiquidContrastPreferenceChange)
   document.removeEventListener('visibilitychange', handleLiquidVisibilityChange)
+  document.removeEventListener('pointerdown', handleMenuOutsidePointerDown, true)
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('resize', handleViewportResize)
 })
@@ -2429,6 +2646,7 @@ onBeforeUnmount(() => {
       'has-active-overlay': Boolean(activeOverlay),
       'is-desktop-focused': desktopFocused,
       'has-liquid-webgl': liquidWebGLReady,
+      'has-open-menu': Boolean(activeMenu),
     }"
     :style="{ '--portal-wallpaper': `url(${wallpaper})` }"
     @pointerdown.self="handleDesktopPointerDown"
@@ -2461,21 +2679,62 @@ onBeforeUnmount(() => {
         </RouterLink>
         <strong class="menu-current-app">{{ activeApp?.title ?? 'Finder' }}</strong>
         <nav class="menu-commands" aria-label="Application menus">
-          <button class="menu-command" type="button" @click="openWindow('dock')">File</button>
-          <a
-            class="menu-command"
-            href="/space1"
-            target="_blank"
-            rel="noopener noreferrer"
-          >Edit</a>
-          <button class="menu-command" type="button" @click="openWindow('music')">Music</button>
-          <button class="menu-command" type="button" @click="openWindow('weather')">Weather</button>
-          <a
-            class="menu-command"
-            :href="chatGptUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-          >Help</a>
+          <div
+            v-for="menu in portalMenus"
+            :key="menu.id"
+            class="menu-group"
+            @keydown="handleMenuKeydown($event, menu.id)"
+            @pointerenter="activeMenu && openMenu(menu.id)"
+          >
+            <button
+              class="menu-command"
+              type="button"
+              :id="'portal-menu-trigger-' + menu.id"
+              :data-portal-menu="menu.id"
+              :class="{ 'is-active': activeMenu === menu.id }"
+              aria-haspopup="menu"
+              :aria-expanded="activeMenu === menu.id"
+              :aria-controls="'portal-menu-' + menu.id"
+              @click="toggleMenu(menu.id)"
+            >{{ menu.label }}</button>
+            <div
+              v-if="activeMenu === menu.id"
+              :id="'portal-menu-' + menu.id"
+              class="menu-dropdown liquid-surface"
+              data-liquid-surface
+              data-liquid-kind="panel"
+              role="menu"
+              :aria-labelledby="'portal-menu-trigger-' + menu.id"
+            >
+              <template v-for="item in menu.items" :key="item.label">
+                <div v-if="item.separator" class="menu-separator" role="separator"></div>
+                <a
+                  v-if="item.href"
+                  class="menu-item"
+                  :href="item.href"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  role="menuitem"
+                  tabindex="-1"
+                  @click="closeMenu()"
+                >
+                  <span>{{ item.label }}</span>
+                </a>
+                <button
+                  v-else
+                  class="menu-item"
+                  type="button"
+                  role="menuitem"
+                  tabindex="-1"
+                  :disabled="item.disabled"
+                  @click="activateMenuItem(item)"
+                >
+                  <span>{{ item.label }}</span>
+                  <kbd v-if="item.shortcut">{{ item.shortcut }}</kbd>
+                </button>
+              </template>
+            </div>
+          </div>
         </nav>
       </div>
 
@@ -2485,28 +2744,23 @@ onBeforeUnmount(() => {
           type="button"
           :class="{ 'is-active': activeOverlay === 'map' }"
           aria-label="Open Spotlight"
+          data-app-id="map"
           title="Spotlight (⌘K)"
           @click="openWindow('map')"
         >
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="8.5" cy="8.5" r="5.4"></circle>
-            <path d="m12.6 12.6 4.1 4.1"></path>
-          </svg>
+<img class="menu-tool-icon" src="/portal-icons/spotlight.svg" alt="">
         </button>
         <button
           class="menu-glyph-button control-center-glyph"
           type="button"
           :class="{ 'is-active': activeWindow === 'todo' && minimizedWindow !== 'todo' }"
           aria-label="Open TODO List"
+          data-app-id="todo"
           aria-haspopup="dialog"
           title="TODO List"
           @click="openWindow('todo')"
         >
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M3 5.25h14M3 14.75h14"></path>
-            <circle cx="7" cy="5.25" r="2"></circle>
-            <circle cx="13" cy="14.75" r="2"></circle>
-          </svg>
+<img class="menu-tool-icon" src="/portal-icons/reminders.svg" alt="">
         </button>
         <a
           class="menu-status-glyph menu-status-action"
@@ -2533,6 +2787,7 @@ onBeforeUnmount(() => {
           type="button"
           :class="{ 'is-active': activeWindow === 'calendar' && minimizedWindow !== 'calendar' }"
           aria-label="Open Calendar"
+          data-app-id="calendar"
           aria-haspopup="dialog"
           title="Calendar"
           @click="openWindow('calendar')"
@@ -2540,7 +2795,15 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <Transition name="window-shell" appear @after-enter="handleWindowAfterEnter">
+    <Transition
+      name="window-shell"
+      appear
+      @before-enter="requestLiquidGlassRender(260)"
+      @before-leave="requestLiquidGlassRender(260)"
+      @after-enter="handleWindowAfterEnter"
+      @after-leave="handleWindowAfterLeave"
+      @leave-cancelled="handleWindowAfterLeave"
+    >
       <section
         v-if="activeWindowApp"
         v-show="minimizedWindow !== activeWindow"
@@ -2556,6 +2819,7 @@ onBeforeUnmount(() => {
             'is-maximized': windowMaximized,
             'is-dragging': dragging,
             'is-minimizing': isMinimizing,
+            'is-restoring': isRestoring,
             'is-receded': activeOverlay || !desktopFocused,
           },
         ]"
@@ -2595,28 +2859,13 @@ onBeforeUnmount(() => {
               class="traffic-light zoom"
               type="button"
               :aria-label="windowMaximized ? 'Restore window' : 'Maximize window'"
+              :disabled="compactLayout"
               @pointerdown.stop
               @click.stop="toggleMaximizeWindow"
             ></button>
           </div>
           <div class="window-title">
-            <svg
-              v-if="activeWindow === 'todo'"
-              class="window-title-glyph"
-              viewBox="0 0 20 20"
-              aria-hidden="true"
-            >
-              <circle cx="4.25" cy="5" r="1.25"></circle>
-              <circle cx="4.25" cy="10" r="1.25"></circle>
-              <circle cx="4.25" cy="15" r="1.25"></circle>
-              <path d="M7.5 5h8M7.5 10h8M7.5 15h8"></path>
-            </svg>
-            <img
-              v-else
-              :src="activeWindowApp.icon"
-              alt=""
-              @error="handleIconError($event, activeWindowApp.title)"
-            >
+            <img class="window-title-glyph" :src="activeWindowApp.icon" alt="">
             <span>{{ activeWindowApp.title }}</span>
           </div>
         </div>
@@ -2657,10 +2906,7 @@ onBeforeUnmount(() => {
                 <span>Keep the next thing clear and close at hand.</span>
               </div>
               <span class="todo-overview-mark" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="9"></circle>
-                  <path d="m8.2 12.2 2.4 2.4 5.4-5.5"></path>
-                </svg>
+<img src="/portal-icons/reminders.svg" alt="">
               </span>
             </header>
             <ToDoList
@@ -2883,6 +3129,7 @@ onBeforeUnmount(() => {
       tabindex="-1"
       @pointerdown.stop
       @pointermove="handleDockPointerMove"
+      @pointerover="requestLiquidGlassRender(500)"
       @pointerleave="resetDockMagnification"
       @pointercancel="resetDockMagnification"
     >
@@ -2904,9 +3151,9 @@ onBeforeUnmount(() => {
         @click="openWindow(app.id)"
       >
         <img
+          class="portal-app-icon"
           :src="app.icon"
           alt=""
-          @error="handleIconError($event, app.label)"
         >
         <span
           class="launcher-tooltip liquid-surface"
@@ -2948,9 +3195,9 @@ onBeforeUnmount(() => {
           @click="restoreMinimizedWindow"
         >
           <img
+            class="portal-app-icon"
             :src="minimizedApp.icon"
             alt=""
-            @error="handleIconError($event, minimizedApp.title)"
           >
           <span
             class="launcher-tooltip liquid-surface"
@@ -2965,6 +3212,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .portal-desktop {
+  --portal-system-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'PingFang SC', sans-serif;
   --portal-material-menu: rgba(18, 28, 42, 0.08);
   --portal-material-window: rgba(16, 25, 38, 0.1);
   --portal-material-content: rgba(10, 18, 28, 0.11);
@@ -3030,7 +3278,14 @@ onBeforeUnmount(() => {
   overflow: hidden;
   color: var(--portal-text);
   background: #181825;
-  font-family: 'SF Pro Text', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Inter', system-ui, sans-serif;
+  font-family: var(--portal-system-font);
+}
+
+.widget-shell :deep(*),
+.music-app :deep(*),
+.portal-desktop :deep(button),
+.portal-desktop :deep(input) {
+  font-family: var(--portal-system-font) !important;
 }
 
 .wallpaper,
@@ -3197,16 +3452,16 @@ onBeforeUnmount(() => {
 }
 
 .traffic-light.close {
-  background: #ff5f57;
+  --traffic-color: #ff5f57;
   cursor: pointer;
 }
 
 .traffic-light.minimize {
-  background: #febc2e;
+  --traffic-color: #febc2e;
 }
 
 .traffic-light.zoom {
-  background: #28c840;
+  --traffic-color: #28c840;
 }
 
 .traffic-light:disabled {
@@ -3713,7 +3968,7 @@ onBeforeUnmount(() => {
 
 /* macOS material pass */
 .portal-menu-bar {
-  height: 26px;
+  height: 28px;
   padding: 0 10px;
   color: var(--portal-text-primary);
   background:
@@ -3789,6 +4044,87 @@ onBeforeUnmount(() => {
   line-height: 1.2;
   text-decoration: none;
   cursor: pointer;
+}
+
+.menu-group {
+  position: relative;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  z-index: 60;
+  min-width: 232px;
+  padding: 5px;
+  border: 0.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 9px;
+  color: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 36px rgba(8, 12, 20, 0.28), 0 2px 8px rgba(8, 12, 20, 0.14);
+  text-shadow: none;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.portal-desktop.has-open-menu .portal-menu-bar {
+  z-index: 60;
+}
+
+.portal-desktop.has-liquid-webgl .menu-dropdown.liquid-surface::before {
+  background: rgba(30, 34, 43, 0.76);
+}
+
+.menu-item {
+  display: flex;
+  box-sizing: border-box;
+  text-decoration: none;
+  width: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 4px 9px;
+  border: 0;
+  border-radius: 5px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+  cursor: default;
+}
+
+.menu-item:not(:disabled):is(:hover, :focus-visible) {
+  color: #fff;
+  background: #087cf0;
+  outline: none;
+}
+
+.menu-item:disabled {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.menu-item kbd {
+  color: inherit;
+  font: inherit;
+  opacity: 0.65;
+}
+
+.menu-separator {
+  height: 1px;
+  margin: 4px 7px;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.menu-tool-icon {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
+}
+
+.portal-menu-bar[data-liquid-foreground='dark'] .menu-tool-icon {
+  filter: brightness(0);
 }
 
 .menu-command:hover,
@@ -3906,19 +4242,19 @@ onBeforeUnmount(() => {
 }
 
 .window-music {
-  width: min(780px, calc(100vw - 48px));
+  width: min(700px, calc(100vw - 48px));
 }
 
 .window-weather {
-  width: min(620px, calc(100vw - 48px));
+  width: min(520px, calc(100vw - 48px));
 }
 
 .window-calendar {
-  width: min(620px, calc(100vw - 48px));
+  width: min(490px, calc(100vw - 48px));
 }
 
 .window-todo {
-  width: min(690px, calc(100vw - 48px));
+  width: min(600px, calc(100vw - 48px));
 }
 
 .window-titlebar {
@@ -3943,28 +4279,32 @@ onBeforeUnmount(() => {
 }
 
 .traffic-lights {
-  gap: 8px;
+  gap: 0;
 }
 
 .traffic-light {
   position: relative;
-  width: 12px;
-  height: 12px;
-  overflow: hidden;
-  border: 0.5px solid rgba(0, 0, 0, 0.18);
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: radial-gradient(circle, var(--traffic-color) 0 6px, transparent 6.5px);
+  box-shadow: none;
   cursor: default;
 }
 
 .traffic-light.close {
-  background: #ff5f57;
+  --traffic-color: #ff5f57;
 }
 
 .traffic-light.minimize {
-  background: #febc2e;
+  --traffic-color: #febc2e;
 }
 
 .traffic-light.zoom {
-  background: #28c840;
+  --traffic-color: #28c840;
 }
 
 .traffic-light::before,
@@ -4032,8 +4372,7 @@ onBeforeUnmount(() => {
 }
 
 .mac-window.is-receded .traffic-light {
-  border-color: rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.24);
+  --traffic-color: rgba(255, 255, 255, 0.28);
 }
 
 .window-title {
@@ -4046,8 +4385,9 @@ onBeforeUnmount(() => {
 .window-title img {
   width: 16px;
   height: 16px;
-  border-radius: var(--portal-radius-icon);
-  object-fit: cover;
+  border-radius: 0;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 .window-title-glyph {
@@ -4196,7 +4536,7 @@ onBeforeUnmount(() => {
 .todo-overview h2 {
   margin-top: 2px;
   color: var(--portal-text-primary);
-  font-size: 25px;
+  font-size: 22px;
   font-weight: var(--portal-fw-semibold);
   letter-spacing: -0.025em;
 }
@@ -4220,7 +4560,7 @@ onBeforeUnmount(() => {
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16);
 }
 
-.todo-overview-mark svg {
+.todo-overview-mark img {
   width: 24px;
   height: 24px;
   fill: none;
@@ -4228,6 +4568,7 @@ onBeforeUnmount(() => {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.7;
+  filter: brightness(0) invert(1);
 }
 
 .todo-shell :deep(.todo-list-container),
@@ -4303,14 +4644,15 @@ onBeforeUnmount(() => {
 
 .todo-shell :deep(.input-section) {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 44px;
+  grid-template-columns: minmax(0, 1fr) 32px;
   gap: 8px;
   margin-bottom: 0;
-  padding: 6px;
+  padding: 4px;
   border: 0.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 13px;
   background: rgba(0, 0, 0, 0.2);
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+  align-items: center;
 }
 
 .todo-shell :deep(.task-input) {
@@ -4384,15 +4726,15 @@ onBeforeUnmount(() => {
 .todo-shell :deep(.task-list:empty::before) {
   content: '✓';
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   margin-bottom: 10px;
   place-items: center;
-  border: 1px solid rgba(100, 210, 255, 0.36);
+  border: 0;
   border-radius: 50%;
-  color: rgba(151, 220, 255, 0.9);
-  background: rgba(10, 132, 255, 0.1);
-  font-size: 22px;
+  color: var(--portal-text-tertiary);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 18px;
 }
 
 .todo-shell :deep(.task-list:empty::after) {
@@ -4441,7 +4783,7 @@ onBeforeUnmount(() => {
   margin-left: 10px;
   color: var(--portal-text-primary);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: var(--portal-fw-regular);
 }
 
@@ -4480,7 +4822,7 @@ onBeforeUnmount(() => {
 .window-shell-enter-active {
   transition:
     opacity 180ms ease-out,
-    transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
+    transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .window-shell-leave-active {
@@ -4492,17 +4834,23 @@ onBeforeUnmount(() => {
 .mac-window.window-shell-enter-from,
 .mac-window.window-shell-leave-to {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.96);
+  transform: translate(-50%, calc(-50% + 6px)) scale(0.98);
 }
 
 .mac-window.is-positioned.window-shell-enter-from,
 .mac-window.is-positioned.window-shell-leave-to {
-  transform: scale(0.96);
+  transform: translateY(6px) scale(0.98);
 }
 
-.mac-window.is-positioned.is-minimizing.window-shell-leave-to {
+.mac-window.is-positioned.is-minimizing.window-shell-leave-to,
+.mac-window.is-positioned.is-restoring.window-shell-enter-from {
   opacity: 0;
-  transform: translate3d(0, 52vh, 0) scale(0.2);
+  transform: translate3d(var(--window-dock-x), var(--window-dock-y), 0) scale(var(--window-dock-scale));
+}
+
+.mac-window.is-minimizing.window-shell-leave-active,
+.mac-window.is-restoring.window-shell-enter-active {
+  transition: opacity 220ms ease, transform 250ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .spotlight-overlay,
@@ -4616,8 +4964,8 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr) auto;
   width: 100%;
-  min-height: 51px;
-  padding: 6px 10px;
+  min-height: 44px;
+  padding: 4px 10px;
   border: 0;
   border-radius: 10px;
   color: var(--portal-text-primary);
@@ -4678,13 +5026,13 @@ onBeforeUnmount(() => {
 
 .spotlight-result-copy strong {
   color: var(--portal-text-primary);
-  font-size: 14.5px;
+  font-size: 13px;
   font-weight: var(--portal-fw-medium);
 }
 
 .spotlight-result-copy small {
   color: var(--portal-text-secondary);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .spotlight-result-category {
@@ -4784,6 +5132,7 @@ onBeforeUnmount(() => {
 .spotlight-shell-enter-from .spotlight-panel,
 .spotlight-shell-leave-to .spotlight-panel {
   transform: translateX(-50%) scale(0.97);
+  width: min(640px, calc(100vw - 32px));
 }
 
 .launchpad-overlay {
@@ -4914,7 +5263,7 @@ onBeforeUnmount(() => {
 .launchpad-tile:hover,
 .launchpad-tile:focus-visible {
   background: transparent;
-  transform: scale(1.06);
+  transform: scale(1.025);
 }
 
 .launchpad-tile img {
@@ -4962,7 +5311,7 @@ onBeforeUnmount(() => {
 
 .launchpad-shell-enter-from .launchpad-panel,
 .launchpad-shell-leave-to .launchpad-panel {
-  transform: scale(1.04);
+  transform: scale(1.015);
 }
 
 .bottom-launcher {
@@ -5029,12 +5378,12 @@ onBeforeUnmount(() => {
   transition: transform 240ms var(--portal-spring-settle);
 }
 
-.launcher-tooltip {
+.launcher-item .launcher-tooltip {
   position: absolute;
   bottom: calc(100% + 10px);
   left: 50%;
   display: block;
-  max-width: 150px;
+  max-width: min(240px, calc(100vw - 24px));
   padding: 5px 9px;
   overflow: visible;
   border: 0.5px solid var(--portal-hairline);
@@ -5053,6 +5402,9 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
+  width: max-content;
+  text-overflow: clip;
+  box-sizing: border-box;
 }
 
 .launcher-tooltip::after {
@@ -5073,6 +5425,40 @@ onBeforeUnmount(() => {
   opacity: 1;
   transform: translate(-50%, 0);
   transition-timing-function: ease-out;
+  transition-delay: 280ms;
+}
+
+.launcher-item:focus-visible .launcher-tooltip {
+  transition-delay: 0ms;
+}
+
+.launcher-item img.portal-app-icon {
+  padding: 9px;
+  object-fit: contain;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(160deg, #f8fafc, #d5dce7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 5px 12px rgba(0, 0, 0, 0.18);
+}
+
+.launcher-item[data-app-id='music'] .portal-app-icon {
+  background: linear-gradient(160deg, #ffe3e9, #ed9fb2);
+}
+
+.launcher-item[data-app-id='weather'] .portal-app-icon {
+  background: linear-gradient(160deg, #e3f4ff, #9bcaec);
+}
+
+.launcher-item[data-app-id='calendar'] .portal-app-icon {
+  background: linear-gradient(160deg, #fff7ef, #eccaba);
+}
+
+.launcher-item[data-app-id='dock'] .portal-app-icon {
+  background: linear-gradient(160deg, #e9e9ff, #bebee9);
+}
+
+.launcher-item:active img {
+  transform: translateY(var(--dock-lift)) scale(calc(var(--dock-scale) * 0.94));
+  transition-duration: 80ms;
 }
 
 .launcher-item.is-running::after,
@@ -5218,6 +5604,7 @@ onBeforeUnmount(() => {
 .weather-shell :deep(.highlight-city),
 .weather-shell :deep(.highlight-desc) {
   color: rgba(255, 255, 255, 0.96);
+  font-weight: 600;
 }
 
 .weather-shell :deep(.highlight-temp) {
@@ -5225,16 +5612,20 @@ onBeforeUnmount(() => {
   min-height: 34px;
   align-items: center;
   margin-left: 5px;
-  padding: 2px 11px;
-  border: 0.5px solid rgba(142, 203, 255, 0.36);
-  border-radius: 999px;
-  color: #a8d7ff;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 0;
+  color: var(--portal-text-primary);
   background:
     linear-gradient(145deg, rgba(102, 187, 255, 0.22), rgba(10, 132, 255, 0.08)),
     var(--lg-control-fill);
   box-shadow:
     inset 0 0.5px 0 rgba(255, 255, 255, 0.28),
     0 4px 18px rgba(0, 88, 175, 0.12);
+  font-size: 32px;
+  font-weight: 500;
+  background: transparent;
+  box-shadow: none;
 }
 
 .weather-shell :deep(.details-list) {
@@ -5359,16 +5750,44 @@ onBeforeUnmount(() => {
   border-radius: 999px;
 }
 
+
+.calendar-shell :deep(.nav-btn)::before {
+  content: '';
+  display: block;
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  -webkit-mask: url('/portal-icons/chevron-left.svg') center / contain no-repeat;
+  mask: url('/portal-icons/chevron-left.svg') center / contain no-repeat;
+}
+
+.calendar-shell :deep(.nav-btn[aria-label='Next month'])::before {
+  -webkit-mask-image: url('/portal-icons/chevron-right.svg');
+  mask-image: url('/portal-icons/chevron-right.svg');
+}
+
 .calendar-shell :deep(.today-btn) {
-  border-color: rgba(166, 227, 161, 0.6);
-  color: #1e1e2e;
-  background: linear-gradient(135deg, #a6e3a1, #89dceb);
+  min-height: 28px;
+  height: 28px;
+  padding: 0 9px;
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  color: var(--portal-text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .calendar-shell :deep(.mark-btn) {
-  border-color: rgba(243, 139, 168, 0.55);
-  color: #1e1e2e;
-  background: linear-gradient(135deg, #f38ba8, #f5c2e7);
+  border-color: rgba(117, 181, 255, 0.55);
+  color: #fff;
+  background: #087cf0;
+  min-height: 28px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .calendar-shell :deep(.calendar-grid) {
@@ -5382,13 +5801,14 @@ onBeforeUnmount(() => {
 
 .calendar-shell :deep(.calendar-day) {
   color: var(--portal-text-secondary);
-  font-weight: var(--portal-fw-medium);
+  font-weight: 500;
+  font-size: 12px;
 }
 
 .calendar-shell :deep(.calendar-cell) {
-  min-height: 34px;
+  min-height: 32px;
   border: 0.5px solid transparent;
-  border-radius: 999px;
+  border-radius: 50%;
   color: var(--portal-text-primary);
   background: transparent;
   transition:
@@ -5396,6 +5816,14 @@ onBeforeUnmount(() => {
     background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
     border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
     transform 180ms var(--portal-spring-settle);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  box-sizing: border-box;
+  justify-self: center;
+  align-self: center;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .calendar-shell :deep(.calendar-cell:hover),
@@ -5404,7 +5832,7 @@ onBeforeUnmount(() => {
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035)),
     var(--lg-control-fill);
-  transform: scale(1.04);
+  transform: none;
 }
 
 .calendar-shell :deep(.calendar-cell.is-red) {
@@ -5414,19 +5842,27 @@ onBeforeUnmount(() => {
 }
 
 .calendar-shell :deep(.calendar-cell.selected:not(.today)) {
-  border-color: #b4befe;
-  color: #1e1e2e;
-  background: #b4befe;
-  box-shadow: 0 4px 14px rgba(180, 190, 254, 0.25);
+  border-color: #0a84ff;
+  color: #fff;
+  background: #0a84ff;
+  box-shadow: none;
 }
 
 .calendar-shell :deep(.calendar-cell.today) {
-  border-color: rgba(166, 227, 161, 0.7);
-  color: #1e1e2e;
-  background: linear-gradient(135deg, #a6e3a1, #89dceb);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.4),
-    0 4px 14px rgba(137, 220, 235, 0.25);
+  border-color: rgba(255, 112, 105, 0.5);
+  color: #ffb3ae;
+  background: rgba(255, 99, 91, 0.14);
+  box-shadow: none;
+}
+
+
+.calendar-shell :deep(.calendar-cell:focus-visible) {
+  outline: 2px solid var(--portal-text-accent);
+  outline-offset: 2px;
+}
+
+.calendar-shell :deep(.calendar-cell.is-red.selected) {
+  box-shadow: inset 0 -2px 0 #ff9c98;
 }
 
 .calendar-shell :deep(.calendar-cell.out-this-month) {
@@ -5507,6 +5943,8 @@ onBeforeUnmount(() => {
 .todo-shell :deep(.task-input) {
   background: rgba(5, 10, 17, 0.16);
   box-shadow: none;
+  min-height: 34px;
+  font-size: 13px;
 }
 
 .todo-shell :deep(.add-button) {
@@ -5515,6 +5953,10 @@ onBeforeUnmount(() => {
   background:
     linear-gradient(145deg, rgba(89, 185, 255, 0.92), rgba(9, 106, 211, 0.78)),
     rgba(10, 132, 255, 0.56);
+  width: 32px;
+  height: 32px;
+  font-size: 22px;
+  border-radius: 8px;
 }
 
 .todo-shell :deep(.task-list:empty) {
@@ -6091,9 +6533,9 @@ onBeforeUnmount(() => {
 }
 
 .launcher-item {
-  flex: 0 0 46px;
+  flex: 0 0 52px;
   display: grid;
-  width: 46px;
+  width: 52px;
   height: 52px;
   min-height: 0;
   grid-template-rows: 44px 8px;
@@ -6102,6 +6544,7 @@ onBeforeUnmount(() => {
   gap: 0;
   box-sizing: border-box;
   transform: translateX(var(--dock-shift));
+  transition: transform 130ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .launcher-item img {
@@ -6114,6 +6557,7 @@ onBeforeUnmount(() => {
     translateY(var(--dock-lift))
     scale(var(--dock-scale));
   transform-origin: 50% 100%;
+  transition: transform 130ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .launcher-item.is-running::after,
@@ -6243,7 +6687,7 @@ onBeforeUnmount(() => {
 
 .portal-menu-bar.liquid-surface {
   --lg-surface-radius: 0;
-  overflow: hidden;
+  overflow: visible;
   border-bottom-color: rgba(255, 255, 255, 0.14);
   box-shadow:
     0 0.5px 0 rgba(0, 0, 0, 0.12),
@@ -6283,6 +6727,7 @@ onBeforeUnmount(() => {
     rgba(20, 24, 33, 0.2);
   box-shadow:
     inset 0 -0.5px 0 rgba(0, 0, 0, 0.11);
+  min-height: 40px;
 }
 
 .window-body,
@@ -6319,6 +6764,8 @@ onBeforeUnmount(() => {
     linear-gradient(145deg, rgba(255, 255, 255, 0.04), transparent),
     rgba(6, 13, 22, 0.035);
   box-shadow: none;
+  font-size: 15px;
+  font-weight: 400;
 }
 
 .weather-shell :deep(.details-list) {
@@ -6334,6 +6781,8 @@ onBeforeUnmount(() => {
   background: transparent;
   box-shadow: none;
   color: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  font-weight: 400;
 }
 
 .weather-shell :deep(.details-list li:hover) {
@@ -6355,19 +6804,28 @@ onBeforeUnmount(() => {
   border: 0;
   background: transparent;
   box-shadow: none;
-  font-weight: var(--portal-fw-semibold);
+  font-weight: 500;
+  font-size: 13px;
 }
 
 .calendar-shell :deep(.calendar-header) {
   border: 0;
   background: transparent;
   box-shadow: none;
+  grid-template-columns: 28px minmax(0, 1fr) 28px auto auto;
+  gap: 6px;
 }
 
 .calendar-shell :deep(.month-title) {
   border: 0;
   background: transparent;
   box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  height: 28px;
+  line-height: 28px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .calendar-shell :deep(.nav-btn) {
@@ -6378,27 +6836,34 @@ onBeforeUnmount(() => {
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.15);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+  width: 28px;
+  height: 28px;
+  font-size: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
 }
 
 .calendar-shell :deep(.mark-btn[aria-label='Unmark red']) {
-  border-color: rgba(255, 111, 139, 0.78);
-  color: #fff;
-  background: linear-gradient(135deg, #e95f79, #f38ba8);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.32),
-    0 3px 12px rgba(233, 95, 121, 0.24);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--portal-text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
 }
 
 .calendar-shell :deep(.calendar-grid) {
   border: 0;
   background: transparent;
+  grid-auto-rows: 36px;
+  justify-items: center;
+  align-items: center;
 }
 
 .calendar-shell :deep(.calendar-cell:not(.today):not(.selected):not(.is-red):hover),
 .calendar-shell :deep(.calendar-cell:not(.today):not(.selected):not(.is-red):focus-visible) {
   border-color: rgba(255, 255, 255, 0.13);
   background: rgba(255, 255, 255, 0.075);
-  transform: scale(1.03);
+  transform: none;
 }
 
 .todo-overview {
@@ -6428,7 +6893,8 @@ onBeforeUnmount(() => {
 
 .todo-shell :deep(.task-input),
 .todo-shell :deep(.task-list:empty) {
-  background: rgba(5, 11, 19, 0.055);
+  background: transparent;
+  border: 0;
 }
 
 .todo-shell :deep(.task-item) {
@@ -6437,6 +6903,10 @@ onBeforeUnmount(() => {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  min-height: 44px;
+  margin-bottom: 0;
+  padding: 6px 4px;
+  box-sizing: border-box;
 }
 
 .todo-shell :deep(.task-item:hover) {
@@ -6486,6 +6956,9 @@ onBeforeUnmount(() => {
   border-top-color: rgba(255, 255, 255, 0.085);
   color: rgba(255, 255, 255, 0.76);
   background: transparent;
+  height: 34px;
+  line-height: 34px;
+  font-size: 13px;
 }
 
 .window-music :deep(.aplayer-list ol li:hover) {
@@ -6503,18 +6976,56 @@ onBeforeUnmount(() => {
 .window-music :deep(.aplayer-music .aplayer-title),
 .window-music :deep(.aplayer-list-title) {
   color: rgba(255, 255, 255, 0.94) !important;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .window-music :deep(.aplayer-music .aplayer-author),
 .window-music :deep(.aplayer-list-author),
 .window-music :deep(.aplayer-list-index) {
   color: rgba(255, 255, 255, 0.62) !important;
+  font-size: 11px;
 }
 
 .window-music :deep(.aplayer-list-light .aplayer-list-title),
 .window-music :deep(.aplayer-list-light .aplayer-list-author),
 .window-music :deep(.aplayer-list-light .aplayer-list-index) {
   color: rgba(255, 255, 255, 0.98) !important;
+}
+
+
+.window-music :deep(.aplayer-music .aplayer-author),
+.window-music :deep(.aplayer-list-author) {
+  font-size: 11px;
+}
+
+.window-music :deep(.aplayer-icon) {
+  position: relative;
+  min-width: 24px;
+  min-height: 24px;
+  margin: 0 1px;
+  padding: 0;
+}
+
+.window-music :deep(.aplayer-icon svg) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0;
+  transform: translate(-50%, -50%);
+}
+
+.window-music :deep(.aplayer .aplayer-info .aplayer-controller .aplayer-time) {
+  height: 28px;
+  line-height: 28px;
+}
+
+.window-music :deep(.aplayer-button:focus-visible),
+.window-music :deep(.aplayer-icon:focus-visible) {
+  outline: 2px solid var(--portal-text-accent);
+  outline-offset: 2px;
 }
 
 .window-music :deep(.aplayer-time) {
@@ -6569,6 +7080,7 @@ onBeforeUnmount(() => {
 
 .spotlight-search {
   background: rgba(255, 255, 255, 0.025);
+  min-height: 56px;
 }
 
 .spotlight-results {
@@ -6750,7 +7262,7 @@ onBeforeUnmount(() => {
     transform: none !important;
   }
 
-  .launcher-tooltip {
+  .launcher-item .launcher-tooltip {
     display: none;
   }
 }
@@ -6810,22 +7322,16 @@ onBeforeUnmount(() => {
   }
 
   .traffic-light.close {
-    width: 28px;
-    height: 28px;
-    margin-left: -6px;
-    background: transparent;
+    width: 44px;
+    height: 44px;
+    margin-left: -8px;
+    background: radial-gradient(circle, #ff5f57 0 6px, transparent 6.5px);
   }
 
   .traffic-light.close::before {
     content: '';
     position: absolute;
-    inset: 8px;
-    width: auto;
-    height: auto;
-    border-radius: 50%;
-    background: #ff5f57;
-    opacity: 1;
-    transform: none;
+    display: none;
   }
 
   .traffic-light.close::after {
@@ -6961,6 +7467,75 @@ onBeforeUnmount(() => {
     min-height: 44px;
   }
 
+  .todo-shell :deep(.input-section) {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
+  .todo-shell :deep(.task-input) {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .todo-shell :deep(.add-button) {
+    width: 44px;
+    height: 44px;
+  }
+
+  .calendar-shell :deep(.nav-btn),
+  .calendar-shell :deep(.today-btn),
+  .calendar-shell :deep(.mark-btn) {
+    min-width: 44px;
+    min-height: 44px;
+    height: 44px;
+  }
+
+  .calendar-shell :deep(.calendar-grid) {
+    grid-auto-rows: 44px;
+  }
+
+  .calendar-shell :deep(.calendar-cell) {
+    width: 44px;
+    max-width: 100%;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .window-music :deep(.aplayer-info) {
+    min-height: 110px;
+  }
+
+  .window-music :deep(.aplayer-controller) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .window-music :deep(.aplayer .aplayer-info .aplayer-controller .aplayer-bar-wrap) {
+    width: 100%;
+    margin: 0;
+    padding: 8px 0;
+  }
+
+  .window-music :deep(.aplayer .aplayer-info .aplayer-controller .aplayer-time) {
+    position: static;
+    display: flex;
+    height: auto;
+    min-height: 44px;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+
+  .window-music :deep(.aplayer-icon) {
+    min-width: 44px;
+    min-height: 44px;
+    margin: 0;
+  }
+
+  .window-music :deep(.aplayer-list ol li) {
+    height: 44px;
+    line-height: 44px;
+  }
+
   .todo-shell :deep(.task-list) {
     min-height: 132px;
   }
@@ -7030,7 +7605,7 @@ onBeforeUnmount(() => {
     transform: none !important;
   }
 
-  .launcher-tooltip {
+  .launcher-item .launcher-tooltip {
     display: none;
   }
 
@@ -7071,258 +7646,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* Ultra-wide desktops: scale the system chrome without changing the 1280×800 baseline. */
-@media (min-width: 1800px) and (min-height: 1000px) {
-  .portal-desktop {
-    --portal-window-max-top: 54px;
-    --portal-window-max-inset: 16px;
-    --portal-window-max-gutter: 32px;
-    --portal-window-max-height-offset: 164px;
-    --portal-dock-magnify-radius: 140;
-    --portal-dock-magnify-shift: 9;
-    --portal-dock-magnify-lift: 16;
-  }
-
-  .portal-menu-bar {
-    height: 42px;
-    padding: 0 20px;
-  }
-
-  .menu-left,
-  .menu-right {
-    gap: 7px;
-  }
-
-  .menu-brand-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-  }
-
-  .menu-home-link,
-  .menu-glyph-button,
-  .menu-status-glyph {
-    width: 36px;
-    height: 36px;
-  }
-
-  .menu-current-app,
-  .menu-commands,
-  .menu-clock {
-    font-size: 18px;
-  }
-
-  .menu-current-app {
-    margin-inline: 5px 10px;
-  }
-
-  .menu-command {
-    padding: 4px 10px;
-  }
-
-  .menu-glyph-button svg,
-  .menu-status-glyph svg {
-    width: 23px;
-    height: 23px;
-  }
-
-  .battery-glyph,
-  .battery-glyph svg {
-    width: 34px;
-  }
-
-  .menu-clock {
-    padding: 4px 9px;
-  }
-
-  .mac-window {
-    width: min(1380px, calc(100vw - 112px));
-    max-height: min(1040px, calc(100dvh - 176px));
-    min-height: 34rem;
-    font-size: 18px;
-  }
-
-  .window-music {
-    width: min(1160px, calc(100vw - 112px));
-  }
-
-  .window-weather,
-  .window-calendar {
-    width: min(920px, calc(100vw - 112px));
-  }
-
-  .window-todo {
-    width: min(1040px, calc(100vw - 112px));
-  }
-
-  .window-titlebar {
-    grid-template-columns: 132px minmax(0, 1fr) 132px;
-    min-height: 54px;
-    padding: 0 20px;
-  }
-
-  .traffic-lights {
-    gap: 12px;
-  }
-
-  .traffic-light {
-    width: 18px;
-    height: 18px;
-  }
-
-  .window-title {
-    gap: 9px;
-    font-size: 18px;
-  }
-
-  .window-title img,
-  .window-title-glyph {
-    width: 24px;
-    height: 24px;
-  }
-
-  .window-body {
-    padding: 22px;
-  }
-
-  .window-music :deep(.aplayer-list) {
-    max-height: 420px !important;
-  }
-
-  .spotlight-panel {
-    top: clamp(140px, 12vh, 240px);
-    width: min(980px, calc(100vw - 96px));
-    max-height: min(860px, calc(100dvh - 280px));
-  }
-
-  .spotlight-search {
-    min-height: 82px;
-    padding-inline: 26px;
-  }
-
-  .spotlight-input {
-    font-size: 30px;
-  }
-
-  .spotlight-results {
-    max-height: 660px;
-    padding: 9px 11px 14px;
-  }
-
-  .spotlight-result {
-    grid-template-columns: 48px minmax(0, 1fr) auto;
-    min-height: 70px;
-    padding: 8px 15px;
-  }
-
-  .spotlight-result-icon {
-    width: 42px;
-    height: 42px;
-  }
-
-  .spotlight-result-copy strong {
-    font-size: 19px;
-  }
-
-  .spotlight-result-copy small,
-  .spotlight-result-category {
-    font-size: 15px;
-  }
-
-  .spotlight-footer {
-    min-height: 50px;
-    padding-inline: 20px;
-    font-size: 14px;
-  }
-
-  .launchpad-panel {
-    inset: 42px 0 0;
-    padding: 72px clamp(56px, 7vw, 180px) 168px;
-  }
-
-  .launchpad-close {
-    top: 62px;
-    right: 40px;
-    width: 52px;
-    height: 52px;
-    font-size: 28px;
-  }
-
-  .launchpad-search {
-    width: min(440px, 72vw);
-    min-height: 52px;
-    margin-bottom: 54px;
-    padding-inline: 16px;
-  }
-
-  .launchpad-search input {
-    font-size: 18px;
-  }
-
-  .launchpad-groups {
-    gap: 46px;
-    max-width: 1800px;
-  }
-
-  .launchpad-grid {
-    grid-template-columns: repeat(10, minmax(0, 1fr));
-    gap: 42px 28px;
-  }
-
-  .launchpad-tile {
-    min-height: 132px;
-    gap: 12px;
-  }
-
-  .launchpad-tile img {
-    width: 96px;
-    height: 96px;
-  }
-
-  .launchpad-tile span,
-  .link-group h2 {
-    font-size: 16px;
-  }
-
-  .bottom-launcher.liquid-surface {
-    --lg-surface-radius: 35px;
-    bottom: 20px;
-    height: 98px;
-    gap: 5px;
-    padding: 8px 15px;
-    border-radius: var(--lg-surface-radius);
-  }
-
-  .bottom-launcher.liquid-surface::before,
-  .bottom-launcher.liquid-surface::after {
-    clip-path: inset(0 round var(--lg-surface-radius));
-  }
-
-  .launcher-item {
-    flex-basis: 72px;
-    width: 72px;
-    height: 82px;
-    grid-template-rows: 68px 14px;
-  }
-
-  .launcher-item img {
-    width: 68px;
-    height: 68px;
-  }
-
-  .launcher-divider {
-    height: 58px;
-    margin-inline: 5px;
-  }
-
-  .launcher-tooltip {
-    max-width: 220px;
-    padding: 8px 13px;
-    font-size: 16px;
-  }
-}
-
-/* Short laptops: reclaim vertical space while leaving the 800px-high baseline untouched. */
+/* Short desktop viewports keep the same control sizes with tighter spacing. */
 @media (min-width: 1101px) and (max-width: 1600px) and (max-height: 780px) {
   .portal-desktop {
     --portal-window-max-top: 30px;
@@ -7596,7 +7920,7 @@ onBeforeUnmount(() => {
     transform: none !important;
   }
 
-  .launcher-tooltip {
+  .launcher-item .launcher-tooltip {
     display: none;
   }
 
@@ -7776,11 +8100,15 @@ onBeforeUnmount(() => {
   }
 
   .calendar-shell :deep(.calendar-grid) {
+    grid-auto-rows: 44px;
     column-gap: 2px;
     row-gap: 4px;
   }
 
   .calendar-shell :deep(.calendar-cell) {
+    width: 44px;
+    max-width: 100%;
+    height: 44px;
     min-height: 44px;
   }
 
@@ -8089,6 +8417,7 @@ onBeforeUnmount(() => {
     display: none;
   }
 
+  .menu-dropdown.liquid-surface,
   .portal-menu-bar.liquid-surface,
   .mac-window.liquid-surface,
   .spotlight-panel.liquid-surface,
@@ -8103,6 +8432,7 @@ onBeforeUnmount(() => {
     box-shadow: none;
   }
 
+  .menu-dropdown,
   .portal-desktop,
   .portal-menu-bar,
   .mac-window,
@@ -8169,6 +8499,7 @@ onBeforeUnmount(() => {
     display: none;
   }
 
+  .menu-dropdown,
   .portal-menu-bar,
   .mac-window,
   .spotlight-panel,
@@ -8275,6 +8606,7 @@ onBeforeUnmount(() => {
   .mac-window.is-positioned.window-shell-enter-from,
   .mac-window.is-positioned.window-shell-leave-to,
   .mac-window.is-positioned.is-minimizing.window-shell-leave-to,
+  .mac-window.is-positioned.is-restoring.window-shell-enter-from,
   .spotlight-shell-enter-from .spotlight-panel,
   .spotlight-shell-leave-to .spotlight-panel,
   .launchpad-shell-enter-from .launchpad-panel,
