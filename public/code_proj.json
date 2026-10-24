@@ -1,5 +1,12 @@
 [
   {
+    "name": "AVIS Six · avis6-3d",
+    "desc": "六自由度六边形悬挂式主动隔振平台的交互式 3D 模型，支持部件选择、剖视、分解视图、六自由度运动演示与 PNG 导出。",
+    "homepage": "https://liuyinchu.github.io/avis6-3d/",
+    "repo": "https://github.com/liuyinchu/avis6-3d",
+    "category": "project"
+  },
+  {
     "name": "音乐机关盒",
     "desc": "摆放音铃、鼓面和斜坡，让弹珠沿重力轨迹奏响旋律；支持拖动编排、音符调整和本地保存。",
     "homepage": "/music-box",
