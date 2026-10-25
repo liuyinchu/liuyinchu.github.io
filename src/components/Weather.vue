@@ -1,10 +1,19 @@
 <template>
-  <section ref="appElement" class="weather-app portal-widget" aria-label="Zhuhai weather">
+  <section ref="appElement" class="weather-app portal-widget" :aria-label="selectedCity.name + ' weather'" @scroll.passive="updateCityMenuGeometry">
     <div class="weather-body">
       <header class="weather-toolbar">
-        <div>
-          <h2>{{ locationName }}</h2>
-          <p class="weather-updated">{{ sections.current.loading ? 'Updating weather…' : sections.current.updatedAt ? 'Updated ' + formatLocalTime(sections.current.updatedAt) + ' · CST' : 'Local weather · CST' }}</p>
+        <div ref="cityPicker" class="weather-city-picker">
+          <h2><button ref="cityTrigger" class="weather-city-trigger" type="button" :aria-expanded="cityMenuOpen" aria-controls="weather-city-options" :aria-label="'Choose weather city, current ' + selectedCity.name" @click="toggleCityMenu"><span>{{ selectedCity.name }}</span><img src="/portal-icons/chevron-right.svg" alt="" :class="{ 'is-open': cityMenuOpen }" /></button></h2>
+          <p class="weather-updated">{{ sections.current.loading ? 'Updating weather…' : sections.current.updatedAt ? 'Updated ' + localTime(sections.current.updatedAt) + ' · ' + timeZoneLabel(sections.current.updatedAt) : 'Local weather · ' + timeZoneLabel(observedAt) }}</p>
+          <div v-if="cityMenuOpen" id="weather-city-options" class="weather-city-menu" role="group" aria-label="Weather cities" :style="cityMenuStyle" data-liquid-surface data-liquid-kind="menu">
+            <canvas class="weather-city-optics" data-liquid-local-optics aria-hidden="true"></canvas>
+            <div ref="cityMenu" class="weather-city-list">
+              <button v-for="city in weatherCities" :key="city.id" class="weather-city-option" type="button" :aria-pressed="selectedCity.id === city.id" @click="selectCity(city)">
+                <span><strong>{{ city.label }}</strong><small>{{ city.name }}</small></span>
+                <img v-if="selectedCity.id === city.id" src="/portal-icons/check.svg" alt="" />
+              </button>
+            </div>
+          </div>
         </div>
         <button class="weather-icon-button" type="button" :disabled="busy" :aria-label="busy ? 'Updating weather' : 'Refresh weather'" title="Refresh weather" @click="refresh()">
           <img src="/portal-icons/refresh-cw.svg" alt="" :class="{ 'weather-refreshing': busy }" />
@@ -40,16 +49,16 @@
           <button type="button" :disabled="busy" @click="refresh(['hourly'])">Retry</button>
         </div>
         <div v-if="hours.length" ref="hourlyTrack" class="weather-hourly-track" aria-label="Select an hour for details" @scroll.passive="updateScrollState">
-          <button v-for="(hour, index) in hours" :key="hour.fxTime" type="button" class="weather-hour" :class="{ 'is-selected': selectedHour === index }" :aria-pressed="selectedHour === index" :aria-label="formatLocalHour(hour.fxTime) + ', ' + (hour.text || '') + ', ' + degree(hour.temp)" @click="selectedHour = index" @keydown="navigateHour($event, index)">
-            <span class="weather-hour-time">{{ formatLocalHour(hour.fxTime) }}</span>
+          <button v-for="(hour, index) in hours" :key="hour.fxTime" type="button" class="weather-hour" :class="{ 'is-selected': selectedHour === index }" :aria-pressed="selectedHour === index" :aria-label="localHour(hour.fxTime) + ', ' + (hour.text || '') + ', ' + degree(hour.temp)" @click="selectedHour = index" @keydown="navigateHour($event, index)">
+            <span class="weather-hour-time">{{ localHour(hour.fxTime) }}</span>
             <img :src="weatherIcon(hour.icon)" alt="" class="weather-hour-icon weather-symbol" @error="iconFallback" />
             <span class="weather-hour-temperature">{{ degree(hour.temp) }}</span>
             <span class="weather-hour-pop">{{ numberOrNull(hour.pop) == null ? '' : numeric(hour.pop) + '%' }}</span>
           </button>
         </div>
         <p v-else class="weather-empty" role="status">{{ sections.hourly.loading ? 'Loading the next 24 hours…' : 'No hourly forecast to display.' }}</p>
-        <p v-if="activeHour" class="weather-hour-detail"><strong>{{ formatLocalHour(activeHour.fxTime) }} · {{ activeHour.text || 'Forecast' }}</strong><span>Wind {{ measure(activeHour.windSpeed, 'km/h') }} · Humidity {{ measure(activeHour.humidity, '%') }}<template v-if="numberOrNull(activeHour.pop) != null"> · Precip. chance {{ measure(activeHour.pop, '%') }}</template><template v-if="numberOrNull(activeHour.precip) != null"> · Precipitation {{ measure(activeHour.precip, 'mm') }}</template></span></p>
-        <p v-if="sections.hourly.updatedAt" class="weather-section-updated">{{ sections.hourly.loading ? 'Refreshing · ' : '' }}Forecast updated {{ formatLocalTime(sections.hourly.updatedAt) }} CST</p>
+        <p v-if="activeHour" class="weather-hour-detail"><strong>{{ localHour(activeHour.fxTime) }} · {{ activeHour.text || 'Forecast' }}</strong><span>Wind {{ measure(activeHour.windSpeed, 'km/h') }} · Humidity {{ measure(activeHour.humidity, '%') }}<template v-if="numberOrNull(activeHour.pop) != null"> · Precip. chance {{ measure(activeHour.pop, '%') }}</template><template v-if="numberOrNull(activeHour.precip) != null"> · Precipitation {{ measure(activeHour.precip, 'mm') }}</template></span></p>
+        <p v-if="sections.hourly.updatedAt" class="weather-section-updated">{{ sections.hourly.loading ? 'Refreshing · ' : '' }}Forecast updated {{ localTime(sections.hourly.updatedAt) }} {{ timeZoneLabel(sections.hourly.updatedAt) }}</p>
       </section>
 
       <div class="weather-lower-grid">
@@ -60,13 +69,13 @@
             <button type="button" :disabled="busy" @click="refresh(['daily'])">Retry</button>
           </div>
           <div v-for="day in days" :key="day.fxDate" class="weather-day" :class="{ 'is-open': expandedDay === day.fxDate }">
-            <button type="button" class="weather-day-row" :aria-expanded="expandedDay === day.fxDate" :aria-controls="'weather-day-' + day.fxDate" :aria-label="formatForecastDay(day.fxDate, observedAt) + ', ' + (day.textDay || '') + ', low ' + degree(day.tempMin) + ', high ' + degree(day.tempMax) + '. Show daily details'" @click="expandedDay = expandedDay === day.fxDate ? null : day.fxDate">
-              <span class="weather-day-label">{{ formatForecastDay(day.fxDate, observedAt) }}</span>
+            <button type="button" class="weather-day-row" :aria-expanded="expandedDay === day.fxDate" :aria-controls="'weather-day-' + day.fxDate" :aria-label="forecastDay(day.fxDate, observedAt) + ', ' + (day.textDay || '') + ', low ' + degree(day.tempMin) + ', high ' + degree(day.tempMax) + '. Show daily details'" @click="expandedDay = expandedDay === day.fxDate ? null : day.fxDate">
+              <span class="weather-day-label">{{ forecastDay(day.fxDate, observedAt) }}</span>
               <img :src="weatherIcon(day.iconDay)" :alt="day.textDay || ''" class="weather-day-icon weather-symbol" @error="iconFallback" />
               <span class="weather-day-low">{{ degree(day.tempMin) }}</span>
               <span class="weather-range" aria-hidden="true">
                 <span v-if="temperatureRange(day, domain)" class="weather-range-fill" :style="rangeStyle(day)"></span>
-                <span v-if="formatForecastDay(day.fxDate, observedAt) === 'Today' && currentPoint != null" class="weather-range-current" :style="{ left: currentPoint + '%' }"></span>
+                <span v-if="forecastDay(day.fxDate, observedAt) === 'Today' && currentPoint != null" class="weather-range-current" :style="{ left: currentPoint + '%' }"></span>
               </span>
               <span class="weather-day-high">{{ degree(day.tempMax) }}</span>
             </button>
@@ -76,7 +85,7 @@
             </div>
           </div>
           <p v-if="!days.length" class="weather-empty" role="status">{{ sections.daily.loading ? 'Loading the week ahead…' : 'No daily forecast to display.' }}</p>
-          <p v-if="sections.daily.updatedAt" class="weather-section-updated">{{ sections.daily.loading ? 'Refreshing · ' : '' }}Forecast updated {{ formatLocalTime(sections.daily.updatedAt) }} CST</p>
+          <p v-if="sections.daily.updatedAt" class="weather-section-updated">{{ sections.daily.loading ? 'Refreshing · ' : '' }}Forecast updated {{ localTime(sections.daily.updatedAt) }} {{ timeZoneLabel(sections.daily.updatedAt) }}</p>
         </section>
 
         <div class="weather-metric-grid" aria-label="Weather details">
@@ -120,8 +129,9 @@
 
 <script setup>
 import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { weatherCities, defaultWeatherCity, findWeatherCity } from '../weather/weatherCities.mjs';
 import { createWeatherSections, refreshWeatherSections } from '../weather/weatherData.mjs';
-import { numberOrNull, formatLocalHour, formatLocalTime, formatForecastDay, temperatureDomain, temperatureRange, solarSummary, uvCategory } from '../weather/weatherModel.mjs';
+import { numberOrNull, formatLocalHour, formatLocalTime, formatForecastDay, formatTimeZoneLabel, temperatureDomain, temperatureRange, solarSummary, uvCategory } from '../weather/weatherModel.mjs';
 
 // --- 核心配置 (请根据您的实际情况修改) ---
 
@@ -134,14 +144,6 @@ const QWEATHER_API_KEY = '56b97062a8b1413586f388cffbb8c53a'; // 举例: 'abcdef1
 //    - 免费订阅用户: 通常无需修改以下默认值 'devapi.qweather.com'。
 //    - 付费订阅用户: 请根据您在和风天气控制台获取的专属API域名替换。
 const QWEATHER_WEATHER_API_HOST = 'nm6apvx4jf.re.qweatherapi.com'; // 付费用户请替换, e.g., 'api.qweather.com' 或您的专属域名
-
-// 3. 固定的地点ID (用于获取天气数据)
-// ⚠️ 请确认这是您希望获取天气的准确Location ID。您之前提到的是 '101280704' (珠海香洲区)。
-const LOCATION_ID_FOR_WEATHER = '101280704';
-
-// 4. 固定的显示城市名称
-// ⚠️ 请确认这是您希望在界面上显示的城市名称。
-const DISPLAY_CITY_NAME = 'Zhuhai'; // 例如 "珠海", "香洲区", "北京市" 等
 
 const fetchQWeatherApi = async (apiUrl, apiKey, apiNameForError, signal) => {
   const headers = {
@@ -168,14 +170,19 @@ const fetchQWeatherApi = async (apiUrl, apiKey, apiNameForError, signal) => {
 
 // Section data stays independent so one failed forecast cannot erase current conditions.
 const sections = ref(createWeatherSections());
-const locationName = DISPLAY_CITY_NAME;
+const selectedCity = ref(defaultWeatherCity);
+const cityStorageKey = 'portal.weather.city';
+const localTime = iso => formatLocalTime(iso, selectedCity.value.timeZone);
+const localHour = iso => formatLocalHour(iso, selectedCity.value.timeZone);
+const forecastDay = (date, now) => formatForecastDay(date, now, selectedCity.value.timeZone);
+const timeZoneLabel = iso => formatTimeZoneLabel(iso, selectedCity.value.timeZone);
 const current = computed(() => sections.value.current.data);
 const hours = computed(() => (sections.value.hourly.data || []).slice(0, 24));
 const days = computed(() => (sections.value.daily.data || []).slice(0, 7));
 const observedAt = ref(Date.now());
-const today = computed(() => days.value.find(day => formatForecastDay(day.fxDate, observedAt.value) === 'Today'));
+const today = computed(() => days.value.find(day => forecastDay(day.fxDate, observedAt.value) === 'Today'));
 const domain = computed(() => temperatureDomain(days.value));
-const solar = computed(() => solarSummary(today.value, observedAt.value));
+const solar = computed(() => solarSummary(today.value, observedAt.value, selectedCity.value.timeZone));
 const uv = computed(() => uvCategory(today.value?.uvIndex));
 const busy = computed(() => Object.values(sections.value).some(section => section.loading));
 const selectedHour = ref(0);
@@ -185,6 +192,13 @@ const appElement = ref(null);
 const hourlyTrack = ref(null);
 const canScrollBack = ref(false);
 const canScrollForward = ref(false);
+const cityPicker = ref(null);
+const cityTrigger = ref(null);
+const cityMenu = ref(null);
+const cityMenuOpen = ref(false);
+const cityMenuStyle = ref({});
+let cityResizeObserver;
+let requestId = 0;
 let controller;
 let disposed = false;
 let resizeObserver;
@@ -205,9 +219,9 @@ const feelsDescription = computed(() => {
   return Math.abs(feels - air) + '° ' + (feels > air ? 'warmer' : 'cooler') + ' than the actual temperature';
 });
 const daylightDescription = computed(() => {
-  if (solar.value.daylightMinutes == null) return 'Sun times in China Standard Time';
+  if (solar.value.daylightMinutes == null) return 'Sun times in local time';
   const minutes = Math.round(solar.value.daylightMinutes);
-  return Math.floor(minutes / 60) + 'h ' + (minutes % 60) + 'm of daylight · CST';
+  return Math.floor(minutes / 60) + 'h ' + (minutes % 60) + 'm of daylight · Local time';
 });
 const currentPoint = computed(() => {
   const value = numberOrNull(current.value?.temp);
@@ -218,6 +232,63 @@ const currentPoint = computed(() => {
 function rangeStyle(day) {
   const range = temperatureRange(day, domain.value);
   return range ? { left: range.left + '%', width: range.width + '%' } : {};
+}
+function updateCityMenuGeometry() {
+  if (!cityMenuOpen.value || !appElement.value || !cityTrigger.value) return;
+  const root = appElement.value.getBoundingClientRect();
+  const trigger = cityTrigger.value.getBoundingClientRect();
+  const toolbar = cityPicker.value.parentElement.getBoundingClientRect();
+  const below = Math.max(0, Math.min(root.bottom, window.innerHeight) - trigger.bottom - 12);
+  const above = Math.max(0, trigger.top - Math.max(root.top, 0) - 12);
+  const opensAbove = below < 100 && above > below;
+  cityMenuStyle.value = {
+    width: Math.min(320, toolbar.width) + 'px',
+    maxHeight: Math.min(352, opensAbove ? above : below) + 'px',
+    top: opensAbove ? 'auto' : trigger.bottom - toolbar.top + 5 + 'px',
+    bottom: opensAbove ? toolbar.bottom - trigger.top + 5 + 'px' : 'auto',
+  };
+}
+function closeCityMenu(returnFocus = false) {
+  window.removeEventListener('keydown', dismissCityMenu, true);
+  cityMenuOpen.value = false;
+  if (returnFocus) cityTrigger.value?.focus({ preventScroll: true });
+}
+async function toggleCityMenu() {
+  if (cityMenuOpen.value) return closeCityMenu();
+  cityMenuOpen.value = true;
+  // Resolve Escape before Portal's window-level close shortcut, regardless of the key target.
+  window.addEventListener('keydown', dismissCityMenu, true);
+  updateCityMenuGeometry();
+  await nextTick();
+  if (!cityMenuOpen.value || disposed) return;
+  const selected = cityMenu.value?.querySelector('[aria-pressed="true"]');
+  selected?.focus({ preventScroll: true });
+  if (selected) cityMenu.value.scrollTop = selected.offsetTop - cityMenu.value.clientHeight / 2 + selected.clientHeight / 2;
+}
+function dismissCityMenu(event) {
+  if (event.key !== 'Escape' || !cityMenuOpen.value || cityPicker.value?.closest('[inert]')) return;
+  event.preventDefault();
+  event.stopPropagation();
+  closeCityMenu(true);
+}
+function dismissCityMenuOutside(event) {
+  if (cityMenuOpen.value && !cityPicker.value?.contains(event.target)) closeCityMenu();
+}
+function selectCity(city) {
+  closeCityMenu(true);
+  if (city.id === selectedCity.value.id) return;
+  // Invalidate before aborting: even an already settled old response cannot publish.
+  requestId += 1;
+  controller?.abort();
+  selectedCity.value = city;
+  sections.value = createWeatherSections();
+  selectedHour.value = 0;
+  expandedDay.value = null;
+  if (hourlyTrack.value) hourlyTrack.value.scrollLeft = 0;
+  updateScrollState();
+  observedAt.value = Date.now();
+  try { localStorage.setItem(cityStorageKey, city.id); } catch { /* Selection still works when storage is unavailable. */ }
+  refresh();
 }
 function updateScrollState() {
   const element = hourlyTrack.value;
@@ -251,29 +322,49 @@ watch(hourlyTrack, element => {
 });
 async function refresh(names = ['current', 'hourly', 'daily']) {
   if (busy.value || disposed) return;
+  const city = selectedCity.value;
+  const id = ++requestId;
   controller = new AbortController();
   const signal = controller.signal;
+  const ownsRequest = () => !disposed && id === requestId && selectedCity.value.id === city.id;
   const request = path => fetchQWeatherApi(
-    'https://' + QWEATHER_WEATHER_API_HOST + path + '?location=' + LOCATION_ID_FOR_WEATHER + '&lang=en',
+    'https://' + QWEATHER_WEATHER_API_HOST + path + '?location=' + encodeURIComponent(city.location) + '&lang=en',
     QWEATHER_API_KEY, 'Weather API', signal,
   );
   await refreshWeatherSections(request, sections.value, (name, section) => {
-    if (disposed) return;
+    if (!ownsRequest()) return;
     sections.value[name] = section;
     observedAt.value = Date.now();
   }, names);
-  if (!disposed) {
-    selectedHour.value = Math.min(selectedHour.value, Math.max(0, hours.value.length - 1));
-    await nextTick();
-    updateScrollState();
-  }
+  if (!ownsRequest()) return;
+  selectedHour.value = Math.min(selectedHour.value, Math.max(0, hours.value.length - 1));
+  await nextTick();
+  if (!ownsRequest()) return;
+  updateScrollState();
 }
 onMounted(() => {
+  try { selectedCity.value = findWeatherCity(localStorage.getItem(cityStorageKey)); } catch { /* Use the default city without storage. */ }
+  document.addEventListener('pointerdown', dismissCityMenuOutside, true);
+  document.addEventListener('focusin', dismissCityMenuOutside);
+  window.addEventListener('resize', updateCityMenuGeometry);
+  cityResizeObserver = new ResizeObserver(updateCityMenuGeometry);
+  cityResizeObserver.observe(appElement.value);
   refresh();
   // Advance daylight and local day labels without making network requests.
   localClock = setInterval(() => { observedAt.value = Date.now(); }, 60_000);
 });
-onBeforeUnmount(() => { disposed = true; controller?.abort(); resizeObserver?.disconnect(); clearInterval(localClock); });
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', dismissCityMenu, true);
+  disposed = true;
+  requestId += 1;
+  controller?.abort();
+  resizeObserver?.disconnect();
+  cityResizeObserver?.disconnect();
+  clearInterval(localClock);
+  document.removeEventListener('pointerdown', dismissCityMenuOutside, true);
+  document.removeEventListener('focusin', dismissCityMenuOutside);
+  window.removeEventListener('resize', updateCityMenuGeometry);
+});
 </script>
 
 <style scoped>
@@ -288,8 +379,26 @@ onBeforeUnmount(() => { disposed = true; controller?.abort(); resizeObserver?.di
 .weather-app button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .weather-app button:disabled { cursor: default; opacity: .35; }
 .weather-app button:focus-visible, .weather-app a:focus-visible { outline: 2px solid #acd9ff; outline-offset: 3px; }
-.weather-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.weather-toolbar { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .weather-toolbar h2 { font-size: 23px; font-weight: 600; letter-spacing: -.6px; }
+.weather-city-picker { min-width: 0; }
+.weather-city-trigger { display: flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 0; border: 0; border-radius: 7px; background: transparent; text-align: left; }
+.weather-city-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weather-city-trigger img { width: 15px; height: 15px; flex-shrink: 0; filter: brightness(0) invert(1); opacity: .65; transform: rotate(90deg); transition: transform .15s; }
+.weather-city-trigger img.is-open { transform: rotate(-90deg); }
+.weather-city-trigger:hover img { opacity: 1; }
+.weather-city-menu { position: absolute; z-index: 5; left: 0; display: flex; flex-direction: column; max-width: 100%; padding: 5px; overflow: hidden; isolation: isolate; border: 1px solid rgba(255,255,255,.16); border-top-color: rgba(255,255,255,.3); border-bottom-color: rgba(255,255,255,.08); border-radius: 18px; background: linear-gradient(145deg,rgba(255,255,255,.06),transparent 44%), rgba(27,32,42,.42); backdrop-filter: blur(22px) saturate(115%); -webkit-backdrop-filter: blur(22px) saturate(115%); box-shadow: 0 14px 34px rgba(0,0,0,.2), 0 3px 8px rgba(0,0,0,.08), inset 0 .5px rgba(255,255,255,.13); }
+.weather-city-optics { display: none; position: absolute; z-index: 0; inset: -.5px; width: calc(100% + 1px); height: calc(100% + 1px); border-radius: inherit; pointer-events: none; opacity: .32; }
+.has-liquid-webgl .weather-city-optics { display: block; }
+.weather-city-list { position: relative; z-index: 1; flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; border-radius: 12px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.26) transparent; }
+.weather-city-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; width: 100%; padding: 7px 10px; border: 0; border-radius: 11px; background: transparent; text-align: left; transition: background-color .14s, box-shadow .14s; }
+.weather-city-option:hover { background: rgba(255,255,255,.065); }
+.weather-city-option[aria-pressed="true"] { background: rgba(174,207,248,.13); box-shadow: inset 0 .5px rgba(255,255,255,.12); }
+.weather-city-option:focus-visible { outline-offset: -2px; }
+.weather-city-option strong, .weather-city-option small { display: block; }
+.weather-city-option strong { font-size: 12px; font-weight: 500; line-height: 1.45; }
+.weather-city-option small { margin-top: 2px; font-size: 10px; color: var(--app-muted, #c6d1df); }
+.weather-city-option img { width: 16px; height: 16px; flex-shrink: 0; filter: brightness(0) invert(1); }
 .weather-updated { font-size: 11px; color: var(--app-muted, #c6d1df); margin-top: 2px !important; }
 .weather-icon-button { width: 36px; height: 36px; display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid var(--app-line, rgba(255,255,255,.13)); background: rgba(255,255,255,.055); border-radius: 50%; transition: background .15s; }
 .weather-icon-button:hover:not(:disabled) { background: rgba(255,255,255,.14); }
@@ -386,6 +495,17 @@ onBeforeUnmount(() => { disposed = true; controller?.abort(); resizeObserver?.di
   .weather-icon-button { min-width: 44px; min-height: 44px; }
   .weather-notice button { min-height: 44px; min-width: 44px; }
   .weather-day-row { min-height: 48px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .weather-city-menu { background: rgba(25,31,40,.96); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .has-liquid-webgl .weather-city-optics { display: none; }
+}
+@media (forced-colors: active) {
+  .weather-city-menu { color: CanvasText; background: Canvas; border: 1px solid CanvasText; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .has-liquid-webgl .weather-city-optics { display: none; }
+  .weather-city-option small { color: GrayText; }
+  .weather-city-option[aria-pressed="true"] { outline: 1px solid Highlight; outline-offset: -2px; box-shadow: none; }
+  .weather-city-option:focus-visible { outline-color: Highlight; }
 }
 @media (prefers-reduced-motion: reduce) {
   .weather-app *, .weather-app *::before, .weather-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

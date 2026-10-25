@@ -1,13 +1,7 @@
 const TIME_ZONE = 'Asia/Shanghai'
 const EMPTY = '—'
-const timeFormatter = new Intl.DateTimeFormat('en-GB', {
-  timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-})
-const dateFormatter = new Intl.DateTimeFormat('en-CA', {
-  timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
-})
 const dayFormatter = new Intl.DateTimeFormat('en-US', {
-  timeZone: TIME_ZONE, weekday: 'short',
+  timeZone: 'UTC', weekday: 'short',
 })
 
 export function numberOrNull(value) {
@@ -23,33 +17,45 @@ function instant(value) {
   return Number.isFinite(date.getTime()) ? date : null
 }
 
-function localDate(value) {
+function localDate(value, timeZone = TIME_ZONE) {
   const date = instant(value)
   if (!date) return null
-  const parts = Object.fromEntries(dateFormatter.formatToParts(date).map(part => [part.type, part.value]))
-  return `${parts.year}-${parts.month}-${parts.day}`
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+  })
+  const parts = Object.fromEntries(formatter.formatToParts(date).map(part => [part.type, part.value]))
+  return parts.year + '-' + parts.month + '-' + parts.day
 }
 
 function forecastDate(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
-  const date = instant(`${value}T12:00:00+08:00`)
-  return date && localDate(date) === value ? date : null
+  const date = instant(value + 'T12:00:00Z')
+  return date && date.toISOString().slice(0, 10) === value ? date : null
 }
 
-export function formatLocalTime(iso) {
+export function formatLocalTime(iso, timeZone = TIME_ZONE) {
   const date = instant(iso)
-  return date ? timeFormatter.format(date) : EMPTY
+  return date ? new Intl.DateTimeFormat('en-GB', {
+    timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).format(date) : EMPTY
 }
 
-export function formatLocalHour(iso) {
-  const time = formatLocalTime(iso)
+export function formatLocalHour(iso, timeZone = TIME_ZONE) {
+  const time = formatLocalTime(iso, timeZone)
   return time === EMPTY ? EMPTY : time.slice(0, 2) + ':00'
 }
 
-export function formatForecastDay(date, now = Date.now()) {
+export function formatTimeZoneLabel(iso, timeZone = TIME_ZONE) {
+  const date = instant(iso)
+  if (!date) return 'Local time'
+  return new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'short' })
+    .formatToParts(date).find(part => part.type === 'timeZoneName')?.value || 'Local time'
+}
+
+export function formatForecastDay(date, now = Date.now(), timeZone = TIME_ZONE) {
   const value = forecastDate(date)
   if (!value) return EMPTY
-  return date === localDate(now) ? 'Today' : dayFormatter.format(value)
+  return date === localDate(now, timeZone) ? 'Today' : dayFormatter.format(value)
 }
 
 export function temperatureDomain(daily) {
@@ -71,14 +77,33 @@ function solarTime(value) {
   return typeof value === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : null
 }
 
-export function solarSummary(day, now = Date.now()) {
+function localSolarInstant(date, time, timeZone) {
+  const wallTime = Date.parse(date + 'T' + time + ':00Z')
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+  })
+  let candidate = wallTime
+  // Resolve the offset at the event itself, including days when DST changes.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const parts = Object.fromEntries(formatter.formatToParts(candidate).map(part => [part.type, part.value]))
+    const local = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+      Number(parts.hour), Number(parts.minute), Number(parts.second))
+    const correction = wallTime - local
+    if (correction === 0) return candidate
+    candidate += correction
+  }
+  return null
+}
+
+export function solarSummary(day, now = Date.now(), timeZone = TIME_ZONE) {
   const sunrise = solarTime(day?.sunrise)
   const sunset = solarTime(day?.sunset)
   const summary = { sunrise, sunset, daylightMinutes: null, progress: null, isDay: null }
   if (!sunrise || !sunset || !forecastDate(day?.fxDate)) return summary
-  const start = Date.parse(`${day.fxDate}T${sunrise}:00+08:00`)
-  const end = Date.parse(`${day.fxDate}T${sunset}:00+08:00`)
-  if (end <= start) return summary
+  const start = localSolarInstant(day.fxDate, sunrise, timeZone)
+  const end = localSolarInstant(day.fxDate, sunset, timeZone)
+  if (start == null || end == null || end <= start) return summary
   summary.daylightMinutes = (end - start) / 60000
   const current = instant(now)
   if (!current) return summary

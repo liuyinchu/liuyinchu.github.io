@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  numberOrNull, formatLocalHour, formatLocalTime, formatForecastDay,
+  numberOrNull, formatLocalHour, formatLocalTime, formatForecastDay, formatTimeZoneLabel,
   temperatureDomain, temperatureRange, solarSummary, uvCategory,
 } from '../src/weather/weatherModel.mjs'
 import {
@@ -74,6 +74,70 @@ test('UV categories preserve a true zero and established boundaries', () => {
   for (const [value, label, level] of [[0, 'Low', 1], [3, 'Moderate', 2], [6, 'High', 3], [8, 'Very high', 4], [11, 'Extreme', 5]]) {
     assert.deepEqual(uvCategory(String(value)), { label, level })
   }
+})
+
+test('the same instant uses each city timezone for hours and Today', () => {
+  const now = '2026-07-01T08:35:00Z'
+  const zones = [
+    ['Asia/Shanghai', '16:35', '2026-07-01'],
+    ['America/Los_Angeles', '01:35', '2026-07-01'],
+    ['Pacific/Honolulu', '22:35', '2026-06-30'],
+  ]
+  for (const [zone, time, today] of zones) {
+    assert.equal(formatLocalTime(now, zone), time)
+    assert.equal(formatLocalHour(now, zone), time.slice(0, 2) + ':00')
+    assert.equal(formatForecastDay(today, now, zone), 'Today')
+    assert.equal(formatForecastDay('2026-07-02', now, zone), 'Thu')
+  }
+  assert.equal(formatForecastDay('2026-06-30', now, 'America/Los_Angeles'), 'Tue')
+  assert.equal(formatForecastDay('2026-07-01', now, 'Pacific/Honolulu'), 'Wed')
+})
+
+test('Los Angeles hour and timezone labels follow the timestamp in summer and winter', () => {
+  const zone = 'America/Los_Angeles'
+  assert.equal(formatLocalTime('2026-07-01T12:00:00Z', zone), '05:00')
+  assert.equal(formatLocalTime('2026-01-01T12:00:00Z', zone), '04:00')
+  assert.equal(formatTimeZoneLabel('2026-07-01T12:00:00Z', zone), 'PDT')
+  assert.equal(formatTimeZoneLabel('2026-01-01T12:00:00Z', zone), 'PST')
+  assert.equal(formatTimeZoneLabel('2026-03-08T09:59:00Z', zone), 'PST')
+  assert.equal(formatTimeZoneLabel('2026-03-08T10:00:00Z', zone), 'PDT')
+})
+
+test('solar events use their own Los Angeles offsets across both DST transitions', () => {
+  const zone = 'America/Los_Angeles'
+  for (const [date, sunrise, midpoint, sunset] of [
+    ['2026-03-08', '2026-03-08T13:00:00Z', '2026-03-08T19:00:00Z', '2026-03-09T01:00:00Z'],
+    ['2026-11-01', '2026-11-01T14:00:00Z', '2026-11-01T20:00:00Z', '2026-11-02T02:00:00Z'],
+  ]) {
+    const day = { fxDate: date, sunrise: '06:00', sunset: '18:00' }
+    assert.deepEqual(solarSummary(day, midpoint, zone), {
+      sunrise: '06:00', sunset: '18:00', daylightMinutes: 720, progress: 0.5, isDay: true,
+    })
+    assert.equal(solarSummary(day, sunrise, zone).progress, 0)
+    assert.equal(solarSummary(day, sunrise, zone).isDay, true)
+    assert.equal(solarSummary(day, sunset, zone).progress, 1)
+    assert.equal(solarSummary(day, sunset, zone).isDay, false)
+    assert.equal(solarSummary(day, Date.parse(sunrise) - 60000, zone).isDay, false)
+  }
+})
+
+test('Honolulu solar times and zone labels stay on UTC minus ten in both seasons', () => {
+  const zone = 'Pacific/Honolulu'
+  for (const date of ['2026-01-01', '2026-07-01']) {
+    assert.equal(formatLocalTime(date + 'T12:00:00Z', zone), '02:00')
+    assert.equal(formatTimeZoneLabel(date + 'T12:00:00Z', zone), 'HST')
+    assert.equal(solarSummary({ fxDate: date, sunrise: '06:00', sunset: '18:00' }, date + 'T22:00:00Z', zone).progress, 0.5)
+  }
+})
+
+test('missing dates and solar values remain missing in non-default zones', () => {
+  assert.equal(formatLocalTime(null, 'America/Los_Angeles'), '—')
+  assert.equal(formatLocalHour('invalid', 'Pacific/Honolulu'), '—')
+  assert.equal(formatTimeZoneLabel(null, 'Pacific/Honolulu'), 'Local time')
+  assert.equal(formatForecastDay('2026-02-30', Date.now(), 'America/Los_Angeles'), '—')
+  assert.deepEqual(solarSummary({ fxDate: '2026-07-01', sunrise: '06:00' }, Date.now(), 'Pacific/Honolulu'), {
+    sunrise: '06:00', sunset: null, daylightMinutes: null, progress: null, isDay: null,
+  })
 })
 
 const stamp = '2026-10-25T08:00:00+08:00'

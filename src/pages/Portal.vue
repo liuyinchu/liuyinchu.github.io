@@ -275,6 +275,22 @@ const liquidMaterialPresets = Object.freeze({
     softness: 20,
     tintColor: [0.12, 0.14, 0.18],
   },
+  menu: {
+    radius: 18,
+    bevel: 8,
+    refraction: 4.5,
+    dispersion: 0.08,
+    tint: 0.07,
+    highlight: 0.78,
+    opacity: 0.97,
+    interaction: 0.12,
+    ior: 1.4,
+    normalStrength: 0.96,
+    shininess: 46,
+    adaptivity: 0.45,
+    softness: 14,
+    tintColor: [0.12, 0.15, 0.2],
+  },
   panel: {
     radius: 22,
     bevel: 22,
@@ -1798,7 +1814,11 @@ function liquidSurfaceZIndex(surface) {
   if (surface.matches('.portal-menu-bar')) return 200
   if (surface.matches('.launcher-tooltip')) return 190
   if (surface.matches('.bottom-launcher')) return 180
-  if (surface.matches('.mac-window')) return Number(surface.dataset.windowOrder) || 100
+  const owningWindow = surface.closest('.mac-window')
+  if (owningWindow) {
+    const order = Number(owningWindow.dataset.windowOrder) || 100
+    return order + (owningWindow === surface ? 0 : 0.5)
+  }
   return 100
 }
 
@@ -1999,7 +2019,7 @@ function resizeLiquidCanvas(renderer, rootRect) {
   renderer.scaleY = height / cssHeight
 }
 
-function copyWindowOpticalRim(renderer, target, x, y, width, height, radius, scale) {
+function copyLocalOpticalRim(renderer, target, x, y, width, height, radius, scale, kind) {
   const context = target.getContext('2d')
   if (!context) return
   const targetWidth = Math.max(1, Math.round(width))
@@ -2009,7 +2029,8 @@ function copyWindowOpticalRim(renderer, target, x, y, width, height, radius, sca
     target.height = targetHeight
   }
   context.clearRect(0, 0, targetWidth, targetHeight)
-  const band = Math.min(12 * scale, width / 2, height / 2)
+  const isMenu = kind === 'menu'
+  const band = Math.min((isMenu ? 6.5 : 12) * scale, width / 2, height / 2)
   context.save()
   context.beginPath()
   context.roundRect(0, 0, width, height, Math.min(radius, width / 2, height / 2))
@@ -2032,15 +2053,17 @@ function copyWindowOpticalRim(renderer, target, x, y, width, height, radius, sca
   }
   // A signed-distance-like feather follows concentric rounded contours.
   // Unlike a shadow plus solid inner cutout, this continuously removes the
-  // ring from 2px to 10px without a hard, almost-square inner boundary.
+  // window ring from 2px to 10px; menus use a finer 0.5px to 5px lens.
   context.globalCompositeOperation = 'destination-out'
   context.fillStyle = '#000'
   let previousAlpha = 1
   const featherSteps = 16
+  const featherStart = isMenu ? 0.5 : 2
+  const featherSpan = isMenu ? 4.5 : 8
   for (let step = 1; step <= featherSteps; step += 1) {
     const progress = step / featherSteps
     const remainingAlpha = 1 - progress * progress * (3 - 2 * progress)
-    const inset = Math.min((2 + progress * 8) * scale, width / 2, height / 2)
+    const inset = Math.min((featherStart + progress * featherSpan) * scale, width / 2, height / 2)
     context.globalAlpha = 1 - remainingAlpha / previousAlpha
     context.beginPath()
     context.roundRect(inset, inset, Math.max(0, width - inset * 2),
@@ -2084,7 +2107,7 @@ function drawLiquidGlass(renderer) {
         radius: Number.parseFloat(style.borderTopLeftRadius),
         opacity: liquidSurfaceOpacity(surface, root),
         order: liquidSurfaceZIndex(surface),
-        opticsCanvas: surface.querySelector(':scope > .window-optics'),
+        opticsCanvas: surface.querySelector(':scope > canvas[data-liquid-local-optics]'),
       }
     })
     .filter(Boolean)
@@ -2188,16 +2211,16 @@ function drawLiquidGlass(renderer) {
     )
     gl.uniform3fv(uniforms.tintColor, preset.tintColor)
     gl.uniform1f(uniforms.brightness, brightness)
-    gl.uniform1f(uniforms.windowMaterial, kind === 'window' ? 1 : 0)
+    gl.uniform1f(uniforms.windowMaterial, kind === 'window' || kind === 'menu' ? 1 : 0)
     gl.uniform1f(uniforms.pixelScale, scale)
     gl.uniform1f(
       uniforms.softness,
       preset.softness * scale * (contrastMode ? 0.55 : 1),
     )
     gl.drawArrays(gl.TRIANGLES, 0, 6)
-    // Capture this window before later surfaces are drawn into the shared GL canvas.
-    // The ring belongs to its DOM window, so lower-window content cannot cover it.
-    if (opticsCanvas) copyWindowOpticalRim(renderer, opticsCanvas, x, y, width, height, cssRadius * scale, scale)
+    // Capture each local surface before later surfaces enter the shared GL canvas.
+    // Its ring follows the DOM stacking order, including menus inside a window.
+    if (opticsCanvas) copyLocalOpticalRim(renderer, opticsCanvas, x, y, width, height, cssRadius * scale, scale, kind)
   })
 
   gl.disable(gl.SCISSOR_TEST)
@@ -2826,7 +2849,7 @@ onBeforeUnmount(() => {
         @focusin="focusWindow(app.id)"
         @keydown="handleDialogKeydown"
       >
-        <canvas class="window-optics" aria-hidden="true"></canvas>
+        <canvas class="window-optics" data-liquid-local-optics aria-hidden="true"></canvas>
         <div
           class="window-titlebar"
           :class="{ 'has-scrolled-divider': windowScrollState[app.id] }"
