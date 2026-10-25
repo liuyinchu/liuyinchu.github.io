@@ -14,12 +14,7 @@ export const portalApps = [
     windowClass: 'window-todo',
     shellClass: 'widget-shell todo-shell',
     defaultSize: { width: 600, height: 480 },
-    minSize: { width: 340, height: 260 },
-    intro: {
-      eyebrow: 'REMINDERS',
-      title: 'My Tasks',
-      description: 'Keep the next thing clear and close at hand.',
-    },
+    minSize: { width: 340, height: 320 },
   },
   {
     id: 'music',

@@ -1,86 +1,50 @@
 <template>
-  <div class="todo-list-container">
-    <!-- 模式切换 -->
-    <div class="mode-switch">
-      <button
-        :class="['mode-btn', mode === 'global' ? 'active' : '']"
-        @click="setMode('global')"
-        aria-label="Switch to Global mode"
-      >
-        Total Task
-      </button>
-      <button
-        :class="['mode-btn', mode === 'daily' ? 'active' : '']"
-        @click="setMode('daily')"
-        aria-label="Switch to Daily mode"
-      >
-        Daily Task
-      </button>
-      <span v-if="mode === 'daily'" class="current-day-chip" :title="'Selected day: ' + selectedDateStr">
-        {{ selectedDateStr }}
-      </span>
+  <div class="reminders-app">
+    <header class="reminders-header">
+      <h2>Reminders</h2>
+      <span class="reminders-count" :aria-label="remainingCount + ' incomplete reminders'">{{ remainingCount }}</span>
+    </header>
+
+    <div class="reminders-toolbar">
+      <div class="reminders-segments" role="group" aria-label="Reminder scope">
+        <button type="button" :class="{ 'is-active': mode === 'global' }" :aria-pressed="mode === 'global'" @click="setMode('global')">All</button>
+        <button type="button" :class="{ 'is-active': mode === 'daily' }" :aria-pressed="mode === 'daily'" @click="setMode('daily')">Daily</button>
+      </div>
+      <time v-if="mode === 'daily'" class="reminders-selected-date" :datetime="selectedDateStr" :title="'Date selected in Calendar: ' + selectedDateStr">{{ selectedDateStr }}</time>
     </div>
 
-    <!-- 输入区 -->
-    <div class="input-section">
+    <form class="reminders-composer" @submit.prevent="addTask">
       <input
-        type="text"
         v-model="newTaskText"
-        @keyup.enter="addTask"
-        placeholder="Enter your thought..."
-        class="task-input"
-        aria-label="Add a task"
+        type="text"
+        class="reminders-input"
+        :placeholder="mode === 'daily' ? 'Add a reminder for this day' : 'Add a reminder'"
+        aria-label="New reminder"
+        autocomplete="off"
       />
-      <button @click="addTask" class="add-button" aria-label="Add task">+</button>
+      <button type="submit" class="reminders-add" :disabled="!canAddTask"><span class="reminders-add-icon" aria-hidden="true"></span>Add</button>
+    </form>
+
+    <div class="reminders-content">
+      <ul v-if="visibleTasks.length" class="reminders-list" aria-label="Reminders">
+        <li v-for="task in visibleTasks" :key="task.id" class="reminders-item" :class="{ 'is-completed': task.completed }">
+          <label class="reminders-check-target">
+            <input type="checkbox" class="reminders-checkbox" :checked="task.completed" @change="toggleTaskCompletion(task.id)" :aria-label="'Complete reminder: ' + task.text" />
+            <span class="reminders-check-icon" aria-hidden="true"></span>
+          </label>
+          <div class="reminders-task-content">
+            <span class="reminders-task-text">{{ task.text }}</span>
+            <time v-if="task.date && mode === 'global'" class="reminders-task-date" :datetime="task.date">{{ task.date }}</time>
+          </div>
+          <button type="button" class="reminders-delete" @click="deleteTask(task.id)" :aria-label="'Delete reminder: ' + task.text" title="Delete reminder"><span class="reminders-delete-icon" aria-hidden="true"></span></button>
+        </li>
+      </ul>
+      <div v-else class="reminders-empty" role="status">
+        <img src="/portal-icons/reminders.svg" width="40" height="40" alt="" />
+        <p>{{ mode === 'daily' ? 'No reminders for this day' : 'No reminders yet' }}</p>
+        <span>{{ mode === 'daily' ? 'Add one above or select another day in Calendar.' : 'Your reminders will appear here.' }}</span>
+      </div>
     </div>
-
-    <!-- 任务列表（按模式过滤） -->
-    <ul class="task-list" role="list">
-      <li
-        v-for="task in visibleTasks"
-        :key="task.id"
-        class="task-item"
-        :class="{ completed: task.completed }"
-        role="listitem"
-      >
-        <label class="checkbox-container" :aria-label="'Toggle complete: ' + task.text">
-          <input
-            type="checkbox"
-            class="hidden-checkbox"
-            :checked="task.completed"
-            @change="toggleTaskCompletion(task.id)"
-            aria-checked="task.completed ? 'true' : 'false'"
-          />
-          <span class="custom-checkbox"></span>
-        </label>
-
-        <div class="task-text">{{ task.text }}</div>
-
-        <!-- 小号日期徽标（与原风格一致，轻量呈现） -->
-        <div class="task-meta">
-          <span class="date-chip" :title="'Task date'">
-            {{ task.date || 'Ever' }}
-          </span>
-        </div>
-
-        <button
-          class="delete-button"
-          @click="deleteTask(task.id)"
-          :aria-label="'Delete: ' + task.text"
-          title="Delete"
-        >
-          <!-- <svg class="delete-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M9 3v1H4v2h16V4h-5V3H9zm1 6h2v9h-2V9zm-4 0h2v9H6V9zm8 0h2v9h-2V9z"
-            />
-          </svg> -->
-          <svg viewBox="0 0 24 24" fill="currentColor" class="delete-icon">
-            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm3-4.5c0-.28.22-.5.5-.5s.5.22.5.5v6c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-6zm3-4.5c0-.28.22-.5.5-.5s.5.22.5.5v6c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-6zm3-4.5c0-.28.22-.5.5-.5s.5.22.5.5v6c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-          </svg>
-        </button>
-      </li>
-    </ul>
   </div>
 </template>
 
@@ -113,6 +77,9 @@ const visibleTasks = computed(() => {
   if (mode.value !== 'daily') return tasks.value
   return tasks.value.filter(t => t.date === selectedDateStr.value)
 })
+
+const remainingCount = computed(() => visibleTasks.value.filter(task => !task.completed).length)
+const canAddTask = computed(() => newTaskText.value.trim().length > 0)
 
 // 持久化
 watch(tasks, (v) => safeWrite(LS_KEYS.TODOS, v), { deep: true })
@@ -194,249 +161,81 @@ function safeWrite (key, value) {
 </script>
 
 <style scoped>
-/* ====== 原始样式风格（你提供的版本） ====== */
-.todo-list-container {
+.reminders-app {
+  box-sizing: border-box;
+  padding: 20px;
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
-  padding: 0 1.5rem;
-  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--app-text, #f8f9fc);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
 }
-
-.input-section {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.0rem;
+.reminders-app *,
+.reminders-app *::before,
+.reminders-app *::after { box-sizing: border-box; }
+.reminders-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex: none; margin-bottom: 16px; }
+.reminders-header h2 { margin: 0; font-size: 24px; font-weight: 650; letter-spacing: -.65px; line-height: 1.2; }
+.reminders-count { color: var(--app-accent, #8bbcff); font-size: 28px; line-height: 1.2; font-weight: 600; font-variant-numeric: tabular-nums; }
+.reminders-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; flex: none; margin-bottom: 14px; }
+.reminders-segments { display: inline-flex; padding: 3px; gap: 3px; border: 1px solid var(--app-line, rgba(255,255,255,.12)); border-radius: 9px; background: var(--app-fill, rgba(255,255,255,.065)); }
+.reminders-app button { font: inherit; cursor: pointer; }
+.reminders-segments button { min-width: 70px; min-height: 30px; padding: 4px 16px; border: 0; border-radius: 6px; color: var(--app-muted, rgba(255,255,255,.68)); background: transparent; font-weight: 500; }
+.reminders-segments button.is-active { color: var(--app-text, #f8f9fc); background: var(--app-control-bg, rgba(255,255,255,.10)); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.reminders-selected-date { color: var(--app-muted, rgba(255,255,255,.68)); font-size: 12px; font-variant-numeric: tabular-nums; }
+.reminders-composer { display: flex; flex: none; align-items: center; gap: 10px; border-bottom: 1px solid var(--app-line, rgba(255,255,255,.12)); padding: 0 0 10px; }
+.reminders-input { display: block; width: 100%; min-width: 0; min-height: 36px; padding: 7px 10px; border: 1px solid transparent; border-radius: 8px; color: var(--app-text, #f8f9fc); background: var(--app-fill, rgba(255,255,255,.065)); font: inherit; }
+.reminders-input::placeholder { color: var(--app-muted, rgba(255,255,255,.68)); opacity: 1; }
+.reminders-add { display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex: none; min-height: 34px; padding: 6px 14px; border: 1px solid var(--app-line, rgba(255,255,255,.12)); border-radius: 7px; color: var(--app-accent, #8bbcff); background: var(--app-control-bg, rgba(255,255,255,.10)); font-weight: 600; }
+.reminders-add-icon,
+.reminders-delete-icon { display: block; flex: none; width: 18px; height: 18px; background: currentColor; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
+.reminders-add-icon { mask-image: url('/portal-icons/plus.svg'); }
+.reminders-delete-icon { mask-image: url('/portal-icons/trash-2.svg'); }
+.reminders-add:disabled { color: var(--app-muted, rgba(255,255,255,.68)); opacity: .5; cursor: default; }
+.reminders-content { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--app-line, rgba(255,255,255,.12)) transparent; }
+.reminders-list { padding: 0; margin: 0; list-style: none; }
+.reminders-item { display: flex; align-items: flex-start; min-width: 0; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--app-line, rgba(255,255,255,.12)); }
+.reminders-check-target { position: relative; display: flex; flex: none; width: 32px; height: 32px; align-items: center; justify-content: center; cursor: pointer; }
+.reminders-checkbox { appearance: none; width: 20px; height: 20px; margin: 0; border: 1.5px solid var(--app-muted, rgba(255,255,255,.68)); border-radius: 50%; background: transparent; cursor: pointer; }
+.reminders-checkbox:checked { border-color: var(--app-accent, #8bbcff); background: var(--app-accent, #8bbcff); }
+.reminders-check-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; background: #162333; mask: url('/portal-icons/check.svg') center / contain no-repeat; pointer-events: none; opacity: 0; }
+.reminders-checkbox:checked + .reminders-check-icon { opacity: 1; }
+.reminders-check-target:focus-within { outline: 2px solid var(--app-accent, #8bbcff); outline-offset: 1px; border-radius: 50%; }
+.reminders-task-content { display: flex; flex: 1; flex-direction: column; align-items: flex-start; min-width: 0; gap: 4px; padding: 6px 0; }
+.reminders-task-text { overflow-wrap: anywhere; white-space: pre-wrap; }
+.reminders-task-date { color: var(--app-muted, rgba(255,255,255,.68)); font-size: 11px; font-variant-numeric: tabular-nums; }
+.reminders-item.is-completed .reminders-task-text { color: var(--app-muted, rgba(255,255,255,.68)); text-decoration: line-through; }
+.reminders-delete { display: inline-flex; align-items: center; justify-content: center; width: 44px; min-width: 44px; min-height: 32px; flex: none; margin-left: 4px; padding: 6px 8px; border: 0; border-radius: 6px; color: var(--app-muted, rgba(255,255,255,.68)); background: transparent; opacity: 0; }
+.reminders-item:hover .reminders-delete,
+.reminders-item:focus-within .reminders-delete { opacity: 1; }
+.reminders-delete:hover { color: #ffaaa4; background: var(--app-fill, rgba(255,255,255,.065)); }
+.reminders-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; gap: 8px; padding: 28px 16px; text-align: center; }
+.reminders-empty img { filter: brightness(0) invert(1); opacity: .5; margin-bottom: 2px; }
+.reminders-empty p { margin: 0; color: var(--app-text, #f8f9fc); font-weight: 500; }
+.reminders-empty span { max-width: 250px; color: var(--app-muted, rgba(255,255,255,.68)); font-size: 12px; }
+.reminders-app button:focus-visible,
+.reminders-input:focus-visible { outline: 2px solid var(--app-accent, #8bbcff); outline-offset: 2px; }
+@media (max-width: 600px), (hover: none), (pointer: coarse) {
+  .reminders-segments button,
+  .reminders-input,
+  .reminders-add,
+  .reminders-delete { min-height: 44px; }
+  .reminders-check-target { width: 44px; height: 44px; }
+  .reminders-delete { opacity: 1; }
 }
-
-.task-input {
-  flex: 1;
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--ctp-mocha-surface2);
-  border-radius: 0.5rem;
-  background-color: var(--ctp-mocha-surface0);
-  color: var(--text-color);
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  font-family: "LXGW WenKai";
+@media (max-width: 360px) {
+  .reminders-app { padding: 16px; }
 }
-
-.task-input::placeholder {
-  color: var(--ctp-mocha-overlay1);
-}
-
-.task-input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(var(--ctp-mocha-blue-rgb), 0.2);
-}
-
-.add-button {
-  width: 44px;
-  height: 44px;
-  /* background-color: var(--primary-color); */
-  background: linear-gradient(135deg, var(--ctp-mocha-mauve), var(--ctp-mocha-blue));
-  color: var(--ctp-mocha-base);
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1.8rem;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.add-button:hover {
-  /* background-color: var(--primary-color-hover); */
-  background: linear-gradient(135deg, var(--success-color), #89dceb);
-  transform: translateY(-1px);
-}
-
-.task-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex-grow: 1;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-  max-height: 250px;
-}
-
-/* 滚动条 */
-.task-list::-webkit-scrollbar {
-  width: 6px;
-}
-.task-list::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--ctp-mocha-blue-rgb), 0.4);
-  border-radius: 3px;
-}
-.task-list::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(var(--ctp-mocha-blue-rgb), 0.7);
-}
-
-.task-item {
-  display: flex;
-  align-items: center;
-  background-color: var(--ctp-mocha-surface0);
-  padding: 0.8rem 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 0.75rem;
-  border: 1px solid var(--ctp-mocha-surface1);
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.task-item.completed {
-  background-color: var(--ctp-mocha-surface0);
-  border-color: var(--ctp-mocha-green);
-  opacity: 0.7;
-}
-
-.task-text {
-  flex-grow: 1;
-  color: var(--ctp-mocha-text);
-  font-size: 0.95rem;
-  margin-left: 0.75rem;
-  word-break: break-word;
-  transition: text-decoration 0.3s ease, color 0.3s ease;
-  font-weight: 700;
-  font-family: "LXGW WenKai";
-}
-
-.task-item.completed .task-text {
-  text-decoration: line-through;
-  color: var(--ctp-mocha-overlay1);
-}
-
-.checkbox-container {
-  display: block;
-  position: relative;
-  cursor: pointer;
-  font-size: 22px;
-  user-select: none;
-}
-
-/* 隐藏原生 checkbox */
-.hidden-checkbox {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
-
-/* 自定义圆形 checkbox */
-.custom-checkbox {
-  height: 20px;
-  width: 20px;
-  background-color: var(--ctp-mocha-base);
-  border: 2px solid var(--ctp-mocha-surface2);
-  border-radius: 50%;
-  display: inline-block;
-  vertical-align: middle;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-/* 悬停 */
-.checkbox-container:hover .custom-checkbox {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-
-/* 选中态：不显示对勾，只改底色与边框为绿色 */
-.hidden-checkbox:checked ~ .custom-checkbox {
-  background-color: var(--ctp-mocha-green);
-  border-color: var(--ctp-mocha-green);
-}
-
-/* 维持不显示对勾 */
-.custom-checkbox:after {
-  content: "";
-  position: absolute;
-  display: none;
-  left: 6px;
-  top: 3px;
-  width: 5px;
-  height: 10px;
-  border: solid var(--ctp-mocha-base);
-  border-width: 0 3px 3px 0;
-  transform: rotate(45deg);
-}
-
-/* 删除按钮 */
-.delete-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--ctp-mocha-red);
-  margin-left: 1rem;
-  padding: 0.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s ease, transform 0.1s ease;
-}
-
-.delete-button:hover {
-  color: var(--ctp-mocha-maroon);
-  transform: scale(1.1);
-}
-
-.delete-icon {
-  width: 20px;
-  height: 20px;
-}
-
-/* ====== 为模式切换与日期徽标补充的极简样式（保持同风格） ====== */
-.mode-switch {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0.25rem 0 0.75rem;
-}
-.mode-btn {
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.5rem;
-  border: 1.5px solid var(--ctp-mocha-surface2);
-  background-color: var(--ctp-mocha-surface0);
-  color: var(--ctp-mocha-text);
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-  font-family: monospace;
-  font-weight: 600;
-}
-.mode-btn.active {
-  border-color: var(--primary-color);
-  /* background-color: var(--ctp-mocha-base); */
-}
-.current-day-chip {
-  /* margin-left: auto; */
-  font-size: 0.75rem;
-  color: var(--ctp-mocha-overlay1);
-  border: 1px dashed #b4befe;
-  /* padding: 0.2rem 0.5rem; */
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.5rem;
-  /* box-shadow: inset 0 0 0 2px rgba(255,255,255,0.3); */
-  background: #b4befe;
-  color: var(--background-color);
-  /* border-color: #b4befe; */
-  font-family: monospace;
-  font-weight: 600;
-}
-.task-meta {
-  margin-left: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--ctp-mocha-overlay1);
-}
-.date-chip {
-  display: inline-block;
-  border: 1px solid var(--ctp-mocha-surface2);
-  border-radius: 0.4rem;
-  padding: 0.05rem 0.35rem;
-  font-family: monospace;
+@media (max-width: 480px) {
+  .reminders-header { margin-bottom: 12px; }
+  .reminders-header h2 { font-size: 22px; }
+  .reminders-toolbar { margin-bottom: 10px; }
+  .reminders-segments button { min-width: 64px; }
+  .reminders-delete { padding-inline: 6px; }
 }
 </style>

@@ -261,17 +261,17 @@ const liquidMaterialPresets = Object.freeze({
   },
   window: {
     radius: 14,
-    bevel: 20,
-    refraction: 6.5,
-    dispersion: 0.12,
-    tint: 0.14,
-    highlight: 0.86,
+    bevel: 16,
+    refraction: 9,
+    dispersion: 0.1,
+    tint: 0.085,
+    highlight: 0.94,
     opacity: 0.97,
     interaction: 0.16,
-    ior: 1.34,
-    normalStrength: 0.9,
-    shininess: 48,
-    adaptivity: 0.76,
+    ior: 1.42,
+    normalStrength: 0.98,
+    shininess: 42,
+    adaptivity: 0.5,
     softness: 20,
     tintColor: [0.12, 0.14, 0.18],
   },
@@ -376,6 +376,7 @@ uniform vec3 uTintColor;
 uniform float uBrightness;
 uniform float uPixelScale;
 uniform float uSoftness;
+uniform float uWindowMaterial;
 
 in vec2 vLocal;
 in vec2 vScreen;
@@ -454,6 +455,8 @@ vec3 sampleSoftenedRefraction(
 ) {
   // Prefilter detail before the reconstruction kernel. Convert screen pixels
   // to texture texels so the material stays consistent across resize and DPR.
+  // A clear lens at the edge surrounds a quiet, softened reading plane.
+  softness *= mix(1.0, 0.24, edge * uWindowMaterial);
   vec2 texelsPerPixel = vec2(textureSize(uWallpaper, 0)) / uWallpaperRect.zw;
   float blurLod = max(0.0, log2(max(
     softness * max(texelsPerPixel.x, texelsPerPixel.y) * 0.7,
@@ -480,7 +483,7 @@ vec3 sampleSoftenedRefraction(
     dispersionAxis,
     dispersion
   ));
-  return mix(crisp, softened, (1.0 - edge * 0.16) * materialization);
+  return mix(crisp, softened, (1.0 - edge * mix(0.16, 0.58, uWindowMaterial)) * materialization);
 }
 
 float glassHeight(
@@ -732,7 +735,7 @@ void main() {
     clamp(highlightEnergy, 0.0, 0.58)
   );
   float fresnelEnergy = fresnel
-    * 0.1
+    * mix(0.1, 0.18, uWindowMaterial)
     * uMaterial.y
     * materialization
     * uBrightness;
@@ -1920,11 +1923,22 @@ function sampleLiquidSurfaceLuminance(renderer, rect, rootRect) {
     0,
   ) / samples.length
 
-  return { mean, contrast }
+  return { mean, contrast, peak: Math.max(...samples) }
 }
 
 function adaptLiquidSurfaceForeground(surface, kind, statistics) {
-  if (!statistics || !['strip', 'search', 'circle'].includes(kind)) return
+  if (!statistics) return
+  if (kind === 'window') {
+    // Protect small text over bright wallpaper without darkening the optical rim
+    // or title bar. Peak luminance also catches a bright coastline in a mixed view.
+    const brightness = Math.max(0, Math.min(1, (statistics.peak - 0.24) / 0.5))
+    const shade = (0.14 + 0.4 * brightness * brightness * (3 - 2 * brightness)).toFixed(3)
+    if (surface.style.getPropertyValue('--window-content-shade') !== shade) {
+      surface.style.setProperty('--window-content-shade', shade)
+    }
+    return
+  }
+  if (!['strip', 'search', 'circle'].includes(kind)) return
 
   const currentTone = surface.dataset.liquidForeground
   const useDarkForeground = currentTone === 'dark'
@@ -1985,6 +1999,58 @@ function resizeLiquidCanvas(renderer, rootRect) {
   renderer.scaleY = height / cssHeight
 }
 
+function copyWindowOpticalRim(renderer, target, x, y, width, height, radius, scale) {
+  const context = target.getContext('2d')
+  if (!context) return
+  const targetWidth = Math.max(1, Math.round(width))
+  const targetHeight = Math.max(1, Math.round(height))
+  if (target.width !== targetWidth || target.height !== targetHeight) {
+    target.width = targetWidth
+    target.height = targetHeight
+  }
+  context.clearRect(0, 0, targetWidth, targetHeight)
+  const band = Math.min(12 * scale, width / 2, height / 2)
+  context.save()
+  context.beginPath()
+  context.roundRect(0, 0, width, height, Math.min(radius, width / 2, height / 2))
+  context.clip()
+  // Only four perimeter strips cross from WebGL to 2D, never the reading area.
+  const bands = [
+    [0, 0, width, band],
+    [0, height - band, width, band],
+    [0, band, band, height - band * 2],
+    [width - band, band, band, height - band * 2],
+  ]
+  for (const [localX, localY, bandWidth, bandHeight] of bands) {
+    const left = Math.max(0, x + localX)
+    const top = Math.max(0, y + localY)
+    const right = Math.min(renderer.canvas.width, x + localX + bandWidth)
+    const bottom = Math.min(renderer.canvas.height, y + localY + bandHeight)
+    if (right <= left || bottom <= top) continue
+    context.drawImage(renderer.canvas, left, top, right - left, bottom - top,
+      left - x, top - y, right - left, bottom - top)
+  }
+  // A signed-distance-like feather follows concentric rounded contours.
+  // Unlike a shadow plus solid inner cutout, this continuously removes the
+  // ring from 2px to 10px without a hard, almost-square inner boundary.
+  context.globalCompositeOperation = 'destination-out'
+  context.fillStyle = '#000'
+  let previousAlpha = 1
+  const featherSteps = 16
+  for (let step = 1; step <= featherSteps; step += 1) {
+    const progress = step / featherSteps
+    const remainingAlpha = 1 - progress * progress * (3 - 2 * progress)
+    const inset = Math.min((2 + progress * 8) * scale, width / 2, height / 2)
+    context.globalAlpha = 1 - remainingAlpha / previousAlpha
+    context.beginPath()
+    context.roundRect(inset, inset, Math.max(0, width - inset * 2),
+      Math.max(0, height - inset * 2), Math.max(0, radius - inset))
+    context.fill()
+    previousAlpha = remainingAlpha
+  }
+  context.restore()
+}
+
 function drawLiquidGlass(renderer) {
   const root = portalDesktopRef.value
   if (!root || !renderer.image.naturalWidth || !renderer.image.naturalHeight) return
@@ -2018,6 +2084,7 @@ function drawLiquidGlass(renderer) {
         radius: Number.parseFloat(style.borderTopLeftRadius),
         opacity: liquidSurfaceOpacity(surface, root),
         order: liquidSurfaceZIndex(surface),
+        opticsCanvas: surface.querySelector(':scope > .window-optics'),
       }
     })
     .filter(Boolean)
@@ -2062,7 +2129,7 @@ function drawLiquidGlass(renderer) {
   )
   gl.enable(gl.SCISSOR_TEST)
 
-  surfaces.forEach(({ surface, rect, radius: computedRadius, opacity }) => {
+  surfaces.forEach(({ surface, rect, radius: computedRadius, opacity, opticsCanvas }) => {
     const kind = surface.dataset.liquidKind
     const preset = liquidMaterialPresets[kind]
     if (!preset) return
@@ -2121,12 +2188,16 @@ function drawLiquidGlass(renderer) {
     )
     gl.uniform3fv(uniforms.tintColor, preset.tintColor)
     gl.uniform1f(uniforms.brightness, brightness)
+    gl.uniform1f(uniforms.windowMaterial, kind === 'window' ? 1 : 0)
     gl.uniform1f(uniforms.pixelScale, scale)
     gl.uniform1f(
       uniforms.softness,
       preset.softness * scale * (contrastMode ? 0.55 : 1),
     )
     gl.drawArrays(gl.TRIANGLES, 0, 6)
+    // Capture this window before later surfaces are drawn into the shared GL canvas.
+    // The ring belongs to its DOM window, so lower-window content cannot cover it.
+    if (opticsCanvas) copyWindowOpticalRim(renderer, opticsCanvas, x, y, width, height, cssRadius * scale, scale)
   })
 
   gl.disable(gl.SCISSOR_TEST)
@@ -2331,6 +2402,7 @@ async function initializeLiquidGlassRenderer() {
       brightness: uniform('uBrightness'),
       pixelScale: uniform('uPixelScale'),
       softness: uniform('uSoftness'),
+      windowMaterial: uniform('uWindowMaterial'),
     }
 
     const handleContextLost = (event) => {
@@ -2754,6 +2826,7 @@ onBeforeUnmount(() => {
         @focusin="focusWindow(app.id)"
         @keydown="handleDialogKeydown"
       >
+        <canvas class="window-optics" aria-hidden="true"></canvas>
         <div
           class="window-titlebar"
           :class="{ 'has-scrolled-divider': windowScrollState[app.id] }"
@@ -2791,16 +2864,6 @@ onBeforeUnmount(() => {
         <div class="window-body" @scroll.passive="handleWindowBodyScroll($event, app.id)">
           <div v-if="dataError" class="portal-error" role="alert">{{ dataError }}</div>
           <section class="mac-app-content" :class="app.shellClass">
-            <header v-if="app.intro" class="todo-overview">
-              <div>
-                <p>{{ app.intro.eyebrow }}</p>
-                <h2>{{ app.intro.title }}</h2>
-                <span>{{ app.intro.description }}</span>
-              </div>
-              <span class="todo-overview-mark" aria-hidden="true">
-                <img :src="app.icon" alt="">
-              </span>
-            </header>
             <component
               :is="app.component"
               v-bind="applicationProps(app)"
@@ -3484,11 +3547,8 @@ onBeforeUnmount(() => {
   box-shadow: inset 0 0 0 0.5px var(--portal-hairline);
 }
 
-.widget-shell :deep(.weather-container),
-.widget-shell :deep(.todo-list-container),
 .widget-shell :deep(.calendar),
-.widget-shell :deep(.calendar-container),
-.widget-shell :deep(.todo-container) {
+.widget-shell :deep(.calendar-container) {
   border: 1px solid rgba(180, 190, 254, 0.12);
   border-radius: 1rem;
   background: rgba(30, 30, 46, 0.58);
@@ -4431,11 +4491,8 @@ onBeforeUnmount(() => {
   box-shadow: inset 0 0 0 0.5px var(--portal-hairline);
 }
 
-.widget-shell :deep(.weather-container),
-.widget-shell :deep(.todo-list-container),
 .widget-shell :deep(.calendar),
-.widget-shell :deep(.calendar-container),
-.widget-shell :deep(.todo-container) {
+.widget-shell :deep(.calendar-container) {
   border: 0.5px solid var(--portal-hairline);
   border-radius: var(--portal-radius-control);
   background: rgba(255, 255, 255, 0.045);
@@ -4443,316 +4500,7 @@ onBeforeUnmount(() => {
 }
 
 .window-todo {
-  min-height: 470px;
-}
-
-.window-todo .window-body {
-  padding: 18px;
-  background:
-    radial-gradient(circle at 92% 4%, rgba(10, 132, 255, 0.13), transparent 260px),
-    radial-gradient(circle at 10% 100%, rgba(94, 92, 230, 0.11), transparent 280px),
-    rgba(25, 27, 34, 0.84);
-}
-
-.todo-shell {
-  align-content: start;
-  gap: 14px;
-  min-height: 390px;
-}
-
-.todo-overview {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 4px;
-}
-
-.todo-overview p,
-.todo-overview h2 {
-  margin: 0;
-}
-
-.todo-overview p {
-  color: rgba(100, 210, 255, 0.84);
-  font-size: 10px;
-  font-weight: var(--portal-fw-semibold);
-  letter-spacing: 0.14em;
-}
-
-.todo-overview h2 {
-  margin-top: 2px;
-  color: var(--portal-text-primary);
-  font-size: 22px;
-  font-weight: var(--portal-fw-semibold);
-  letter-spacing: -0.025em;
-}
-
-.todo-overview div > span {
-  display: block;
-  margin-top: 3px;
-  color: var(--portal-text-secondary);
-  font-size: 12px;
-}
-
-.todo-overview-mark {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border: 0.5px solid rgba(100, 210, 255, 0.28);
-  border-radius: 13px;
-  color: rgba(151, 220, 255, 0.94);
-  background: linear-gradient(145deg, rgba(10, 132, 255, 0.22), rgba(94, 92, 230, 0.14));
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16);
-}
-
-.todo-overview-mark img {
-  width: 24px;
-  height: 24px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.7;
-  filter: brightness(0) invert(1);
-}
-
-.todo-shell :deep(.todo-list-container),
-.todo-shell :deep(.todo-container) {
-  width: 100%;
-  min-height: 300px;
-  height: auto;
-  padding: 16px;
-  border: 0.5px solid rgba(255, 255, 255, 0.12);
-  border-radius: 15px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
-    rgba(18, 21, 32, 0.55);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.14),
-    0 16px 36px rgba(0, 0, 0, 0.14);
-  box-sizing: border-box;
-}
-
-.todo-shell :deep(.mode-switch) {
-  width: fit-content;
-  min-height: 34px;
-  align-items: center;
-  gap: 3px;
-  margin: 0 0 14px;
-  padding: 3px;
-  border: 0.5px solid rgba(255, 255, 255, 0.09);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.18);
-}
-
-.todo-shell :deep(.mode-btn) {
-  min-width: 104px;
-  min-height: 28px;
-  padding: 4px 12px;
-  border: 0;
-  border-radius: 7px;
-  color: var(--portal-text-secondary);
-  background: transparent;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: var(--portal-fw-medium);
-  letter-spacing: 0;
-  cursor: pointer;
-}
-
-.todo-shell :deep(.mode-btn:hover) {
-  color: var(--portal-text-primary);
-  background: rgba(255, 255, 255, 0.07);
-}
-
-.todo-shell :deep(.mode-btn.active) {
-  color: var(--portal-text-primary);
-  border: 0.5px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.14);
-  box-shadow:
-    0 1px 4px rgba(0, 0, 0, 0.2),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.13);
-  font-weight: var(--portal-fw-semibold);
-}
-
-.todo-shell :deep(.current-day-chip) {
-  min-height: 28px;
-  padding: 4px 10px;
-  border: 0;
-  border-radius: 7px;
-  color: var(--portal-text-primary);
-  background: rgba(10, 132, 255, 0.24);
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: var(--portal-fw-medium);
-}
-
-.todo-shell :deep(.input-section) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 32px;
-  gap: 8px;
-  margin-bottom: 0;
-  padding: 4px;
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 13px;
-  background: rgba(0, 0, 0, 0.2);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
-  align-items: center;
-}
-
-.todo-shell :deep(.task-input) {
-  min-width: 0;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 9px;
-  color: var(--portal-text-primary);
-  background: rgba(255, 255, 255, 0.055);
-  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
-  font-family: inherit;
-  font-size: 14px;
-  outline: none;
-}
-
-.todo-shell :deep(.task-input::placeholder) {
-  color: var(--portal-text-tertiary);
-}
-
-.todo-shell :deep(.task-input:focus),
-.todo-shell :deep(.task-input:focus-visible) {
-  box-shadow:
-    inset 0 0 0 1.5px var(--portal-text-accent),
-    0 0 0 3px rgba(10, 132, 255, 0.16);
-}
-
-.todo-shell :deep(.add-button) {
-  width: 44px;
-  height: 44px;
-  padding: 0 0 2px;
-  border: 0;
-  border-radius: 10px;
-  color: white;
-  background: linear-gradient(145deg, #35a2ff, #0a72df);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.34),
-    0 5px 14px rgba(0, 102, 204, 0.26);
-  font-family: inherit;
-  font-size: 24px;
-  font-weight: var(--portal-fw-regular);
-  line-height: 1;
-}
-
-.todo-shell :deep(.add-button:hover) {
-  background: linear-gradient(145deg, #52b1ff, #1484f2);
-  transform: translateY(-1px);
-}
-
-.todo-shell :deep(.task-list) {
-  display: flex;
-  min-height: 170px;
-  max-height: 250px;
-  flex: 1 1 auto;
-  flex-direction: column;
-  margin: 14px 0 0;
-  padding: 0 4px 0 0;
-  overflow-y: auto;
-}
-
-.todo-shell :deep(.task-list:empty) {
-  align-items: center;
-  justify-content: center;
-  border: 0.5px dashed rgba(255, 255, 255, 0.11);
-  border-radius: 13px;
-  background:
-    radial-gradient(circle at 50% 20%, rgba(10, 132, 255, 0.09), transparent 150px),
-    rgba(255, 255, 255, 0.018);
-}
-
-.todo-shell :deep(.task-list:empty::before) {
-  content: '✓';
-  display: grid;
-  width: 32px;
-  height: 32px;
-  margin-bottom: 10px;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  color: var(--portal-text-tertiary);
-  background: rgba(255, 255, 255, 0.045);
-  font-size: 18px;
-}
-
-.todo-shell :deep(.task-list:empty::after) {
-  content: 'No reminders yet\A Add one above when something comes to mind.';
-  color: var(--portal-text-secondary);
-  font-size: 12px;
-  line-height: 1.55;
-  text-align: center;
-  white-space: pre;
-}
-
-.todo-shell :deep(.task-item) {
-  min-height: 50px;
-  margin-bottom: 8px;
-  padding: 10px 12px;
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.055);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.07);
-}
-
-.todo-shell :deep(.task-item:hover) {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.075);
-}
-
-.todo-shell :deep(.task-item.completed) {
-  border-color: rgba(48, 209, 88, 0.26);
-  background: rgba(48, 209, 88, 0.07);
-  opacity: 0.72;
-}
-
-.todo-shell :deep(.custom-checkbox) {
-  width: 20px;
-  height: 20px;
-  border: 1.5px solid rgba(255, 255, 255, 0.34);
-  background: rgba(0, 0, 0, 0.18);
-}
-
-.todo-shell :deep(.hidden-checkbox:checked ~ .custom-checkbox) {
-  border-color: #30d158;
-  background: #30d158;
-}
-
-.todo-shell :deep(.task-text) {
-  margin-left: 10px;
-  color: var(--portal-text-primary);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: var(--portal-fw-regular);
-}
-
-.todo-shell :deep(.task-meta),
-.todo-shell :deep(.date-chip) {
-  color: var(--portal-text-tertiary);
-  font-family: inherit;
-  font-size: 11px;
-}
-
-.todo-shell :deep(.delete-button) {
-  min-width: 32px;
-  min-height: 32px;
-  margin-left: 8px;
-  padding: 6px;
-  border-radius: 8px;
-  color: #ff6961;
-}
-
-.todo-shell :deep(.delete-button:hover) {
-  color: #ff8a84;
-  background: rgba(255, 105, 97, 0.12);
-  transform: none;
+  min-height: 0;
 }
 
 .music-app :deep(.portal-loading),
@@ -5462,11 +5210,8 @@ onBeforeUnmount(() => {
 .spotlight-footer,
 .launchpad-groups,
 :deep(.aplayer),
-.widget-shell :deep(.weather-container),
 .widget-shell :deep(.calendar),
-.widget-shell :deep(.calendar-container),
-.todo-shell :deep(.todo-list-container),
-.todo-shell :deep(.todo-container) {
+.widget-shell :deep(.calendar-container) {
   border-color: var(--lg-border-soft);
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.025)),
@@ -5515,120 +5260,6 @@ onBeforeUnmount(() => {
 }
 
 /* Weather */
-.weather-shell :deep(.weather-container) {
-  overflow: hidden;
-  padding: 12px;
-  border-width: 0.5px;
-  border-style: solid;
-  border-radius: 12px;
-}
-
-.weather-shell :deep(.weather-content) {
-  display: grid;
-  grid-template-rows: auto auto;
-  align-content: start;
-  gap: 10px;
-}
-
-.weather-shell :deep(.summary-text) {
-  margin: 0;
-  padding: 16px 18px;
-  border: 0.5px solid var(--lg-border-soft);
-  border-radius: 13px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
-    rgba(8, 14, 22, 0.22);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -0.5px 0 rgba(0, 0, 0, 0.2);
-  line-height: 1.48;
-}
-
-.weather-shell :deep(.highlight-city),
-.weather-shell :deep(.highlight-desc) {
-  color: rgba(255, 255, 255, 0.96);
-  font-weight: 600;
-}
-
-.weather-shell :deep(.highlight-temp) {
-  display: inline-flex;
-  min-height: 34px;
-  align-items: center;
-  margin-left: 5px;
-  padding: 0 3px;
-  border: 0;
-  border-radius: 0;
-  color: var(--portal-text-primary);
-  background:
-    linear-gradient(145deg, rgba(102, 187, 255, 0.22), rgba(10, 132, 255, 0.08)),
-    var(--lg-control-fill);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.28),
-    0 4px 18px rgba(0, 88, 175, 0.12);
-  font-size: 32px;
-  font-weight: 500;
-  background: transparent;
-  box-shadow: none;
-}
-
-.weather-shell :deep(.details-list) {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-}
-
-.weather-shell :deep(.details-list li) {
-  display: grid;
-  min-height: 46px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 0.5px solid var(--lg-border-soft);
-  border-radius: 12px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018)),
-    rgba(8, 14, 22, 0.18);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.15);
-  transition:
-    background-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.weather-shell :deep(.details-list li:last-child) {
-  grid-column: 1 / -1;
-}
-
-.weather-shell :deep(.details-list li:hover) {
-  border-color: var(--lg-border);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.025)),
-    rgba(8, 14, 22, 0.22);
-  transform: translateY(-1px);
-}
-
-.weather-shell :deep(.bullet) {
-  width: 7px;
-  height: 7px;
-  overflow: hidden;
-  border: 0.5px solid rgba(184, 225, 255, 0.62);
-  border-radius: 50%;
-  color: transparent;
-  background: rgba(101, 195, 255, 0.84);
-  box-shadow: 0 0 10px rgba(87, 181, 255, 0.38);
-}
-
-.weather-shell :deep(.detail-value) {
-  padding: 3px 8px;
-  border: 0.5px solid var(--lg-border-soft);
-  border-radius: 999px;
-  color: rgba(255, 255, 255, 0.9);
-  background: var(--lg-control-fill);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16);
-}
 
 /* Calendar */
 .calendar-shell {
@@ -5834,104 +5465,6 @@ onBeforeUnmount(() => {
 }
 
 /* TODO */
-.todo-overview {
-  padding: 12px 14px;
-  border: 0.5px solid var(--lg-border-soft);
-  border-radius: 14px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018)),
-    rgba(8, 14, 22, 0.16);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -0.5px 0 rgba(0, 0, 0, 0.18);
-}
-
-.todo-overview-mark {
-  border-color: var(--lg-border);
-  color: #9ed5ff;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025)),
-    var(--lg-control-fill);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -0.5px 0 rgba(0, 0, 0, 0.16);
-  -webkit-backdrop-filter: var(--lg-control-filter);
-  backdrop-filter: var(--lg-control-filter);
-}
-
-.todo-shell :deep(.todo-list-container),
-.todo-shell :deep(.todo-container) {
-  border-color: var(--lg-border-soft);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.025)),
-    rgba(7, 12, 20, 0.2);
-  box-shadow:
-    var(--lg-edge-high),
-    var(--lg-edge-low);
-}
-
-.todo-shell :deep(.mode-switch),
-.todo-shell :deep(.input-section),
-.todo-shell :deep(.current-day-chip),
-.todo-shell :deep(.add-button) {
-  border-color: var(--lg-border-soft);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
-    var(--lg-control-fill);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -0.5px 0 rgba(0, 0, 0, 0.17);
-  -webkit-backdrop-filter: var(--lg-control-filter);
-  backdrop-filter: var(--lg-control-filter);
-}
-
-.todo-shell :deep(.mode-btn.active) {
-  border-color: var(--lg-border);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.055)),
-    var(--lg-control-fill);
-}
-
-.todo-shell :deep(.task-input) {
-  background: rgba(5, 10, 17, 0.16);
-  box-shadow: none;
-  min-height: 34px;
-  font-size: 13px;
-}
-
-.todo-shell :deep(.add-button) {
-  border: 0.5px solid rgba(136, 206, 255, 0.5);
-  color: white;
-  background:
-    linear-gradient(145deg, rgba(89, 185, 255, 0.92), rgba(9, 106, 211, 0.78)),
-    rgba(10, 132, 255, 0.56);
-  width: 32px;
-  height: 32px;
-  font-size: 22px;
-  border-radius: 8px;
-}
-
-.todo-shell :deep(.task-list:empty) {
-  border-style: solid;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent),
-    rgba(5, 10, 17, 0.1);
-}
-
-.todo-shell :deep(.task-item) {
-  border-color: var(--lg-border-soft);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018)),
-    rgba(8, 14, 22, 0.16);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.14);
-}
-
-.todo-shell :deep(.task-item:hover) {
-  border-color: var(--lg-border);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
-    rgba(8, 14, 22, 0.2);
-}
 
 /* Music */
 :deep(.aplayer) {
@@ -6362,11 +5895,8 @@ onBeforeUnmount(() => {
   backdrop-filter: none;
 }
 
-.widget-shell :deep(.weather-container),
 .widget-shell :deep(.calendar),
 .widget-shell :deep(.calendar-container),
-.todo-shell :deep(.todo-list-container),
-.todo-shell :deep(.todo-container),
 :deep(.aplayer),
 :deep(.aplayer-list) {
   background:
@@ -6562,12 +6092,8 @@ onBeforeUnmount(() => {
   .launchpad-search,
   .launchpad-close,
   .bottom-launcher,
-  .todo-overview,
-  .widget-shell :deep(.weather-container),
   .widget-shell :deep(.calendar),
   .widget-shell :deep(.calendar-container),
-  .todo-shell :deep(.todo-list-container),
-  .todo-shell :deep(.todo-container),
   :deep(.aplayer),
   :deep(.aplayer-list)
 ) {
@@ -6676,7 +6202,7 @@ onBeforeUnmount(() => {
 .window-titlebar {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent),
-    rgba(20, 24, 33, 0.2);
+    rgba(20, 24, 33, 0.08);
   box-shadow:
     inset 0 -0.5px 0 rgba(0, 0, 0, 0.11);
   min-height: 40px;
@@ -6687,17 +6213,14 @@ onBeforeUnmount(() => {
 .window-music .window-body {
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 55%),
-    rgba(18, 23, 32, 0.18);
+    rgb(18 23 32 / var(--window-content-shade, 0.14));
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.055);
   text-shadow:
     0 1px 2px rgba(0, 0, 0, 0.26);
 }
 
-.widget-shell :deep(.weather-container),
 .widget-shell :deep(.calendar),
 .widget-shell :deep(.calendar-container),
-.todo-shell :deep(.todo-list-container),
-.todo-shell :deep(.todo-container),
 :deep(.aplayer),
 :deep(.aplayer-list) {
   border-color: rgba(255, 255, 255, 0.075);
@@ -6705,59 +6228,8 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 
-.weather-shell :deep(.weather-container),
 .calendar-shell :deep(.calendar) {
   border: 0;
-}
-
-.weather-shell :deep(.summary-text) {
-  border-color: rgba(255, 255, 255, 0.075);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.04), transparent),
-    rgba(6, 13, 22, 0.035);
-  box-shadow: none;
-  font-size: 15px;
-  font-weight: 400;
-}
-
-.weather-shell :deep(.details-list) {
-  gap: 0 16px;
-}
-
-.weather-shell :deep(.details-list li) {
-  min-height: 48px;
-  padding: 8px 5px;
-  border: 0;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.09);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: rgba(255, 255, 255, 0.86);
-  font-size: 13px;
-  font-weight: 400;
-}
-
-.weather-shell :deep(.details-list li:hover) {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.055);
-  transform: none;
-}
-
-.weather-shell :deep(.bullet) {
-  width: 5px;
-  height: 5px;
-  border: 0;
-  background: rgba(116, 194, 255, 0.9);
-  box-shadow: none;
-}
-
-.weather-shell :deep(.detail-value) {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  font-weight: 500;
-  font-size: 13px;
 }
 
 .calendar-shell :deep(.calendar-header) {
@@ -6822,54 +6294,6 @@ onBeforeUnmount(() => {
   transform: none;
 }
 
-.todo-overview {
-  border: 0;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.075);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.todo-overview-mark,
-.todo-shell :deep(.mode-switch),
-.todo-shell :deep(.input-section),
-.todo-shell :deep(.current-day-chip) {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.045);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.12);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-.todo-shell :deep(.todo-list-container),
-.todo-shell :deep(.todo-container) {
-  border: 0;
-  background: transparent;
-}
-
-.todo-shell :deep(.task-input),
-.todo-shell :deep(.task-list:empty) {
-  background: transparent;
-  border: 0;
-}
-
-.todo-shell :deep(.task-item) {
-  border: 0;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  min-height: 44px;
-  margin-bottom: 0;
-  padding: 6px 4px;
-  box-sizing: border-box;
-}
-
-.todo-shell :deep(.task-item:hover) {
-  border-color: rgba(255, 255, 255, 0.13);
-  background: rgba(255, 255, 255, 0.055);
-}
-
 :deep(.aplayer),
 :deep(.aplayer-info),
 :deep(.aplayer-list) {
@@ -6887,12 +6311,12 @@ onBeforeUnmount(() => {
   border-radius: 14px;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.045), transparent 55%),
-    rgba(20, 25, 34, 0.18);
+    rgba(255, 255, 255, 0.035);
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
 }
 
 .window-music :deep(.aplayer-body) {
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.065);
 }
 
 .window-music :deep(.aplayer-pic) {
@@ -6903,13 +6327,38 @@ onBeforeUnmount(() => {
   background: transparent;
 }
 
+.window-music :deep(.aplayer.aplayer-withlist .aplayer-info) {
+  border-bottom: 0;
+}
+
 .window-music :deep(.aplayer-list) {
   border-top: 0;
   background: transparent;
 }
 
+.window-music :deep(.aplayer-list ol) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.26) transparent;
+}
+
+.window-music :deep(.aplayer-list ol::-webkit-scrollbar) {
+  width: 6px;
+  height: 6px;
+}
+
+.window-music :deep(.aplayer-list ol::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+.window-music :deep(.aplayer-list ol::-webkit-scrollbar-thumb) {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.26);
+  background-clip: padding-box;
+}
+
 .window-music :deep(.aplayer-list ol li) {
-  border-top-color: rgba(255, 255, 255, 0.085);
+  border-top-color: rgba(255, 255, 255, 0.045);
   color: rgba(255, 255, 255, 0.76);
   background: transparent;
   height: 34px;
@@ -6939,7 +6388,7 @@ onBeforeUnmount(() => {
 .window-music :deep(.aplayer-music .aplayer-author),
 .window-music :deep(.aplayer-list-author),
 .window-music :deep(.aplayer-list-index) {
-  color: rgba(255, 255, 255, 0.62) !important;
+  color: var(--app-muted) !important;
   font-size: 11px;
 }
 
@@ -6985,7 +6434,7 @@ onBeforeUnmount(() => {
 }
 
 .window-music :deep(.aplayer-time) {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--app-muted);
 }
 
 .window-music :deep(.aplayer-icon path) {
@@ -7141,12 +6590,12 @@ onBeforeUnmount(() => {
   opacity: 0.72;
 }
 
-/* Wallpaper optics sit below every DOM window. This local material also
- * softens lower windows, keeping overlapping application content readable. */
+/* One local reading material softens lower DOM windows. The per-window
+ * optical ring sits above this blur, preserving the lens and Fresnel highlights. */
 .portal-desktop.has-liquid-webgl .mac-window.liquid-surface::before {
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.045), transparent 55%),
-    rgba(25, 30, 40, 0.42);
+    rgba(22, 29, 41, 0.16);
   -webkit-backdrop-filter: blur(18px) saturate(112%) !important;
   backdrop-filter: blur(18px) saturate(112%) !important;
 }
@@ -7194,30 +6643,69 @@ onBeforeUnmount(() => {
   outline: none;
 }
 
+
+/* App chrome shares tokens; each app owns its internal layout and scrolling. */
+.mac-window {
+  --app-text: #f8f9fc;
+  --app-muted: rgba(255, 255, 255, 0.78);
+  --app-line: rgba(255, 255, 255, 0.12);
+  --app-fill: rgba(255, 255, 255, 0.065);
+  --app-accent: #8bbcff;
+  --app-control-bg: rgba(255, 255, 255, 0.10);
+}
+
+.mac-window > .window-optics {
+  position: absolute;
+  inset: -0.5px;
+  z-index: 1;
+  width: calc(100% + 1px);
+  height: calc(100% + 1px);
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.has-liquid-webgl .mac-window > .window-optics {
+  opacity: 0.64;
+}
+
+.window-titlebar {
+  flex: 0 0 auto;
+}
+
+.window-todo .window-body,
+.window-weather .window-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.mac-app-content.todo-shell,
+.mac-app-content.weather-shell {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.todo-shell :deep(.reminders-app),
+.weather-shell :deep(.weather-app) {
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
 /* App contents respond to the window width, independently of the viewport. */
 @container (max-width: 420px) {
   .calendar-shell :deep(.calendar-grid) {
     padding-inline: 0;
     column-gap: 2px;
-  }
-
-  .weather-shell :deep(.details-list) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .weather-shell :deep(.details-list li:last-child) {
-    grid-column: auto;
-  }
-
-  .todo-shell :deep(.mode-switch) {
-    width: 100%;
-    flex-wrap: wrap;
-    box-sizing: border-box;
-  }
-
-  .todo-shell :deep(.mode-btn) {
-    min-width: 0;
-    flex: 1 1 90px;
   }
 
   .calendar-shell :deep(.calendar-header) {
@@ -7366,20 +6854,6 @@ onBeforeUnmount(() => {
     padding: 10px;
   }
 
-  .weather-shell :deep(.weather-content) {
-    justify-content: flex-start;
-    padding-top: 22px;
-    box-sizing: border-box;
-  }
-
-  .weather-shell :deep(.details-list) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .weather-shell :deep(.details-list li:last-child) {
-    grid-column: auto;
-  }
-
   .calendar-shell :deep(.calendar-header) {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -7449,62 +6923,6 @@ onBeforeUnmount(() => {
     display: none;
   }
 
-  .window-todo .window-body {
-    padding: 10px;
-  }
-
-  .todo-shell {
-    min-height: 0;
-  }
-
-  .todo-overview {
-    padding-inline: 2px;
-  }
-
-  .todo-overview h2 {
-    font-size: 22px;
-  }
-
-  .todo-overview div > span {
-    max-width: 230px;
-  }
-
-  .todo-shell :deep(.todo-list-container),
-  .todo-shell :deep(.todo-container) {
-    min-height: 0;
-    padding: 12px;
-  }
-
-  .todo-shell :deep(.mode-switch) {
-    width: 100%;
-    overflow-x: auto;
-    box-sizing: border-box;
-  }
-
-  .todo-shell :deep(.mode-btn) {
-    min-width: 0;
-    min-height: 44px;
-    flex: 1 0 96px;
-  }
-
-  .todo-shell :deep(.current-day-chip) {
-    min-height: 44px;
-  }
-
-  .todo-shell :deep(.input-section) {
-    grid-template-columns: minmax(0, 1fr) 44px;
-  }
-
-  .todo-shell :deep(.task-input) {
-    min-height: 44px;
-    font-size: 16px;
-  }
-
-  .todo-shell :deep(.add-button) {
-    width: 44px;
-    height: 44px;
-  }
-
   .calendar-shell :deep(.nav-btn),
   .calendar-shell :deep(.today-btn),
   .calendar-shell :deep(.mark-btn) {
@@ -7564,10 +6982,6 @@ onBeforeUnmount(() => {
   .window-music :deep(.aplayer-list ol li) {
     height: 44px;
     line-height: 44px;
-  }
-
-  .todo-shell :deep(.task-list) {
-    min-height: 132px;
   }
 
   .spotlight-shell-enter-from .spotlight-panel,
@@ -7646,15 +7060,6 @@ onBeforeUnmount(() => {
 
 @media (max-width: 480px) {
   .menu-clock {
-    display: none;
-  }
-
-  .todo-overview-mark {
-    width: 38px;
-    height: 38px;
-  }
-
-  .todo-overview div > span {
     display: none;
   }
 
@@ -7844,11 +7249,8 @@ onBeforeUnmount(() => {
   }
 
   .calendar-shell :deep(.nav-btn),
-  .calendar-shell :deep(.today-btn),
-  .calendar-shell :deep(.mark-btn),
-  .todo-shell :deep(.mode-btn),
-  .todo-shell :deep(.current-day-chip),
-  .todo-shell :deep(.add-button) {
+.calendar-shell :deep(.today-btn),
+.calendar-shell :deep(.mark-btn) {
     min-height: 44px;
   }
 
@@ -8103,20 +7505,8 @@ onBeforeUnmount(() => {
       0 0 10px rgba(0, 0, 0, 0.14);
   }
 
-  .widget-shell :deep(.weather-container),
-  .widget-shell :deep(.calendar),
-  .todo-shell :deep(.todo-list-container),
-  .todo-shell :deep(.todo-container) {
+  .widget-shell :deep(.calendar) {
     background: rgba(7, 13, 22, 0.14);
-  }
-
-  .weather-shell :deep(.weather-container) {
-    color: rgba(255, 255, 255, 0.92);
-  }
-
-  .weather-shell :deep(.loading-state) {
-    color: rgba(255, 255, 255, 0.78);
-    background: rgba(7, 13, 22, 0.18);
   }
 
   .calendar-shell :deep(.nav-btn),
@@ -8145,11 +7535,6 @@ onBeforeUnmount(() => {
   .calendar-shell :deep(.red-pill) {
     min-height: 36px;
     padding-inline: 10px;
-  }
-
-  .todo-overview-mark {
-    width: 44px;
-    height: 44px;
   }
 
   .spotlight-overlay {
@@ -8232,40 +7617,6 @@ onBeforeUnmount(() => {
   .bottom-launcher > a.launcher-item,
   .bottom-launcher > .launcher-divider {
     display: none;
-  }
-}
-
-@media (max-width: 360px) and (orientation: portrait) {
-  .todo-shell {
-    width: 100%;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .todo-overview {
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .todo-shell :deep(.mode-switch) {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    overflow: visible;
-  }
-
-  .todo-shell :deep(.mode-btn) {
-    width: auto;
-    flex: none;
-  }
-
-  .todo-shell :deep(.current-day-chip) {
-    width: 100%;
-    grid-column: 1 / -1;
-    white-space: nowrap;
-  }
-
-  .todo-shell :deep(.task-list:empty::after) {
-    width: 100%;
-    white-space: pre-wrap;
   }
 }
 
@@ -8352,19 +7703,15 @@ onBeforeUnmount(() => {
   }
 
   .window-body,
-  .window-todo .window-body,
-  .window-music .window-body,
-  .spotlight-results,
-  .spotlight-footer,
-  .launchpad-groups,
-  .todo-overview,
-  :deep(.aplayer),
-  :deep(.aplayer-list),
-  .widget-shell :deep(.weather-container),
-  .widget-shell :deep(.calendar),
-  .widget-shell :deep(.calendar-container),
-  .todo-shell :deep(.todo-list-container),
-  .todo-shell :deep(.todo-container) {
+.window-todo .window-body,
+.window-music .window-body,
+.spotlight-results,
+.spotlight-footer,
+.launchpad-groups,
+:deep(.aplayer),
+:deep(.aplayer-list),
+.widget-shell :deep(.calendar),
+.widget-shell :deep(.calendar-container) {
     background: rgba(26, 28, 34, 0.98);
   }
 
@@ -8408,18 +7755,14 @@ onBeforeUnmount(() => {
   }
 
   .window-body,
-  .window-todo .window-body,
-  .window-music .window-body,
-  .spotlight-results,
-  .spotlight-footer,
-  .launchpad-groups,
-  .todo-overview,
-  :deep(.aplayer),
-  .widget-shell :deep(.weather-container),
-  .widget-shell :deep(.calendar),
-  .widget-shell :deep(.calendar-container),
-  .todo-shell :deep(.todo-list-container),
-  .todo-shell :deep(.todo-container) {
+.window-todo .window-body,
+.window-music .window-body,
+.spotlight-results,
+.spotlight-footer,
+.launchpad-groups,
+:deep(.aplayer),
+.widget-shell :deep(.calendar),
+.widget-shell :deep(.calendar-container) {
     background: rgba(20, 22, 27, 0.9);
   }
 
@@ -8463,35 +7806,29 @@ onBeforeUnmount(() => {
   }
 
   .menu-dropdown,
-  .portal-desktop,
-  .portal-menu-bar,
-  .mac-window,
-  .window-titlebar,
-  .window-body,
-  .window-todo .window-body,
-  .window-music .window-body,
-  .spotlight-overlay,
-  .spotlight-panel,
-  .spotlight-search,
-  .spotlight-results,
-  .spotlight-footer,
-  .launchpad-overlay,
-  .launchpad-groups,
-  .launchpad-search,
-  .launchpad-close,
-  .bottom-launcher,
-  .launcher-tooltip,
-  .launcher-tooltip::after,
-  .todo-overview,
-  :deep(.aplayer),
-  :deep(.aplayer-list),
-  .widget-shell :deep(.weather-container),
-  .widget-shell :deep(.calendar),
-  .widget-shell :deep(.calendar-container),
-  .todo-shell :deep(.todo-list-container),
-  .todo-shell :deep(.todo-container),
-  .todo-shell :deep(.mode-switch),
-  .todo-shell :deep(.input-section) {
+.portal-desktop,
+.portal-menu-bar,
+.mac-window,
+.window-titlebar,
+.window-body,
+.window-todo .window-body,
+.window-music .window-body,
+.spotlight-overlay,
+.spotlight-panel,
+.spotlight-search,
+.spotlight-results,
+.spotlight-footer,
+.launchpad-overlay,
+.launchpad-groups,
+.launchpad-search,
+.launchpad-close,
+.bottom-launcher,
+.launcher-tooltip,
+.launcher-tooltip::after,
+:deep(.aplayer),
+:deep(.aplayer-list),
+.widget-shell :deep(.calendar),
+.widget-shell :deep(.calendar-container) {
     color: CanvasText;
     border-color: CanvasText;
     background: Canvas;
@@ -8530,24 +7867,18 @@ onBeforeUnmount(() => {
   }
 
   .menu-dropdown,
-  .portal-menu-bar,
-  .mac-window,
-  .spotlight-panel,
-  .spotlight-overlay,
-  .bottom-launcher,
-  .launchpad-overlay,
-  .launcher-tooltip,
-  .launchpad-groups,
-  .todo-overview,
-  :deep(.aplayer),
-  :deep(.aplayer-list),
-  .widget-shell :deep(.weather-container),
-  .widget-shell :deep(.calendar),
-  .widget-shell :deep(.calendar-container),
-  .todo-shell :deep(.todo-list-container),
-  .todo-shell :deep(.todo-container),
-  .todo-shell :deep(.mode-switch),
-  .todo-shell :deep(.input-section) {
+.portal-menu-bar,
+.mac-window,
+.spotlight-panel,
+.spotlight-overlay,
+.bottom-launcher,
+.launchpad-overlay,
+.launcher-tooltip,
+.launchpad-groups,
+:deep(.aplayer),
+:deep(.aplayer-list),
+.widget-shell :deep(.calendar),
+.widget-shell :deep(.calendar-container) {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -8562,29 +7893,20 @@ onBeforeUnmount(() => {
   }
 
   .window-body,
-  .window-todo .window-body,
-  .window-music .window-body,
-  .spotlight-results,
-  .spotlight-footer,
-  .launchpad-groups,
-  .todo-overview,
-  :deep(.aplayer),
-  :deep(.aplayer-list),
-  .widget-shell :deep(.weather-container),
-  .widget-shell :deep(.calendar),
-  .widget-shell :deep(.calendar-container),
-  .todo-shell :deep(.todo-list-container),
-  .todo-shell :deep(.todo-container) {
+.window-todo .window-body,
+.window-music .window-body,
+.spotlight-results,
+.spotlight-footer,
+.launchpad-groups,
+:deep(.aplayer),
+:deep(.aplayer-list),
+.widget-shell :deep(.calendar),
+.widget-shell :deep(.calendar-container) {
     background: rgb(31, 32, 37);
   }
 
   .spotlight-overlay {
     background: rgba(20, 20, 24, 0.92);
-  }
-
-  .todo-shell :deep(.todo-list-container),
-  .todo-shell :deep(.todo-container) {
-    background: rgb(35, 36, 44);
   }
 
   .bottom-launcher {
@@ -8603,31 +7925,28 @@ onBeforeUnmount(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .mac-window.is-zooming,
-  .liquid-glass-canvas,
-  .window-shell-enter-active,
-  .window-shell-leave-active,
-  .spotlight-shell-enter-active,
-  .spotlight-shell-leave-active,
-  .spotlight-shell-enter-active .spotlight-panel,
-  .spotlight-shell-leave-active .spotlight-panel,
-  .launchpad-shell-enter-active,
-  .launchpad-shell-leave-active,
-  .launchpad-shell-enter-active .launchpad-panel,
-  .launchpad-shell-leave-active .launchpad-panel,
-  .launcher-item,
-  .launcher-item img,
-  .launcher-tooltip,
-  .menu-glyph-button,
-  .menu-command,
-  .menu-status-action,
-  .menu-clock-action,
-  .spotlight-result,
-  .todo-shell :deep(.mode-btn),
-  .todo-shell :deep(.add-button),
-  .launchpad-tile,
-  .launchpad-tile::before,
-  .weather-shell :deep(.details-list li),
-  .calendar-shell :deep(.calendar-cell) {
+.liquid-glass-canvas,
+.window-shell-enter-active,
+.window-shell-leave-active,
+.spotlight-shell-enter-active,
+.spotlight-shell-leave-active,
+.spotlight-shell-enter-active .spotlight-panel,
+.spotlight-shell-leave-active .spotlight-panel,
+.launchpad-shell-enter-active,
+.launchpad-shell-leave-active,
+.launchpad-shell-enter-active .launchpad-panel,
+.launchpad-shell-leave-active .launchpad-panel,
+.launcher-item,
+.launcher-item img,
+.launcher-tooltip,
+.menu-glyph-button,
+.menu-command,
+.menu-status-action,
+.menu-clock-action,
+.spotlight-result,
+.launchpad-tile,
+.launchpad-tile::before,
+.calendar-shell :deep(.calendar-cell) {
     animation: none !important;
     transition: none !important;
   }

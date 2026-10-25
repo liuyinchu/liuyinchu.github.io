@@ -1,42 +1,42 @@
 <template>
-  <div class="weather-container">
-    <div v-if="loading" class="loading-state">Loading weather data...</div>
-    <div v-else-if="error" class="error-state">{{ error }}</div>
-    <div v-else-if="weatherInfo" class="weather-content">
-      <p class="summary-text">
-        Today in <span class="highlight-city">{{ locationName }}</span> ,
-        it will be <span class="highlight-desc">{{ weatherInfo.text }}</span> ,
-        with <span class="highlight-temp">{{ weatherInfo.temp }}°C</span> .
-      </p>
-
-      <ul class="details-list">
-        <li>
-          <span class="bullet">•</span> Feels like temperature is
-          <span class="detail-value">{{ weatherInfo.feelsLike }}°C</span>
-        </li>
-        <li>
-          <span class="bullet">•</span> Wind speed in your Location is
-          <span class="detail-value">{{ weatherInfo.windSpeed }} km/h</span>
-        </li>
-        <li>
-          <span class="bullet">•</span> And humidity
-          <span class="detail-value">{{ weatherInfo.humidity }}%</span>
-        </li>
-        <li v-if="weatherInfo.pressure">
-          <span class="bullet">•</span> Pressure
-          <span class="detail-value">{{ weatherInfo.pressure }} hPa</span>
-        </li>
-        <li v-if="weatherInfo.vis">
-          <span class="bullet">•</span> Visibility
-          <span class="detail-value">{{ Number(weatherInfo.vis).toFixed(1) }} km</span>
-        </li>
-      </ul>
+  <section class="weather-app portal-widget" aria-label="Current weather" :aria-busy="loading">
+    <div v-if="loading" class="weather-status" role="status">
+      <img src="/portal-icons/weather-cloud.svg" alt="" class="weather-status-icon" />
+      <h2 class="weather-city">{{ locationName }}</h2>
+      <p class="weather-status-copy">Loading current weather…</p>
     </div>
-  </div>
+    <div v-else-if="error" class="weather-status">
+      <img src="/portal-icons/weather-cloud.svg" alt="" class="weather-status-icon" />
+      <h2 class="weather-city">{{ locationName }}</h2>
+      <p class="weather-status-copy" role="alert">Weather is unavailable right now.</p>
+      <button class="weather-retry" type="button" @click="fetchWeatherData">Try again</button>
+    </div>
+    <div v-else-if="weatherInfo" class="weather-body">
+      <header class="weather-overview">
+        <div class="weather-summary">
+          <h2 class="weather-city">{{ locationName }}</h2>
+          <p class="weather-condition">{{ weatherInfo.text }}</p>
+          <p class="weather-temperature" :aria-label="weatherInfo.temp + ' degrees Celsius'">
+            <span>{{ weatherInfo.temp }}°</span><span class="weather-scale" aria-hidden="true">C</span>
+          </p>
+        </div>
+        <img :src="conditionIcon" alt="" class="weather-condition-icon" />
+      </header>
+      <dl class="weather-metrics" aria-label="Weather details">
+        <div v-for="metric in weatherMetrics" :key="metric.label" class="weather-metric">
+          <dt class="weather-metric-label">
+            <img :src="'/portal-icons/' + metric.icon + '.svg'" alt="" />
+            <span>{{ metric.label }}</span>
+          </dt>
+          <dd class="weather-metric-value">{{ metric.value }}<span class="weather-metric-unit">{{ metric.unit }}</span></dd>
+        </div>
+      </dl>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 
 // --- 核心配置 (请根据您的实际情况修改) ---
 
@@ -63,6 +63,37 @@ const weatherInfo = ref(null);      // 存储实时天气数据
 const locationName = ref(DISPLAY_CITY_NAME); // 直接使用固定的城市名称
 const loading = ref(true);          // 控制加载状态
 const error = ref(null);            // 存储错误信息
+
+
+// Use the reported condition without inferring forecasts or the current time.
+const conditionIcon = computed(() => {
+  const condition = (weatherInfo.value?.text || '').toLowerCase();
+  let icon = 'cloud';
+  if (/thunder|storm/.test(condition)) icon = 'storm';
+  else if (/snow|sleet|ice|blizzard/.test(condition)) icon = 'snow';
+  else if (/rain|drizzle|shower/.test(condition)) icon = 'rain';
+  else if (/fog|mist|haze|dust|sand/.test(condition)) icon = 'fog';
+  else if (/partly cloudy|few clouds/.test(condition)) icon = 'cloud-sun';
+  else if (/sunny|clear/.test(condition)) icon = String(weatherInfo.value?.icon) === '150' ? 'moon' : 'sun';
+  return '/portal-icons/weather-' + icon + '.svg';
+});
+
+const weatherMetrics = computed(() => {
+  const now = weatherInfo.value;
+  if (!now) return [];
+  const metrics = [
+    { label: 'Feels like', icon: 'thermometer', value: now.feelsLike, unit: '°C' },
+    { label: 'Wind', icon: 'wind', value: now.windSpeed, unit: 'km/h' },
+    { label: 'Humidity', icon: 'droplets', value: now.humidity, unit: '%' },
+  ];
+  if (now.pressure != null && now.pressure !== '') {
+    metrics.push({ label: 'Pressure', icon: 'gauge', value: now.pressure, unit: 'hPa' });
+  }
+  if (now.vis != null && now.vis !== '') {
+    metrics.push({ label: 'Visibility', icon: 'eye', value: Number(now.vis).toFixed(1), unit: 'km' });
+  }
+  return metrics;
+});
 
 /**
  * 统一的 API 请求辅助函数 (与之前版本相同)
@@ -152,214 +183,147 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* ===== 容器：柔和玻璃感 + 细描边 + 内边距优化 ===== */
-.weather-container {
-  transform: scale(0.999);
-  transform-origin: top center;
-
-  --card-bg: rgba(255,255,255,0.03);
-  --card-bd: rgba(255,255,255,0.08);
-  --card-bd-strong: rgba(255,255,255,0.14);
-  --chip-bg: rgba(255,255,255,0.06);
-  --chip-bd: rgba(255,255,255,0.12);
-
-  display: flex;
-  flex-direction: column;
+.weather-app {
+  container-type: inline-size;
+  width: 100%;
   height: 100%;
-  padding: 1.1rem 1.25rem; /* 收紧左右，拉大整体密度 */
+  min-height: 0;
+  overflow: auto;
   box-sizing: border-box;
-  color: var(--ctp-mocha-text);
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  justify-content: center;
-  align-items: stretch;
-
-  background: linear-gradient(180deg, var(--card-bg), transparent 120%),
-              radial-gradient(120% 90% at 10% -10%, rgba(116,199,236,0.09), transparent 40%),
-              radial-gradient(120% 90% at 100% 0%, rgba(203,166,247,0.06), transparent 45%);
-  border: 1px solid var(--card-bd);
-  border-radius: 14px;
-  backdrop-filter: saturate(115%) blur(6px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  color: var(--app-text, #f8f9fc);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  font-size: 13px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .28) transparent;
 }
-
-/* ===== 状态：加载/错误 ===== */
-.loading-state, .error-state {
-  flex-grow: 1;
+.weather-app::-webkit-scrollbar { width: 6px; height: 6px; }
+.weather-app::-webkit-scrollbar-track { background: transparent; }
+.weather-app::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .28); border-radius: 999px; }
+.weather-app::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .42); }
+.weather-app::-webkit-scrollbar-corner { background: transparent; }
+.weather-body { padding: 16px 20px 20px; }
+.weather-overview {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  text-align: center;
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px dashed var(--card-bd);
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
 }
-
-/* 骨架微动效（loading） */
-.loading-state {
-  font-size: 1.05rem;
-  color: var(--ctp-mocha-overlay1);
-  position: relative;
-  overflow: hidden;
-}
-.loading-state::after{
-  content:"";
-  position:absolute; inset:0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-  transform: translateX(-100%);
-  animation: shimmer 1.2s infinite;
-}
-@keyframes shimmer{
-  100% { transform: translateX(100%); }
-}
-
-.error-state {
-  color: var(--ctp-mocha-red);
-  white-space: pre-line;
-  border-color: color-mix(in oklab, var(--ctp-mocha-red) 35%, transparent);
-  background: color-mix(in oklab, var(--ctp-mocha-red) 8%, transparent);
-}
-
-/* ===== 内容主体 ===== */
-.weather-content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 100%;
-  background: none !important; /* 去掉深色背景 */
-  box-shadow: none !important; /* 去掉阴影 */
-  border-radius: 0 !important; /* 去掉圆角 */
-  padding: 0; /* 去掉额外间距 */
-}
-
-/* ===== 概要句：层级更清晰，数值更突出 ===== */
-.summary-text {
+.weather-summary { min-width: 0; }
+.weather-city {
   margin: 0;
+  color: var(--app-text, #f8f9fc);
+  font-size: 21px;
   font-weight: 600;
-  line-height: 1.45;
-  color: var(--ctp-mocha-text);
-  font-size: clamp(1.05rem, 0.92rem + 0.6vw, 1.6rem);
-  letter-spacing: 0.1px;
+  letter-spacing: -.45px;
+  line-height: 1.25;
 }
-
-/* 城市名：暖色强调 */
-.highlight-city {
-  color: var(--ctp-mocha-lavender);
-  font-weight: 900;
-  padding: 0.05rem 0.35rem;
+.weather-condition {
+  margin: 4px 0 6px;
+  color: var(--app-muted, rgba(255, 255, 255, .68));
+  font-size: 13px;
+  line-height: 1.4;
 }
-
-/* 天气描述：淡紫强调，首字母已在模板中处理为 capitalize */
-.highlight-desc {
-  color: var(--ctp-mocha-lavender);
-  font-weight: 900;
-  padding: 0.05rem 0.35rem;
-  border-radius: 0.5rem;
-  /* background: rgba(203,166,247,0.12);
-  border: 1px solid rgba(203,166,247,0.28); */
+.weather-temperature {
+  display: flex;
+  align-items: baseline;
+  margin: 0;
+  color: var(--app-text, #f8f9fc);
+  font-size: 72px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -4px;
+  font-variant-numeric: tabular-nums;
 }
-
-/* 温度：大号数字 + 轻投影，视觉锚点 */
-.highlight-temp {
-  display: inline-block;
-  margin-left: 0.4rem;
-  font-weight: 1000;
-  font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.4rem);
-  color: var(--ctp-mocha-blue);
-  text-shadow: 0 2px 12px rgba(116,199,236,0.25);
-  transform: translateY(1px);
-  padding: 0.05rem 0.35rem;
+.weather-scale {
+  margin-left: 5px;
+  color: var(--app-muted, rgba(255, 255, 255, .68));
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0;
 }
-
-/* ===== 细节列表：对齐规整，加入分隔线与数值“胶囊” ===== */
-.details-list {
-  list-style: none;
-  padding: 0;
-  margin: 0.25rem 0 0;
-  font-size: clamp(0.88rem, 0.84rem + 0.2vw, 1rem);
-  color: var(--ctp-mocha-subtext0);
+.weather-condition-icon {
+  width: 86px;
+  height: 86px;
+  flex-shrink: 0;
+  margin-right: 8px;
+  opacity: .95;
+  filter: brightness(0) invert(1) drop-shadow(0 5px 14px rgba(139, 188, 255, .16));
+}
+.weather-metrics {
   display: grid;
-  grid-template-columns: 1fr;   /* 你若想双列：改 repeat(2,minmax(0,1fr)) */
-  row-gap: 0.35rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
 }
-
-.details-list li {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+.weather-metric {
+  grid-column: span 2;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--app-line, rgba(255, 255, 255, .12));
+  border-radius: 13px;
+  background: var(--app-fill, rgba(255, 255, 255, .065));
+}
+.weather-metric:nth-child(-n + 2) { grid-column: span 3; }
+.weather-metric-label {
+  display: flex;
   align-items: center;
-  column-gap: 0.4rem;
-  padding: 0.4rem 0.25rem;
-  border-bottom: 1px dashed var(--card-bd);
+  gap: 5px;
+  color: var(--app-muted, rgba(255, 255, 255, .68));
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
 }
-.details-list li:last-child { border-bottom: 0; }
-
-/* 子弹点：几何圆点，不抢主色 */
-.bullet {
-  width: 10px; height: 10px;
-  display: inline-block;
-  line-height: 10px;
-  text-indent: -9999px; /* 隐藏原字符 */
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, var(--ctp-mocha-sky), var(--ctp-mocha-blue));
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.06);
-  margin-right: 0.25rem;
-}
-
-/* 数值胶囊：与主题协调的玻璃态 chip */
-.detail-value {
-  justify-self: end;
-  padding: 0.18rem 0.5rem;
-  border-radius: 999px;
-  background: var(--chip-bg);
-  border: 1px solid var(--chip-bd);
-  color: var(--ctp-mocha-text);
-  font-weight: 700;
-  letter-spacing: 0.2px;
+.weather-metric-label img { width: 13px; height: 13px; opacity: .75; filter: brightness(0) invert(1); }
+.weather-metric-value {
+  margin: 5px 0 0;
+  color: var(--app-text, #f8f9fc);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -.4px;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  min-width: 4ch;
-  text-align: right;
 }
-
-/* ===== 交互微动效（整体 hover 轻微提亮） ===== */
-.weather-container:hover {
-  border-color: var(--card-bd-strong);
-  box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+.weather-metric-unit {
+  margin-left: 4px;
+  color: var(--app-muted, rgba(255, 255, 255, .68));
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
 }
-
-/* ===== 小屏优化：行距与字号略收紧 ===== */
-@media (max-width: 460px) {
-  .weather-container { padding: 0.9rem 1rem; }
-  .details-list { row-gap: 0.25rem; }
-  .details-list li { padding: 0.3rem 0.1rem; }
+.weather-status {
+  display: flex;
+  min-height: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  text-align: center;
 }
-
-/* KILL the dark panel on the container itself */
-.weather-container {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  border-radius: 0 !important; /* 如需保持外层卡片圆角，可删掉这行 */
-  padding: 0 0rem !important; /* 保留你原先的左右内边距 */
+.weather-status-icon { width: 42px; height: 42px; margin-bottom: 12px; opacity: .75; filter: brightness(0) invert(1); }
+.weather-status-copy { margin: 8px 0 0; color: var(--app-muted, rgba(255, 255, 255, .68)); line-height: 1.5; }
+.weather-retry {
+  margin-top: 16px;
+  padding: 7px 15px;
+  border: 1px solid var(--app-line, rgba(255, 255, 255, .12));
+  border-radius: 8px;
+  background: var(--app-control-bg, rgba(255, 255, 255, .10));
+  color: var(--app-text, #f8f9fc);
+  font: inherit;
+  cursor: pointer;
 }
-
-/* 保险：如果之前加过伪元素做遮罩，一并关掉 */
-.weather-container::before,
-.weather-container::after {
-  content: none !important;
-  display: none !important;
-  background: none !important;
-  box-shadow: none !important;
-}
-
-/* 内容块保持透明，防止内层再加底色 */
-.weather-content {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
+.weather-retry:hover { background: rgba(255, 255, 255, .17); }
+.weather-retry:focus-visible { outline: 2px solid var(--app-accent, #8bbcff); outline-offset: 3px; }
+@container (max-width: 360px) {
+  .weather-body { padding: 12px 14px 16px; }
+  .weather-overview { gap: 12px; margin-bottom: 14px; }
+  .weather-city { font-size: 20px; }
+  .weather-temperature { font-size: 64px; }
+  .weather-condition-icon { width: 68px; height: 68px; margin-right: 2px; }
+  .weather-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .weather-metric, .weather-metric:nth-child(-n + 2) { grid-column: span 1; }
+  .weather-metric:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 </style>

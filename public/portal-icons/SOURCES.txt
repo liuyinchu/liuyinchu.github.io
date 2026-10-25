@@ -11,3 +11,21 @@ launchpad.svg <- layout-grid.svg
 reminders.svg <- list-todo.svg
 chevron-left.svg <- chevron-left.svg
 chevron-right.svg <- chevron-right.svg
+
+Portal app refinement — retrieved 2026-10-25 from the same Lucide source and license:
+plus.svg <- plus.svg
+trash-2.svg <- trash.svg
+weather-sun.svg <- sun.svg
+weather-moon.svg <- moon.svg
+weather-cloud.svg <- cloud.svg
+weather-cloud-sun.svg <- cloud-sun.svg
+weather-rain.svg <- cloud-rain.svg
+weather-snow.svg <- cloud-snow.svg
+weather-fog.svg <- cloud-fog.svg
+weather-storm.svg <- cloud-lightning.svg
+thermometer.svg <- thermometer.svg
+wind.svg <- wind.svg
+droplets.svg <- droplets.svg
+gauge.svg <- gauge.svg
+eye.svg <- eye.svg
+check.svg <- check.svg
