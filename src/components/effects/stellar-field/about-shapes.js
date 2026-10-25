@@ -1,9 +1,8 @@
 // Procedural About formations and the projection shared with their DOM anchors.
 export const ABOUT_NODES = [
-  { id: 'notes', position: [-.55, .38, .10], fallbackPath: 'M-14-17H14V17H-14ZM-8-8H8M-8-1H8M-8 6H4' },
-  { id: 'talk', position: [.55, .38, -.12], fallbackPath: 'M-18-13H18V10H1L-10 19V10H-18ZM-10-3H10M-10 3H5' },
-  { id: 'resources', position: [-.55, -.38, -.10], fallbackPath: 'M-21 0A21 11 0 1 0 21 0A21 11 0 1 0-21 0M0-21A11 21 0 1 0 0 21A11 21 0 1 0 0-21' },
-  { id: 'projects', position: [.55, -.38, .14], fallbackPath: 'M-17-8 0-18 17-8 0 2ZM-17-8V12L0 22 17 12V-8M0 2V22' },
+  { id: 'notes', position: [-.58, .42, .10], fallbackPath: 'M-14-17H14V17H-14ZM-8-8H8M-8-1H8M-8 6H4' },
+  { id: 'resources', position: [-.50, -.26, -.10], fallbackPath: 'M-21 0A21 11 0 1 0 21 0A21 11 0 1 0-21 0M0-21A11 21 0 1 0 0 21A11 21 0 1 0 0-21' },
+  { id: 'projects', position: [.45, .06, .14], fallbackPath: 'M-17-8 0-18 17-8 0 2ZM-17-8V12L0 22 17 12V-8M0 2V22' },
 ]
 
 function smoothstep(low, high, value) {
@@ -14,9 +13,14 @@ export function getAboutContentWeight(progress) {
   return 1 - smoothstep(.04, .14, Math.abs(progress - .6))
 }
 export function getAboutView(width, height, progress) {
+  const desktop = smoothstep(700, 1000, width)
+  const mobile = 1 - desktop
+  const contents = getAboutContentWeight(progress)
+  const ending = smoothstep(.8, 1, progress)
   return {
-    scene: Math.min(height * .458, width * .45),
-    offsetX: width * .16 * smoothstep(700, 1000, width) * getAboutContentWeight(progress),
+    scene: Math.min(height * .458, width * .45) * (1 - mobile * (.12 * contents + .32 * ending) - desktop * .12 * ending),
+    offsetX: width * desktop * (.16 * contents - .18 * ending),
+    offsetY: height * mobile * (.07 * contents + .036 * ending),
   }
 }
 
@@ -41,10 +45,62 @@ function ellipse(cx, cy, rx, ry, depth = 0, start = 0, end = Math.PI * 2) {
   })
 }
 
+// An open half-twisted strip follows a depth-separated figure eight; a second,
+// narrower stream crosses behind it. Across-strip lanes stay visible when dragged.
+export function endingRibbonPoint(u, across = 0, stream = 0) {
+  const theta = -.86 * Math.PI + u * 1.80 * Math.PI
+  const phase = theta + stream * .24
+  const center = [
+    Math.sin(phase) * (stream ? .91 : .86) + stream * .07,
+    Math.sin(phase * 2 + stream * .38) * (stream ? .29 : .37) - stream * .08,
+    Math.cos(phase) * (stream ? -.32 : .44) - stream * .09,
+  ]
+  const tangent = [
+    Math.cos(phase) * (stream ? .91 : .86),
+    Math.cos(phase * 2 + stream * .38) * (stream ? .58 : .74),
+    -Math.sin(phase) * (stream ? -.32 : .44),
+  ]
+  const length = Math.hypot(...tangent)
+  const [tx, ty, tz] = tangent.map((value) => value / length)
+  const flat = Math.hypot(tx, ty)
+  const normal = [-ty / flat, tx / flat, 0]
+  const binormal = [-tz * normal[1], tz * normal[0], tx * normal[1] - ty * normal[0]]
+  const twist = theta * .5 + stream * 1.1
+  const taper = .45 + .55 * Math.sin(Math.PI * u) ** .6
+  const width = (stream ? .065 : .18) * across * taper
+  const point = center.map((value, axis) => value + width * (normal[axis] * Math.cos(twist) + binormal[axis] * Math.sin(twist)))
+  const release = smoothstep(.82, 1, u)
+  point[0] += release * release * (stream ? .33 : .48)
+  point[1] += release * release * .14
+  point[2] -= release * .20
+  // A gentle tilt exposes both the crossing and the front/back ribbon surfaces.
+  const y = point[1] * Math.cos(.26) - point[2] * Math.sin(.26)
+  const z = point[1] * Math.sin(.26) + point[2] * Math.cos(.26)
+  return [point[0] * Math.cos(.18) - y * Math.sin(.18), point[0] * Math.sin(.18) + y * Math.cos(.18), z]
+}
+
+export const ABOUT_ENDING_PATHS = [0, 1].flatMap((stream) =>
+  [-1, -.66, -.33, 0, .33, .66, 1].map((across) => ({
+    stream,
+    opacity: stream ? .44 : .68 - Math.abs(across) * .20,
+    d: Array.from({ length: 121 }, (_, index) => {
+      const [x, y, z] = endingRibbonPoint(index / 120, across, stream)
+      const scale = 90 * 3.8 / (3.8 - z)
+      return (index ? 'L' : 'M') + (x * scale).toFixed(2) + ' ' + (-y * scale).toFixed(2)
+    }).join(' '),
+  })),
+)
+
+export const ABOUT_ENDING_KNOTS = [.11, .31, .54, .77, .93].map((u) => {
+  const [x, y, z] = endingRibbonPoint(u)
+  const scale = 90 * 3.8 / (3.8 - z)
+  return { x: x * scale, y: -y * scale }
+})
+
 export function createAboutParticles({ dustCount, starCount, backgroundCount, random }) {
   const count = dustCount + starCount + backgroundCount
   const result = { count }
-  for (const name of ['six', 'emoji', 'arrow', 'knot', 'field', 'scatter']) result[name] = new Float32Array(count * 3)
+  for (const name of ['six', 'emoji', 'arrow', 'knot', 'field', 'scatter', 'ending']) result[name] = new Float32Array(count * 3)
   result.style = new Float32Array(count * 4)
   result.nodeGroup = new Float32Array(count)
   result.anchors = ABOUT_NODES.map((node, index) => ({ id: node.id, index: dustCount + index }))
@@ -79,10 +135,6 @@ export function createAboutParticles({ dustCount, starCount, backgroundCount, ra
       path([[-.15, -.19], [.15, -.19], [.15, .19], [-.15, .19], [-.15, -.19]]),
       path([[-.09, .09], [.09, .09]]), path([[-.09, .01], [.09, .01]]), path([[-.09, -.07], [.04, -.07]]),
     ]),
-    sampler([
-      path([[-.20, .14], [.20, .14], [.20, -.11], [.02, -.11], [-.11, -.21], [-.11, -.11], [-.20, -.11], [-.20, .14]]),
-      path([[-.10, .04], [.10, .04]]), path([[-.10, -.03], [.05, -.03]]),
-    ]),
     sampler([ellipse(0, 0, .23, .12, .02), ellipse(0, 0, .12, .23, -.02)]),
     sampler([
       path([[-.18, .09], [0, .20], [.18, .09], [0, -.02], [-.18, .09]], .08),
@@ -94,7 +146,7 @@ export function createAboutParticles({ dustCount, starCount, backgroundCount, ra
     const background = i >= dustCount + starCount
     const hero = i >= dustCount && !background
     const u = random()
-    const group = hero ? (i - dustCount) % 4 : i % 4
+    const group = hero ? (i - dustCount) % ABOUT_NODES.length : i % ABOUT_NODES.length
     result.nodeGroup[i] = background ? 0 : group + 1
     const jitter = () => gaussian() * (hero ? .005 : .009)
     const secondary = i % 4 === 0
@@ -117,9 +169,15 @@ export function createAboutParticles({ dustCount, starCount, backgroundCount, ra
     write('scatter', i, [Math.cos(starAngle) * openRadius * 1.22, Math.sin(starAngle) * openRadius, (random() - .5) * 2.2 - .15])
     const fieldRadius = .94 + random() * 1.1
     write('field', i, [Math.cos(starAngle) * fieldRadius * 1.15, Math.sin(starAngle) * fieldRadius * .78, (random() - .5) * 1.0 - .8])
+    const brightKnot = hero && i % 11 === 0
+    const ribbonU = brightKnot ? [.11, .31, .54, .77, .93][i % 5] : u
+    const across = brightKnot ? 0 : ((i % 9 - 4) / 4 * .87 + Math.sin(i * 1.71) * .13)
+    const ribbon = endingRibbonPoint(ribbonU, across, i % 4 === 0 ? 1 : 0)
+    const haze = brightKnot ? .002 : i % 7 === 0 ? .025 : .005
+    write('ending', i, ribbon.map((value, axis) => value + Math.sin(i * (.73 + axis * .17)) * haze))
     if (background) {
       const point = [(random() - .5) * 7.5, (random() - .5) * 5.5, -.8 - random() * 2.8]
-      for (const name of ['six', 'emoji', 'arrow', 'knot', 'field', 'scatter']) write(name, i, point)
+      for (const name of ['six', 'emoji', 'arrow', 'knot', 'field', 'scatter', 'ending']) write(name, i, point)
     }
     const temperature = random() < .085 ? .97 : hero ? .30 + random() * .33 : .03 + random() * .38
     const size = background ? 1.4 + random() * 2.5 : hero ? 8 + Math.pow(random(), 2.2) * 15 : 1.1 + Math.pow(random(), 2.5) * 2.7
@@ -133,7 +191,7 @@ export function projectAboutAnchors(particles, { progress, replay, rotationX, ro
   const section = Math.max(0, Math.min(1, progress)) * 5
   const segment = Math.min(4, Math.floor(section))
   const t = smoothstep(.18, .82, section - segment)
-  const names = ['six', 'emoji', 'arrow', 'knot', 'field', 'scatter']
+  const names = ['six', 'emoji', 'arrow', 'knot', 'field', 'ending']
   const flight = Math.sin(t * Math.PI)
   const view = getAboutView(width, height, progress)
   const rx = rotationX + hoverY + Math.sin(time * .12) * .024 * motion
@@ -145,7 +203,7 @@ export function projectAboutAnchors(particles, { progress, replay, rotationX, ro
     let p = Array.from({ length: 3 }, (_, axis) => {
       const start = from[index * 3 + axis]
       const mixed = start + (to[index * 3 + axis] - start) * t
-      return mixed + (particles.scatter[index * 3 + axis] - mixed) * flight * .72
+      return mixed + (particles.scatter[index * 3 + axis] - mixed) * flight * (segment === 4 ? .12 : .72)
     })
     const angle = flight * .38 * Math.sin(seed * .17)
     p = [p[0] * Math.cos(angle) - p[1] * Math.sin(angle), p[0] * Math.sin(angle) + p[1] * Math.cos(angle), p[2] + flight * Math.sin(seed * .31) * .55]
@@ -153,13 +211,14 @@ export function projectAboutAnchors(particles, { progress, replay, rotationX, ro
     const breathe = Math.sin(time * .19 + seed * .025) * .007 * motion
     p[0] += Math.cos(seed) * breathe
     p[1] += Math.sin(seed) * breathe
+    p[2] += Math.sin(time * .10 + seed * .021) * .004 * motion * smoothstep(.8, 1, progress)
     const x = Math.cos(ry) * p[0] + Math.sin(ry) * p[2]
     const z = -Math.sin(ry) * p[0] + Math.cos(ry) * p[2]
     const y = Math.cos(rx) * p[1] - Math.sin(rx) * z
     const depth = 3.8 - (Math.sin(rx) * p[1] + Math.cos(rx) * z)
     const perspective = 3.8 / Math.max(depth, .25)
     const px = .5 + (x * view.scene * perspective - view.offsetX) / width
-    const py = .5 - y * view.scene * perspective / height
+    const py = .5 - (y * view.scene * perspective + view.offsetY) / height
     return { id, x: Math.max(0, Math.min(1, px)), y: Math.max(0, Math.min(1, py)), visible: getAboutContentWeight(progress) > .15 && replay < .5 && depth > .25 && px >= 0 && px <= 1 && py >= 0 && py <= 1 }
   })
 }

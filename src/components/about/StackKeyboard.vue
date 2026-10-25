@@ -9,18 +9,24 @@ const props = defineProps({
 })
 const emit = defineEmits(['ready', 'unavailable', 'selection'])
 const technologies = [
-  { id: 'vue', name: 'Vue', shortcut: 'v', color: '#9bc7af', description: '把页面拆成组件，让内容与交互一起更新。' },
-  { id: 'vite', name: 'Vite', shortcut: 'i', color: '#e2c38c', description: '负责本地开发、即时更新与网站构建。' },
-  { id: 'javascript', name: 'JavaScript', shortcut: 'j', color: '#cda870', description: '连接滚动、按键与页面里那些细小的响应。' },
-  { id: 'css', name: 'CSS', shortcut: 'c', color: '#96b9ce', description: '安排字体、留白、颜色和不同屏幕下的布局。' },
-  { id: 'markdown', name: 'Markdown', shortcut: 'm', color: '#b9b7ac', description: '用轻量的文本格式，写下文章与零散的想法。' },
-  { id: 'json', name: 'JSON', shortcut: 'n', color: '#b2aac9', description: '组织文章索引和页面要读取的结构化数据。' },
-  { id: 'highlight', name: 'highlight.js', legend: ['highlight.js'], shortcut: 'h', color: '#a7b08b', description: '为文章中的代码片段添加语法颜色。' },
-  { id: 'mermaid', name: 'Mermaid', shortcut: 'r', color: '#c598a8', description: '把文章里的文字描述，变成流程与关系图。' },
-  { id: 'mathjax', name: 'MathJax', shortcut: 'x', color: '#d3c7b1', description: '在文章里排版数学公式，让符号保持清晰。' },
-  { id: 'webgl', name: 'WebGL', shortcut: 'w', color: '#81b8b3', description: '在浏览器里绘制星空，以及眼前这把立体键盘。' },
-  { id: 'git', name: 'Git', shortcut: 'g', color: '#cd9987', description: '记录代码与内容的每次改动，保留搭建的过程。' },
-  { id: 'github-pages', name: 'GitHub Pages', legend: ['GitHub', 'Pages'], shortcut: 'p', color: '#aab5c2', description: '托管构建后的静态页面，让这个空间可以被访问。' },
+  { id: 'python', name: 'Python', mark: 'PY', shortcut: 'y', color: '#c5d5b7', description: '处理数据、写小脚本，把重复步骤交给程序。' },
+  { id: 'rust', name: 'Rust', mark: 'RS', shortcut: 'u', color: '#d5a68e', description: '用类型与所有权，表达更明确的程序边界。' },
+  { id: 'matlab', name: 'MATLAB', mark: 'MAT', shortcut: 'a', color: '#cbb98e', description: '做矩阵运算、数值计算和结果可视化。' },
+  { id: 'latex', name: 'LaTeX', mark: 'TeX', shortcut: 'l', color: '#c7cac3', description: '把公式、段落和引用整理成排版清晰的文档。' },
+  { id: 'codex', name: 'Codex', mark: 'CX', shortcut: 'd', color: '#a8c6bf', description: '协助拆解任务、修改代码，并核对实现结果。' },
+  { id: 'claude-code', name: 'Claude Code', mark: 'CC', shortcut: 'e', color: '#d0ab98', description: '在终端里讨论代码，推进调试与重构。' },
+  { id: 'vue', name: 'Vue', mark: 'VUE', shortcut: 'v', color: '#8fb6a0', description: '用组件组织界面，让内容与交互一起更新。' },
+  { id: 'vite', name: 'Vite', mark: 'VI', shortcut: 'i', color: '#d1b57e', description: '在本地即时预览改动，再把网站构建成静态文件。' },
+  { id: 'javascript', name: 'JavaScript', mark: 'JS', shortcut: 'j', color: '#c4a46d', description: '连接滚动、按键与界面里那些细小的响应。' },
+  { id: 'css', name: 'CSS', mark: 'CSS', shortcut: 'c', color: '#8eacbf', description: '安排字体、留白、颜色和不同屏幕下的布局。' },
+  { id: 'markdown', name: 'Markdown', mark: 'MD', shortcut: 'm', color: '#b7b5a9', description: '用轻量的文本格式，写下文章与零散的想法。' },
+  { id: 'json', name: 'JSON', mark: 'JSON', shortcut: 'n', color: '#aaa2bd', description: '交换结构化数据，整理配置与内容索引。' },
+  { id: 'highlight', name: 'highlight.js', mark: 'HL', shortcut: 'h', color: '#a2aa87', description: '为代码片段添加语法颜色，方便阅读与分享。' },
+  { id: 'mermaid', name: 'Mermaid', mark: 'MM', shortcut: 'r', color: '#ba94a1', description: '用文字画流程与关系，把思路整理成图。' },
+  { id: 'mathjax', name: 'MathJax', mark: 'MX', shortcut: 'x', color: '#c9bfa9', description: '在网页中排版数学公式，让符号保持清晰。' },
+  { id: 'webgl', name: 'WebGL', mark: 'GL', shortcut: 'w', color: '#80aaa6', description: '在浏览器里绘制星空、图形与可交互的三维物体。' },
+  { id: 'git', name: 'Git', mark: 'GIT', shortcut: 'g', color: '#bf9283', description: '记录代码与内容的改动，保留每一步的来处。' },
+  { id: 'github-pages', name: 'GitHub Pages', mark: 'GH', shortcut: 'p', color: '#9fabb9', description: '托管静态页面，把做好的小站放到网上。' },
 ]
 const canvas = ref(null)
 const surface = ref(null)
@@ -135,12 +141,11 @@ onBeforeUnmount(() => {
           @click="choose(index, true)"
         >
           <span class="stack-keyboard__shortcut" aria-hidden="true">{{ key.shortcut.toUpperCase() }}</span>
-          <span class="stack-keyboard__legend" aria-hidden="true">{{ key.name }}</span>
+          <span class="stack-keyboard__legend" aria-hidden="true">{{ key.mark }}</span>
         </button>
       </div>
     </div>
     <div class="stack-keyboard__information">
-      <span class="stack-keyboard__eyebrow">用来搭建这里</span>
       <div class="stack-keyboard__selection" aria-live="polite" aria-atomic="true">
         <h3 data-testid="stack-selection-title">{{ selected.name }}</h3>
         <p data-testid="stack-selection-description">{{ selected.description }}</p>
@@ -152,33 +157,21 @@ onBeforeUnmount(() => {
 <style scoped>
 .stack-keyboard {
   display: grid;
-  grid-template-columns: minmax(0, 2.7fr) minmax(172px, 1fr);
+  grid-template-columns: minmax(0, 3.1fr) minmax(185px, 1fr);
   align-items: center;
   gap: clamp(1rem, 2.5vw, 2.75rem);
   width: 100%;
-  min-height: 440px;
+  min-height: 430px;
   color: #f2eee6;
 }
-.stack-keyboard__surface {
-  position: relative;
-  height: clamp(350px, 36vw, 490px);
-  min-width: 0;
-  touch-action: pan-y;
-}
-.stack-keyboard__canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  visibility: hidden;
-  pointer-events: none;
-}
+.stack-keyboard__surface { position: relative; height: clamp(350px, 35vw, 465px); min-width: 0; touch-action: pan-y; }
+.stack-keyboard__canvas { position: absolute; inset: 0; width: 100%; height: 100%; visibility: hidden; pointer-events: none; }
 .is-ready .stack-keyboard__canvas { visibility: visible; }
 .stack-keyboard__keys {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 11px;
-  padding: 25px 20px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  padding: 25px 12px;
   align-content: center;
   height: 100%;
   box-sizing: border-box;
@@ -187,55 +180,41 @@ onBeforeUnmount(() => {
   position: relative;
   display: flex;
   min-width: 0;
-  min-height: 77px;
-  padding: 12px 7px;
+  min-height: 85px;
+  padding: 22px 4px 8px;
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, .22);
   border-bottom: 5px solid rgba(17, 24, 30, .48);
-  border-radius: 11px;
+  border-radius: 10px;
   background: var(--cap);
   color: #1c2328;
-  font: 600 12px/1.3 Arial, sans-serif;
+  font: 600 20px/1.2 Arial, sans-serif;
   cursor: pointer;
   touch-action: pan-y;
 }
 .stack-keyboard__key:focus-visible { outline: 2px solid #fff7de; outline-offset: 4px; }
 .stack-keyboard__key.is-selected { box-shadow: 0 0 0 2px #ece3d0; }
 .stack-keyboard__key:active { transform: translateY(3px); }
-.stack-keyboard__shortcut { position: absolute; top: 8px; left: 10px; font-size: 10px; font-weight: 400; opacity: .72; }
+.stack-keyboard__shortcut { position: absolute; top: 7px; left: 9px; font-size: 14px; font-weight: 400; opacity: .72; }
 .stack-keyboard__legend { overflow-wrap: anywhere; }
 .is-ready .stack-keyboard__keys { position: absolute; inset: 0; display: block; padding: 0; }
-.is-ready .stack-keyboard__key {
-  position: absolute;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: transparent;
-  box-shadow: none;
-  transform: none;
-}
+.is-ready .stack-keyboard__key { position: absolute; min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: transparent; box-shadow: none; transform: none; }
 .is-ready .stack-keyboard__key > span { opacity: 0; }
-.is-ready .stack-keyboard__key:focus-visible { background: rgba(255, 247, 222, .20); outline: 0; }
-.stack-keyboard__information { position: relative; padding-block: 24px; }
-.stack-keyboard__eyebrow { display: block; margin-bottom: 19px; color: rgba(236, 229, 214, .47); font-size: .71rem; letter-spacing: .16em; }
+.is-ready .stack-keyboard__key:focus-visible { background: rgba(255, 247, 222, .16); outline: 0; }
+.stack-keyboard__information { position: relative; padding-block: 20px; }
 .stack-keyboard__selection { min-height: 133px; }
 .stack-keyboard__selection h3 { margin: 0 0 15px; color: #f5efe4; font-size: clamp(1.8rem, 2.9vw, 2.8rem); font-weight: 500; letter-spacing: -.035em; line-height: 1.1; overflow-wrap: anywhere; }
-.stack-keyboard__selection p { margin: 0; max-width: 23ch; color: rgba(237, 231, 219, .72); font-size: .89rem; line-height: 1.9; }
+.stack-keyboard__selection p { margin: 0; max-width: 24ch; color: rgba(237, 231, 219, .72); font-size: max(14px, .89rem); line-height: 1.85; }
 @media (max-width: 760px) {
   .stack-keyboard { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 0; }
-  .stack-keyboard__surface { height: clamp(285px, 78vw, 390px); }
-  .stack-keyboard__information { padding: 0 16px 12px; }
-  .stack-keyboard__eyebrow { margin-bottom: 13px; }
-  .stack-keyboard__selection { min-height: 99px; }
-  .stack-keyboard__selection h3 { font-size: 2rem; margin-bottom: 11px; }
-  .stack-keyboard__selection p { max-width: 34ch; font-size: .85rem; }
-  .stack-keyboard__keys { gap: 9px; padding: 20px 12px; }
-  .stack-keyboard__key { min-height: 72px; font-size: 10px; }
+  .stack-keyboard__information { grid-row: 1; padding: 6px 12px 0; }
+  .stack-keyboard__surface { grid-row: 2; height: 410px; }
+  .stack-keyboard__selection { min-height: 100px; }
+  .stack-keyboard__selection h3 { font-size: 1.9rem; margin-bottom: 11px; }
+  .stack-keyboard__selection p { max-width: 35ch; font-size: 14px; }
+  .stack-keyboard__keys { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; padding: 12px 6px; }
+  .stack-keyboard__key { min-height: 67px; font-size: 20px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .stack-keyboard__key:active { transform: none; }
-}
+@media (prefers-reduced-motion: reduce) { .stack-keyboard__key:active { transform: none; } }
 </style>

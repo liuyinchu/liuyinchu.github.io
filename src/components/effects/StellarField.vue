@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { createStellarRenderer } from './stellar-field/renderer.js'
-import { ABOUT_NODES, getAboutView } from './stellar-field/about-shapes.js'
+import { ABOUT_NODES, ABOUT_ENDING_PATHS, ABOUT_ENDING_KNOTS, getAboutView } from './stellar-field/about-shapes.js'
 
 const props = defineProps({
   profile: { type: String, default: 'stellar' },
@@ -34,9 +34,9 @@ const description = computed(() => ({
   orbit: '倾斜交错的立体星尘轨道',
   expression: '星尘组成的戴圆眼镜露齿笑脸，旁边举起一根食指',
   framework: '由星尘搭起的立体建造框架',
-  contents: '由书页、对话泡、资源光环和立体方块组成的四簇内容星图',
+  contents: '由书页、资源光环和立体方块组成的三簇内容星图',
   field: '舒展到四周、为键盘让出中央空间的星域',
-  open: '向远处舒展的开放星空',
+  open: '两道有立体厚度的扭转星带交错穿行，一端向远处舒展',
   six: '由星尘组成的数字 6',
   scatter: '向边缘散开的星尘',
   cursor: '由星尘组成的导航箭头',
@@ -45,8 +45,8 @@ const description = computed(() => ({
 const fallbackTransform = computed(() => {
   if (props.profile !== 'about') return undefined
   const { width, height } = fallbackSize.value
-  const { scene, offsetX } = getAboutView(width, height, props.progress)
-  return `translate(${width / 2 - offsetX} ${height / 2}) scale(${scene / 90})`
+  const { scene, offsetX, offsetY } = getAboutView(width, height, props.progress)
+  return `translate(${width / 2 - offsetX} ${height / 2 - offsetY}) scale(${scene / 90})`
 })
 let renderer
 let fallbackObserver
@@ -58,11 +58,11 @@ function updateFallbackAnchors() {
   const height = Math.max(1, rect.height)
   fallbackSize.value = { width, height }
   if (props.profile !== 'about' || status.value !== 'unavailable') return
-  const { scene, offsetX } = getAboutView(width, height, props.progress)
+  const { scene, offsetX, offsetY } = getAboutView(width, height, props.progress)
   emit('anchors', ABOUT_NODES.map((node) => ({
     id: node.id,
     x: .5 + (node.position[0] * scene - offsetX) / width,
-    y: .5 - node.position[1] * scene / height,
+    y: .5 - (node.position[1] * scene + offsetY) / height,
     visible: phase.value === 'contents',
   })))
 }
@@ -147,8 +147,12 @@ defineExpose({
               <circle r="2" fill="currentColor" stroke="none" />
             </g>
           </g>
-          <g v-else-if="phase === 'field' || phase === 'open'" fill="currentColor" stroke="none">
-            <circle v-for="i in 38" :key="i" :cx="Math.cos(i * 2.4) * (phase === 'field' ? 90 + i % 5 * 7 : 18 + i % 7 * 17)" :cy="Math.sin(i * 2.4) * (phase === 'field' ? 78 + i % 4 * 7 : 18 + i % 7 * 14)" :r="i % 4 === 0 ? 1.1 : .55" />
+          <g v-else-if="phase === 'field'" fill="currentColor" stroke="none">
+            <circle v-for="i in 38" :key="i" :cx="Math.cos(i * 2.4) * (90 + i % 5 * 7)" :cy="Math.sin(i * 2.4) * (78 + i % 4 * 7)" :r="i % 4 === 0 ? 1.1 : .55" />
+          </g>
+          <g v-else-if="phase === 'open'">
+            <path v-for="(ribbon, index) in ABOUT_ENDING_PATHS" :key="index" :d="ribbon.d" :opacity="ribbon.opacity" :stroke="ribbon.stream ? '#d5c19c' : '#d7e8f2'" :stroke-width="ribbon.stream ? .7 : .9" stroke-dasharray=".4 1.5" />
+            <circle v-for="(point, index) in ABOUT_ENDING_KNOTS" :key="index" :cx="point.x" :cy="point.y" r="1.15" fill="#e5d2af" stroke="none" />
           </g>
         </g>
         <g v-else-if="phase === 'six'" fill="none" stroke="currentColor">

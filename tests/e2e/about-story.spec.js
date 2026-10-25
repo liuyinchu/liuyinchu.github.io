@@ -19,9 +19,17 @@ const retiredRoutes = ['/about/site', '/about/self', '/research', '/academic']
 const identityPageName = /^(?:学术主页|学术概览)(?:，|$)/
 const arrowSymbols = /[\u2190-\u21ff\u27f0-\u27ff\u2900-\u297f]/u
 const stackKeys = [
+  ['Python', 'Y'], ['Rust', 'U'], ['MATLAB', 'A'], ['LaTeX', 'L'],
+  ['Codex', 'D'], ['Claude Code', 'E'],
   ['Vue', 'V'], ['Vite', 'I'], ['JavaScript', 'J'], ['CSS', 'C'],
   ['Markdown', 'M'], ['JSON', 'N'], ['highlight.js', 'H'], ['Mermaid', 'R'],
   ['MathJax', 'X'], ['WebGL', 'W'], ['Git', 'G'], ['GitHub Pages', 'P'],
+]
+
+const contentConstellations = [
+  { id: 'notes', name: '随记', title: '给 AI 编程助手补一份项目记忆：聊聊 claude-mem', href: '/space1/claude_mem_intro' },
+  { id: 'resources', name: '资源', title: '人生苦短，我学 Python ！', href: 'https://docs.python.org/3/' },
+  { id: 'projects', name: '代码项目', title: '音乐机关盒', href: '/music-box' },
 ]
 
 function stackKey(keyboard, name) {
@@ -34,6 +42,9 @@ async function expectSimplifiedPresentation(story) {
   await expect(story).not.toContainText(/🤓|☝|从一个名字开始|SCROLL TO WANDER|拖动星光|横向轻扫星光|向下，慢慢认识这里/)
   await expect(story.locator('.about-name-note, .about-purpose-trace, .about-colophon, .about-read-on, .about-gesture')).toHaveCount(0)
   await expect(story.locator('#about-making dl')).toHaveCount(0)
+  const ending = story.locator('#about-curiosity')
+  await expect(ending.locator('a[href="/portal"], a[href="/space4"]')).toHaveCount(0)
+  await expect(ending).not.toContainText(/也可以打开|或翻翻|好奇心可以不带目的地/)
   const controlLabels = await story.locator('a, button, [role="button"], [role="img"]').evaluateAll(elements =>
     elements.flatMap(element => ['aria-label', 'title'].map(attribute => element.getAttribute(attribute) || '')).join(' '),
   )
@@ -78,6 +89,19 @@ async function exerciseStackKeyboard(page, isMobile) {
   await expect(chapter).toHaveAttribute('aria-current', 'step')
   const keyboard = page.locator('#about-making').getByTestId('stack-keyboard')
   await keyboard.scrollIntoViewIfNeeded()
+  await expect(keyboard).toHaveAttribute('data-selected', 'python')
+  await expectStackSelection(keyboard, 'Python')
+  const python = stackKey(keyboard, 'Python')
+  if (isMobile) await python.tap()
+  else await python.click()
+  let previousDescription = await expectStackSelection(keyboard, 'Python')
+  for (const technology of ['Rust', 'MATLAB', 'LaTeX', 'Codex', 'Claude Code']) {
+    if (isMobile) await stackKey(keyboard, technology).tap()
+    else await page.keyboard.press(stackKeys.find(([name]) => name === technology)[1].toLowerCase())
+    const description = await expectStackSelection(keyboard, technology)
+    expect(description).not.toBe(previousDescription)
+    previousDescription = description
+  }
   const vue = stackKey(keyboard, 'Vue')
   if (isMobile) await vue.tap()
   else await vue.click()
@@ -112,6 +136,49 @@ async function pointAtVisibleNode(page, node, isMobile, hover = false) {
   else await page.mouse.click(x, y)
 }
 
+async function expectDirectoryLinks(directory) {
+  await expect(directory).toBeVisible()
+  await expect(directory.getByRole('link')).toHaveCount(contentConstellations.length)
+  await expect(directory.getByRole('button')).toHaveCount(0)
+  await expect(directory.getByRole('link', { name: '说说', exact: true })).toHaveCount(0)
+  for (const destination of contentConstellations) {
+    const link = directory.getByRole('link', { name: destination.name, exact: true })
+    await expect(link).toHaveAttribute('href', destination.href)
+    await expect(link).not.toHaveAttribute('aria-pressed')
+    if (destination.id === 'resources') {
+      await expect(link).toHaveAttribute('target', '_blank')
+      await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    } else {
+      await expect(link).not.toHaveAttribute('target')
+      await expect(link).not.toHaveAttribute('rel')
+    }
+  }
+  const preview = directory.getByRole('article', { name: '当前内容预览', exact: true })
+  await expect(preview).toBeVisible()
+  await expect(preview.locator('a, button')).toHaveCount(0)
+  return preview
+}
+
+async function expectConstellationSelection(story, directory, destination) {
+  await expect(directory.getByRole('link', { name: destination.name, exact: true })).toHaveAttribute('data-selected', 'true')
+  await expect(directory.locator('a[data-selected="true"]')).toHaveCount(1)
+  await expect(story.locator('.stellar-field[data-profile="about"]')).toHaveAttribute('data-active-node', destination.id)
+  const preview = directory.getByRole('article', { name: '当前内容预览', exact: true })
+  await expect(preview.getByRole('heading', { level: 3 })).toHaveText(destination.title)
+  await expect(preview.locator('.constellation-preview__description')).toHaveText(/\S/)
+}
+
+async function tabToConstellation(page, directory, link) {
+  // Projected and fallback links can change DOM order as a star cluster leaves view.
+  const tabStops = await page.locator('a[href], button, [tabindex="0"]').count()
+  for (let step = 0; step < tabStops; step += 1) {
+    await page.keyboard.press('Shift+Tab')
+    await expect(directory).toBeVisible()
+    if (await link.evaluate(element => element === document.activeElement)) break
+  }
+  await expect(link).toBeFocused()
+}
+
 async function expectReadableToFooter(page) {
   const overflow = await page.evaluate(() => ({
     html: getComputedStyle(document.documentElement).overflowY,
@@ -129,9 +196,7 @@ async function expectReadableToFooter(page) {
       await expect(visualTitle).toBeVisible()
       await expect(visualTitle).toBeInViewport()
       const directory = page.getByRole('region', { name: '内容星图', exact: true })
-      await expect(directory).toBeVisible()
-      await expect(directory.getByRole('button')).toHaveCount(4)
-      await expect(directory.getByRole('article', { name: '当前内容预览', exact: true })).toBeVisible()
+      await expectDirectoryLinks(directory)
     } else {
       const heading = page.locator('#' + id).getByRole('heading', { level: 2 })
       await heading.scrollIntoViewIfNeeded()
@@ -243,7 +308,7 @@ test('WebGL unavailability preserves the static star map and usable native keybo
   await finishAudit(page, audit)
 })
 
-test('content constellations select real previews and open a complete article', async ({ page, isMobile }) => {
+test('content constellation links reveal previews and open a complete article directly', async ({ page, isMobile }) => {
   const audit = auditPage(page)
   await gotoRoute(page, '/about/me')
   const story = await expectCompleteStory(page)
@@ -251,39 +316,25 @@ test('content constellations select real previews and open a complete article', 
   await chapter.click()
   await expect(chapter).toHaveAttribute('aria-current', 'step')
   const directory = story.getByRole('region', { name: '内容星图', exact: true })
-  await expect(directory).toBeVisible()
-  await expect(directory.getByRole('button')).toHaveCount(4)
-  const preview = directory.getByRole('article', { name: '当前内容预览', exact: true })
-  const destinations = [
-    { id: 'notes', name: '随记', title: '给 AI 编程助手补一份项目记忆：聊聊 claude-mem', action: '读这篇随记', href: '/space1/claude_mem_intro' },
-    { id: 'talk', name: '说说', title: '小马过河', action: '继续读说说', href: '/talk' },
-    { id: 'resources', name: '资源', title: '人生苦短，我学 Python ！', action: '看看这个资源', href: 'https://docs.python.org/3/' },
-    { id: 'projects', name: '代码项目', title: '音乐机关盒', action: '打开这个项目', href: '/music-box' },
-  ]
-  for (const destination of destinations) {
-    const node = directory.getByRole('button', { name: destination.name, exact: true })
-    if (!isMobile && destination.id === 'resources') {
-      await page.keyboard.press('Tab')
-      await expect(directory.getByRole('button', { name: '说说', exact: true })).toBeFocused()
-      await page.keyboard.press('Tab')
-      await expect(node).toBeFocused()
-    } else {
-      await pointAtVisibleNode(page, node, isMobile, destination.id === 'talk')
-    }
-    await expect(node).toHaveAttribute('aria-pressed', 'true')
-    await expect(directory.getByRole('button', { pressed: true })).toHaveCount(1)
-    await expect(story.locator('.stellar-field[data-profile="about"]')).toHaveAttribute('data-active-node', destination.id)
-    await expect(preview.getByRole('heading', { level: 3 })).toHaveText(destination.title)
-    const link = preview.getByRole('link', { name: destination.action, exact: true })
-    await expect(link).toHaveAttribute('href', destination.href)
-    await expect(link).toBeVisible()
+  await expectDirectoryLinks(directory)
+  const [notes, resources, projects] = contentConstellations
+  await expectConstellationSelection(story, directory, notes)
+  const notesLink = directory.getByRole('link', { name: notes.name, exact: true })
+  if (isMobile) {
+    await pointAtVisibleNode(page, notesLink, true)
+  } else {
+    const resourcesLink = directory.getByRole('link', { name: resources.name, exact: true })
+    await pointAtVisibleNode(page, resourcesLink, false, true)
+    await expectConstellationSelection(story, directory, resources)
+    await tabToConstellation(page, directory, directory.getByRole('link', { name: projects.name, exact: true }))
+    await expectConstellationSelection(story, directory, projects)
+    await tabToConstellation(page, directory, notesLink)
+    await expectConstellationSelection(story, directory, notes)
     await expectSimplifiedPresentation(story)
     await expectNoHorizontalOverflow(page)
+    await page.keyboard.press('Enter')
   }
-  const notes = directory.getByRole('button', { name: '随记', exact: true })
-  await pointAtVisibleNode(page, notes, isMobile)
-  await pointAtVisibleNode(page, preview.getByRole('link', { name: '读这篇随记', exact: true }), isMobile)
-  await expect(page).toHaveURL(BASE_URL + '/space1/claude_mem_intro')
+  await expect(page).toHaveURL(BASE_URL + notes.href)
   await expect(page.locator('[data-page="article"][data-article-id="claude_mem_intro"][data-state="ready"]')).toBeVisible()
   await expect(page.locator('[data-article-content]')).toBeVisible()
   await finishAudit(page, audit)

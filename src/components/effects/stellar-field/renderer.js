@@ -10,6 +10,7 @@ in vec3 aScatter;
 in vec4 aStyle;
 in vec3 aEmoji;
 in vec3 aField;
+in vec3 aEnding;
 in float aNode;
 uniform float uProgress;
 uniform float uProfile;
@@ -48,8 +49,8 @@ void main() {
     else if(section<2.) p=mix(aEmoji,aArrow,t);
     else if(section<3.) p=mix(aArrow,aKnot,t);
     else if(section<4.) p=mix(aKnot,aField,t);
-    else p=mix(aField,aScatter,t);
-    p=mix(p,aScatter,sin(t*3.14159265)*.72);
+    else p=mix(aField,aEnding,t);
+    p=mix(p,aScatter,sin(t*3.14159265)*(section<4.?.72:.12));
     dispersed=sin(t*3.14159265)*.6;
   } else {
     if(section<1.) { p=mix(aSix,aScatter,t); dispersed=t; }
@@ -58,6 +59,7 @@ void main() {
     else { t=smoothstep(0.,1.,section-3.); p=mix(aScatter,aKnot,t); dispersed=1.-t; }
   }
   float flight = sin(t*3.14159265);
+  float endingWeight=uProfile>.5?smoothstep(.8,1.,uProgress):0.;
   if(aStyle.w>.2) {
     // Curved travel rather than a flat crossfade; the same stars survive every form.
     float angle=flight*.38*sin(seed*.17);
@@ -67,6 +69,7 @@ void main() {
     dispersed=max(dispersed,uReplay);
     float breathe=sin(uTime*.19+seed*.025)*.007*uMotion;
     p.xy+=vec2(cos(seed),sin(seed))*breathe;
+    p.z+=sin(uTime*.10+seed*.021)*.004*uMotion*endingWeight;
     p=rotationX(uRotation.x+uHover.y+sin(uTime*.12)*.024*uMotion)*
       rotationY(uRotation.y+uHover.x+sin(uTime*.09)*.032*uMotion)*p;
   }
@@ -76,8 +79,14 @@ void main() {
   float perspective=3.8/max(cameraDepth,.25);
   float scene=min(uResolution.y*.458,uResolution.x*(uProfile>.5?.45:.565));
   float contentWeight=1.-smoothstep(.04,.14,abs(uProgress-.6));
+  float desktop=smoothstep(700.,1000.,uResolution.x);
+  float mobile=1.-desktop;
+  if(uProfile>.5) scene*=1.-mobile*(.12*contentWeight+.32*endingWeight)-desktop*.12*endingWeight;
   vec2 screen=p.xy*scene*perspective;
-  if(uProfile>.5) screen.x-=uResolution.x*.16*smoothstep(700.,1000.,uResolution.x)*contentWeight;
+  if(uProfile>.5) {
+    screen.x-=uResolution.x*desktop*(.16*contentWeight-.18*endingWeight);
+    screen.y+=uResolution.y*mobile*(.07*contentWeight+.036*endingWeight);
+  }
   gl_Position=vec4(screen/uResolution*2.,cameraDepth<=.25?2.:0.,1.);
   float mobileScale=clamp(uResolution.x/720.,.64,1.);
   float nucleusScale=1.;
@@ -98,6 +107,19 @@ void main() {
     gl_PointSize*=1.+selected*contentWeight*.45;
     vColor=mix(vColor,vec3(1.,.82,.54),selected*contentWeight);
     vAlpha*=mix(1.,mix(.45,1.7,selected),contentWeight);
+  }
+  if(endingWeight>0.) {
+    float hero=step(.8,aStyle.w);
+    float dust=step(.2,aStyle.w)*(1.-hero);
+    float edge=step(3.2,abs(mod(float(gl_VertexID),9.)-4.))*dust;
+    float layer=mix(.88,1.10,smoothstep(-.5,.5,p.z));
+    float dustSize=1.+dust*(.10+edge*.12);
+    float dustGlow=1.+dust*((1.55+edge*.25)*layer-1.);
+    float brightKnot=hero*(1.-step(.5,mod(float(gl_VertexID),11.)));
+    gl_PointSize*=mix(1.,mix(dustSize,.48,hero)+brightKnot*.90,endingWeight);
+    vAlpha*=mix(1.,mix(dustGlow,.42,hero)+brightKnot*1.15,endingWeight);
+    vColor=mix(vColor,vec3(.88,.94,1.),dust*endingWeight*(.18+edge*.18));
+    vColor=mix(vColor,vec3(.96,.83,.62),brightKnot*endingWeight*.85);
   }
   vHero=step(.8,aStyle.w);
   vSeed=seed;
@@ -238,9 +260,9 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
         ['aKnot', particles.knot, 3], ['aScatter', particles.scatter, 3],
         ['aStyle', particles.style, 4],
       ]
-      if (aboutProfile) attributes.push(['aEmoji', particles.emoji, 3], ['aField', particles.field, 3], ['aNode', particles.nodeGroup, 1])
+      if (aboutProfile) attributes.push(['aEmoji', particles.emoji, 3], ['aField', particles.field, 3], ['aEnding', particles.ending, 3], ['aNode', particles.nodeGroup, 1])
       else {
-        for (const name of ['aEmoji', 'aField', 'aNode']) {
+        for (const name of ['aEmoji', 'aField', 'aEnding', 'aNode']) {
           const attribute = gl.getAttribLocation(program, name)
           gl.disableVertexAttribArray(attribute)
           gl.vertexAttrib1f(attribute, 0)
@@ -491,7 +513,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
   return {
     update(options) {
       targetProgress = Math.max(0, Math.min(1, Number(options.progress) || 0))
-      activeNode = ['notes', 'talk', 'resources', 'projects'].indexOf(options.activeNode) + 1
+      activeNode = ['notes', 'resources', 'projects'].indexOf(options.activeNode) + 1
       paused = options.paused
       interactive = options.interactive
       if (!interactive) {

@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
           <div class="about-making__heading">
             <p class="about-eyebrow"><span>05</span> 搭建 / ALWAYS IN THE MAKING</p>
             <h2 id="about-making-title">一边使用，一边搭建。</h2>
-            <p>从文字到星光，按一枚键，看看这座网站怎样运转。</p>
+            <p>写作、计算、编程，把想法慢慢做成东西。按一枚键，看看我手边的工具。</p>
           </div>
           <StackKeyboard class="about-making__keyboard" :active="activeChapter === 4" :progress="keyboardProgress" :paused="paused" />
         </section>
@@ -231,7 +231,6 @@ onBeforeUnmount(() => {
             <p class="about-eyebrow"><span>06</span> 继续 / STILL CURIOUS</p>
             <h2 id="about-curiosity-title">保留好奇，<br>也保留一点抽象。</h2>
             <p>编程与开源、数据分析、工具与工作流，<br class="about-desktop-break">设计、动效、音乐、游戏，还有生活里偶然发现的小事——<br class="about-desktop-break">它们不必被归成同一种兴趣，却都能在这里相遇。</p>
-            <p>也可以打开 <RouterLink to="/portal">Portal</RouterLink>，或翻翻 <RouterLink to="/space4">星穹文库</RouterLink>。<br>好奇心可以不带目的地。</p>
             <div class="about-closing__links">
               <RouterLink to="/space1">去读一篇随记</RouterLink>
               <RouterLink to="/code">找个东西玩玩</RouterLink>
@@ -379,12 +378,13 @@ onBeforeUnmount(() => {
   .about-making__heading .about-eyebrow { margin-bottom: 14px; }
   .about-making h2 { max-width: none; font-size: 31px; margin-bottom: 14px; }
   .about-making__keyboard { margin-top: 12px; }
-  .about-closing { padding-top: 205px; min-height: max(var(--about-stage-height), 940px); }
+  .about-closing { padding-top: 42px; min-height: max(var(--about-stage-height), 940px); }
   .about-closing__content { width: 100%; max-width: 410px; margin-inline: auto; }
-  .about-closing h2 { font-size: clamp(34px, 8.8vw, 48px); }
-  .about-closing__content > p:not(.about-eyebrow) { font-size: 14px; line-height: 2.15; }
-  .about-closing__links { gap: 22px; margin-top: 29px; }
-  .about-signoff { margin-top: 30px; }
+  .about-closing .about-eyebrow { margin-bottom: 14px; }
+  .about-closing h2 { font-size: clamp(34px, 8.8vw, 48px); margin-bottom: 18px; }
+  .about-closing__content > p:not(.about-eyebrow) { font-size: 14px; line-height: 1.95; margin-bottom: 14px; }
+  .about-closing__links { gap: 22px; margin-top: 18px; }
+  .about-signoff { margin-top: 20px; }
   .about-desktop-break { display: none; }
 }
 @media (max-width: 360px) {

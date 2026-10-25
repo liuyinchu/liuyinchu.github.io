@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const props = defineProps({
   active: Boolean,
@@ -12,25 +13,29 @@ const props = defineProps({
 const emit = defineEmits(['select'])
 const nodes = [
   { id: 'notes', label: '随记', color: '#c3bde6' },
-  { id: 'talk', label: '说说', color: '#c4b59b' },
   { id: 'resources', label: '资源', color: '#9fc4bf' },
   { id: 'projects', label: '代码项目', color: '#a8bddc' },
 ]
 const content = ref({
-  notes: { title: '随记', description: '把一个问题，慢慢展开。', href: '/space1', action: '打开随记', meta: '' },
-  talk: { title: '说说', description: '留住还没长成文章的念头。', href: '/talk', action: '打开说说', meta: '' },
-  resources: { title: '资源', description: '收好值得再回来找的入口。', href: '/rd', action: '打开资源目录', meta: '' },
-  projects: { title: '代码项目', description: '把想法做成可用、可玩的东西。', href: '/code', action: '打开代码项目', meta: '' },
+  notes: { title: '随记', description: '把一个问题，慢慢展开。', href: '/space1', meta: '' },
+  resources: { title: '资源', description: '收好值得再回来找的入口。', href: '/rd', meta: '' },
+  projects: { title: '代码项目', description: '把想法做成可用、可玩的东西。', href: '/code', meta: '' },
 })
 const currentNode = computed(() => nodes.find((node) => node.id === props.selected) || nodes[0])
 const preview = computed(() => content.value[currentNode.value.id])
-const external = computed(() => /^https?:\/\//.test(preview.value.href))
 const compact = computed(() => props.height > 0 && props.height < 518)
-const projected = computed(() => !compact.value && props.canvas.width > 0 && props.anchors.length === 4)
+const projected = computed(() => !compact.value && props.canvas.width > 0 && nodes.every((node) => props.anchors.some((anchor) => anchor.id === node.id)))
 const projectedNodes = computed(() => projected.value ? nodes.filter((node) => point(node)) : [])
 const fallbackNodes = computed(() => nodes.filter((node) => !projectedNodes.value.some((item) => item.id === node.id)))
 let controller
 
+function isExternal(node) {
+  return /^https?:\/\//.test(content.value[node.id].href)
+}
+function destination(node) {
+  const href = content.value[node.id].href
+  return isExternal(node) ? { href, target: '_blank', rel: 'noopener noreferrer' } : { to: href }
+}
 function choose(id) {
   if (id !== props.selected) emit('select', id)
 }
@@ -60,37 +65,29 @@ function sentence(value, limit = 72) {
   const first = plain.match(/^.*?[。！？](?:[”’])?/)?.[0] || plain
   return first.length > limit ? `${first.slice(0, limit).replace(/[，、：；\s]+$/, '')}…` : first
 }
-async function read(url, format = 'json') {
+async function read(url) {
   const response = await fetch(url, { signal: controller.signal })
   if (!response.ok) throw new Error('Content unavailable')
-  return format === 'text' ? response.text() : response.json()
+  return response.json()
 }
 
 onMounted(async () => {
   controller = new AbortController()
   const results = await Promise.allSettled([
     read('/articles.json'),
-    read('/markdown/post_it.md', 'text'),
     read('/resource/programming.json'),
     read('/code_proj.json'),
   ])
   if (controller.signal.aborted) return
-  const [notes, talk, resources, projects] = results
+  const [notes, resources, projects] = results
   if (notes.status === 'fulfilled' && Array.isArray(notes.value) && notes.value.length) {
     const article = notes.value[0]
     content.value.notes = {
       title: article.title,
       description: sentence(article.desc),
       href: `/space1/${encodeURIComponent(article.id)}`,
-      action: '读这篇随记',
       meta: `${notes.value.length} 篇随记`,
     }
-  }
-  if (talk.status === 'fulfilled') {
-    const heading = /^## (.+)$/m.exec(talk.value)
-    const body = heading ? talk.value.slice(heading.index + heading[0].length).split(/\n## |\n---/)[0] : ''
-    const paragraph = body.split(/\n\s*\n/).map((part) => part.trim()).find((part) => part && !/^(?:<|!\[|#|::)/.test(part))
-    if (heading && paragraph) content.value.talk = { title: heading[1], description: sentence(paragraph), href: '/talk', action: '继续读说说', meta: '此刻的一则片段' }
   }
   if (resources.status === 'fulfilled' && Array.isArray(resources.value) && resources.value.length) {
     const resource = resources.value[0]
@@ -98,7 +95,6 @@ onMounted(async () => {
       title: resource.name,
       description: sentence(resource.intro),
       href: resource.url || '/rprogramming',
-      action: '看看这个资源',
       meta: `${resources.value.length} 个编程入口`,
     }
   }
@@ -108,7 +104,6 @@ onMounted(async () => {
       title: project.name,
       description: sentence(project.desc),
       href: project.homepage || project.repo || '/code',
-      action: '打开这个项目',
       meta: `${projects.value.length} 个项目`,
     }
   }
@@ -118,46 +113,43 @@ onBeforeUnmount(() => controller?.abort())
 
 <template>
   <div v-show="active" class="constellation-directory" role="region" aria-label="内容星图" :class="{ 'constellation-directory--projected': projected, 'constellation-directory--compact': compact }">
-    <div class="constellation-directory__nodes" aria-label="选择一个内容星座">
-      <button
+    <div class="constellation-directory__nodes" aria-label="内容星座入口">
+      <component
         v-for="node in projectedNodes"
+        :is="isExternal(node) ? 'a' : RouterLink"
         :key="node.id"
-        type="button"
+        v-bind="destination(node)"
         class="constellation-node"
         :class="{ 'is-selected': selected === node.id }"
         :style="position(node)"
         :aria-label="node.label"
-        :aria-pressed="selected === node.id"
-        aria-controls="constellation-content-preview"
+        :data-selected="selected === node.id"
         @pointerenter="choose(node.id)"
         @focus="choose(node.id)"
-        @click="choose(node.id)"
       >
         <span class="constellation-node__point" aria-hidden="true"></span>
         <span class="constellation-node__label">{{ node.label }}</span>
-      </button>
+      </component>
     </div>
     <nav v-if="fallbackNodes.length" class="constellation-directory__fallback" aria-label="栏目入口">
-      <button
+      <component
         v-for="node in fallbackNodes"
+        :is="isExternal(node) ? 'a' : RouterLink"
         :key="node.id"
-        type="button"
+        v-bind="destination(node)"
         class="constellation-fallback"
+        :class="{ 'is-selected': selected === node.id }"
         :style="{ '--node-color': node.color }"
         :aria-label="node.label"
-        :aria-pressed="selected === node.id"
-        aria-controls="constellation-content-preview"
+        :data-selected="selected === node.id"
         @pointerenter="choose(node.id)"
         @focus="choose(node.id)"
-        @click="choose(node.id)"
-      >{{ node.label }}</button>
+      >{{ node.label }}</component>
     </nav>
     <article id="constellation-content-preview" class="constellation-preview" aria-label="当前内容预览" aria-live="polite" aria-atomic="true" :style="{ '--node-color': currentNode.color }">
       <p class="constellation-preview__category"><span>{{ currentNode.label }}</span><span v-if="preview.meta">{{ preview.meta }}</span></p>
       <h3>{{ preview.title }}</h3>
       <p class="constellation-preview__description">{{ preview.description }}</p>
-      <a v-if="external" :href="preview.href" class="constellation-preview__link">{{ preview.action }}</a>
-      <RouterLink v-else :to="preview.href" class="constellation-preview__link">{{ preview.action }}</RouterLink>
     </article>
   </div>
 </template>
@@ -165,13 +157,13 @@ onBeforeUnmount(() => controller?.abort())
 <style scoped>
 .constellation-directory { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .constellation-directory__nodes { position: absolute; inset: 25% 35% 23% 8%; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center; }
-.constellation-node { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; justify-self: center; min-width: 88px; min-height: 64px; padding: 0 8px 8px; border: 0; border-radius: 10px; background: transparent; color: var(--node-color); cursor: pointer; pointer-events: auto; font: inherit; text-align: center; touch-action: manipulation; }
+.constellation-node { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; justify-self: center; min-width: 88px; min-height: 64px; padding: 0 8px 8px; border: 0; border-radius: 10px; background: transparent; color: var(--node-color); cursor: pointer; pointer-events: auto; font: inherit; text-align: center; text-decoration: none; touch-action: manipulation; }
 .constellation-directory--projected .constellation-directory__nodes { inset: 0; display: block; z-index: 2; }
 .constellation-directory__fallback { position: absolute; left: var(--about-gutter, 6vw); bottom: 105px; display: flex; flex-wrap: wrap; gap: 8px 20px; max-width: 64%; z-index: 3; pointer-events: none; }
-.constellation-fallback { min-height: 44px; padding: 6px 4px; border: 0; border-bottom: 1px solid #8192a35c; background: transparent; color: var(--node-color); font: inherit; font-size: 14px; cursor: pointer; pointer-events: auto; }
-.constellation-fallback[aria-pressed="true"] { color: #eeeae0; border-bottom-color: currentColor; }
+.constellation-fallback { min-height: 44px; padding: 6px 4px; border: 0; border-bottom: 1px solid #8192a35c; background: transparent; color: var(--node-color); font: inherit; font-size: 14px; cursor: pointer; pointer-events: auto; text-decoration: none; }
+.constellation-fallback.is-selected { color: #eeeae0; border-bottom-color: currentColor; }
 .constellation-fallback:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
-.constellation-directory--projected .constellation-node { position: absolute; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; transform: translate(-50%, -50%); }
+.constellation-directory--projected .constellation-node { position: absolute; width: 112px; height: 112px; min-width: 112px; min-height: 112px; padding: 0; transform: translate(-50%, -50%); }
 .constellation-directory--projected .constellation-node__point { position: absolute; left: 50%; top: 50%; margin: 0; transform: translate(-50%, -50%); }
 .constellation-directory--projected .constellation-node__label { position: absolute; left: 50%; top: calc(50% + var(--label-y)); width: max-content; white-space: nowrap; transform: translateX(calc(-50% + var(--label-x))); }
 .constellation-node__point { position: relative; display: block; width: 23px; height: 23px; margin: 0 auto 9px; border: 1px solid currentColor; border-radius: 50%; opacity: .42; transition: opacity .2s, box-shadow .2s; }
@@ -185,9 +177,6 @@ onBeforeUnmount(() => controller?.abort())
 .constellation-preview__category > span:first-child { color: var(--node-color); }
 .constellation-preview h3 { color: #e2dfd7; margin: 0 0 17px; font-size: clamp(21px, 2vw, 28px); line-height: 1.55; font-weight: 450; text-wrap: pretty; }
 .constellation-preview__description { color: #a5afbc; margin: 0; font-size: 14px; line-height: 1.95; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-.constellation-preview__link { display: inline-flex; align-items: center; min-height: 44px; margin-top: 19px; padding: 0 0 4px; color: #d5cbb7; border-bottom: 1px solid #a99c7e6b; font-size: 14px; line-height: 1.6; text-decoration: none; }
-.constellation-preview__link:hover { color: #fff3d5; border-color: currentColor; }
-.constellation-preview__link:focus-visible { outline: 1px solid #d5cbb7; outline-offset: 6px; }
 @media (max-width: 1100px) and (min-width: 761px) {
   .constellation-preview { width: 28%; right: 4vw; padding-left: 18px; }
   .constellation-preview h3 { font-size: 21px; }
@@ -195,26 +184,24 @@ onBeforeUnmount(() => controller?.abort())
 @media (max-width: 760px) {
   .constellation-directory__nodes { inset: 29% 7% 39%; }
   .constellation-node__label { font-size: 15px; white-space: nowrap; }
+  .constellation-directory--projected .constellation-node { width: 88px; height: 88px; min-width: 88px; min-height: 88px; }
   .constellation-directory__fallback { top: 176px; bottom: auto; left: var(--about-gutter, 26px); right: var(--about-gutter, 26px); max-width: none; gap: 6px 16px; }
   .constellation-preview { top: auto; bottom: 86px; left: var(--about-gutter, 26px); right: var(--about-gutter, 26px); width: auto; padding: 16px 0 0; border-left: 0; border-top: 1px solid color-mix(in srgb, var(--node-color), transparent 60%); }
   .constellation-preview__category { justify-content: space-between; margin-bottom: 8px; }
   .constellation-preview h3 { margin-bottom: 8px; font-size: 19px; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .constellation-preview__description { line-height: 1.7; -webkit-line-clamp: 2; }
-  .constellation-preview__link { min-height: 40px; margin-top: 7px; padding-bottom: 0; }
 }
 @media (max-height: 700px) and (min-width: 761px) {
   .constellation-preview { top: 29%; }
   .constellation-preview__category { margin-bottom: 12px; }
   .constellation-preview h3 { font-size: 20px; margin-bottom: 11px; }
   .constellation-preview__description { -webkit-line-clamp: 3; line-height: 1.8; }
-  .constellation-preview__link { margin-top: 11px; }
 }
 .constellation-directory--compact .constellation-directory__fallback { top: 108px; bottom: auto; left: var(--about-gutter, 6vw); right: auto; width: 39%; max-width: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; }
 .constellation-directory--compact .constellation-preview { top: 108px; bottom: auto; left: auto; right: var(--about-gutter, 6vw); width: 44%; padding: 0 0 0 16px; border-top: 0; border-left: 1px solid #8192a35c; }
 .constellation-directory--compact .constellation-preview__category { font-size: 14px; margin-bottom: 6px; gap: 2px 10px; }
 .constellation-directory--compact .constellation-preview h3 { font-size: 18px; line-height: 1.35; margin-bottom: 4px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .constellation-directory--compact .constellation-preview__description { display: none; }
-.constellation-directory--compact .constellation-preview__link { min-height: 38px; margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .constellation-node__point { transition: none; }
 }
