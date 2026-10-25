@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { createStellarRenderer } from './stellar-field/renderer.js'
 
 const props = defineProps({
+  profile: { type: String, default: 'stellar' },
   progress: { type: Number, default: 0 },
   paused: { type: Boolean, default: false },
   interactive: { type: Boolean, default: true },
@@ -12,6 +13,14 @@ const canvas = ref(null)
 const status = ref('initializing')
 const phase = computed(() => {
   const p = Math.max(0, Math.min(1, props.progress))
+  if (props.profile === 'about') {
+    if (p < .1) return 'orbit'
+    if (p < .3) return 'scatter'
+    if (p < .5) return 'framework'
+    if (p < .7) return 'scatter'
+    if (p < .9) return 'constellation'
+    return 'open'
+  }
   if (p < .125) return 'six'
   if (p < .375) return 'scatter'
   if (p < .625) return 'cursor'
@@ -19,6 +28,10 @@ const phase = computed(() => {
   return 'blossom'
 })
 const description = computed(() => ({
+  orbit: '倾斜交错的立体星尘轨道',
+  framework: '由星尘搭起的立体建造框架',
+  constellation: '彼此连接的立体兴趣星图',
+  open: '向远处舒展的开放星图',
   six: '由星尘组成的数字 6',
   scatter: '向边缘散开的星尘',
   cursor: '由星尘组成的导航箭头',
@@ -26,13 +39,18 @@ const description = computed(() => ({
 })[phase.value])
 let renderer
 
-onMounted(() => {
+function initializeRenderer() {
+  renderer?.destroy()
+  status.value = 'initializing'
   renderer = createStellarRenderer(canvas.value, {
+    profile: props.profile,
     onReady() { status.value = 'webgl2'; emit('ready') },
     onUnavailable() { status.value = 'unavailable'; emit('unavailable') },
   })
   renderer?.update(props)
-})
+}
+onMounted(initializeRenderer)
+watch(() => props.profile, initializeRenderer)
 watch(() => [props.progress, props.paused, props.interactive], () => renderer?.update(props))
 onBeforeUnmount(() => renderer?.destroy())
 defineExpose({
@@ -45,6 +63,7 @@ defineExpose({
   <div
     class="stellar-field"
     :data-renderer="status"
+    :data-profile="profile"
     :data-phase="phase"
     :data-paused="paused"
     :data-progress="Math.max(0, Math.min(1, progress)).toFixed(3)"
@@ -67,7 +86,23 @@ defineExpose({
           <circle cx="108" cy="29" r=".6"/><circle cx="-103" cy="76" r=".7"/>
           <circle cx="72" cy="94" r=".5"/><circle cx="-57" cy="-96" r=".5"/>
         </g>
-        <g v-if="phase === 'six'" fill="none" stroke="currentColor">
+        <g v-if="profile === 'about'" fill="none" stroke="currentColor" stroke-width="1.1">
+          <g v-if="phase === 'orbit'" stroke-dasharray=".3 2.4">
+            <ellipse rx="91" ry="31" transform="rotate(-28)" />
+            <ellipse rx="72" ry="43" transform="rotate(43)" />
+            <circle cx="-80" cy="42" r="2" fill="currentColor" stroke="none" />
+            <circle cx="58" cy="26" r="2" fill="currentColor" stroke="none" />
+          </g>
+          <g v-else-if="phase === 'framework'" stroke-dasharray=".3 2.1">
+            <path d="M-71 -33 9 -68 75 -27 -5 10Z M-71 -33V44L-5 83 75 47V-27 M-5 10V83 M9 -68V8L75 47 M-71 5-5 45 75 9 M9 8-71 44" />
+            <circle v-for="point in [[-71, -33], [9, -68], [75, -27], [-5, 83]]" :key="point.join(',')" :cx="point[0]" :cy="point[1]" r="2" fill="currentColor" stroke="none" />
+          </g>
+          <g v-else-if="phase === 'constellation' || phase === 'open'" :transform="phase === 'open' ? 'scale(1.16)' : undefined">
+            <path d="M-83 42-51 15-20 41 12 4 47 21 81-18 45-51 2-65-36-47-72-20 M-51 15-36-47 12 4 45-51 M-20 41 12 4" stroke-dasharray=".3 2.3" opacity=".7" />
+            <circle v-for="point in [[-83, 42], [-51, 15], [-20, 41], [12, 4], [47, 21], [81, -18], [45, -51], [2, -65], [-36, -47], [-72, -20]]" :key="point.join(',')" :cx="point[0]" :cy="point[1]" r="1.8" fill="currentColor" stroke="none" />
+          </g>
+        </g>
+        <g v-else-if="phase === 'six'" fill="none" stroke="currentColor">
           <path d="M54 -95 C-29 -115 -87 -17 -59 45 C-25 112 73 79 56 20 C42 -18 -25 -9 -20 37 C-15 72 38 62 23 28 C15 10 -9 20 1 33" stroke-dasharray=".3 2.7" stroke-width="2"/>
           <path d="M54 -95 C-29 -115 -87 -17 -59 45 C-25 112 73 79 56 20 C42 -18 -25 -9 -20 37" opacity=".3" filter="url(#stellar-static-glow)"/>
         </g>

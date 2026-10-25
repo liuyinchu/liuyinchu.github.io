@@ -4,33 +4,17 @@ import TypingTitle from '../components/TypingTitle.vue'
 
 const aboutLinks = [
   {
-    title: '网站说明书',
-    eyebrow: 'Inside This Space',
+    title: '关于我 & 关于本站',
+    eyebrow: 'About This Space',
     index: '01',
-    to: '/about/site',
-    desc: '逐一展开网站的内容、功能、交互细节与设计思路。',
-    detail: 'Handbook',
-  },
-  {
-    title: '自我介绍',
-    eyebrow: 'Personal Profile',
-    index: '02',
-    to: '/about/self',
-    desc: '关于我的兴趣、研究，以及记录与创造的日常。',
-    detail: 'Identity',
-  },
-  {
-    title: '学术主页',
-    eyebrow: 'Academic Work',
-    index: '03',
-    to: '/research',
-    desc: '进入研究综述、学术脉络和通往学术名片页的入口。',
-    detail: 'Research',
+    to: '/about/me',
+    desc: '从这个网站出发，聊聊名字的来历、兴趣，以及记录与创造。',
+    detail: 'About',
   },
   {
     title: '版权说明',
     eyebrow: 'Credits & License',
-    index: '04',
+    index: '02',
     to: '/credit',
     desc: '查看素材致谢、代码许可和内容版权边界。',
     detail: 'Credits',
@@ -198,7 +182,7 @@ onBeforeUnmount(() => {
               <p class="eyebrow">ABOUT HUB</p>
               <h1 id="about-title">关于</h1>
               <p class="hero-lead">
-                从网站说明书开始，也可以进一步了解站主、研究工作与内容的使用约定。
+                从这个网站出发，了解站主的兴趣、名字的来历，以及内容的使用约定。
               </p>
             </div>
 

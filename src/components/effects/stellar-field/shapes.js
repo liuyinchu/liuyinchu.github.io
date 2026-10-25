@@ -103,7 +103,8 @@ const knotLoop = pathSampler([
   [-0.40, -0.092], [0.28, -0.484], [0.28, -0.162],
 ])
 
-export function createParticles() {
+export function createParticles(profile = 'stellar') {
+  if (profile === 'about') return createAboutParticles()
   const count = DUST_COUNT + STAR_COUNT + BACKGROUND_COUNT
   const six = new Float32Array(count * 3)
   const arrow = new Float32Array(count * 3)
@@ -162,6 +163,101 @@ export function createParticles() {
     const size = background ? 1.4 + random() * 2.5 : hero ? 18 + Math.pow(random(), 2.2) * 32 : 1.15 + Math.pow(random(), 2.5) * 4.4
     const brightness = background ? 0.58 + random() * 0.46 : hero ? 0.86 + random() * 0.76 : 0.26 + random() * 0.44
     style.set([size, brightness, temperature, background ? 0 : hero ? 1 : 0.5], i * 4)
+  }
+  return { count, six, arrow, knot, scatter, style }
+}
+
+
+// The About story uses the same buffers with three independent, unbranded forms.
+function segmentSampler3d(segments) {
+  const lengths = segments.map(([a, b]) => Math.hypot(...b.map((value, axis) => value - a[axis])))
+  const total = lengths.reduce((sum, length) => sum + length, 0)
+  return (u) => {
+    let distance = u * total
+    let index = 0
+    while (index < segments.length - 1 && distance > lengths[index]) distance -= lengths[index++]
+    const [a, b] = segments[index]
+    const t = distance / lengths[index]
+    return a.map((value, axis) => value + (b[axis] - value) * t)
+  }
+}
+
+function createAboutParticles() {
+  const count = DUST_COUNT + STAR_COUNT + BACKGROUND_COUNT
+  const six = new Float32Array(count * 3)
+  const arrow = new Float32Array(count * 3)
+  const knot = new Float32Array(count * 3)
+  const scatter = new Float32Array(count * 3)
+  const style = new Float32Array(count * 4)
+  const random = randomGenerator(0x9a34e1)
+  const gaussian = () => Math.sqrt(-2 * Math.log(Math.max(0.00001, random()))) * Math.cos(2 * Math.PI * random())
+  const write = (target, index, point) => target.set(point, index * 3)
+  const corners = [
+    [-.64, -.64, -.48], [.64, -.64, -.48], [.64, .64, -.48], [-.64, .64, -.48],
+    [-.64, -.64, .48], [.64, -.64, .48], [.64, .64, .48], [-.64, .64, .48],
+  ]
+  const beams = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]
+    .map(([a, b]) => [corners[a], corners[b]])
+  beams.push(
+    [[-.64, 0, -.48], [.64, 0, -.48]], [[-.64, 0, .48], [.64, 0, .48]],
+    [[-.64, 0, -.48], [-.64, 0, .48]], [[.64, 0, -.48], [.64, 0, .48]],
+    [[-.64, -.64, .48], [.64, .64, .48]],
+  )
+  const frameSample = segmentSampler3d(beams)
+  const nodes = [
+    [-.92, -.46, -.10], [-.56, -.16, .32], [-.22, -.45, -.28], [.13, -.04, .22],
+    [.52, -.23, -.12], [.90, .20, .18], [.50, .57, -.22], [.02, .72, .12],
+    [-.40, .52, -.18], [-.80, .22, .10],
+  ]
+  const links = [[0, 1], [1, 2], [1, 8], [8, 9], [8, 7], [7, 6], [6, 5], [5, 4], [4, 3], [3, 2], [3, 8], [3, 6]]
+    .map(([a, b]) => [nodes[a], nodes[b]])
+  const constellationSample = segmentSampler3d(links)
+  const frameAngle = .42
+  const tiltFrame = ([x, y, z]) => {
+    const depth = -x * Math.sin(frameAngle) + z * Math.cos(frameAngle)
+    return [
+      x * Math.cos(frameAngle) + z * Math.sin(frameAngle),
+      y * Math.cos(.18) - depth * Math.sin(.18),
+      y * Math.sin(.18) + depth * Math.cos(.18),
+    ]
+  }
+
+  for (let i = 0; i < count; i++) {
+    const background = i >= DUST_COUNT + STAR_COUNT
+    const hero = i >= DUST_COUNT && !background
+    const u = random()
+    const spread = hero ? .006 : .013
+    const jitter = () => gaussian() * spread
+    const secondary = i % 4 === 0
+    const angle = (hero ? (i - DUST_COUNT) % 7 / 7 : u) * Math.PI * 1.86 + .18
+    const lean = secondary ? .78 : -.48
+    const ox = Math.cos(angle) * (secondary ? .73 : .96)
+    const oy = Math.sin(angle) * (secondary ? .32 : .35)
+    const oz = Math.sin(angle) * (secondary ? -.53 : .46)
+    write(six, i, [
+      ox * Math.cos(lean) - oy * Math.sin(lean) + jitter(),
+      ox * Math.sin(lean) + oy * Math.cos(lean) + jitter(),
+      oz + jitter(),
+    ])
+
+    const beamPoint = hero ? corners[(i - DUST_COUNT) % corners.length] : frameSample(u)
+    write(arrow, i, tiltFrame(beamPoint.map((value) => value + jitter())))
+    const nearNode = hero || i % 5 === 0
+    const starPoint = nearNode ? nodes[(hero ? i - DUST_COUNT : Math.floor(i / 5)) % nodes.length] : constellationSample(u)
+    write(knot, i, starPoint.map((value) => value + gaussian() * (nearNode ? .020 : .007)))
+
+    const scatterAngle = random() * Math.PI * 2
+    const radius = 1.15 + Math.pow(random(), .70) * 2.25
+    write(scatter, i, [Math.cos(scatterAngle) * radius * 1.30, Math.sin(scatterAngle) * radius, (random() - .5) * 2.8])
+    if (background) {
+      const point = [(random() - .5) * 7.5, (random() - .5) * 5.5, -.8 - random() * 2.8]
+      for (const target of [six, arrow, knot, scatter]) write(target, i, point)
+    }
+
+    const temperature = random() < .085 ? .97 : hero ? .30 + random() * .33 : .03 + random() * .38
+    const size = background ? 1.4 + random() * 2.5 : hero ? 9 + Math.pow(random(), 2.2) * 17 : 1.1 + Math.pow(random(), 2.5) * 2.7
+    const brightness = background ? .58 + random() * .46 : hero ? .60 + random() * .70 : .12 + random() * .30
+    style.set([size, brightness, temperature, background ? 0 : hero ? 1 : .5], i * 4)
   }
   return { count, six, arrow, knot, scatter, style }
 }

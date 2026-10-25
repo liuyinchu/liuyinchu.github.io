@@ -114,54 +114,17 @@ import MarkdownViewer from '../components/MarkdownViewer.vue'
 
 如果这个项目应该出现在页脚，则还需要手动更新 `src/components/Footer.vue` 的“代码与项目”分组。
 
-## 个人介绍页面
+## 关于我与关于本站
 
-- 页面：`src/pages/AboutIntro.vue`
-- 入口：`/about/self`
-- 父级中枢：`src/pages/About.vue`
+- 关于中枢：`src/pages/About.vue`，入口 `/about`，保留欢迎打字机与目录切换。
+- 合并介绍：`src/pages/AboutMe.vue`，入口 `/about/me`。
+- 版权说明：`src/pages/Credit.vue`，入口 `/credit`。
 
-当前个人介绍内容直接写在 `AboutIntro.vue` 的 `chapters` 数组中。每一页由一个 chapter 对象控制：
+介绍正文和页面布局直接维护在 `AboutMe.vue` 中，没有额外的 Markdown 内容源。内容以网站为主，结合建站原因、昵称来历、兴趣和实际技术栈介绍站主。修改文案时直接编辑该组件；技术描述应与代码实际使用的实现保持一致。
 
-- `index`
-- `eyebrow`
-- `title`
-- `seal`
-- `image`
-- `imageAlt`
-- `accent`
-- `paragraphs`
+旧路径 `/about/site` 和 `/about/self` 由 Vue Router 跳转到 `/about/me`，保留 query 与 hash。这是客户端兼容跳转，不是 HTTP 301。旧的 `/research` 和 `/academic` 页面及其专用资料已移除，路径继续显示全站 404。
 
-如果只是改自我介绍文案或替换图片，改 `chapters` 即可。若要改翻页机制、C4D 新中式视觉或页面结构，再改 Vue 模板和样式。
-
-## 学术主页与我的学术
-
-学术相关页面分两层：
-
-- `/research`：学术主页，偏完整综述
-- `/academic`：我的学术，偏学术名片 / 组会汇报式 deck
-
-学术主页：
-
-- 页面壳：`src/pages/Research.vue`
-- 内容源：`public/markdown/pages/research.md`
-- `research.md` 中的 `name.svg` 入口会跳到 `/academic`
-
-我的学术：
-
-- 页面与交互：`src/pages/Academic.vue`
-- 基础信息：`public/data/academic_brief.json`
-- 当前工作：`public/data/highlight_work.md`
-- 出版成果：`public/data/publications.json`
-- 经历：`public/data/experience.json`
-- 会议：`public/data/conferences.json`
-- 签名图片：`public/fig/signature-shuyun-yang.png`
-
-后续修改原则：
-
-- 改名字、标题、研究方向、联系信息：优先改 `academic_brief.json`
-- 改“当前工作”正文：改 `highlight_work.md`
-- 改论文、经历、会议：改对应 JSON
-- 改翻页、签名动画、PPT 风格：改 `Academic.vue`
+新增或调整介绍入口时，同步维护 `Footer.vue`、`Portal.vue` 的备用搜索条目与 `public/data/search-index.json`。普通文章、资源链接和 `/academic-plot-guide` 工具页面不属于已移除的个人展示页面。
 
 ## Portal 搜索
 

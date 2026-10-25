@@ -54,7 +54,7 @@ const homeSections = [
     id: 'about',
     eyebrow: 'ABOUT',
     title: '关于',
-    description: '从这里进入自我介绍、学术主页和版权说明。',
+    description: '从这个网站出发，了解站主的兴趣、名字的来历与内容的使用约定。',
     image: '/bg/IMG_FireFly.png',
     cta: '了解关于',
     to: '/about',

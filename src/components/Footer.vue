@@ -170,8 +170,7 @@ const footerColumns = [
         icon: 'about',
         to: '/about',
         links: [
-          { label: '自我介绍', to: '/about/self' },
-          { label: '学术主页', to: '/research' },
+          { label: '关于我 & 关于本站', to: '/about/me' },
           { label: '版权说明', to: '/credit' },
         ],
       },

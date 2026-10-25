@@ -14,7 +14,7 @@ const Talk = () => import('../pages/Talk.vue')
 const VisitorCenter = () => import('../pages/VisitorCenter.vue')
 const ArticleView = () => import('../pages/ArticleView.vue')
 const About = () => import('../pages/About.vue')
-const AboutSite = () => import('../pages/AboutSite.vue')
+const AboutMe = () => import('../pages/AboutMe.vue')
 const Credit = () => import('../pages/Credit.vue')
 const Portal = () => import('../pages/Portal.vue')
 const LabReport = () => import('../pages/LabReport.vue')
@@ -61,7 +61,9 @@ const routes = [
   { path: '/space1/post_it', redirect: '/talk' },
   { path: '/space1/:id', component: ArticleView },
   { path: '/about', component: About },
-  { path: '/about/site', component: AboutSite },
+  { path: '/about/me', component: AboutMe },
+  { path: '/about/site', redirect: (to) => ({ path: '/about/me', query: to.query, hash: to.hash }) },
+  { path: '/about/self', redirect: (to) => ({ path: '/about/me', query: to.query, hash: to.hash }) },
   { path: '/credit', component: Credit },
   { path: '/portal', component: Portal },
   { path: '/labreport', component: LabReport },

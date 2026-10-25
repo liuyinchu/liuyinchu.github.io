@@ -131,7 +131,7 @@ const navItems = [
     label: '关于',
     icon: 'about',
     to: '/about',
-    match: ['/about', '/credit', '/academic', '/research', '/academic-plot-guide'],
+    match: ['/about', '/credit', '/academic-plot-guide'],
   },
 ]
 

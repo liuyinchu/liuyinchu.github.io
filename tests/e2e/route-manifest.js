@@ -10,6 +10,7 @@ export const STATIC_ROUTES = Object.freeze([
   '/talk',
   '/visitor-center',
   '/about',
+  '/about/me',
   '/credit',
   '/portal',
   '/labreport',
@@ -40,7 +41,6 @@ export const STATIC_ROUTES = Object.freeze([
 ])
 
 export const DISABLED_ROUTES = Object.freeze([
-  '/about/self',
   '/research',
   '/academic',
 ])

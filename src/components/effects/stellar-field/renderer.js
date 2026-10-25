@@ -8,6 +8,7 @@ in vec3 aKnot;
 in vec3 aScatter;
 in vec4 aStyle;
 uniform float uProgress;
+uniform float uProfile;
 uniform float uTime;
 uniform float uReplay;
 uniform float uDpr;
@@ -30,14 +31,21 @@ mat3 rotationY(float a) {
 }
 void main() {
   float seed = float(gl_VertexID) * 1.61803398875;
-  float section = clamp(uProgress,0.,1.)*4.;
+  float section = clamp(uProgress,0.,1.)*(uProfile>.5?5.:4.);
   float t = smoothstep(0.,1.,fract(section));
   vec3 p;
   float dispersed;
   if(section < 1.) { p=mix(aSix,aScatter,t); dispersed=t; }
   else if(section < 2.) { p=mix(aScatter,aArrow,t); dispersed=1.-t; }
   else if(section < 3.) { p=mix(aArrow,aScatter,t); dispersed=t; }
-  else { t=smoothstep(0.,1.,section-3.); p=mix(aScatter,aKnot,t); dispersed=1.-t; }
+  else if(section<4. || uProfile<.5) { t=smoothstep(0.,1.,section-3.); p=mix(aScatter,aKnot,t); dispersed=1.-t; }
+  else {
+    t=smoothstep(0.,1.,section-4.);
+    p=aKnot;
+    p.xy*=1.+t*.26;
+    p.z+=sin(seed*.17)*t*.12;
+    dispersed=t*.12;
+  }
   float flight = sin(t*3.14159265);
   if(aStyle.w>.2) {
     // Curved travel rather than a flat crossfade; the same stars survive every form.
@@ -60,7 +68,7 @@ void main() {
   gl_Position=vec4(screen/uResolution*2.,cameraDepth<=.25?2.:0.,1.);
   float mobileScale=clamp(uResolution.x/720.,.64,1.);
   float nucleusScale=1.;
-  if(section<1. && aStyle.w>.8) {
+  if(uProfile<.5 && section<1. && aStyle.w>.8) {
     nucleusScale+=.8*(1.-smoothstep(.035,.15,length(aSix.xy-vec2(.035,-.30))))*(1.-dispersed);
   }
   gl_PointSize=max(1.,aStyle.x*uDpr*perspective*mobileScale*nucleusScale);
@@ -70,7 +78,7 @@ void main() {
   vColor=aStyle.z<.65?mix(cold,neutral,aStyle.z/.65):mix(neutral,warm,(aStyle.z-.65)/.35);
   float twinkle=1.+sin(uTime*(.32+fract(seed)*.31)+seed)*.16*uMotion;
   float centerGlow=1.;
-  if(section<1. && aStyle.w>.2) centerGlow+=exp(-length(aSix.xy-vec2(.035,-.30))*7.)*1.30*(1.-dispersed);
+  if(uProfile<.5 && section<1. && aStyle.w>.2) centerGlow+=exp(-length(aSix.xy-vec2(.035,-.30))*7.)*1.30*(1.-dispersed);
   vAlpha=aStyle.y*twinkle*mix(1.,.30,dispersed)*centerGlow;
   vHero=step(.8,aStyle.w);
   vSeed=seed;
@@ -116,14 +124,15 @@ void main() {
   outColor=vec4(vec3(.008,.020,.027)+haze*vec3(.017,.030,.052),1.);
 }`
 
-export function createStellarRenderer(canvas, { onReady, onUnavailable }) {
+export function createStellarRenderer(canvas, { profile = 'stellar', onReady, onUnavailable }) {
   const gl = canvas.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: 'high-performance' })
   if (!gl) {
     onUnavailable()
     return null
   }
 
-  const particles = createParticles()
+  const particles = createParticles(profile)
+  const aboutProfile = profile === 'about'
   let program = null
   let backgroundProgram = null
   let backgroundResolution = null
@@ -217,7 +226,7 @@ export function createStellarRenderer(canvas, { onReady, onUnavailable }) {
         gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, 0, 0)
       }
       locations = {}
-      for (const name of ['Progress', 'Time', 'Replay', 'Dpr', 'Resolution', 'Rotation', 'Hover', 'Motion']) {
+      for (const name of ['Progress', 'Profile', 'Time', 'Replay', 'Dpr', 'Resolution', 'Rotation', 'Hover', 'Motion']) {
         locations[name] = gl.getUniformLocation(program, 'u' + name)
       }
       backgroundVertex = shader(gl.VERTEX_SHADER, BACKGROUND_VERTEX)
@@ -296,6 +305,7 @@ export function createStellarRenderer(canvas, { onReady, onUnavailable }) {
     gl.enable(gl.BLEND)
     gl.useProgram(program)
     gl.uniform1f(locations.Progress, progress)
+    gl.uniform1f(locations.Profile, aboutProfile ? 1 : 0)
     gl.uniform1f(locations.Time, time)
     gl.uniform1f(locations.Replay, replayValue)
     gl.uniform1f(locations.Dpr, dpr)

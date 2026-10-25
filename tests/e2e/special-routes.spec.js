@@ -23,6 +23,22 @@ test('the legacy post-it route redirects to Talk', async ({ page }) => {
   await finishAudit(page, audit)
 })
 
+for (const route of ['/about/site', '/about/self']) {
+  test(route + ' redirects to the complete About story', async ({ page }) => {
+    const audit = auditPage(page)
+    const suffix = '?from=legacy#about-names'
+
+    await gotoRoute(page, route + suffix)
+    await expect(page).toHaveURL(BASE_URL + '/about/me' + suffix)
+    await expectKnownRouteShell(page, '/about/me')
+    await expect(page.getByTestId('about-story')).toBeVisible()
+    await expect(
+      page.getByTestId('about-story').getByRole('heading', { level: 1 }),
+    ).toHaveText('关于我 & 关于本站')
+    await finishAudit(page, audit)
+  })
+}
+
 test('a known article reaches the ready state', async ({ page }) => {
   const audit = auditPage(page)
 
