@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { createKeyboardRenderer } from './stack-keyboard/renderer.js'
+import { createCatGeometry } from './stack-keyboard/cat-geometry.js'
 
 const props = defineProps({
   active: { type: Boolean, default: true },
@@ -34,6 +35,7 @@ const selectedIndex = ref(0)
 const selected = computed(() => technologies[selectedIndex.value])
 const rendererState = ref('loading')
 const positions = ref([])
+const fallbackCat = createCatGeometry().fallback
 let renderer = null
 let heldPointer = -1
 let heldLetter = -1
@@ -58,6 +60,8 @@ function releaseLetter() {
   if (heldLetter !== -1) renderer?.press(heldLetter, false)
   heldLetter = -1
 }
+function releaseInput() { releaseLetter(); releasePointer() }
+function releaseHiddenInput() { if (document.hidden) releaseInput() }
 function handleKeydown(event) {
   if (event.altKey || event.ctrlKey || event.metaKey || event.repeat || event.key.length !== 1) return
   const index = technologies.findIndex((key) => key.shortcut === event.key.toLowerCase())
@@ -100,13 +104,15 @@ onMounted(() => {
   renderer?.setState({ selected: selectedIndex.value, active: props.active, progress: props.progress, paused: props.paused })
   window.addEventListener('pointerup', releasePointer, { passive: true })
   window.addEventListener('pointercancel', releasePointer, { passive: true })
-  window.addEventListener('blur', releaseLetter)
+  window.addEventListener('blur', releaseInput)
+  document.addEventListener('visibilitychange', releaseHiddenInput)
   window.addEventListener('keyup', handleKeyup)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('pointerup', releasePointer)
   window.removeEventListener('pointercancel', releasePointer)
-  window.removeEventListener('blur', releaseLetter)
+  window.removeEventListener('blur', releaseInput)
+  document.removeEventListener('visibilitychange', releaseHiddenInput)
   window.removeEventListener('keyup', handleKeyup)
   renderer?.dispose()
 })
@@ -124,6 +130,9 @@ onBeforeUnmount(() => {
   >
     <div ref="surface" class="stack-keyboard__surface" @keydown="handleKeydown" @focusout="onFocusOut">
       <canvas ref="canvas" class="stack-keyboard__canvas" aria-hidden="true" data-testid="stack-keyboard-canvas"></canvas>
+      <svg v-if="rendererState === 'unavailable'" class="stack-keyboard__fallback-cat" viewBox="0 0 457 289" aria-hidden="true" focusable="false">
+        <circle v-for="(point, index) in fallbackCat" :key="index" :cx="point.x" :cy="point.y" :r="point.radius" :fill="point.color" :opacity="point.alpha" />
+      </svg>
       <div class="stack-keyboard__keys" aria-label="选择一种技术">
         <button
           v-for="(key, index) in technologies"
@@ -161,12 +170,15 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: clamp(1rem, 2.5vw, 2.75rem);
   width: 100%;
-  min-height: 430px;
+  min-height: 520px;
   color: #f2eee6;
 }
-.stack-keyboard__surface { position: relative; height: clamp(350px, 35vw, 465px); min-width: 0; touch-action: pan-y; }
+.stack-keyboard__surface { position: relative; height: clamp(480px, 36vw, 540px); min-width: 0; touch-action: pan-y; }
 .stack-keyboard__canvas { position: absolute; inset: 0; width: 100%; height: 100%; visibility: hidden; pointer-events: none; }
 .is-ready .stack-keyboard__canvas { visibility: visible; }
+.stack-keyboard__fallback-cat { position: absolute; top: 5.5%; left: 50%; width: min(100%, 430px); height: 175px; transform: translateX(-50%); pointer-events: none; }
+.stack-keyboard:not(.is-ready) .stack-keyboard__surface { height: 560px; }
+.stack-keyboard:not(.is-ready) .stack-keyboard__keys { padding-top: 180px; }
 .stack-keyboard__keys {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -209,12 +221,13 @@ onBeforeUnmount(() => {
 @media (max-width: 760px) {
   .stack-keyboard { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 0; }
   .stack-keyboard__information { grid-row: 1; padding: 6px 12px 0; }
-  .stack-keyboard__surface { grid-row: 2; height: 410px; }
+  .stack-keyboard__surface { grid-row: 2; height: 520px; }
   .stack-keyboard__selection { min-height: 100px; }
   .stack-keyboard__selection h3 { font-size: 1.9rem; margin-bottom: 11px; }
   .stack-keyboard__selection p { max-width: 35ch; font-size: 14px; }
   .stack-keyboard__keys { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; padding: 12px 6px; }
   .stack-keyboard__key { min-height: 67px; font-size: 20px; }
+  .stack-keyboard:not(.is-ready) .stack-keyboard__keys { padding-top: 170px; }
 }
 @media (prefers-reduced-motion: reduce) { .stack-keyboard__key:active { transform: none; } }
 </style>

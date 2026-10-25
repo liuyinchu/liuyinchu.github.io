@@ -315,12 +315,23 @@ test('the About directory opens the full story and keeps its controls and Footer
   await finishAudit(page, audit)
 })
 
-test('reduced motion keeps every chapter and the Footer readable', async ({ page }) => {
+test('reduced motion keeps every chapter and the Footer readable', async ({ page, isMobile }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   const audit = auditPage(page)
   await gotoRoute(page, '/about/me')
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
   await expectCompleteStory(page)
+  const chapter = page.getByRole('navigation', { name: '关于我与本站：章节索引' }).getByRole('link', { name: '第5节：一边搭建', exact: true })
+  await chapter.click()
+  await expect(chapter).toHaveAttribute('aria-current', 'step')
+  const keyboard = page.locator('#about-making').getByTestId('stack-keyboard')
+  await keyboard.scrollIntoViewIfNeeded()
+  const initialDescription = await expectStackSelection(keyboard, 'Python')
+  const codex = stackKey(keyboard, 'Codex')
+  if (isMobile) await codex.tap()
+  else await codex.click()
+  const codexDescription = await expectStackSelection(keyboard, 'Codex')
+  expect(codexDescription).not.toBe(initialDescription)
   await expectReadableToFooter(page)
   await finishAudit(page, audit)
 })
@@ -405,6 +416,7 @@ test('constellation icons open columns while preview titles open details without
 })
 
 test('the mechanical keyboard renders on supported browsers and responds to touch, focus, and shortcuts', async ({ page, isMobile }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
   const audit = auditPage(page)
   await gotoRoute(page, '/about/me')
   const webgl2Supported = await page.evaluate(() => {
@@ -423,6 +435,26 @@ test('the mechanical keyboard renders on supported browsers and responds to touc
   } else {
     await expect(keyboard).toHaveClass(/is-fallback/)
   }
+  // Keep a returning keycap from passing under the navigation pointer and selecting itself.
+  await page.mouse.move(0, 0)
+  const selectedDescription = await expectStackSelection(keyboard, 'Markdown')
+  const chapters = page.getByRole('navigation', { name: '关于我与本站：章节索引' })
+  const ending = chapters.getByRole('link', { name: '第6节：未完待续', exact: true })
+  await ending.press('Enter')
+  await expect(ending).toHaveAttribute('aria-current', 'step')
+  await page.locator('.site-footer .footer-bottom').scrollIntoViewIfNeeded()
+  await expect(keyboard).not.toBeInViewport()
+  await expectStackSelection(keyboard, 'Markdown')
+  const making = chapters.getByRole('link', { name: '第5节：一边搭建', exact: true })
+  await making.press('Enter')
+  await expect(making).toHaveAttribute('aria-current', 'step')
+  await keyboard.scrollIntoViewIfNeeded()
+  expect(await expectStackSelection(keyboard, 'Markdown')).toBe(selectedDescription)
+  const codex = stackKey(keyboard, 'Codex')
+  if (isMobile) await codex.tap()
+  else await codex.click()
+  expect(await expectStackSelection(keyboard, 'Codex')).not.toBe(selectedDescription)
+  await expect(keyboard).toHaveAttribute('data-renderer', webgl2Supported ? 'ready' : 'unavailable')
   await finishAudit(page, audit)
 })
 

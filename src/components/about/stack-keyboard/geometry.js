@@ -1,4 +1,9 @@
-// Rounded solids with a real cylindrical dish across each key's crown.
+import { BONGO_WIDTH, BONGO_HEIGHT } from './bongo-reference.js'
+
+// Rounded solids and the shared camera bounds for the keyboard and starlight cat.
+export const KEY_TOP = 1.10
+export const KEY_TRAVEL = .14
+export const KEY_HIT_HEIGHT = KEY_TOP - .035
 function contour(width, depth, radius, segments = 8) {
   const result = []
   const corners = [
@@ -77,15 +82,15 @@ export function keyGeometry() {
   return createSolid([
     { width: 1.09, depth: 1.05, radius: .095, y: .30 },
     { width: 1.13, depth: 1.09, radius: .105, y: .35 },
-    { width: 1.055, depth: 1.015, radius: .11, y: .75 },
-    { width: .97, depth: .93, radius: .115, y: .86 },
-  ], { labels: true, uvWidth: .97, uvDepth: .93, dish: .065 })
+    { width: 1.055, depth: 1.015, radius: .11, y: .94 },
+    { width: .97, depth: .93, radius: .115, y: KEY_TOP },
+  ], { labels: true, uvWidth: .97, uvDepth: .93, dish: .070 })
 }
 
 export function baseGeometry(width = 7.69, depth = 4.18) {
   return createSolid([
-    { width: width - .24, depth: depth - .24, radius: .22, y: -.24 },
-    { width, depth, radius: .28, y: -.14 },
+    { width: width - .24, depth: depth - .24, radius: .22, y: -.49 },
+    { width, depth, radius: .28, y: -.36 },
     { width, depth, radius: .28, y: .04 },
     { width: width + .035, depth: depth + .035, radius: .28, y: .065 },
     { width: width + .035, depth: depth + .035, radius: .28, y: .115 },
@@ -133,25 +138,39 @@ export function project(matrix, x, y, z) {
   return [(matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12]) / w,
     (matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13]) / w]
 }
+export function keyboardScene(layout) {
+  return { catScale: layout.width * .71, catOrigin: [0, .30, -layout.depth / 2 - .28], catAspect: BONGO_HEIGHT / BONGO_WIDTH }
+}
 export function keyboardCamera(width, height, layout, progress, reduced = false) {
   const entrance = (1 - progress) * (reduced ? 0 : 1)
-  const eye = layout.columns === 4 ? [1.5 + entrance * .3, 14 - entrance * .35, 8.5] : [5.2 + entrance * .65, 8.8 - entrance * .4, 12]
-  const view = lookAt(eye, [0, .2, 0]), projection = perspective(width / height)
+  // Three-quarter view: a slanted front edge plus readable tops and substantial sides.
+  const eye = layout.columns === 4 ? [6.22 + entrance * .18, 15.02, 13.74] : [7.20 + entrance * .24, 13.60, 13.35]
+  const view = lookAt(eye, [0, .75, -.20]), projection = perspective(width / height)
+  const right = [view[0],view[4],view[8]], up = [view[1],view[5],view[9]], forward = [view[2],view[6],view[10]]
   const initial = multiply(projection, view), corners = []
-  for (const x of [-layout.width / 2 - .08, layout.width / 2 + .08]) for (const y of [-.25, .9]) {
+  for (const x of [-layout.width / 2 - .08, layout.width / 2 + .08]) for (const y of [-.52, KEY_TOP + .02]) {
     for (const z of [-layout.depth / 2 - .08, layout.depth / 2 + .08]) corners.push(project(initial, x, y, z))
+  }
+  const scene = keyboardScene(layout)
+  // The source frame already contains the angled cat pose. Face the camera at its
+  // exact 457:289 aspect rather than shearing that pose a second time.
+  for (const x of [-.5,.5]) for (const y of [0,scene.catAspect]) for (const z of [-.002,.010]) {
+    const world=scene.catOrigin.map((n,i)=>n+(right[i]*x+up[i]*y+forward[i]*z)*scene.catScale)
+    corners.push(project(initial,...world))
   }
   const xs = corners.map((p) => p[0]), ys = corners.map((p) => p[1])
   const minimumX = Math.min(...xs), maximumX = Math.max(...xs), minimumY = Math.min(...ys), maximumY = Math.max(...ys)
-  const zoom = Math.min(1.92 / (maximumX - minimumX), 1.84 / (maximumY - minimumY))
+  const zoom = Math.min(1.90 / (maximumX - minimumX), 1.85 / (maximumY - minimumY))
   projection[0] *= zoom; projection[5] *= zoom
   projection[8] = (maximumX + minimumX) / 2 * zoom
   projection[9] = (maximumY + minimumY) / 2 * zoom
-  return { matrix: multiply(projection, view), eye }
+  return { matrix: multiply(projection, view), eye, right, up, forward }
 }
-export function projectedKeys(matrix, layout, depression) {
+export function projectedKeys(matrix, layout) {
   return layout.centers.map(([x, , z], index) => {
-    const top = .824 - depression[index]
+    // Keep the target on the resting crown plane while the cap moves beneath it.
+    // This prevents a held key from sliding into the neighboring row's target.
+    const top = KEY_HIT_HEIGHT
     // Include the full shoulder, with a real gap between adjacent hit polygons.
     const halfWidth = layout.columns === 4 ? .55 : .52
     const halfDepth = layout.columns === 4 ? .545 : .505
