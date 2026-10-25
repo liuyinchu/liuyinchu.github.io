@@ -12,14 +12,16 @@ const props = defineProps({
 })
 const emit = defineEmits(['select'])
 const nodes = [
-  { id: 'notes', label: '随记', color: '#c3bde6' },
-  { id: 'resources', label: '资源', color: '#9fc4bf' },
-  { id: 'projects', label: '代码项目', color: '#a8bddc' },
+  { id: 'notes', label: '随记', to: '/space1', color: '#c3bde6' },
+  { id: 'talk', label: '说说', to: '/talk', color: '#c4b59b' },
+  { id: 'resources', label: '资源', to: '/rd', color: '#9fc4bf' },
+  { id: 'projects', label: '代码与项目', to: '/code', color: '#a8bddc' },
 ]
 const content = ref({
   notes: { title: '随记', description: '把一个问题，慢慢展开。', href: '/space1', meta: '' },
+  talk: { title: '随手记下的想法与片段', description: '放一些零散的想法、见闻和心情。还没写成文章的内容，也可以先留在这里。', meta: '' },
   resources: { title: '资源', description: '收好值得再回来找的入口。', href: '/rd', meta: '' },
-  projects: { title: '代码项目', description: '把想法做成可用、可玩的东西。', href: '/code', meta: '' },
+  projects: { title: '代码与项目', description: '把想法做成可用、可玩的东西。', href: '/code', meta: '' },
 })
 const currentNode = computed(() => nodes.find((node) => node.id === props.selected) || nodes[0])
 const preview = computed(() => content.value[currentNode.value.id])
@@ -29,12 +31,11 @@ const projectedNodes = computed(() => projected.value ? nodes.filter((node) => p
 const fallbackNodes = computed(() => nodes.filter((node) => !projectedNodes.value.some((item) => item.id === node.id)))
 let controller
 
-function isExternal(node) {
-  return /^https?:\/\//.test(content.value[node.id].href)
+function isExternal(href) {
+  return /^https?:\/\//.test(href)
 }
-function destination(node) {
-  const href = content.value[node.id].href
-  return isExternal(node) ? { href, target: '_blank', rel: 'noopener noreferrer' } : { to: href }
+function destination(href) {
+  return isExternal(href) ? { href, target: '_blank', rel: 'noopener noreferrer' } : { to: href }
 }
 function choose(id) {
   if (id !== props.selected) emit('select', id)
@@ -114,11 +115,10 @@ onBeforeUnmount(() => controller?.abort())
 <template>
   <div v-show="active" class="constellation-directory" role="region" aria-label="内容星图" :class="{ 'constellation-directory--projected': projected, 'constellation-directory--compact': compact }">
     <div class="constellation-directory__nodes" aria-label="内容星座入口">
-      <component
+      <RouterLink
         v-for="node in projectedNodes"
-        :is="isExternal(node) ? 'a' : RouterLink"
         :key="node.id"
-        v-bind="destination(node)"
+        :to="node.to"
         class="constellation-node"
         :class="{ 'is-selected': selected === node.id }"
         :style="position(node)"
@@ -129,14 +129,13 @@ onBeforeUnmount(() => controller?.abort())
       >
         <span class="constellation-node__point" aria-hidden="true"></span>
         <span class="constellation-node__label">{{ node.label }}</span>
-      </component>
+      </RouterLink>
     </div>
     <nav v-if="fallbackNodes.length" class="constellation-directory__fallback" aria-label="栏目入口">
-      <component
+      <RouterLink
         v-for="node in fallbackNodes"
-        :is="isExternal(node) ? 'a' : RouterLink"
         :key="node.id"
-        v-bind="destination(node)"
+        :to="node.to"
         class="constellation-fallback"
         :class="{ 'is-selected': selected === node.id }"
         :style="{ '--node-color': node.color }"
@@ -144,11 +143,19 @@ onBeforeUnmount(() => controller?.abort())
         :data-selected="selected === node.id"
         @pointerenter="choose(node.id)"
         @focus="choose(node.id)"
-      >{{ node.label }}</component>
+      >{{ node.label }}</RouterLink>
     </nav>
     <article id="constellation-content-preview" class="constellation-preview" aria-label="当前内容预览" aria-live="polite" aria-atomic="true" :style="{ '--node-color': currentNode.color }">
       <p class="constellation-preview__category"><span>{{ currentNode.label }}</span><span v-if="preview.meta">{{ preview.meta }}</span></p>
-      <h3>{{ preview.title }}</h3>
+      <h3>
+        <component
+          v-if="currentNode.id !== 'talk'"
+          :is="isExternal(preview.href) ? 'a' : RouterLink"
+          v-bind="destination(preview.href)"
+          class="constellation-preview__title-link"
+        >{{ preview.title }}</component>
+        <template v-else>{{ preview.title }}</template>
+      </h3>
       <p class="constellation-preview__description">{{ preview.description }}</p>
     </article>
   </div>
@@ -176,6 +183,9 @@ onBeforeUnmount(() => controller?.abort())
 .constellation-preview__category { display: flex; flex-wrap: wrap; gap: 6px 18px; color: #a3adba; font-size: 14px; line-height: 1.6; margin: 0 0 20px; }
 .constellation-preview__category > span:first-child { color: var(--node-color); }
 .constellation-preview h3 { color: #e2dfd7; margin: 0 0 17px; font-size: clamp(21px, 2vw, 28px); line-height: 1.55; font-weight: 450; text-wrap: pretty; }
+.constellation-preview__title-link { color: inherit; text-decoration: underline; text-decoration-color: #a6a2b15c; text-decoration-thickness: 1px; text-underline-offset: .18em; }
+.constellation-preview__title-link:hover { color: #fff3d5; text-decoration-color: currentColor; }
+.constellation-preview__title-link:focus-visible { outline: 1px solid var(--node-color); outline-offset: 5px; }
 .constellation-preview__description { color: #a5afbc; margin: 0; font-size: 14px; line-height: 1.95; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 @media (max-width: 1100px) and (min-width: 761px) {
   .constellation-preview { width: 28%; right: 4vw; padding-left: 18px; }

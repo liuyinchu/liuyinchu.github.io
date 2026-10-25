@@ -106,7 +106,12 @@ const knotLoop = pathSampler([
 ])
 
 export function createParticles(profile = 'stellar') {
-  if (profile === 'about') return createAboutParticles({ dustCount: DUST_COUNT, starCount: STAR_COUNT, backgroundCount: BACKGROUND_COUNT, random: randomGenerator(0x9a34e1) })
+  const stellar = createStellarParticles()
+  if (profile === 'about') return createAboutParticles({ dustCount: DUST_COUNT, starCount: STAR_COUNT, backgroundCount: BACKGROUND_COUNT, random: randomGenerator(0x9a34e1), cursor: stellar.arrow, cursorStyle: stellar.style })
+  return stellar
+}
+
+function createStellarParticles() {
   const count = DUST_COUNT + STAR_COUNT + BACKGROUND_COUNT
   const six = new Float32Array(count * 3)
   const arrow = new Float32Array(count * 3)

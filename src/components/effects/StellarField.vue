@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { createStellarRenderer } from './stellar-field/renderer.js'
-import { ABOUT_NODES, ABOUT_ENDING_PATHS, ABOUT_ENDING_KNOTS, getAboutView } from './stellar-field/about-shapes.js'
+import { ABOUT_NODES, ABOUT_ENDING_PATHS, ABOUT_ENDING_KNOTS, ABOUT_EXPRESSION_DOTS, getAboutView } from './stellar-field/about-shapes.js'
 
 const props = defineProps({
   profile: { type: String, default: 'stellar' },
@@ -19,7 +19,7 @@ const phase = computed(() => {
   if (props.profile === 'about') {
     if (p < .1) return 'orbit'
     if (p < .3) return 'expression'
-    if (p < .5) return 'framework'
+    if (p < .5) return 'pointer'
     if (p < .7) return 'contents'
     if (p < .9) return 'field'
     return 'open'
@@ -32,9 +32,9 @@ const phase = computed(() => {
 })
 const description = computed(() => ({
   orbit: '倾斜交错的立体星尘轨道',
-  expression: '星尘组成的戴圆眼镜露齿笑脸，旁边举起一根食指',
-  framework: '由星尘搭起的立体建造框架',
-  contents: '由书页、资源光环和立体方块组成的三簇内容星图',
+  expression: '星光组成的智慧表情：贴脸眼镜、笑口中恰好两颗醒目门牙，旁边握拳并抬起食指',
+  pointer: '原星光组件中由立体星尘组成的鼠标指针',
+  contents: '由书页、对话泡、资源光环和立体方块组成的四簇内容星图',
   field: '舒展到四周、为键盘让出中央空间的星域',
   open: '两道有立体厚度的扭转星带交错穿行，一端向远处舒展',
   six: '由星尘组成的数字 6',
@@ -132,15 +132,10 @@ defineExpose({
             <ellipse rx="86" ry="30" transform="rotate(-28)" />
             <ellipse rx="66" ry="40" transform="rotate(43)" />
           </g>
-          <g v-else-if="phase === 'expression'" stroke-dasharray=".4 1.8">
-            <circle cx="-32" cy="0" r="55" />
-            <circle cx="-52" cy="-17" r="18" /><circle cx="-11" cy="-17" r="18" />
-            <path d="M-34-20H-29M-88-23-70-20M7-20 23-23M-60 10A28 25 0 0 0-4 10ZM-41 10V26H-32V10M-31 10V26H-22V10M50 45H77L82 24 91 5 89-12 83-18 77-13 74-22 73-66 69-74H62L59-66V-22L51-29 43-27 40-20V-3L45 15 50 24Z" />
-            <circle cx="-52" cy="-17" r="2" fill="currentColor" /><circle cx="-11" cy="-17" r="2" fill="currentColor" />
+          <g v-else-if="phase === 'expression'" stroke="none">
+            <circle v-for="(dot, index) in ABOUT_EXPRESSION_DOTS" :key="index" :cx="dot.x" :cy="dot.y" :r="dot.feature === 1 ? .55 : .85" :fill="dot.feature === 1 ? '#ad752e' : dot.feature === 2 ? '#ffba40' : dot.feature === 3 ? '#ffe695' : dot.feature === 6 ? '#9eabb8' : '#fffcef'" :opacity="dot.feature === 1 ? .18 : .85" />
           </g>
-          <g v-else-if="phase === 'framework'" stroke-dasharray=".3 2.1">
-            <path d="M-71-33 9-68 75-27-5 10ZM-71-33V44L-5 83 75 47V-27M-5 10V83M9-68V8L75 47M-71 5-5 45 75 9" />
-          </g>
+          <path v-else-if="phase === 'pointer'" d="M-90 -89 Q-93 -94 -86 -91 L86 -21 Q93 -18 87 -13 L29 30 L-24 86 Q-28 92 -30 85 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray=".3 2.7" />
           <g v-else-if="phase === 'contents'">
             <g v-for="node in ABOUT_NODES" :key="node.id" :transform="`translate(${node.position[0] * 90} ${-node.position[1] * 90})`" :stroke="activeNode === node.id ? '#ffd18a' : undefined">
               <path :d="node.fallbackPath" stroke-dasharray=".4 1.7" />

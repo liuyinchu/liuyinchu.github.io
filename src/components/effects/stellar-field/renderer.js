@@ -12,6 +12,7 @@ in vec3 aEmoji;
 in vec3 aField;
 in vec3 aEnding;
 in float aNode;
+in vec4 aDetails;
 uniform float uProgress;
 uniform float uProfile;
 uniform float uActiveNode;
@@ -60,6 +61,8 @@ void main() {
   }
   float flight = sin(t*3.14159265);
   float endingWeight=uProfile>.5?smoothstep(.8,1.,uProgress):0.;
+  float expressionWeight=uProfile>.5?1.-smoothstep(.04,.12,abs(uProgress-.2)):0.;
+  float pointerWeight=uProfile>.5?1.-smoothstep(.04,.12,abs(uProgress-.4)):0.;
   if(aStyle.w>.2) {
     // Curved travel rather than a flat crossfade; the same stars survive every form.
     float angle=flight*.38*sin(seed*.17);
@@ -81,11 +84,11 @@ void main() {
   float contentWeight=1.-smoothstep(.04,.14,abs(uProgress-.6));
   float desktop=smoothstep(700.,1000.,uResolution.x);
   float mobile=1.-desktop;
-  if(uProfile>.5) scene*=1.-mobile*(.12*contentWeight+.32*endingWeight)-desktop*.12*endingWeight;
+  if(uProfile>.5) scene*=1.-mobile*(.12*contentWeight+.32*endingWeight+.08*expressionWeight+.40*pointerWeight)-desktop*(.12*endingWeight+.22*expressionWeight+.12*pointerWeight);
   vec2 screen=p.xy*scene*perspective;
   if(uProfile>.5) {
-    screen.x-=uResolution.x*desktop*(.16*contentWeight-.18*endingWeight);
-    screen.y+=uResolution.y*mobile*(.07*contentWeight+.036*endingWeight);
+    screen.x-=uResolution.x*desktop*(.16*contentWeight+.18*expressionWeight-.17*pointerWeight-.18*endingWeight);
+    screen.y+=uResolution.y*mobile*(.07*contentWeight+.036*endingWeight+.06*expressionWeight);
   }
   gl_Position=vec4(screen/uResolution*2.,cameraDepth<=.25?2.:0.,1.);
   float mobileScale=clamp(uResolution.x/720.,.64,1.);
@@ -121,7 +124,24 @@ void main() {
     vColor=mix(vColor,vec3(.88,.94,1.),dust*endingWeight*(.18+edge*.18));
     vColor=mix(vColor,vec3(.96,.83,.62),brightKnot*endingWeight*.85);
   }
-  vHero=step(.8,aStyle.w);
+  if(expressionWeight>0. && aStyle.w>.2) {
+    float feature=aDetails.x;
+    vec3 expressionColor=feature>5.5?vec3(.62,.67,.72):feature<1.5?vec3(.82,.64,.30):feature<2.5?vec3(1.,.88,.58):feature<3.5?vec3(1.,.96,.82):vec3(1.,.99,.94);
+    float expressionAlpha=feature>5.5?.70:feature<1.5?.24:feature<2.5?1.10:feature<3.5?1.:1.35;
+    float expressionSize=(feature>5.5?2.2:feature<1.5?1.65:feature<2.5?2.4:feature<3.5?2.55:2.75)*uDpr*perspective;
+    vColor=mix(vColor,expressionColor,expressionWeight);
+    vAlpha=mix(vAlpha,expressionAlpha,expressionWeight);
+    gl_PointSize=mix(gl_PointSize,max(1.,expressionSize),expressionWeight);
+  }
+  if(pointerWeight>0. && aStyle.w>.2) {
+    float temperature=aDetails.w;
+    vec3 cursorColor=temperature<.65?mix(cold,neutral,temperature/.65):mix(neutral,warm,(temperature-.65)/.35);
+    vColor=mix(vColor,cursorColor,pointerWeight);
+    vAlpha=mix(vAlpha,aDetails.z*twinkle*mix(1.,.30,dispersed),pointerWeight);
+    gl_PointSize=mix(gl_PointSize,max(1.,aDetails.y*uDpr*perspective*mobileScale),pointerWeight);
+  }
+  vHero=step(.8,aStyle.w)*(1.-expressionWeight)
+    +expressionWeight*step(.2,aStyle.w)*(aDetails.x>5.5?.12:aDetails.x>=4.?.45:aDetails.x<1.5?.08:.22);
   vSeed=seed;
 }`
 
@@ -260,9 +280,9 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
         ['aKnot', particles.knot, 3], ['aScatter', particles.scatter, 3],
         ['aStyle', particles.style, 4],
       ]
-      if (aboutProfile) attributes.push(['aEmoji', particles.emoji, 3], ['aField', particles.field, 3], ['aEnding', particles.ending, 3], ['aNode', particles.nodeGroup, 1])
+      if (aboutProfile) attributes.push(['aEmoji', particles.emoji, 3], ['aField', particles.field, 3], ['aEnding', particles.ending, 3], ['aNode', particles.nodeGroup, 1], ['aDetails', particles.details, 4])
       else {
-        for (const name of ['aEmoji', 'aField', 'aEnding', 'aNode']) {
+        for (const name of ['aEmoji', 'aField', 'aEnding', 'aNode', 'aDetails']) {
           const attribute = gl.getAttribLocation(program, name)
           gl.disableVertexAttribArray(attribute)
           gl.vertexAttrib1f(attribute, 0)
@@ -513,7 +533,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
   return {
     update(options) {
       targetProgress = Math.max(0, Math.min(1, Number(options.progress) || 0))
-      activeNode = ['notes', 'resources', 'projects'].indexOf(options.activeNode) + 1
+      activeNode = ['notes', 'talk', 'resources', 'projects'].indexOf(options.activeNode) + 1
       paused = options.paused
       interactive = options.interactive
       if (!interactive) {

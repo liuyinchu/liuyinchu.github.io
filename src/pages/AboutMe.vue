@@ -229,7 +229,7 @@ onBeforeUnmount(() => {
         <section id="about-curiosity" class="about-chapter about-closing" tabindex="-1" aria-labelledby="about-curiosity-title">
           <div class="about-closing__content">
             <p class="about-eyebrow"><span>06</span> 继续 / STILL CURIOUS</p>
-            <h2 id="about-curiosity-title">保留好奇，<br>也保留一点抽象。</h2>
+            <h2 id="about-curiosity-title">保持好奇，<br>继续创造。</h2>
             <p>编程与开源、数据分析、工具与工作流，<br class="about-desktop-break">设计、动效、音乐、游戏，还有生活里偶然发现的小事——<br class="about-desktop-break">它们不必被归成同一种兴趣，却都能在这里相遇。</p>
             <div class="about-closing__links">
               <RouterLink to="/space1">去读一篇随记</RouterLink>
@@ -373,6 +373,12 @@ onBeforeUnmount(() => {
   #about-names h2 { margin-bottom: 18px; }
   #about-names h2 br { display: none; }
   #about-names .about-copy > p:not(.about-eyebrow) { line-height: 1.95; margin-bottom: 14px; }
+  #about-purpose { padding-top: 32px; justify-content: flex-start; }
+  #about-purpose .about-eyebrow { margin-bottom: 14px; }
+  #about-purpose h2 { margin-bottom: 18px; }
+  #about-purpose h2 br { display: none; }
+  #about-purpose .about-copy > p:not(.about-eyebrow) { font-size: 14px; line-height: 1.95; margin-bottom: 14px; }
+  #about-purpose .about-copy > p.about-quiet { margin-top: 14px; }
   .about-making { justify-content: flex-start; padding-top: 32px; padding-bottom: 120px; min-height: max(var(--about-stage-height), 850px); }
   .about-making__heading { width: 100%; }
   .about-making__heading .about-eyebrow { margin-bottom: 14px; }

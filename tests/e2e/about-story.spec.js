@@ -13,7 +13,7 @@ const chapters = [
   ['about-purpose', '想法，总得有个落点。'],
   ['about-wander', '挑一片星光，随处逛逛。'],
   ['about-making', '一边使用，一边搭建。'],
-  ['about-curiosity', '保留好奇，也保留一点抽象。'],
+  ['about-curiosity', '保持好奇，继续创造。'],
 ]
 const retiredRoutes = ['/about/site', '/about/self', '/research', '/academic']
 const identityPageName = /^(?:学术主页|学术概览)(?:，|$)/
@@ -27,9 +27,10 @@ const stackKeys = [
 ]
 
 const contentConstellations = [
-  { id: 'notes', name: '随记', title: '给 AI 编程助手补一份项目记忆：聊聊 claude-mem', href: '/space1/claude_mem_intro' },
-  { id: 'resources', name: '资源', title: '人生苦短，我学 Python ！', href: 'https://docs.python.org/3/' },
-  { id: 'projects', name: '代码项目', title: '音乐机关盒', href: '/music-box' },
+  { id: 'notes', name: '随记', column: '/space1', title: '给 AI 编程助手补一份项目记忆：聊聊 claude-mem', href: '/space1/claude_mem_intro' },
+  { id: 'talk', name: '说说', column: '/talk', title: '随手记下的想法与片段', description: '放一些零散的想法、见闻和心情。还没写成文章的内容，也可以先留在这里。' },
+  { id: 'resources', name: '资源', column: '/rd', title: '人生苦短，我学 Python ！', href: 'https://docs.python.org/3/' },
+  { id: 'projects', name: '代码与项目', column: '/code', title: '音乐机关盒', href: '/music-box' },
 ]
 
 function stackKey(keyboard, name) {
@@ -136,43 +137,86 @@ async function pointAtVisibleNode(page, node, isMobile, hover = false) {
   else await page.mouse.click(x, y)
 }
 
+function constellationLink(directory, destination) {
+  return directory.locator('[aria-label="内容星座入口"], [aria-label="栏目入口"]').getByRole('link', { name: destination.name, exact: true })
+}
+
+function observeAboutTalkRequests(page) {
+  const requests = []
+  const onRequest = request => {
+    if (new URL(request.url()).pathname === '/markdown/post_it.md') requests.push(request.url())
+  }
+  page.on('request', onRequest)
+  return () => {
+    page.off('request', onRequest)
+    expect(requests, 'the About story must not request the Talk body').toEqual([])
+  }
+}
+
 async function expectDirectoryLinks(directory) {
   await expect(directory).toBeVisible()
-  await expect(directory.getByRole('link')).toHaveCount(contentConstellations.length)
+  const icons = directory.locator('[aria-label="内容星座入口"], [aria-label="栏目入口"]')
+  await expect(icons.getByRole('link')).toHaveCount(contentConstellations.length)
   await expect(directory.getByRole('button')).toHaveCount(0)
-  await expect(directory.getByRole('link', { name: '说说', exact: true })).toHaveCount(0)
   for (const destination of contentConstellations) {
-    const link = directory.getByRole('link', { name: destination.name, exact: true })
-    await expect(link).toHaveAttribute('href', destination.href)
+    const link = constellationLink(directory, destination)
+    await expect(link).toHaveAttribute('href', destination.column)
     await expect(link).not.toHaveAttribute('aria-pressed')
-    if (destination.id === 'resources') {
-      await expect(link).toHaveAttribute('target', '_blank')
-      await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
-    } else {
-      await expect(link).not.toHaveAttribute('target')
-      await expect(link).not.toHaveAttribute('rel')
-    }
+    await expect(link).not.toHaveAttribute('target')
+    await expect(link).not.toHaveAttribute('rel')
   }
   const preview = directory.getByRole('article', { name: '当前内容预览', exact: true })
   await expect(preview).toBeVisible()
-  await expect(preview.locator('a, button')).toHaveCount(0)
+  await expect(preview.getByRole('button')).toHaveCount(0)
   return preview
 }
 
 async function expectConstellationSelection(story, directory, destination) {
-  await expect(directory.getByRole('link', { name: destination.name, exact: true })).toHaveAttribute('data-selected', 'true')
+  await expect(constellationLink(directory, destination)).toHaveAttribute('data-selected', 'true')
   await expect(directory.locator('a[data-selected="true"]')).toHaveCount(1)
   await expect(story.locator('.stellar-field[data-profile="about"]')).toHaveAttribute('data-active-node', destination.id)
   const preview = directory.getByRole('article', { name: '当前内容预览', exact: true })
-  await expect(preview.getByRole('heading', { level: 3 })).toHaveText(destination.title)
-  await expect(preview.locator('.constellation-preview__description')).toHaveText(/\S/)
+  const heading = preview.getByRole('heading', { level: 3 })
+  await expect(heading).toHaveText(destination.title)
+  await expect(preview.getByRole('button')).toHaveCount(0)
+  if (destination.id === 'talk') {
+    await expect(heading.getByRole('link')).toHaveCount(0)
+    await expect(preview.getByRole('link')).toHaveCount(0)
+    await expect(preview.locator('.constellation-preview__description')).toHaveText(destination.description)
+  } else {
+    await expect(preview.getByRole('link')).toHaveCount(1)
+    const detail = heading.getByRole('link', { name: destination.title, exact: true })
+    await expect(detail).toHaveAttribute('href', destination.href)
+    if (destination.id === 'resources') {
+      await expect(detail).toHaveAttribute('target', '_blank')
+      await expect(detail).toHaveAttribute('rel', 'noopener noreferrer')
+    } else {
+      await expect(detail).not.toHaveAttribute('target')
+      await expect(detail).not.toHaveAttribute('rel')
+    }
+    await expect(preview.locator('.constellation-preview__description')).toHaveText(/\S/)
+  }
 }
 
 async function tabToConstellation(page, directory, link) {
-  // Projected and fallback links can change DOM order as a star cluster leaves view.
-  const tabStops = await page.locator('a[href], button, [tabindex="0"]').count()
+  const chapter = page.getByRole('navigation', { name: '关于我与本站：章节索引' }).getByRole('link', { name: '第4节：随处逛逛', exact: true })
+  await chapter.click()
+  await expect(page.locator('#about-wander')).toBeFocused()
+  await expect.poll(() => page.locator('#about-wander').evaluate(section => {
+    const stage = document.querySelector('.about-stage')
+    return Math.abs(section.getBoundingClientRect().top - stage.getBoundingClientRect().top)
+  }), { message: 'the chapter navigation should reach its scroll destination' }).toBeLessThanOrEqual(1)
+  await expect(directory).toBeVisible()
+  const instruments = page.locator('.about-instruments')
+  // One optional preview title link can appear when focus changes the selection.
+  const tabStops = await instruments.locator('a[href], button:not([disabled])').count() + 1
   for (let step = 0; step < tabStops; step += 1) {
     await page.keyboard.press('Shift+Tab')
+    const focused = await page.evaluate(() => ({
+      inside: Boolean(document.activeElement?.closest('.about-instruments')),
+      label: document.activeElement?.getAttribute('aria-label') || document.activeElement?.textContent?.trim().slice(0, 80) || document.activeElement?.tagName,
+    }))
+    expect(focused.inside, 'Tab should stay in the visible star-map tools: ' + focused.label).toBe(true)
     await expect(directory).toBeVisible()
     if (await link.evaluate(element => element === document.activeElement)) break
   }
@@ -308,8 +352,9 @@ test('WebGL unavailability preserves the static star map and usable native keybo
   await finishAudit(page, audit)
 })
 
-test('content constellation links reveal previews and open a complete article directly', async ({ page, isMobile }) => {
+test('constellation icons open columns while preview titles open details without loading Talk content', async ({ page, isMobile }) => {
   const audit = auditPage(page)
+  let stopTalkObservation = observeAboutTalkRequests(page)
   await gotoRoute(page, '/about/me')
   const story = await expectCompleteStory(page)
   const chapter = story.getByRole('navigation', { name: '关于我与本站：章节索引' }).getByRole('link', { name: '第4节：随处逛逛', exact: true })
@@ -317,23 +362,42 @@ test('content constellation links reveal previews and open a complete article di
   await expect(chapter).toHaveAttribute('aria-current', 'step')
   const directory = story.getByRole('region', { name: '内容星图', exact: true })
   await expectDirectoryLinks(directory)
-  const [notes, resources, projects] = contentConstellations
+  const [notes, talk, resources, projects] = contentConstellations
   await expectConstellationSelection(story, directory, notes)
-  const notesLink = directory.getByRole('link', { name: notes.name, exact: true })
-  if (isMobile) {
-    await pointAtVisibleNode(page, notesLink, true)
-  } else {
-    const resourcesLink = directory.getByRole('link', { name: resources.name, exact: true })
-    await pointAtVisibleNode(page, resourcesLink, false, true)
-    await expectConstellationSelection(story, directory, resources)
-    await tabToConstellation(page, directory, directory.getByRole('link', { name: projects.name, exact: true }))
-    await expectConstellationSelection(story, directory, projects)
-    await tabToConstellation(page, directory, notesLink)
-    await expectConstellationSelection(story, directory, notes)
-    await expectSimplifiedPresentation(story)
-    await expectNoHorizontalOverflow(page)
-    await page.keyboard.press('Enter')
+  for (const destination of [talk, resources, projects]) {
+    const icon = constellationLink(directory, destination)
+    if (!isMobile && destination.id === 'talk') await pointAtVisibleNode(page, icon, false, true)
+    else await tabToConstellation(page, directory, icon)
+    await expectConstellationSelection(story, directory, destination)
   }
+  const notesIcon = constellationLink(directory, notes)
+  await tabToConstellation(page, directory, notesIcon)
+  await expectConstellationSelection(story, directory, notes)
+  await expectSimplifiedPresentation(story)
+  await expectNoHorizontalOverflow(page)
+  await audit.settle()
+  stopTalkObservation()
+  if (isMobile) await pointAtVisibleNode(page, notesIcon, true)
+  else await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(BASE_URL + notes.column)
+  await expectKnownRouteShell(page, notes.column)
+  await expect(page.locator('a[href="' + notes.href + '"]')).not.toHaveCount(0)
+  await audit.settle()
+
+  // The column may legitimately load its Talk ticker; observe only About visits.
+  stopTalkObservation = observeAboutTalkRequests(page)
+  await gotoRoute(page, '/about/me')
+  await expectCompleteStory(page)
+  await chapter.click()
+  await expect(chapter).toHaveAttribute('aria-current', 'step')
+  await expectDirectoryLinks(directory)
+  await expectConstellationSelection(story, directory, notes)
+  const detail = directory.getByRole('article', { name: '当前内容预览', exact: true }).getByRole('heading', { level: 3 }).getByRole('link', { name: notes.title, exact: true })
+  if (!isMobile) await tabToConstellation(page, directory, detail)
+  await audit.settle()
+  stopTalkObservation()
+  if (isMobile) await pointAtVisibleNode(page, detail, true)
+  else await page.keyboard.press('Enter')
   await expect(page).toHaveURL(BASE_URL + notes.href)
   await expect(page.locator('[data-page="article"][data-article-id="claude_mem_intro"][data-state="ready"]')).toBeVisible()
   await expect(page.locator('[data-article-content]')).toBeVisible()
