@@ -1,4 +1,5 @@
 import { createParticles } from './shapes.js'
+import { projectAboutAnchors } from './about-shapes.js'
 
 const VERTEX = `#version 300 es
 precision highp float;
@@ -7,8 +8,12 @@ in vec3 aArrow;
 in vec3 aKnot;
 in vec3 aScatter;
 in vec4 aStyle;
+in vec3 aEmoji;
+in vec3 aField;
+in float aNode;
 uniform float uProgress;
 uniform float uProfile;
+uniform float uActiveNode;
 uniform float uTime;
 uniform float uReplay;
 uniform float uDpr;
@@ -31,20 +36,26 @@ mat3 rotationY(float a) {
 }
 void main() {
   float seed = float(gl_VertexID) * 1.61803398875;
-  float section = clamp(uProgress,0.,1.)*(uProfile>.5?5.:4.);
+  float section = clamp(uProgress,0.,1.)*4.;
   float t = smoothstep(0.,1.,fract(section));
   vec3 p;
   float dispersed;
-  if(section < 1.) { p=mix(aSix,aScatter,t); dispersed=t; }
-  else if(section < 2.) { p=mix(aScatter,aArrow,t); dispersed=1.-t; }
-  else if(section < 3.) { p=mix(aArrow,aScatter,t); dispersed=t; }
-  else if(section<4. || uProfile<.5) { t=smoothstep(0.,1.,section-3.); p=mix(aScatter,aKnot,t); dispersed=1.-t; }
-  else {
-    t=smoothstep(0.,1.,section-4.);
-    p=aKnot;
-    p.xy*=1.+t*.26;
-    p.z+=sin(seed*.17)*t*.12;
-    dispersed=t*.12;
+  if(uProfile>.5) {
+    section=clamp(uProgress,0.,1.)*5.;
+    float segment=min(4.,floor(section));
+    t=smoothstep(.18,.82,section-segment);
+    if(section<1.) p=mix(aSix,aEmoji,t);
+    else if(section<2.) p=mix(aEmoji,aArrow,t);
+    else if(section<3.) p=mix(aArrow,aKnot,t);
+    else if(section<4.) p=mix(aKnot,aField,t);
+    else p=mix(aField,aScatter,t);
+    p=mix(p,aScatter,sin(t*3.14159265)*.72);
+    dispersed=sin(t*3.14159265)*.6;
+  } else {
+    if(section<1.) { p=mix(aSix,aScatter,t); dispersed=t; }
+    else if(section<2.) { p=mix(aScatter,aArrow,t); dispersed=1.-t; }
+    else if(section<3.) { p=mix(aArrow,aScatter,t); dispersed=t; }
+    else { t=smoothstep(0.,1.,section-3.); p=mix(aScatter,aKnot,t); dispersed=1.-t; }
   }
   float flight = sin(t*3.14159265);
   if(aStyle.w>.2) {
@@ -63,8 +74,10 @@ void main() {
   // before projection so those stars cannot reappear as mirrored points.
   float cameraDepth=3.8-p.z;
   float perspective=3.8/max(cameraDepth,.25);
-  float scene=min(uResolution.y*.458,uResolution.x*.565);
+  float scene=min(uResolution.y*.458,uResolution.x*(uProfile>.5?.45:.565));
+  float contentWeight=1.-smoothstep(.04,.14,abs(uProgress-.6));
   vec2 screen=p.xy*scene*perspective;
+  if(uProfile>.5) screen.x-=uResolution.x*.16*smoothstep(700.,1000.,uResolution.x)*contentWeight;
   gl_Position=vec4(screen/uResolution*2.,cameraDepth<=.25?2.:0.,1.);
   float mobileScale=clamp(uResolution.x/720.,.64,1.);
   float nucleusScale=1.;
@@ -80,6 +93,12 @@ void main() {
   float centerGlow=1.;
   if(uProfile<.5 && section<1. && aStyle.w>.2) centerGlow+=exp(-length(aSix.xy-vec2(.035,-.30))*7.)*1.30*(1.-dispersed);
   vAlpha=aStyle.y*twinkle*mix(1.,.30,dispersed)*centerGlow;
+  if(uProfile>.5 && uActiveNode>0.) {
+    float selected=1.-step(.1,abs(aNode-uActiveNode));
+    gl_PointSize*=1.+selected*contentWeight*.45;
+    vColor=mix(vColor,vec3(1.,.82,.54),selected*contentWeight);
+    vAlpha*=mix(1.,mix(.45,1.7,selected),contentWeight);
+  }
   vHero=step(.8,aStyle.w);
   vSeed=seed;
 }`
@@ -124,7 +143,7 @@ void main() {
   outColor=vec4(vec3(.008,.020,.027)+haze*vec3(.017,.030,.052),1.);
 }`
 
-export function createStellarRenderer(canvas, { profile = 'stellar', onReady, onUnavailable }) {
+export function createStellarRenderer(canvas, { profile = 'stellar', onReady, onUnavailable, onAnchors = () => {} }) {
   const gl = canvas.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: 'high-performance' })
   if (!gl) {
     onUnavailable()
@@ -147,6 +166,8 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
   let paused = false
   let interactive = true
   let reduced = false
+  let activeNode = 0
+  let lastAnchorTime = -Infinity
   let targetProgress = 0
   let progress = 0
   let replayStart = -1
@@ -212,11 +233,20 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program))
       vao = gl.createVertexArray()
       gl.bindVertexArray(vao)
-      for (const [name, values, size] of [
+      const attributes = [
         ['aSix', particles.six, 3], ['aArrow', particles.arrow, 3],
         ['aKnot', particles.knot, 3], ['aScatter', particles.scatter, 3],
         ['aStyle', particles.style, 4],
-      ]) {
+      ]
+      if (aboutProfile) attributes.push(['aEmoji', particles.emoji, 3], ['aField', particles.field, 3], ['aNode', particles.nodeGroup, 1])
+      else {
+        for (const name of ['aEmoji', 'aField', 'aNode']) {
+          const attribute = gl.getAttribLocation(program, name)
+          gl.disableVertexAttribArray(attribute)
+          gl.vertexAttrib1f(attribute, 0)
+        }
+      }
+      for (const [name, values, size] of attributes) {
         const buffer = gl.createBuffer()
         buffers.push(buffer)
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
@@ -226,7 +256,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
         gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, 0, 0)
       }
       locations = {}
-      for (const name of ['Progress', 'Profile', 'Time', 'Replay', 'Dpr', 'Resolution', 'Rotation', 'Hover', 'Motion']) {
+      for (const name of ['Progress', 'Profile', 'ActiveNode', 'Time', 'Replay', 'Dpr', 'Resolution', 'Rotation', 'Hover', 'Motion']) {
         locations[name] = gl.getUniformLocation(program, 'u' + name)
       }
       backgroundVertex = shader(gl.VERTEX_SHADER, BACKGROUND_VERTEX)
@@ -306,6 +336,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
     gl.useProgram(program)
     gl.uniform1f(locations.Progress, progress)
     gl.uniform1f(locations.Profile, aboutProfile ? 1 : 0)
+    gl.uniform1f(locations.ActiveNode, activeNode)
     gl.uniform1f(locations.Time, time)
     gl.uniform1f(locations.Replay, replayValue)
     gl.uniform1f(locations.Dpr, dpr)
@@ -314,8 +345,13 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
     gl.uniform2f(locations.Hover, hoverX, hoverY)
     gl.uniform1f(locations.Motion, paused || reduced ? 0 : 1)
     gl.drawArrays(gl.POINTS, 0, particles.count)
-    if ((!paused && !reduced) || replayStart >= 0 || resetPending || progress !== targetProgress ||
-      Math.abs(hoverX - targetHoverX) + Math.abs(hoverY - targetHoverY) > .0001) schedule()
+    const continuing = (!paused && !reduced) || replayStart >= 0 || resetPending || progress !== targetProgress ||
+      Math.abs(hoverX - targetHoverX) + Math.abs(hoverY - targetHoverY) > .0001
+    if (aboutProfile && (timestamp - lastAnchorTime >= 1000 / 30 || !continuing)) {
+      lastAnchorTime = timestamp
+      onAnchors(projectAboutAnchors(particles, { progress, replay: replayValue, rotationX, rotationY, hoverX, hoverY, time, motion: paused || reduced ? 0 : 1, width, height }))
+    }
+    if (continuing) schedule()
   }
 
   function resize() {
@@ -455,6 +491,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
   return {
     update(options) {
       targetProgress = Math.max(0, Math.min(1, Number(options.progress) || 0))
+      activeNode = ['notes', 'talk', 'resources', 'projects'].indexOf(options.activeNode) + 1
       paused = options.paused
       interactive = options.interactive
       if (!interactive) {
