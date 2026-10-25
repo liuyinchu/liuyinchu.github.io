@@ -36,8 +36,8 @@ export const portalApps = [
     component: Weather,
     windowClass: 'window-weather',
     shellClass: 'widget-shell weather-shell',
-    defaultSize: { width: 520, height: 384 },
-    minSize: { width: 320, height: 240 },
+    defaultSize: { width: 720, height: 640 },
+    minSize: { width: 320, height: 320 },
   },
   {
     id: 'calendar',

@@ -1,0 +1,10 @@
+QWeather Icons by QWeather 和风天气 and contributors
+Source: https://github.com/qwd/Icons
+Retrieved: 2026-10-25
+
+The icon artwork is licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+License: https://creativecommons.org/licenses/by/4.0/
+Project license statement: https://github.com/qwd/Icons#license
+
+Filled weather SVGs are distributed unchanged; filenames omit the -fill suffix.
+The project source code is MIT licensed; the icon artwork uses CC BY 4.0.

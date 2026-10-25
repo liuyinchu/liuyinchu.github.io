@@ -1,0 +1,73 @@
+QWeather Icons by QWeather 和风天气 and contributors
+Source: https://github.com/qwd/Icons
+Retrieved: 2026-10-25
+
+The icon artwork is licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+License: https://creativecommons.org/licenses/by/4.0/
+Project license statement: https://github.com/qwd/Icons#license
+
+Filled weather SVGs are distributed unchanged; filenames omit the -fill suffix.
+The project source code is MIT licensed; the icon artwork uses CC BY 4.0.
+
+100.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/100-fill.svg
+101.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/101-fill.svg
+102.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/102-fill.svg
+103.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/103-fill.svg
+104.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/104-fill.svg
+150.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/150-fill.svg
+151.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/151-fill.svg
+152.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/152-fill.svg
+153.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/153-fill.svg
+300.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/300-fill.svg
+301.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/301-fill.svg
+302.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/302-fill.svg
+303.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/303-fill.svg
+304.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/304-fill.svg
+305.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/305-fill.svg
+306.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/306-fill.svg
+307.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/307-fill.svg
+308.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/308-fill.svg
+309.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/309-fill.svg
+310.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/310-fill.svg
+311.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/311-fill.svg
+312.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/312-fill.svg
+313.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/313-fill.svg
+314.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/314-fill.svg
+315.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/315-fill.svg
+316.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/316-fill.svg
+317.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/317-fill.svg
+318.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/318-fill.svg
+350.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/350-fill.svg
+351.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/351-fill.svg
+399.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/399-fill.svg
+400.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/400-fill.svg
+401.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/401-fill.svg
+402.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/402-fill.svg
+403.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/403-fill.svg
+404.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/404-fill.svg
+405.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/405-fill.svg
+406.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/406-fill.svg
+407.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/407-fill.svg
+408.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/408-fill.svg
+409.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/409-fill.svg
+410.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/410-fill.svg
+456.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/456-fill.svg
+457.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/457-fill.svg
+499.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/499-fill.svg
+500.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/500-fill.svg
+501.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/501-fill.svg
+502.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/502-fill.svg
+503.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/503-fill.svg
+504.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/504-fill.svg
+507.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/507-fill.svg
+508.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/508-fill.svg
+509.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/509-fill.svg
+510.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/510-fill.svg
+511.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/511-fill.svg
+512.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/512-fill.svg
+513.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/513-fill.svg
+514.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/514-fill.svg
+515.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/515-fill.svg
+900.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/900-fill.svg
+901.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/901-fill.svg
+999.svg <- https://raw.githubusercontent.com/qwd/Icons/main/icons/999-fill.svg

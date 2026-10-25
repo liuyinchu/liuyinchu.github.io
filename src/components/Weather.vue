@@ -1,42 +1,127 @@
 <template>
-  <section class="weather-app portal-widget" aria-label="Current weather" :aria-busy="loading">
-    <div v-if="loading" class="weather-status" role="status">
-      <img src="/portal-icons/weather-cloud.svg" alt="" class="weather-status-icon" />
-      <h2 class="weather-city">{{ locationName }}</h2>
-      <p class="weather-status-copy">Loading current weather…</p>
-    </div>
-    <div v-else-if="error" class="weather-status">
-      <img src="/portal-icons/weather-cloud.svg" alt="" class="weather-status-icon" />
-      <h2 class="weather-city">{{ locationName }}</h2>
-      <p class="weather-status-copy" role="alert">Weather is unavailable right now.</p>
-      <button class="weather-retry" type="button" @click="fetchWeatherData">Try again</button>
-    </div>
-    <div v-else-if="weatherInfo" class="weather-body">
-      <header class="weather-overview">
-        <div class="weather-summary">
-          <h2 class="weather-city">{{ locationName }}</h2>
-          <p class="weather-condition">{{ weatherInfo.text }}</p>
-          <p class="weather-temperature" :aria-label="weatherInfo.temp + ' degrees Celsius'">
-            <span>{{ weatherInfo.temp }}°</span><span class="weather-scale" aria-hidden="true">C</span>
-          </p>
+  <section ref="appElement" class="weather-app portal-widget" aria-label="Zhuhai weather">
+    <div class="weather-body">
+      <header class="weather-toolbar">
+        <div>
+          <h2>{{ locationName }}</h2>
+          <p class="weather-updated">{{ sections.current.loading ? 'Updating weather…' : sections.current.updatedAt ? 'Updated ' + formatLocalTime(sections.current.updatedAt) + ' · CST' : 'Local weather · CST' }}</p>
         </div>
-        <img :src="conditionIcon" alt="" class="weather-condition-icon" />
+        <button class="weather-icon-button" type="button" :disabled="busy" :aria-label="busy ? 'Updating weather' : 'Refresh weather'" title="Refresh weather" @click="refresh()">
+          <img src="/portal-icons/refresh-cw.svg" alt="" :class="{ 'weather-refreshing': busy }" />
+        </button>
       </header>
-      <dl class="weather-metrics" aria-label="Weather details">
-        <div v-for="metric in weatherMetrics" :key="metric.label" class="weather-metric">
-          <dt class="weather-metric-label">
-            <img :src="'/portal-icons/' + metric.icon + '.svg'" alt="" />
-            <span>{{ metric.label }}</span>
-          </dt>
-          <dd class="weather-metric-value">{{ metric.value }}<span class="weather-metric-unit">{{ metric.unit }}</span></dd>
+
+      <div v-if="sections.current.error" class="weather-notice" role="status">
+        <span>{{ current ? 'Could not update current conditions. Showing the last observation.' : 'Current conditions are unavailable.' }}</span>
+        <button type="button" :disabled="busy" @click="refresh(['current'])">Retry</button>
+      </div>
+      <div class="weather-hero" :class="{ 'weather-hero-pending': !current }">
+        <template v-if="current">
+          <div class="weather-hero-main">
+            <img :src="weatherIcon(current.icon)" alt="" class="weather-hero-icon weather-symbol" @error="iconFallback" />
+            <p class="weather-temperature" :aria-label="numeric(current.temp) + ' degrees Celsius'">{{ numeric(current.temp) }}<span class="weather-degree">°</span><span class="weather-scale">C</span></p>
+          </div>
+          <p class="weather-condition">{{ current.text || 'Current conditions' }}</p>
+          <p class="weather-high-low"><span>H: {{ degree(today?.tempMax) }}</span><span>L: {{ degree(today?.tempMin) }}</span><span class="weather-hero-feels">Feels like {{ degree(current.feelsLike) }}</span></p>
+        </template>
+        <p v-else class="weather-empty" role="status">{{ sections.current.loading ? 'Getting the latest conditions…' : 'Weather will appear here when available.' }}</p>
+      </div>
+
+      <section class="weather-card weather-hourly" aria-labelledby="weather-hourly-title">
+        <header class="weather-card-heading">
+          <h3 id="weather-hourly-title">24-hour forecast</h3>
+          <div class="weather-scroll-controls">
+            <button type="button" class="weather-icon-button weather-scroll-button" aria-label="Earlier hours" :disabled="!canScrollBack" @click="scrollHours(-1)"><img src="/portal-icons/chevron-left.svg" alt="" /></button>
+            <button type="button" class="weather-icon-button weather-scroll-button" aria-label="Later hours" :disabled="!canScrollForward" @click="scrollHours(1)"><img src="/portal-icons/chevron-right.svg" alt="" /></button>
+          </div>
+        </header>
+        <div v-if="sections.hourly.error" class="weather-notice weather-notice-inline" role="status">
+          <span>{{ hours.length ? 'Forecast update failed. Showing saved hours.' : 'Hourly forecast is unavailable.' }}</span>
+          <button type="button" :disabled="busy" @click="refresh(['hourly'])">Retry</button>
         </div>
-      </dl>
+        <div v-if="hours.length" ref="hourlyTrack" class="weather-hourly-track" aria-label="Select an hour for details" @scroll.passive="updateScrollState">
+          <button v-for="(hour, index) in hours" :key="hour.fxTime" type="button" class="weather-hour" :class="{ 'is-selected': selectedHour === index }" :aria-pressed="selectedHour === index" :aria-label="formatLocalHour(hour.fxTime) + ', ' + (hour.text || '') + ', ' + degree(hour.temp)" @click="selectedHour = index" @keydown="navigateHour($event, index)">
+            <span class="weather-hour-time">{{ formatLocalHour(hour.fxTime) }}</span>
+            <img :src="weatherIcon(hour.icon)" alt="" class="weather-hour-icon weather-symbol" @error="iconFallback" />
+            <span class="weather-hour-temperature">{{ degree(hour.temp) }}</span>
+            <span class="weather-hour-pop">{{ numberOrNull(hour.pop) == null ? '' : numeric(hour.pop) + '%' }}</span>
+          </button>
+        </div>
+        <p v-else class="weather-empty" role="status">{{ sections.hourly.loading ? 'Loading the next 24 hours…' : 'No hourly forecast to display.' }}</p>
+        <p v-if="activeHour" class="weather-hour-detail"><strong>{{ formatLocalHour(activeHour.fxTime) }} · {{ activeHour.text || 'Forecast' }}</strong><span>Wind {{ measure(activeHour.windSpeed, 'km/h') }} · Humidity {{ measure(activeHour.humidity, '%') }}<template v-if="numberOrNull(activeHour.pop) != null"> · Precip. chance {{ measure(activeHour.pop, '%') }}</template><template v-if="numberOrNull(activeHour.precip) != null"> · Precipitation {{ measure(activeHour.precip, 'mm') }}</template></span></p>
+        <p v-if="sections.hourly.updatedAt" class="weather-section-updated">{{ sections.hourly.loading ? 'Refreshing · ' : '' }}Forecast updated {{ formatLocalTime(sections.hourly.updatedAt) }} CST</p>
+      </section>
+
+      <div class="weather-lower-grid">
+        <section class="weather-card weather-daily" aria-labelledby="weather-daily-title">
+          <header class="weather-card-heading"><h3 id="weather-daily-title">7-day forecast</h3><span class="weather-heading-note">Low / High</span></header>
+          <div v-if="sections.daily.error" class="weather-notice weather-notice-inline" role="status">
+            <span>{{ days.length ? 'Forecast update failed. Showing saved days.' : 'Daily forecast is unavailable.' }}</span>
+            <button type="button" :disabled="busy" @click="refresh(['daily'])">Retry</button>
+          </div>
+          <div v-for="day in days" :key="day.fxDate" class="weather-day" :class="{ 'is-open': expandedDay === day.fxDate }">
+            <button type="button" class="weather-day-row" :aria-expanded="expandedDay === day.fxDate" :aria-controls="'weather-day-' + day.fxDate" :aria-label="formatForecastDay(day.fxDate, observedAt) + ', ' + (day.textDay || '') + ', low ' + degree(day.tempMin) + ', high ' + degree(day.tempMax) + '. Show daily details'" @click="expandedDay = expandedDay === day.fxDate ? null : day.fxDate">
+              <span class="weather-day-label">{{ formatForecastDay(day.fxDate, observedAt) }}</span>
+              <img :src="weatherIcon(day.iconDay)" :alt="day.textDay || ''" class="weather-day-icon weather-symbol" @error="iconFallback" />
+              <span class="weather-day-low">{{ degree(day.tempMin) }}</span>
+              <span class="weather-range" aria-hidden="true">
+                <span v-if="temperatureRange(day, domain)" class="weather-range-fill" :style="rangeStyle(day)"></span>
+                <span v-if="formatForecastDay(day.fxDate, observedAt) === 'Today' && currentPoint != null" class="weather-range-current" :style="{ left: currentPoint + '%' }"></span>
+              </span>
+              <span class="weather-day-high">{{ degree(day.tempMax) }}</span>
+            </button>
+            <div v-if="expandedDay === day.fxDate" :id="'weather-day-' + day.fxDate" class="weather-day-detail">
+              <p>{{ day.textDay || '—' }} by day · {{ day.textNight || '—' }} at night</p>
+              <dl><div><dt>Day wind</dt><dd>{{ day.windDirDay || '—' }} {{ measure(day.windSpeedDay, 'km/h') }}</dd></div><div><dt>Precipitation</dt><dd>{{ measure(day.precip, 'mm') }}</dd></div><div><dt>Sunrise</dt><dd>{{ day.sunrise || '—' }}</dd></div><div><dt>Sunset</dt><dd>{{ day.sunset || '—' }}</dd></div></dl>
+            </div>
+          </div>
+          <p v-if="!days.length" class="weather-empty" role="status">{{ sections.daily.loading ? 'Loading the week ahead…' : 'No daily forecast to display.' }}</p>
+          <p v-if="sections.daily.updatedAt" class="weather-section-updated">{{ sections.daily.loading ? 'Refreshing · ' : '' }}Forecast updated {{ formatLocalTime(sections.daily.updatedAt) }} CST</p>
+        </section>
+
+        <div class="weather-metric-grid" aria-label="Weather details">
+          <article class="weather-card weather-metric">
+            <h3><img src="/portal-icons/thermometer.svg" alt="" />Feels like</h3>
+            <p class="weather-metric-value">{{ degree(current?.feelsLike) }}</p>
+            <p class="weather-metric-copy">{{ feelsDescription }}</p>
+          </article>
+          <article class="weather-card weather-metric">
+            <h3><img src="/portal-icons/droplets.svg" alt="" />Humidity</h3>
+            <p class="weather-metric-value">{{ measure(current?.humidity, '%') }}</p>
+            <p class="weather-metric-copy">Dew point {{ degree(current?.dew) }}</p>
+          </article>
+          <article class="weather-card weather-metric">
+            <h3><img src="/portal-icons/wind.svg" alt="" />Wind</h3>
+            <p class="weather-metric-value">{{ numeric(current?.windSpeed) }}<span>km/h</span></p>
+            <p class="weather-metric-copy">{{ current?.windDir || 'Direction unavailable' }}<template v-if="numberOrNull(current?.windScale) != null"> · Force {{ current.windScale }}</template></p>
+          </article>
+          <article class="weather-card weather-metric">
+            <h3><img src="/portal-icons/weather-sun.svg" alt="" />Today's UV</h3>
+            <p class="weather-metric-value">{{ numeric(today?.uvIndex) }}<span>{{ uv?.label || '' }}</span></p>
+            <div v-if="uv" class="weather-uv-track" aria-hidden="true"><i :style="{ left: ((uv.level - 1) / 4 * 100) + '%' }"></i></div>
+            <p class="weather-metric-copy">Daily forecast index</p>
+          </article>
+          <article class="weather-card weather-metric weather-sun-card">
+            <h3><img :src="solar.isDay ? '/portal-icons/sunset.svg' : '/portal-icons/sunrise.svg'" alt="" />Sunrise &amp; sunset</h3>
+            <div class="weather-sun-times"><span><img src="/portal-icons/sunrise.svg" alt="" />{{ solar.sunrise || '—' }}</span><span><img src="/portal-icons/sunset.svg" alt="" />{{ solar.sunset || '—' }}</span></div>
+            <div v-if="solar.progress != null" class="weather-daylight-track" :aria-label="'Daylight progress ' + Math.round(solar.progress * 100) + '%'"><span :style="{ width: (solar.progress * 100) + '%' }"></span></div>
+            <p class="weather-metric-copy">{{ daylightDescription }}</p>
+          </article>
+          <article class="weather-card weather-metric weather-observation-card">
+            <div><h3><img src="/portal-icons/eye.svg" alt="" />Visibility</h3><p class="weather-small-value">{{ measure(current?.vis, 'km') }}</p></div>
+            <div><h3><img src="/portal-icons/gauge.svg" alt="" />Pressure</h3><p class="weather-small-value">{{ measure(current?.pressure, 'hPa') }}</p></div>
+          </article>
+        </div>
+      </div>
+      <footer class="weather-footer"><span>Weather data by <a href="https://www.qweather.com/" target="_blank" rel="noopener noreferrer">QWeather</a></span><span>Icons: <a href="https://icons.qweather.com/" target="_blank" rel="noopener noreferrer">QWeather</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></span></footer>
     </div>
   </section>
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { createWeatherSections, refreshWeatherSections } from '../weather/weatherData.mjs';
+import { numberOrNull, formatLocalHour, formatLocalTime, formatForecastDay, temperatureDomain, temperatureRange, solarSummary, uvCategory } from '../weather/weatherModel.mjs';
 
 // --- 核心配置 (请根据您的实际情况修改) ---
 
@@ -58,56 +143,11 @@ const LOCATION_ID_FOR_WEATHER = '101280704';
 // ⚠️ 请确认这是您希望在界面上显示的城市名称。
 const DISPLAY_CITY_NAME = 'Zhuhai'; // 例如 "珠海", "香洲区", "北京市" 等
 
-// --- 响应式状态定义 ---
-const weatherInfo = ref(null);      // 存储实时天气数据
-const locationName = ref(DISPLAY_CITY_NAME); // 直接使用固定的城市名称
-const loading = ref(true);          // 控制加载状态
-const error = ref(null);            // 存储错误信息
-
-
-// Use the reported condition without inferring forecasts or the current time.
-const conditionIcon = computed(() => {
-  const condition = (weatherInfo.value?.text || '').toLowerCase();
-  let icon = 'cloud';
-  if (/thunder|storm/.test(condition)) icon = 'storm';
-  else if (/snow|sleet|ice|blizzard/.test(condition)) icon = 'snow';
-  else if (/rain|drizzle|shower/.test(condition)) icon = 'rain';
-  else if (/fog|mist|haze|dust|sand/.test(condition)) icon = 'fog';
-  else if (/partly cloudy|few clouds/.test(condition)) icon = 'cloud-sun';
-  else if (/sunny|clear/.test(condition)) icon = String(weatherInfo.value?.icon) === '150' ? 'moon' : 'sun';
-  return '/portal-icons/weather-' + icon + '.svg';
-});
-
-const weatherMetrics = computed(() => {
-  const now = weatherInfo.value;
-  if (!now) return [];
-  const metrics = [
-    { label: 'Feels like', icon: 'thermometer', value: now.feelsLike, unit: '°C' },
-    { label: 'Wind', icon: 'wind', value: now.windSpeed, unit: 'km/h' },
-    { label: 'Humidity', icon: 'droplets', value: now.humidity, unit: '%' },
-  ];
-  if (now.pressure != null && now.pressure !== '') {
-    metrics.push({ label: 'Pressure', icon: 'gauge', value: now.pressure, unit: 'hPa' });
-  }
-  if (now.vis != null && now.vis !== '') {
-    metrics.push({ label: 'Visibility', icon: 'eye', value: Number(now.vis).toFixed(1), unit: 'km' });
-  }
-  return metrics;
-});
-
-/**
- * 统一的 API 请求辅助函数 (与之前版本相同)
- * @param {string} apiUrl - 完整的API请求URL
- * @param {string} apiKey - 和风天气API Key
- * @param {string} apiNameForError - API的名称，用于错误日志中区分
- * @returns {Promise<any>} 解析后的JSON数据
- * @throws {Error} 当请求失败或API返回非200业务代码时抛出
- */
-const fetchQWeatherApi = async (apiUrl, apiKey, apiNameForError) => {
+const fetchQWeatherApi = async (apiUrl, apiKey, apiNameForError, signal) => {
   const headers = {
     'X-QW-Api-Key': apiKey,
   };
-  const response = await fetch(apiUrl, { headers });
+  const response = await fetch(apiUrl, { headers, signal });
   if (!response.ok) {
     let errorDetails = `HTTP Status ${response.status}: ${response.statusText || 'No status text'}`;
     try {
@@ -125,205 +165,229 @@ const fetchQWeatherApi = async (apiUrl, apiKey, apiNameForError) => {
   return data;
 };
 
-/**
- * 获取天气数据的主函数 (已简化，不再获取地理位置名称)
- */
-const fetchWeatherData = async () => {
-  loading.value = true;
-  error.value = null;
 
-  if (QWEATHER_API_KEY === 'YOUR_QWEATHER_PUBLIC_KEY' || !QWEATHER_API_KEY) {
-    error.value = '配置错误：请在组件代码中设置有效的和风天气 API Key。';
-    loading.value = false;
-    console.error(error.value);
-    return;
-  }
+// Section data stays independent so one failed forecast cannot erase current conditions.
+const sections = ref(createWeatherSections());
+const locationName = DISPLAY_CITY_NAME;
+const current = computed(() => sections.value.current.data);
+const hours = computed(() => (sections.value.hourly.data || []).slice(0, 24));
+const days = computed(() => (sections.value.daily.data || []).slice(0, 7));
+const observedAt = ref(Date.now());
+const today = computed(() => days.value.find(day => formatForecastDay(day.fxDate, observedAt.value) === 'Today'));
+const domain = computed(() => temperatureDomain(days.value));
+const solar = computed(() => solarSummary(today.value, observedAt.value));
+const uv = computed(() => uvCategory(today.value?.uvIndex));
+const busy = computed(() => Object.values(sections.value).some(section => section.loading));
+const selectedHour = ref(0);
+const expandedDay = ref(null);
+const activeHour = computed(() => hours.value[selectedHour.value] || hours.value[0]);
+const appElement = ref(null);
+const hourlyTrack = ref(null);
+const canScrollBack = ref(false);
+const canScrollForward = ref(false);
+let controller;
+let disposed = false;
+let resizeObserver;
+let localClock;
 
-  const weatherApiUrl = `https://${QWEATHER_WEATHER_API_HOST}/v7/weather/now?location=${LOCATION_ID_FOR_WEATHER}&lang=en`;
-
-  try {
-    const weatherResponse = await fetchQWeatherApi(weatherApiUrl, QWEATHER_API_KEY, 'Weather API');
-
-    if (weatherResponse && weatherResponse.now) {
-      weatherInfo.value = weatherResponse.now;
-    } else {
-      throw new Error('天气API响应结构异常："now"字段缺失。');
-    }
-
-  } catch (e) {
-    console.error('获取天气数据失败:', e);
-    let detailedErrorMessage = `加载天气数据失败: ${e.message}`;
-    const errorMsgLower = e.message.toLowerCase();
-
-    // 错误原因分析 (与之前类似，但现在只针对天气API)
-    if (errorMsgLower.includes('qweather code: 401') || errorMsgLower.includes('status 401') || errorMsgLower.includes('qweather code: 403') || errorMsgLower.includes('status 403')) {
-      detailedErrorMessage += '\n原因分析: API Key认证失败。请检查API Key是否正确、有效、已激活，或与当前配置的API Host是否匹配。';
-    } else if (errorMsgLower.includes('qweather code: 400')) {
-      detailedErrorMessage += '\n原因分析: 请求参数错误或无效。请检查Location ID ('+ LOCATION_ID_FOR_WEATHER +')格式或API请求参数。';
-    } else if (errorMsgLower.includes('qweather code: 402')) {
-      detailedErrorMessage += '\n原因分析: 超过API调用限制或账户余额不足。';
-    } else if (errorMsgLower.includes('qweather code: 404') || errorMsgLower.includes('status 404')) {
-      detailedErrorMessage += '\n原因分析: 请求的资源未找到。可能是API Host配置不正确，或者查询的Location ID ('+ LOCATION_ID_FOR_WEATHER +')不存在/服务不支持。请仔细核对API Host和Location ID。';
-    } else if (errorMsgLower.includes('qweather code: 429')) {
-      detailedErrorMessage += '\n原因分析: 请求过于频繁，请稍后再试。';
-    } else if (errorMsgLower.includes('networkerror') || errorMsgLower.includes('failed to fetch')) {
-      detailedErrorMessage += '\n原因分析: 网络连接问题。请检查您的网络连接。';
-    } else {
-      detailedErrorMessage += '\n请检查网络连接及API配置。';
-    }
-    error.value = detailedErrorMessage;
-  } finally {
-    loading.value = false;
-  }
-};
-
-onMounted(() => {
-  fetchWeatherData();
+const numeric = value => numberOrNull(value) == null ? '—' : String(numberOrNull(value));
+const degree = value => numberOrNull(value) == null ? '—' : numeric(value) + '°';
+const measure = (value, unit) => numberOrNull(value) == null ? '—' : numeric(value) + (unit === '%' ? '' : ' ') + unit;
+const weatherIcon = code => '/weather-icons/' + (/^\d{3,4}$/.test(String(code)) ? code : '999') + '.svg';
+function iconFallback(event) {
+  if (!event.target.src.endsWith('/999.svg')) event.target.src = '/weather-icons/999.svg';
+}
+const feelsDescription = computed(() => {
+  const air = numberOrNull(current.value?.temp);
+  const feels = numberOrNull(current.value?.feelsLike);
+  if (air == null || feels == null) return 'Perceived temperature';
+  if (Math.abs(air - feels) < 1) return 'Similar to the actual temperature';
+  return Math.abs(feels - air) + '° ' + (feels > air ? 'warmer' : 'cooler') + ' than the actual temperature';
 });
+const daylightDescription = computed(() => {
+  if (solar.value.daylightMinutes == null) return 'Sun times in China Standard Time';
+  const minutes = Math.round(solar.value.daylightMinutes);
+  return Math.floor(minutes / 60) + 'h ' + (minutes % 60) + 'm of daylight · CST';
+});
+const currentPoint = computed(() => {
+  const value = numberOrNull(current.value?.temp);
+  const scale = domain.value;
+  if (value == null || !scale || value < scale.min || value > scale.max) return null;
+  return scale.max === scale.min ? 50 : (value - scale.min) / (scale.max - scale.min) * 100;
+});
+function rangeStyle(day) {
+  const range = temperatureRange(day, domain.value);
+  return range ? { left: range.left + '%', width: range.width + '%' } : {};
+}
+function updateScrollState() {
+  const element = hourlyTrack.value;
+  canScrollBack.value = !!element && element.scrollLeft > 2;
+  canScrollForward.value = !!element && element.scrollLeft + element.clientWidth < element.scrollWidth - 2;
+}
+function scrollHours(direction) {
+  const element = hourlyTrack.value;
+  if (!element) return;
+  element.scrollBy({ left: direction * element.clientWidth * .75, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+function navigateHour(event, index) {
+  let target = index;
+  if (event.key === 'ArrowRight') target = Math.min(hours.value.length - 1, index + 1);
+  else if (event.key === 'ArrowLeft') target = Math.max(0, index - 1);
+  else if (event.key === 'Home') target = 0;
+  else if (event.key === 'End') target = hours.value.length - 1;
+  else return;
+  event.preventDefault();
+  selectedHour.value = target;
+  hourlyTrack.value?.querySelectorAll('button')[target]?.focus({ preventScroll: true });
+  hourlyTrack.value?.querySelectorAll('button')[target]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+watch(hourlyTrack, element => {
+  resizeObserver?.disconnect();
+  if (element) {
+    resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(element);
+  }
+  updateScrollState();
+});
+async function refresh(names = ['current', 'hourly', 'daily']) {
+  if (busy.value || disposed) return;
+  controller = new AbortController();
+  const signal = controller.signal;
+  const request = path => fetchQWeatherApi(
+    'https://' + QWEATHER_WEATHER_API_HOST + path + '?location=' + LOCATION_ID_FOR_WEATHER + '&lang=en',
+    QWEATHER_API_KEY, 'Weather API', signal,
+  );
+  await refreshWeatherSections(request, sections.value, (name, section) => {
+    if (disposed) return;
+    sections.value[name] = section;
+    observedAt.value = Date.now();
+  }, names);
+  if (!disposed) {
+    selectedHour.value = Math.min(selectedHour.value, Math.max(0, hours.value.length - 1));
+    await nextTick();
+    updateScrollState();
+  }
+}
+onMounted(() => {
+  refresh();
+  // Advance daylight and local day labels without making network requests.
+  localClock = setInterval(() => { observedAt.value = Date.now(); }, 60_000);
+});
+onBeforeUnmount(() => { disposed = true; controller?.abort(); resizeObserver?.disconnect(); clearInterval(localClock); });
 </script>
 
 <style scoped>
 .weather-app {
-  container-type: inline-size;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: auto;
-  box-sizing: border-box;
-  color: var(--app-text, #f8f9fc);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-  font-size: 13px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, .28) transparent;
+  container-type: inline-size; width: 100%; height: 100%; min-height: 0; overflow: auto;
+  box-sizing: border-box; color: var(--app-text, #f8f9fc); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  font-size: 13px; line-height: 1.4; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent;
 }
-.weather-app::-webkit-scrollbar { width: 6px; height: 6px; }
-.weather-app::-webkit-scrollbar-track { background: transparent; }
-.weather-app::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .28); border-radius: 999px; }
-.weather-app::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .42); }
-.weather-app::-webkit-scrollbar-corner { background: transparent; }
-.weather-body { padding: 16px 20px 20px; }
-.weather-overview {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 16px;
+.weather-app *, .weather-app *::before, .weather-app *::after { box-sizing: border-box; }
+.weather-body { padding: 17px 22px 16px; }
+.weather-app h2, .weather-app h3, .weather-app p { margin: 0; }
+.weather-app button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.weather-app button:disabled { cursor: default; opacity: .35; }
+.weather-app button:focus-visible, .weather-app a:focus-visible { outline: 2px solid #acd9ff; outline-offset: 3px; }
+.weather-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.weather-toolbar h2 { font-size: 23px; font-weight: 600; letter-spacing: -.6px; }
+.weather-updated { font-size: 11px; color: var(--app-muted, #c6d1df); margin-top: 2px !important; }
+.weather-icon-button { width: 36px; height: 36px; display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid var(--app-line, rgba(255,255,255,.13)); background: rgba(255,255,255,.055); border-radius: 50%; transition: background .15s; }
+.weather-icon-button:hover:not(:disabled) { background: rgba(255,255,255,.14); }
+.weather-icon-button img { width: 16px; height: 16px; filter: brightness(0) invert(1); opacity: .9; }
+.weather-refreshing { animation: weather-rotate 1.2s linear infinite; }
+.weather-hero { min-height: 146px; padding: 12px 0 17px; text-align: center; }
+.weather-hero-main { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.weather-hero-icon { width: 64px; height: 64px; opacity: .94; }
+.weather-symbol { filter: brightness(0) invert(1); object-fit: contain; }
+.weather-temperature { font-size: 76px; font-weight: 250; letter-spacing: -4px; line-height: 1.08; font-variant-numeric: tabular-nums; }
+.weather-degree { letter-spacing: -3px; }
+.weather-scale { margin-left: 3px; font-size: 19px; font-weight: 400; letter-spacing: 0; color: var(--app-muted, #c6d1df); }
+.weather-condition { font-size: 15px; margin-top: 2px !important; font-weight: 500; }
+.weather-high-low { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 5px !important; font-size: 12px; }
+.weather-hero-feels { color: var(--app-muted, #c6d1df); }
+.weather-hero-pending { display: flex; align-items: center; justify-content: center; }
+.weather-card { min-width: 0; border: 1px solid var(--app-line, rgba(255,255,255,.12)); border-radius: 16px; background: var(--app-fill, rgba(255,255,255,.055)); }
+.weather-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; padding: 4px 13px; }
+.weather-card-heading h3, .weather-metric h3 { font-size: 11px; line-height: 1.3; font-weight: 600; color: var(--app-muted, #c6d1df); }
+.weather-card-heading h3 { letter-spacing: .35px; text-transform: uppercase; }
+.weather-scroll-controls { display: flex; gap: 4px; }
+.weather-scroll-button { width: 28px; height: 28px; background: transparent; border-color: transparent; }
+.weather-scroll-button img { width: 14px; height: 14px; }
+.weather-hourly-track { display: flex; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent; padding: 2px 10px 7px; scroll-padding: 10px; }
+.weather-hour { display: flex; flex-direction: column; align-items: center; flex: 0 0 58px; gap: 6px; min-height: 108px; padding: 8px 4px 5px; border: 1px solid transparent; border-radius: 12px; background: transparent; }
+.weather-hour:hover { background: rgba(255,255,255,.065); }
+.weather-hour.is-selected { border-color: rgba(181,216,255,.25); background: rgba(170,205,255,.12); }
+.weather-hour-time { color: var(--app-muted, #c6d1df); font-size: 11px; }
+.weather-hour-icon { width: 24px; height: 24px; }
+.weather-hour-temperature { font-size: 16px; font-weight: 500; }
+.weather-hour-pop { min-height: 13px; font-size: 10px; color: #b5ddff; line-height: 1.1; }
+.weather-hour-detail { display: flex; flex-wrap: wrap; gap: 3px 10px; padding: 8px 13px 1px; border-top: 1px solid var(--app-line, rgba(255,255,255,.1)); font-size: 10px; color: var(--app-muted, #c6d1df); }
+.weather-hour-detail strong { color: var(--app-text, #f8f9fc); font-weight: 500; }
+.weather-section-updated { padding: 6px 13px 9px; color: var(--app-muted, #c6d1df); font-size: 9px; }
+.weather-lower-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; gap: 12px; margin-top: 12px; }
+.weather-heading-note { color: var(--app-muted, #c6d1df); font-size: 9px; }
+.weather-day { margin: 0 12px; border-top: 1px solid var(--app-line, rgba(255,255,255,.1)); }
+.weather-day-row { display: grid; grid-template-columns: 42px 24px 29px minmax(26px,1fr) 29px; gap: 7px; width: 100%; min-height: 43px; padding: 8px 0; border: 0; background: transparent; align-items: center; text-align: left; }
+.weather-day-row:hover { background: rgba(255,255,255,.04); }
+.weather-day-label { font-size: 12px; font-weight: 500; }
+.weather-day-icon { width: 22px; height: 22px; }
+.weather-day-low, .weather-day-high { text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; }
+.weather-day-low { color: var(--app-muted, #c6d1df); }
+.weather-range { height: 4px; border-radius: 10px; position: relative; background: rgba(8,18,35,.18); }
+.weather-range-fill { position: absolute; top: 0; height: 4px; min-width: 4px; border-radius: 10px; background: linear-gradient(90deg,#a5cfee,#e4d5a3); }
+.weather-range-current { position: absolute; top: -2px; width: 8px; height: 8px; border: 2px solid rgba(39,57,83,.8); border-radius: 50%; background: white; transform: translateX(-50%); }
+.weather-day-detail { padding: 0 0 12px; font-size: 10px; color: var(--app-muted, #c6d1df); }
+.weather-day-detail dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 9px 0 0; }
+.weather-day-detail dt { font-size: 9px; }
+.weather-day-detail dd { margin: 2px 0 0; color: var(--app-text, #f8f9fc); }
+.weather-metric-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+.weather-metric { padding: 11px 12px; min-height: 102px; }
+.weather-metric h3 { display: flex; align-items: center; gap: 5px; }
+.weather-metric h3 img { width: 12px; height: 12px; filter: brightness(0) invert(1); opacity: .8; }
+.weather-metric-value { font-size: 24px; font-weight: 400; letter-spacing: -.5px; margin: 8px 0 4px !important; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.weather-metric-value span { font-size: 10px; letter-spacing: 0; margin-left: 5px; font-weight: 400; color: var(--app-muted, #c6d1df); }
+.weather-metric-copy { font-size: 10px; color: var(--app-muted, #c6d1df); line-height: 1.4; }
+.weather-uv-track { height: 3px; margin: 8px 3px 7px; border-radius: 10px; background: linear-gradient(90deg,#8ac4b0,#d4cc8a,#daac81,#cb8d8d,#b59cc5); position: relative; }
+.weather-uv-track i { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: white; top: -1.5px; transform: translateX(-50%); box-shadow: 0 0 0 1px rgba(0,0,0,.3); }
+.weather-sun-card { grid-column: 1 / -1; min-height: 98px; }
+.weather-sun-times { display: flex; justify-content: space-between; gap: 12px; font-size: 21px; font-weight: 400; margin-top: 9px; font-variant-numeric: tabular-nums; }
+.weather-sun-times span { display: flex; align-items: center; gap: 6px; }
+.weather-sun-times img { width: 18px; height: 18px; filter: brightness(0) invert(1); opacity: .7; }
+.weather-daylight-track { height: 3px; border-radius: 4px; background: rgba(255,255,255,.13); margin: 8px 0; overflow: hidden; }
+.weather-daylight-track span { display: block; height: 100%; background: #e6d6ae; border-radius: inherit; }
+.weather-observation-card { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: auto; }
+.weather-observation-card > div + div { padding-left: 12px; border-left: 1px solid var(--app-line, rgba(255,255,255,.1)); }
+.weather-small-value { font-size: 15px; margin-top: 7px !important; font-variant-numeric: tabular-nums; }
+.weather-notice { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 9px; background: rgba(235,180,110,.09); font-size: 11px; margin-top: 8px; }
+.weather-notice-inline { margin: 0 10px 8px; }
+.weather-notice button { border: 0; background: transparent; text-decoration: underline; text-underline-offset: 3px; padding: 6px; flex-shrink: 0; }
+.weather-empty { text-align: center; padding: 20px 12px; color: var(--app-muted, #c6d1df); font-size: 12px; }
+.weather-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding-top: 14px; font-size: 9px; color: var(--app-muted, #c6d1df); }
+.weather-footer a { color: inherit; text-decoration: none; }
+.weather-footer a:hover { text-decoration: underline; }
+@keyframes weather-rotate { to { transform: rotate(360deg); } }
+@container (max-width: 580px) {
+  .weather-lower-grid { grid-template-columns: 1fr; }
+  .weather-metric-grid { gap: 10px; }
+  .weather-day-row { grid-template-columns: 48px 26px 34px minmax(40px,1fr) 34px; min-height: 46px; }
+  .weather-metric { min-height: 105px; }
+  .weather-observation-card { min-height: auto; }
 }
-.weather-summary { min-width: 0; }
-.weather-city {
-  margin: 0;
-  color: var(--app-text, #f8f9fc);
-  font-size: 21px;
-  font-weight: 600;
-  letter-spacing: -.45px;
-  line-height: 1.25;
-}
-.weather-condition {
-  margin: 4px 0 6px;
-  color: var(--app-muted, rgba(255, 255, 255, .68));
-  font-size: 13px;
-  line-height: 1.4;
-}
-.weather-temperature {
-  display: flex;
-  align-items: baseline;
-  margin: 0;
-  color: var(--app-text, #f8f9fc);
-  font-size: 72px;
-  font-weight: 300;
-  line-height: 1;
-  letter-spacing: -4px;
-  font-variant-numeric: tabular-nums;
-}
-.weather-scale {
-  margin-left: 5px;
-  color: var(--app-muted, rgba(255, 255, 255, .68));
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: 0;
-}
-.weather-condition-icon {
-  width: 86px;
-  height: 86px;
-  flex-shrink: 0;
-  margin-right: 8px;
-  opacity: .95;
-  filter: brightness(0) invert(1) drop-shadow(0 5px 14px rgba(139, 188, 255, .16));
-}
-.weather-metrics {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-.weather-metric {
-  grid-column: span 2;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--app-line, rgba(255, 255, 255, .12));
-  border-radius: 13px;
-  background: var(--app-fill, rgba(255, 255, 255, .065));
-}
-.weather-metric:nth-child(-n + 2) { grid-column: span 3; }
-.weather-metric-label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--app-muted, rgba(255, 255, 255, .68));
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.3;
-}
-.weather-metric-label img { width: 13px; height: 13px; opacity: .75; filter: brightness(0) invert(1); }
-.weather-metric-value {
-  margin: 5px 0 0;
-  color: var(--app-text, #f8f9fc);
-  font-size: 21px;
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -.4px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.weather-metric-unit {
-  margin-left: 4px;
-  color: var(--app-muted, rgba(255, 255, 255, .68));
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0;
-}
-.weather-status {
-  display: flex;
-  min-height: 100%;
-  box-sizing: border-box;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 20px;
-  text-align: center;
-}
-.weather-status-icon { width: 42px; height: 42px; margin-bottom: 12px; opacity: .75; filter: brightness(0) invert(1); }
-.weather-status-copy { margin: 8px 0 0; color: var(--app-muted, rgba(255, 255, 255, .68)); line-height: 1.5; }
-.weather-retry {
-  margin-top: 16px;
-  padding: 7px 15px;
-  border: 1px solid var(--app-line, rgba(255, 255, 255, .12));
-  border-radius: 8px;
-  background: var(--app-control-bg, rgba(255, 255, 255, .10));
-  color: var(--app-text, #f8f9fc);
-  font: inherit;
-  cursor: pointer;
-}
-.weather-retry:hover { background: rgba(255, 255, 255, .17); }
-.weather-retry:focus-visible { outline: 2px solid var(--app-accent, #8bbcff); outline-offset: 3px; }
 @container (max-width: 360px) {
-  .weather-body { padding: 12px 14px 16px; }
-  .weather-overview { gap: 12px; margin-bottom: 14px; }
-  .weather-city { font-size: 20px; }
-  .weather-temperature { font-size: 64px; }
-  .weather-condition-icon { width: 68px; height: 68px; margin-right: 2px; }
-  .weather-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .weather-metric, .weather-metric:nth-child(-n + 2) { grid-column: span 1; }
-  .weather-metric:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .weather-body { padding: 13px 12px 16px; }
+  .weather-toolbar h2 { font-size: 21px; }
+  .weather-temperature { font-size: 68px; }
+  .weather-hero-icon { width: 54px; height: 54px; }
+  .weather-high-low { gap: 8px; font-size: 11px; }
+  .weather-day-row { grid-template-columns: 39px 22px 27px minmax(26px,1fr) 27px; gap: 6px; }
+  .weather-heading-note { display: none; }
+}
+@media (pointer: coarse), (max-width: 600px) {
+  .weather-icon-button { min-width: 44px; min-height: 44px; }
+  .weather-notice button { min-height: 44px; min-width: 44px; }
+  .weather-day-row { min-height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .weather-app *, .weather-app *::before, .weather-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 </style>
