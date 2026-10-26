@@ -1,12 +1,13 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import SiteIcon from '../common/SiteIcon.vue'
+import { postItEntries } from '../../data/postIt'
 
 const ROTATION_INTERVAL = 6200
 const WHEEL_THRESHOLD = 24
 const WHEEL_COOLDOWN = 360
 
-const entries = ref([])
+const entries = postItEntries
 const activeIndex = ref(0)
 const isPaused = ref(false)
 const hasFocusWithin = ref(false)
@@ -20,17 +21,16 @@ let pointerId = null
 let didSwipe = false
 let swipeResetTimer = 0
 
-const talkRequestController = new AbortController()
-
 const activeEntry = computed(() => (
-  entries.value[activeIndex.value] || {
+  entries[activeIndex.value] || {
     title: '主播的摸鱼日常',
     summary: '分享日常生活，偶尔发表各种想法与吐槽',
+    href: '/talk',
   }
 ))
 
 const positionLabel = computed(() => (
-  `${String(activeIndex.value + 1).padStart(2, '0')} / ${String(Math.max(entries.value.length, 1)).padStart(2, '0')}`
+  `${String(activeIndex.value + 1).padStart(2, '0')} / ${String(Math.max(entries.length, 1)).padStart(2, '0')}`
 ))
 
 const activeLinkLabel = computed(() => {
@@ -38,110 +38,15 @@ const activeLinkLabel = computed(() => {
   return `打开第 ${activeIndex.value + 1} 条说说：${activeEntry.value.title}${summary}`
 })
 
-function cleanInlineText(value) {
-  return value
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-    .replace(/<img\b[^>]*>/gi, '')
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .replace(/^\s*(?:>\s*|[-*+]\s+|\d+[.)]\s+)/, '')
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/[`*_~]/g, '')
-    .replace(/\\([\\`*{}\[\]()#+\-.!_>])/g, '$1')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function extractTalkEntries(markdown) {
-  const result = []
-  let fence = null
-  let currentEntry = null
-  let paragraph = []
-
-  const commitParagraph = () => {
-    if (!currentEntry || currentEntry.summary || !paragraph.length) return
-    currentEntry.summary = cleanInlineText(paragraph.join(' '))
-    paragraph = []
-  }
-
-  const commitEntry = () => {
-    if (!currentEntry) return
-    commitParagraph()
-    result.push(currentEntry)
-    currentEntry = null
-  }
-
-  for (const line of markdown.split(/\r?\n/)) {
-    const fenceMatch = line.match(/^\s*(`{3,}|~{3,})/)
-    if (fenceMatch) {
-      const marker = fenceMatch[1][0]
-      if (!fence) {
-        commitParagraph()
-        fence = marker
-      } else if (fence === marker) {
-        fence = null
-      }
-      continue
-    }
-
-    if (fence) continue
-
-    const headingMatch = line.match(/^##(?!#)\s+(.+?)\s*#*\s*$/)
-    if (headingMatch) {
-      commitEntry()
-      const title = cleanInlineText(headingMatch[1])
-      currentEntry = title ? { title, summary: '' } : null
-      paragraph = []
-      continue
-    }
-
-    if (!currentEntry || currentEntry.summary) continue
-
-    if (!line.trim()) {
-      commitParagraph()
-      continue
-    }
-
-    if (/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
-      commitParagraph()
-      continue
-    }
-
-    if (/^\s*(?:!\[[^\]]*\]\([^)]*\)|<img\b[^>]*>)\s*$/i.test(line)) {
-      commitParagraph()
-      continue
-    }
-
-    if (/^\s*#{1,6}\s+/.test(line) || /^\s*:{1,3}[\w-]*/.test(line)) {
-      commitParagraph()
-      continue
-    }
-
-    const text = cleanInlineText(line)
-    if (!text) continue
-
-    if (/^\s*(?:[-*+]\s+|\d+[.)]\s+)/.test(line)) {
-      commitParagraph()
-      if (!currentEntry.summary) currentEntry.summary = text
-      continue
-    }
-
-    paragraph.push(text)
-  }
-
-  commitEntry()
-  return result
-}
-
 function step(direction) {
-  const count = entries.value.length
+  const count = entries.length
   if (count < 2) return
   activeIndex.value = (activeIndex.value + direction + count) % count
 }
 
 function restartRotation() {
   window.clearInterval(rotationTimer)
-  if (isPaused.value || hasFocusWithin.value || entries.value.length < 2) return
+  if (isPaused.value || hasFocusWithin.value || entries.length < 2) return
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
   rotationTimer = window.setInterval(() => step(1), ROTATION_INTERVAL)
 }
@@ -163,7 +68,7 @@ function handleFocusOut(event) {
 }
 
 function handleWheel(event) {
-  if (entries.value.length < 2) return
+  if (entries.length < 2) return
 
   const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
     ? event.deltaY
@@ -230,27 +135,9 @@ function handleEntryClick(event) {
   window.clearTimeout(swipeResetTimer)
 }
 
-onMounted(async () => {
-  try {
-    const response = await fetch('/markdown/post_it.md', {
-      signal: talkRequestController.signal,
-    })
-    if (!response.ok) throw new Error(`说说请求失败：${response.status}`)
-    const markdown = await response.text()
-    if (!talkRequestController.signal.aborted) {
-      entries.value = extractTalkEntries(markdown)
-    }
-  } catch (error) {
-    if (error.name !== 'AbortError') {
-      console.error('无法读取说说标题:', error)
-    }
-  } finally {
-    if (!talkRequestController.signal.aborted) restartRotation()
-  }
-})
+onMounted(restartRotation)
 
 onBeforeUnmount(() => {
-  talkRequestController.abort()
   window.clearInterval(rotationTimer)
   window.clearTimeout(wheelResetTimer)
   window.clearTimeout(swipeResetTimer)
@@ -278,7 +165,7 @@ onBeforeUnmount(() => {
 
     <RouterLink
       class="talk-ticker__entry"
-      to="/talk"
+      :to="activeEntry.href"
       :aria-label="activeLinkLabel"
       @click.capture="handleEntryClick"
     >

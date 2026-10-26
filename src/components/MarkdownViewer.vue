@@ -17,6 +17,7 @@ const props = defineProps({
   src: { type: String, default: '' },
   content: { type: String, default: '' },
   variant: { type: String, default: 'article' },
+  anchorPrefix: { type: String, default: '' },
   useCJK: { type: Boolean, default: false },
   enhanced: { type: Boolean, default: false },
 })
@@ -415,6 +416,32 @@ function emitToc() {
   emit('tocGenerated', tocItems)
 }
 
+function scopeMarkdownAnchors(html) {
+  if (!props.anchorPrefix) return html
+
+  const template = document.createElement('template')
+  template.innerHTML = html
+  const anchorIds = new Map()
+  const targets = template.content.querySelectorAll(
+    'h1[id], h2[id], h3[id], h4[id], h5[id], h6[id], .md-footnote-ref[id], .md-footnotes li[id]',
+  )
+
+  targets.forEach((target) => {
+    const id = target.id
+    const scopedId = `${props.anchorPrefix}${id}`
+    anchorIds.set(id, scopedId)
+    anchorIds.set(encodeURIComponent(id), scopedId)
+    target.id = scopedId
+  })
+
+  template.content.querySelectorAll('a[href^="#"]').forEach((link) => {
+    const targetId = anchorIds.get(link.getAttribute('href').slice(1))
+    if (targetId) link.setAttribute('href', `#${targetId}`)
+  })
+
+  return template.innerHTML
+}
+
 async function renderMarkdown() {
   const token = ++renderToken
   cleanupEnhancedInlineMath()
@@ -424,7 +451,7 @@ async function renderMarkdown() {
 
     emit('markdownLoaded', rawText)
     const { replaced, formulas } = extractFormulas(rawText)
-    renderedHtml.value = restoreFormulas(renderMarkdownWithComponents(replaced, md, escapeHtml), formulas)
+    renderedHtml.value = scopeMarkdownAnchors(restoreFormulas(renderMarkdownWithComponents(replaced, md, escapeHtml), formulas))
 
     await nextTick()
     if (token !== renderToken) return
@@ -449,7 +476,7 @@ onMounted(() => {
 })
 
 watch(
-  () => [props.src, props.content],
+  () => [props.src, props.content, props.anchorPrefix],
   () => {
     if (mounted) renderMarkdown()
   },

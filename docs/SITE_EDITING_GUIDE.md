@@ -15,7 +15,7 @@
 | 随记正文 | `public/markdown/{id}.md` | [ArticleView](../src/pages/ArticleView.vue) | `/space1/{id}` |
 | 人工精选 | [featured-articles.json](../public/featured-articles.json) | Space1 的精选栏 | `/space1` |
 | 星穹文库 | 同一份 articles.json | [Space4](../src/pages/Space4.vue) | `/space4` |
-| 说说 | [post_it.md](../public/markdown/post_it.md) | [Talk](../src/pages/Talk.vue)、[TalkTicker](../src/components/journal/TalkTicker.vue) | `/talk` |
+| 说说 | [src/content/post-it/](../src/content/post-it/) 下每条一个 Markdown 文件 | [Talk](../src/pages/Talk.vue)、[TalkCard](../src/components/journal/TalkCard.vue)、[TalkTicker](../src/components/journal/TalkTicker.vue) | `/talk#post-{id}` |
 | 资源旧页 | [resource.md](../public/markdown/pages/resource.md) | [Resource](../src/pages/Resource.vue) | `/resource` |
 | 六类资源 | `public/resource/*.json` | [目录](../src/pages/ResourceDirectory.vue)、[分类详情](../src/components/ResourceDetailPage.vue) | `/rd` 及分类路径 |
 | 代码与项目 | [code_proj.json](../public/code_proj.json) | [Code](../src/pages/Code.vue) | `/code` |
@@ -101,30 +101,42 @@ AI Frontier 的数据、来源和发布限制单列在 [内容合同](ai-frontie
 [markdown-enhanced.css](../src/components/markdown-enhanced.css) 是文章专用样式，不应扩散到通用页或 Frontier。
 内容作者不需要为 Enhanced 复制或改写正文。
 
-## 3. 说说：用二级标题划分条目
+## 3. 说说：每条一个 Markdown 文件
 
-说说正文只有一份：[post_it.md](../public/markdown/post_it.md)。
-Talk 读取它、去掉文件开头的一级文档标题，再用 `variant="page"` 和 CJK 字体渲染。
-页面横幅标题在 Talk.vue 内维护，不来自 Markdown 的首个标题。
+在 [src/content/post-it/](../src/content/post-it/) 新建一个 `编号-英文短名.md`，文件开头维护标题和收录日期，随后直接写正文：
 
 ```markdown
-# 文件文档标题
+---
+title: "新的一条说说"
+date: "2026-10-26"
+---
 
-## 新的一条说说
+先写一段能独立理解的文字，再展开正文。
 
-先写一段能独立理解的短摘要，再展开正文。
+## 可选的正文小标题
 
-## 下一条说说
-
-另一段内容。
+支持普通 Markdown、列表、代码块、表格和共享渲染器支持的富语法。
 ```
 
-Space1 的 TalkTicker 也读取同一份文件，按正文出现顺序生成轮播：
-真正的条目起点是行首 `## 标题`，三级标题不会创建新条目。
-摘要取该标题下首个可用段落或列表项；代码围栏、图片、分隔线、标题和组件标记会被跳过或清理。
-因此不要只写图片而期待轮播自动生成说明；需要摘要时明确写出一段文字。
-轮播入口进入 `/talk`，不是为每条说说自动建立独立文章路由。
-旧路径 `/space1/post_it` 跳转到 `/talk`。
+[postIt.js](../src/data/postIt.js) 使用 Vite glob 自动收录这个目录下的 Markdown，
+再由 [postIt.mjs](../src/utils/postIt.mjs) 解析 frontmatter、提取摘要；新增文件不需要手改 JS 列表。
+开发服务会更新内容，正式站点仍需重新构建和部署。
+
+- 文件名去掉 `.md` 就是稳定的 `id`；使用零填充编号保持预期顺序，重命名会改变公开锚点。
+- 条目按文件名排序，保留迁移前正文的先后次序；日期不决定卡片或轮播顺序。
+- `title` 是卡片标题，不需要在正文开头再写相同标题；正文里的二级标题只是卡内小标题。
+- `date` 使用 `YYYY-MM-DD`，表示收录日期。迁移的 27 条采用各旧标题在 Git 中首次出现的日期（2025-12-27 至 2026-09-03），不代表原写作时间或正文事件发生日。
+- frontmatter 只维护上述两项简单字段，页面不显示这个元数据块。
+
+Talk 保留页面横幅，按标题和正文搜索，展示数量与无匹配状态；清除搜索恢复全部条目。
+正文由 TalkCard 复用 MarkdownViewer 的 `embed` 模式；卡片的排版与横滚样式局限在说说内。
+桌面、平板、手机分别为三列、两列和一列瀑布流，长代码和表格在卡内横向滚动。
+卡片标题及脚注的 DOM 锚点带条目前缀，避免不同卡片里的同名标题或脚注互相跳转。
+
+Space1 的 TalkTicker 直接使用同一份条目列表，摘要取首个可读段落并清理 Markdown 标记；
+图片、围栏代码、脚注标识和组件声明不会直接成为摘要，最长 160 个 Unicode 字符（含省略号）。
+每条轮播进入对应的 `/talk#post-{id}`，卡片也提供该锚点链接。
+旧路径 `/space1/post_it` 继续跳转到 `/talk`；旧的单文件 `public/markdown/post_it.md` 已由独立条目替代。
 
 ## 4. 资源：旧说明页与结构化目录并行
 

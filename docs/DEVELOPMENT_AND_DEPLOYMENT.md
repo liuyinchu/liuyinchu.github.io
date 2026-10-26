@@ -4,7 +4,7 @@
 
 > 文档核对日期：2026-10-26；代码基线：main，提交 c1c3b96。
 > 本文记录仓库现有流程，不是本轮测试或线上发布的通过报告。
-> 本轮只维护文档；没有安装依赖、启动服务、运行测试、构建或推送。
+> 下列命令是验证入口；实际安装、测试、构建或发布结果以对应任务记录为准。
 
 返回 [文档索引](README.md)，先读 [项目背景](PROJECT_CONTEXT.md) 与 [架构说明](ARCHITECTURE.md)。
 编辑内容看 [站点编辑指南](SITE_EDITING_GUIDE.md)；交互验收看 [交互功能](INTERACTIVE_FEATURES.md)。
@@ -130,14 +130,16 @@ Playwright 的 4174 是例外：当前配置禁止复用既有服务，须为测
 | Portal 窗口 | `portal-window-model.test.mjs`，特殊路由与 About E2E | 拖动、缩放、层级、最小化、平铺、持久化、移动布局 |
 | 天气 | `weather-model.test.mjs` | 真实服务、城市时区、部分失败、保留旧数据、分区重试 |
 | Music Box | 五个 music-box Node 文件、`music-box.spec.js` | 实际听感、触摸、浏览器音频解锁、离开后静音 |
+| 说说 | `post-it.test.mjs`、`talk.spec.js` | 独立 MD 自动收录、收录日、搜索、卡内横滚与锚点、Space1 轮播 |
 | AI Frontier | `frontier.spec.js`、路由与排版相关 E2E | 远端真实内容、数据字段、失败重试、谱图与窄屏 |
 | 构建 / SEO / 部署 | `npm run build`，检查生成文件与 preview | 生产直达路径、HTTP 状态、资源地址、线上部署结果 |
 
-### Node 模型测试：7 个文件
+### Node 内容与模型测试：8 个文件
 
 可按改动单独运行：
 
 ~~~sh
+node --test tests/post-it.test.mjs
 node --test tests/portal-window-model.test.mjs
 node --test tests/weather-model.test.mjs
 node --test tests/music-box-engine.test.js
@@ -147,12 +149,13 @@ node --test tests/music-box-bowed-audio.test.js
 node --test tests/music-box-composition.test.js
 ~~~
 
-需要完整运行这 7 个文件时：
+需要完整运行这 8 个文件时：
 
 ~~~sh
-node --test tests/portal-window-model.test.mjs tests/weather-model.test.mjs tests/music-box-engine.test.js tests/music-box-sequencer.test.js tests/music-box-string-audio.test.js tests/music-box-bowed-audio.test.js tests/music-box-composition.test.js
+node --test tests/post-it.test.mjs tests/portal-window-model.test.mjs tests/weather-model.test.mjs tests/music-box-engine.test.js tests/music-box-sequencer.test.js tests/music-box-string-audio.test.js tests/music-box-bowed-audio.test.js tests/music-box-composition.test.js
 ~~~
 
+说说测试验证 frontmatter、摘要、文件自动收录、稳定 ID 与顺序；不验证浏览器布局。
 Portal 测试验证窗口模型与序列化，不会操作真实 DOM。
 天气测试验证数值缺失、时区 / 夏令时、日出日落、请求分区成功失败和重试；请求由测试替身控制。
 音乐测试涵盖模拟、碰撞、编曲、节拍和合成模型；部分音频测试使用替身，不等于真实扬声器验收。
@@ -176,6 +179,7 @@ npm run test:e2e -- --project=chromium-desktop
 npm run test:e2e -- --project=chromium-mobile
 npm run test:e2e -- tests/e2e/routes.spec.js tests/e2e/special-routes.spec.js
 npm run test:e2e -- tests/e2e/frontier.spec.js
+npm run test:e2e -- tests/e2e/talk.spec.js
 npm run test:e2e -- tests/e2e/music-box.spec.js
 npm run test:e2e -- tests/e2e/about-story.spec.js tests/e2e/article-typography.spec.js
 ~~~
@@ -212,6 +216,7 @@ manifest 是手工维护的清单，不是自动从 Router 提取；未列出的
 特殊路径测试涵盖旧链接重定向、已知 / 缺失文章、全局未找到页和 Portal 本地数据加载。
 About 与文章测试另外覆盖故事导航、键盘、WebGL 不可用回退、排版偏好和公式布局。
 Music E2E 包含真实 Web Audio PCM、静音和退出关闭观察，但不能保证跨设备音色一致。
+Talk E2E 对照源 Markdown 的数量、标题与收录日，检查三/二/一列布局、搜索、深链和轮播；长表格/代码及重复标题/脚注使用仅测试内替换的 Markdown 样例，不更改生产内容。卡片位置检查验证无重叠和横向越界，不作像素截图比对。
 
 Frontier 的远端 notes URL 由 [fixture](../tests/e2e/frontier-fixture.js) 替换成固定 Markdown。
 谱图请求由 [谱图 fixture](../tests/e2e/avis3-spectra-fixture.js) 替换；失败 / 重试用例也会主动注入响应。

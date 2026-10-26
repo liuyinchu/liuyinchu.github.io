@@ -15,7 +15,7 @@
 - [src/App.vue](../src/App.vue) 管理站点 Header/Footer、路由切换过渡以及新视图挂载信号。
 - [src/router/index.js](../src/router/index.js) 定义全部活动路由、兼容重定向及滚动恢复。
 - Home 静态导入；其余路由页面由动态 `import()` 加载。
-- 页面通过根路径读取 `public/` 静态内容；JSON、Markdown 和媒体文件不需要经由 Vue 导入。
+- 多数页面通过根路径读取 `public/` 静态内容；说说由 Vite 导入 `src/content/post-it/*.md`，自动组成页面与轮播共用的条目列表。
 - 富文本、公式、图表及音乐所用依赖集中声明在 `package.json`；不同页面仍有各自的呈现方式。
 - WebGL 星场、技术栈键盘、Canvas 织机均为项目内实现；不要假设存在统一的三维引擎或全局动画管理器。
 
@@ -40,7 +40,8 @@ src/router/index.js ← App.vue 的 markRouteViewReady(path)
 | [src/pages/](../src/pages/) | 路由级页面、页面布局及部分交互实现 | 先从 Router 找对应组件 |
 | [src/components/](../src/components/) | 跨页面组件与按功能分组的组件 | 保留组件与页面的数据职责边界 |
 | [src/components/common/](../src/components/common/) | 站点图标等公共界面组件 | Header/Footer 使用 `SiteIcon` |
-| [src/components/journal/](../src/components/journal/) | 随记精选轨道、说说 ticker | `Space1.vue` 组合使用 |
+| [src/components/journal/](../src/components/journal/) | 随记精选轨道、说说 ticker 与说说卡片 | `Space1.vue`、`Talk.vue` 组合使用 |
+| [src/content/post-it/](../src/content/post-it/) | 每条独立的说说 Markdown 与 title/date 元数据 | Vite glob 自动收录，文件名作为稳定 id |
 | [src/components/about/](../src/components/about/) | 内容星图、技术栈键盘及键盘几何 | `AboutMe.vue` 组合使用 |
 | [src/components/effects/](../src/components/effects/) | 可复用视觉效果 | 星场详细接口见其组件 README |
 | [src/components/space4/](../src/components/space4/) | 星穹文库背景、星环和年表 | 与共享 WebGL 星场是不同实现 |
@@ -54,7 +55,7 @@ src/router/index.js ← App.vue 的 markRouteViewReady(path)
 | [tests/e2e/](../tests/e2e/) | Playwright 路由、排版及交互回归 | 测试清单与发布文档互相参照 |
 | [docs/](./) | 项目上下文、维护说明与已知问题 | [文档目录](README.md) |
 
-`src/content/` 在本次检查中没有文件；不能据目录名推断文章已经迁入源码层。
+说说的 [postIt.js](../src/data/postIt.js) 导出 `postItEntries`，含 id、title、date、content、summary 和 href；[postIt.mjs](../src/utils/postIt.mjs) 负责解析与摘要。文件名决定顺序，日期是收录日；普通文章仍沿用 public 中的索引和正文。TalkCard 通过 MarkdownViewer 的 embed 模式渲染正文，仅在说说中传入条目专属 anchorPrefix，隔离标题/脚注锚点。
 `public/` 中的数据不全部共用一个 schema，改动前先定位真实消费者。
 
 ## 3. 全部活动路由
@@ -213,6 +214,7 @@ About 目录用宽度 980px 或高度 640px 切模式；AboutMe 有 760px 和多
 | --- | --- |
 | Home | 六段背景图入口，首次进入条件下的单词开场动画 |
 | Space1 | 深色编辑式随记列表、精选轨道、搜索、分页与说说 ticker |
+| Talk | 标题/全文搜索，三/二/一列说说卡片瀑布流；卡片独立日期和锚点，正文复用共享 Markdown 渲染 |
 | Space2/Space3 | 网格、终端/显示器意象的友链与会客厅 |
 | Space4 | 固定视口 Canvas 星空、3D CSS 星环、年份年表 |
 | About | 打字机介绍与目录两屏；紧凑布局改用原生滚动 |
@@ -321,6 +323,7 @@ Space4 搜索标题、简介、作者和日期，排序后分成星环或年份�
 | 调整全站头尾 | Header / Footer / style.css | 独立页面、移动菜单、sticky 高度、长文返回 |
 | 改首页入口 | Home 的 homeSections | Header/Footer 是否同义、图片和移动版 |
 | 改随记信息 | 内容编辑指南列出的 JSON/Markdown | Space1、Space4、About 预览及正文 |
+| 改说说 | src/content/post-it、postItEntries 与 TalkCard | 条目顺序、卡内锚点、搜索、瀑布流和 Space1 ticker |
 | 改 About 文案 | AboutMe 的章节及 About 入口 | 章节 id、索引、SEO/Portal 名称 |
 | 改星场形态 | shapes / about-shapes | 两种 profile、WebGL 与 SVG、减少动态效果 |
 | 改猫与键盘对齐 | keyboard geometry + AboutMe + about-shapes | 两套渲染器正常/降级的组合、窄屏和矮屏 |
@@ -330,7 +333,8 @@ Space4 搜索标题、简介、作者和日期，排序后分成星环或年份�
 现有测试入口包括 [routes.spec.js](../tests/e2e/routes.spec.js)、
 [special-routes.spec.js](../tests/e2e/special-routes.spec.js)、
 [about-story.spec.js](../tests/e2e/about-story.spec.js)、
-[article-typography.spec.js](../tests/e2e/article-typography.spec.js) 及功能专项测试。
+[article-typography.spec.js](../tests/e2e/article-typography.spec.js)、
+[talk.spec.js](../tests/e2e/talk.spec.js) 及功能专项测试。
 `route-manifest.js` 是测试路由清单，不能替代 Router 成为运行时路由源。
 
 About 测试现有源码覆盖完整章节、入口/别名、目录预览、键盘、减少动态效果、WebGL 不可用及 Portal 搜索等场景。

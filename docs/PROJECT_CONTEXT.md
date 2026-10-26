@@ -18,6 +18,7 @@ src/main.js
        ├─ 内容页面
        │    ├─ public/*.json → 列表 / 导航 / 搜索
        │    ├─ public/markdown/*.md → MarkdownViewer
+       │    ├─ src/content/post-it/*.md → postItEntries → Talk / TalkTicker
        │    └─ public/resource/*.json → ResourceDetailPage
        └─ 交互页面
             ├─ Portal registry + windowModel
@@ -47,6 +48,7 @@ src/main.js
 | --- | --- | --- |
 | 首页 | [Home.vue](../src/pages/Home.vue) | 六段全屏入口，含入场字幕与滚动锁；改文案与图片先看 homeSections |
 | 随记与文库 | [Space1.vue](../src/pages/Space1.vue)、[Space4.vue](../src/pages/Space4.vue) | 共用文章索引；Space1 含精选/分页，Space4 提供星环与年份浏览 |
+| 说说 | [Talk.vue](../src/pages/Talk.vue)、[TalkCard.vue](../src/components/journal/TalkCard.vue)、[post-it/](../src/content/post-it/) | 每条独立 Markdown 自动收录；标题/全文搜索、卡片瀑布流与轮播共用同一条目列表 |
 | 文章与富组件 | [ArticleView.vue](../src/pages/ArticleView.vue)、[MarkdownViewer.vue](../src/components/MarkdownViewer.vue)、[markdownComponents.js](../src/utils/markdownComponents.js) | id 固定映射正文；异步公式/图表影响目录与滚动；Enhanced 仅文章显式启用 |
 | 资源与项目 | [ResourceDirectory.vue](../src/pages/ResourceDirectory.vue)、[ResourceDetailPage.vue](../src/components/ResourceDetailPage.vue)、[Code.vue](../src/pages/Code.vue) | 资源两套入口并存；项目/资源新增主要编辑 JSON |
 | 关于与视觉 | [AboutMe.vue](../src/pages/AboutMe.vue)、[about/](../src/components/about/)、[StellarField.vue](../src/components/effects/StellarField.vue) | 六章滚动叙事；星场和键盘是独立渲染器，靠投影坐标对齐猫与键帽 |
@@ -66,7 +68,7 @@ src/main.js
 - Portal curated 搜索条目 21 条，音乐配置 80 首；Launchpad 配置与实际窗口 registry 分离。
 - AVIS3 当前公开数据对应三名选手、每名十轮；30 份频谱由查看器按需加载，manifest 只作发布清单。
 
-新增文章要同时维护索引、同名正文和封面，精选另引用文章 id。说说按 Markdown 二级标题拆条。资源按数值 idx 排序。重要导航并非全数据驱动，Header、Footer、备用搜索项与静态索引可能需要同步。
+新增文章要同时维护索引、同名正文和封面，精选另引用文章 id。说说每条一个带 title/date 的 Markdown，按编号文件名保留原顺序；日期表示收录日，入口为 /talk#post-{id}。资源按数值 idx 排序。重要导航并非全数据驱动，Header、Footer、备用搜索项与静态索引可能需要同步。
 
 详细字段、示例与新增步骤集中在 [编辑指南](SITE_EDITING_GUIDE.md)，避免仅凭上述概览直接修改数据合同。
 
@@ -79,7 +81,7 @@ src/main.js
 验证体系有四层：
 
 1. Markdown 扩展内存断言：`npm run check:markdown`。
-2. Portal/天气与音乐逻辑的 Node 测试。
+2. 说说内容、Portal/天气与音乐逻辑的 Node 测试。
 3. Chromium 桌面、手机两个项目的 Playwright E2E。
 4. build / preview / 实际部署深链检查。
 
