@@ -130,7 +130,7 @@ Playwright 的 4174 是例外：当前配置禁止复用既有服务，须为测
 | Portal 窗口 | `portal-window-model.test.mjs`，特殊路由与 About E2E | 拖动、缩放、层级、最小化、平铺、持久化、移动布局 |
 | 天气 | `weather-model.test.mjs` | 真实服务、城市时区、部分失败、保留旧数据、分区重试 |
 | Music Box | 五个 music-box Node 文件、`music-box.spec.js` | 实际听感、触摸、浏览器音频解锁、离开后静音 |
-| 说说 | `post-it.test.mjs`、`talk.spec.js` | 独立 MD 自动收录、收录日、搜索、卡内横滚与锚点、Space1 轮播 |
+| 说说 | `post-it.test.mjs`、`talk.spec.js` | public/post-it 自动收录/过滤、真实时间倒序、搜索与键盘、卡内横滚/锚点、复制回退、返回列表与 Space1 轮播 |
 | AI Frontier | `frontier.spec.js`、路由与排版相关 E2E | 远端真实内容、数据字段、失败重试、谱图与窄屏 |
 | 构建 / SEO / 部署 | `npm run build`，检查生成文件与 preview | 生产直达路径、HTTP 状态、资源地址、线上部署结果 |
 
@@ -155,7 +155,7 @@ node --test tests/music-box-composition.test.js
 node --test tests/post-it.test.mjs tests/portal-window-model.test.mjs tests/weather-model.test.mjs tests/music-box-engine.test.js tests/music-box-sequencer.test.js tests/music-box-string-audio.test.js tests/music-box-bowed-audio.test.js tests/music-box-composition.test.js
 ~~~
 
-说说测试验证 frontmatter、摘要、文件自动收录、稳定 ID 与顺序；不验证浏览器布局。
+说说 Node 测试验证简单 frontmatter、日期有效性、摘要、public/post-it 文件扫描/过滤、稳定 ID 与真实时间顺序；不验证浏览器布局。
 Portal 测试验证窗口模型与序列化，不会操作真实 DOM。
 天气测试验证数值缺失、时区 / 夏令时、日出日落、请求分区成功失败和重试；请求由测试替身控制。
 音乐测试涵盖模拟、碰撞、编曲、节拍和合成模型；部分音频测试使用替身，不等于真实扬声器验收。
@@ -216,7 +216,7 @@ manifest 是手工维护的清单，不是自动从 Router 提取；未列出的
 特殊路径测试涵盖旧链接重定向、已知 / 缺失文章、全局未找到页和 Portal 本地数据加载。
 About 与文章测试另外覆盖故事导航、键盘、WebGL 不可用回退、排版偏好和公式布局。
 Music E2E 包含真实 Web Audio PCM、静音和退出关闭观察，但不能保证跨设备音色一致。
-Talk E2E 对照源 Markdown 的数量、标题与收录日，检查三/二/一列布局、搜索、深链和轮播；长表格/代码及重复标题/脚注使用仅测试内替换的 Markdown 样例，不更改生产内容。卡片位置检查验证无重叠和横向越界，不作像素截图比对。
+Talk E2E 对照 public/post-it 扫描结果的数量、标题、日期和真实时间顺序，检查三/二/一列布局、搜索与键盘、标题/直达深链、剪贴板拒绝后的手动复制、返回列表顶部和轮播。无编号新 ID、长表格/代码及重复标题/脚注通过仅测试内替换 virtual:post-it 的样例验证，不更改生产内容；文件扫描与 metadata 过滤由 Node 测试覆盖。卡片位置检查验证无重叠和横向越界，不作像素截图比对。
 
 Frontier 的远端 notes URL 由 [fixture](../tests/e2e/frontier-fixture.js) 替换成固定 Markdown。
 谱图请求由 [谱图 fixture](../tests/e2e/avis3-spectra-fixture.js) 替换；失败 / 重试用例也会主动注入响应。

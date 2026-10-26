@@ -5,6 +5,10 @@ import { postItEntries } from '../data/postIt.js'
 
 const query = ref('')
 const grid = ref(null)
+const searchInput = ref(null)
+const board = ref(null)
+const boardHeading = ref(null)
+const showBackTop = ref(false)
 const filteredEntries = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase()
   if (!needle) return postItEntries
@@ -14,12 +18,13 @@ const filteredEntries = computed(() => {
 })
 const countLabel = computed(() => (
   query.value.trim()
-    ? filteredEntries.value.length + ' / ' + postItEntries.length + ' 则说说'
+    ? '找到 ' + filteredEntries.value.length + ' 则'
     : postItEntries.length + ' 则说说'
 ))
 
 let resizeObserver
 let layoutFrame = 0
+let scrollFrame = 0
 let gridWidth = 0
 let initialAnchorPlaced = false
 let disposed = false
@@ -33,9 +38,10 @@ function arrangeCards() {
   }
   if (!initialAnchorPlaced) {
     initialAnchorPlaced = true
-    const target = document.getElementById(window.location.hash.slice(1))
+    const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)))
     if (target && grid.value.contains(target)) target.scrollIntoView({ block: 'start', behavior: 'instant' })
   }
+  scheduleScroll()
 }
 
 function scheduleLayout() {
@@ -53,9 +59,55 @@ function observeCards() {
   scheduleLayout()
 }
 
+function clearSearch() {
+  query.value = ''
+  searchInput.value?.focus()
+}
+
+function handleSearchKey(event) {
+  if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return
+  if (event.key === 'Escape' && event.target === searchInput.value) {
+    event.preventDefault()
+    if (query.value) query.value = ''
+    else searchInput.value.blur()
+    return
+  }
+  const target = event.target
+  const editing = target instanceof HTMLElement && (
+    target.isContentEditable || target.closest('input, textarea, select')
+  )
+  if (event.key === '/' && !editing) {
+    event.preventDefault()
+    searchInput.value?.focus()
+  }
+}
+
+function updateScroll() {
+  scrollFrame = 0
+  showBackTop.value = Boolean(board.value && board.value.getBoundingClientRect().top < -Math.max(360, window.innerHeight * 0.8))
+}
+
+function scheduleScroll() {
+  if (!scrollFrame) scrollFrame = requestAnimationFrame(updateScroll)
+}
+
+function returnToBoard() {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  board.value?.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'instant' : 'smooth' })
+  boardHeading.value?.focus({ preventScroll: true })
+}
+
+function handleHashChange() {
+  initialAnchorPlaced = false
+  scheduleLayout()
+}
+
 watch(filteredEntries, async () => {
   await nextTick()
-  if (!disposed) observeCards()
+  if (!disposed) {
+    observeCards()
+    scheduleScroll()
+  }
 })
 
 onMounted(() => {
@@ -72,12 +124,20 @@ onMounted(() => {
     if (changed) scheduleLayout()
   })
   observeCards()
+  window.addEventListener('keydown', handleSearchKey)
+  window.addEventListener('scroll', scheduleScroll, { passive: true })
+  window.addEventListener('hashchange', handleHashChange)
+  scheduleScroll()
 })
 
 onBeforeUnmount(() => {
   disposed = true
   resizeObserver?.disconnect()
+  window.removeEventListener('keydown', handleSearchKey)
+  window.removeEventListener('scroll', scheduleScroll)
+  window.removeEventListener('hashchange', handleHashChange)
   cancelAnimationFrame(layoutFrame)
+  cancelAnimationFrame(scrollFrame)
 })
 </script>
 
@@ -92,13 +152,13 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <section id="talk-board" class="talk-content" aria-label="说说">
+    <section id="talk-board" ref="board" class="talk-content" aria-label="说说">
       <div class="talk-toolbar">
         <div class="talk-toolbar__intro">
           <span class="talk-eyebrow">LIFE, IN LITTLE PIECES</span>
           <div class="talk-toolbar__line">
-            <h2>片刻之间</h2>
-            <span class="talk-count" role="status">{{ countLabel }}</span>
+            <h2 ref="boardHeading" tabindex="-1">片刻之间</h2>
+            <span class="talk-count" role="status" aria-atomic="true">{{ countLabel }}</span>
           </div>
         </div>
         <label class="talk-search">
@@ -106,8 +166,11 @@ onBeforeUnmount(() => {
             <circle cx="10.5" cy="10.5" r="6.5" />
             <path d="m16 16 4.5 4.5" />
           </svg>
-          <input v-model="query" type="search" aria-label="搜索说说" placeholder="搜索标题或正文…" autocomplete="off">
-          <button v-if="query" type="button" aria-label="清除搜索" @click.prevent="query = ''">×</button>
+          <input ref="searchInput" v-model="query" type="search" aria-label="搜索说说" aria-keyshortcuts="/" title="按 / 搜索，Esc 清空或退出" placeholder="搜索标题或正文…" autocomplete="off">
+          <span class="talk-search__end">
+            <button v-if="query" type="button" aria-label="清除搜索" @click.prevent="clearSearch">×</button>
+            <kbd v-else aria-hidden="true">/</kbd>
+          </span>
         </label>
       </div>
 
@@ -117,9 +180,16 @@ onBeforeUnmount(() => {
       <div v-else class="talk-empty" data-testid="talk-empty">
         <p>没有找到这段片刻。</p>
         <span>换个关键词，或回到全部说说。</span>
-        <button type="button" @click="query = ''">查看全部说说 <span aria-hidden="true">↗</span></button>
+        <button type="button" @click="clearSearch">查看全部说说 <span aria-hidden="true">↗</span></button>
       </div>
     </section>
+
+    <button v-if="showBackTop" class="talk-back-top" type="button" aria-label="返回说说列表顶部" @click="returnToBoard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <path d="m6 12 6-6 6 6M12 6v13" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>返回列表</span>
+    </button>
   </main>
 </template>
 
@@ -250,7 +320,7 @@ onBeforeUnmount(() => {
   gap: 0.65rem;
   width: min(100%, 20rem);
   min-height: 2.85rem;
-  padding: 0.1rem 0.85rem;
+  padding: 0.1rem 0.25rem 0.1rem 0.85rem;
   box-sizing: border-box;
   border: 1px solid rgba(180, 190, 254, 0.18);
   border-radius: 0.85rem;
@@ -286,17 +356,48 @@ onBeforeUnmount(() => {
 .talk-search input::-webkit-search-cancel-button { display: none; }
 .talk-search input::placeholder { color: var(--ctp-mocha-overlay1); }
 
-.talk-search button {
+.talk-search__end {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
   flex: 0 0 auto;
+  place-items: center;
+}
+
+.talk-search kbd {
+  display: grid;
+  width: 1.45rem;
+  height: 1.5rem;
+  place-items: center;
+  border: 1px solid rgba(180, 190, 254, 0.17);
+  border-radius: 0.3rem;
+  color: var(--ctp-mocha-overlay1);
+  font: 0.78rem/1 monospace;
+}
+
+.talk-search button {
   padding: 0;
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border: 0;
   border-radius: 50%;
   color: var(--ctp-mocha-subtext0);
   background: transparent;
   font-size: 1.3rem;
   cursor: pointer;
+}
+
+.talk-search button:hover {
+  color: var(--ctp-mocha-blue);
+  background: rgba(137, 180, 250, 0.08);
+}
+
+.talk-search button:focus-visible,
+.talk-empty button:focus-visible,
+.talk-back-top:focus-visible,
+.talk-toolbar h2:focus-visible {
+  outline: 2px solid var(--ctp-mocha-blue);
+  outline-offset: 4px;
 }
 
 .talk-grid {
@@ -336,6 +437,39 @@ onBeforeUnmount(() => {
 }
 .talk-empty button span { margin-left: 0.5rem; }
 
+.talk-back-top {
+  position: fixed;
+  z-index: 30;
+  right: clamp(1rem, 3vw, 3rem);
+  bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(180, 190, 254, 0.26);
+  border-radius: 999px;
+  color: var(--ctp-mocha-subtext0);
+  background: rgba(24, 24, 37, 0.95);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+
+.talk-back-top svg { width: 1rem; height: 1rem; }
+.talk-back-top:hover {
+  border-color: var(--ctp-mocha-blue);
+  color: var(--ctp-mocha-blue);
+  background: var(--ctp-mocha-mantle);
+}
+
+@media (hover: none) {
+  .talk-search kbd { visibility: hidden; }
+}
+
 @media (min-width: 1800px) {
   .talk-hero,
   .talk-content { width: min(100% - 6rem, 1760px); }
@@ -369,6 +503,7 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .talk-search { transition: none; }
+  .talk-search,
+  .talk-back-top { transition: none; }
 }
 </style>

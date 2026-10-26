@@ -2,11 +2,13 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import path from 'path'
+import { postItPlugin } from './scripts/vite-post-it.mjs'
 
 export default defineConfig({
   base: '/', // ✅ 根目录仓库为 /
   plugins: [
     vue(),
+    postItPlugin(),
     viteStaticCopy({
       targets: [
         {

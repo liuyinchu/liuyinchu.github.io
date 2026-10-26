@@ -5,13 +5,40 @@ function frontmatterError(id, message) {
 }
 
 function validDate(value) {
-  if (value === null) return true
   if (typeof value !== 'string') return false
-  if (!/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2}))?$/.test(value)) return false
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return false
-  const calendarDate = value.slice(0, 10)
-  return new Date(calendarDate).toISOString().slice(0, 10) === calendarDate
+  const parts = value.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2}))?$/)
+  if (!parts || Number.isNaN(Date.parse(value))) return false
+  const calendarDate = new Date(parts[1] + 'T00:00:00Z')
+  if (calendarDate.toISOString().slice(0, 10) !== parts[1]) return false
+  return parts[2] === undefined
+    || (Number(parts[2]) <= 23 && Number(parts[3]) <= 59
+      && (parts[4] === undefined || Number(parts[4]) <= 59))
+}
+
+// This small frontmatter subset supports scalar metadata without a YAML dependency.
+function parseScalar(value, id, field) {
+  if (value.startsWith('"')) {
+    const quoted = value.match(/^("(?:[^"\\]|\\.)*")(?:[ \t]+#.*)?$/)
+    try {
+      if (!quoted) throw new Error()
+      return JSON.parse(quoted[1])
+    } catch {
+      throw frontmatterError(id, field + ' 的双引号字符串无效')
+    }
+  }
+  if (value.startsWith("'")) {
+    const quoted = value.match(/^'((?:[^']|'')*)'(?:[ \t]+#.*)?$/)
+    if (!quoted) throw frontmatterError(id, field + ' 的单引号字符串无效')
+    return quoted[1].replace(/''/g, "'")
+  }
+  const plain = value.replace(/(?:^|[ \t]+)#.*$/, '').trim()
+  if (!plain || /^(?:null|~)$/i.test(plain)) return null
+  if (/^(?:true|false)$/i.test(plain)) return plain.toLowerCase() === 'true'
+  if (/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(plain)) return Number(plain)
+  if (/^[\[\]{}|>&*!]/.test(plain) || /:\s/.test(plain)) {
+    throw frontmatterError(id, field + ' 仅支持单行标量')
+  }
+  return plain
 }
 
 function cleanInlineText(value) {
@@ -94,22 +121,18 @@ export function parsePostIt(source, id) {
 
   const metadata = {}
   for (const line of frontmatter[1].split(/\r?\n/)) {
-    if (!line.trim()) continue
-    const field = line.match(/^(title|date):\s*(.+)$/)
-    if (!field) throw frontmatterError(id, '仅支持 title 和 date，值须为 JSON 双引号字符串或 null')
+    if (!line.trim() || /^\s*#/.test(line)) continue
+    const field = line.match(/^([A-Za-z_][\w-]*):[ \t]*(.*?)\s*$/)
+    if (!field) throw frontmatterError(id, 'metadata 须为单行 key: value')
     if (Object.hasOwn(metadata, field[1])) throw frontmatterError(id, '重复字段 ' + field[1])
-    try {
-      metadata[field[1]] = JSON.parse(field[2])
-    } catch {
-      throw frontmatterError(id, field[1] + ' 不是合法的 JSON 值')
-    }
+    metadata[field[1]] = parseScalar(field[2], id, field[1])
   }
 
   if (typeof metadata.title !== 'string' || !metadata.title.trim()) {
-    throw frontmatterError(id, 'title 必须为非空双引号字符串')
+    throw frontmatterError(id, 'title 必须为非空字符串')
   }
-  if (!Object.hasOwn(metadata, 'date') || !validDate(metadata.date)) {
-    throw frontmatterError(id, 'date 必须为有效的 YYYY-MM-DD、ISO 日期时间字符串或 null')
+  if (!validDate(metadata.date)) {
+    throw frontmatterError(id, 'date 必须为有效的 YYYY-MM-DD 或含明确时区的 ISO 日期时间')
   }
 
   const content = source.slice(frontmatter[0].length)
@@ -119,14 +142,28 @@ export function parsePostIt(source, id) {
     date: metadata.date,
     content,
     summary: extractPostItSummary(content),
-    href: '/talk#post-' + id,
+    href: '/talk#post-' + encodeURIComponent(id),
   }
 }
 
-// Numeric filename prefixes preserve the curated order and stable anchor IDs.
-export function createPostItEntries(modules) {
-  return Object.keys(modules).sort().map(path => {
-    const id = path.split('/').pop().replace(/\.md$/, '')
-    return parsePostIt(modules[path], id)
+function postItTimestamp(date) {
+  // Date-only metadata means midnight in the site's fixed Asia/Shanghai timezone.
+  return Date.parse(date.length === 10 ? date + 'T00:00:00+08:00' : date)
+}
+
+// Sources are keyed by their path relative to public/post-it; dates determine order.
+export function createPostItEntries(modules, { onInvalid = message => console.warn(message) } = {}) {
+  const entries = []
+  for (const [sourcePath, source] of Object.entries(modules)) {
+    const id = sourcePath.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\.md$/i, '')
+    try {
+      entries.push(parsePostIt(source, id))
+    } catch (error) {
+      onInvalid('跳过说说 ' + sourcePath + '：' + error.message)
+    }
+  }
+  return entries.sort((left, right) => {
+    const difference = postItTimestamp(right.date) - postItTimestamp(left.date)
+    return difference || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0)
   })
 }
