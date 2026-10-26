@@ -1,4 +1,38 @@
 <script setup>
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+
+// Earliest reachable repository commit: 7daa6f3 (Initial deploy setup).
+const SITE_STARTED_AT = Date.parse('2025-04-03T19:46:58+00:00')
+const currentTime = ref(Date.now())
+const uptime = computed(() => {
+  const totalSeconds = Math.max(0, Math.floor((currentTime.value - SITE_STARTED_AT) / 1000))
+  return {
+    days: Math.floor(totalSeconds / 86400),
+    hours: String(Math.floor((totalSeconds % 86400) / 3600)).padStart(2, '0'),
+    minutes: String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0'),
+    seconds: String(totalSeconds % 60).padStart(2, '0'),
+  }
+})
+
+function updateUptime() {
+  currentTime.value = Date.now()
+}
+
+function updateWhenVisible() {
+  if (!document.hidden) updateUptime()
+}
+
+let uptimeInterval
+onMounted(() => {
+  updateUptime()
+  uptimeInterval = window.setInterval(updateUptime, 1000)
+  document.addEventListener('visibilitychange', updateWhenVisible)
+})
+onUnmounted(() => {
+  window.clearInterval(uptimeInterval)
+  document.removeEventListener('visibilitychange', updateWhenVisible)
+})
+
 const loungeLinks = [
   {
     label: '访客中心',
@@ -26,6 +60,21 @@ const loungeLinks = [
         <p class="hero-text">
           “我教你们的不是邻人，而是朋友。<br />
           让朋友成为大地的节日。”
+        </p>
+        <p
+          class="site-uptime"
+          data-testid="site-uptime"
+          role="timer"
+          aria-live="off"
+          title="自2025年4月4日03:46:58（北京时间）"
+        >
+          <span class="uptime-label">本站已持续运行</span>
+          <span class="uptime-units">
+            <span class="uptime-unit"><span class="uptime-value" data-unit="days">{{ uptime.days }}</span>天</span>
+            <span class="uptime-unit"><span class="uptime-value" data-unit="hours">{{ uptime.hours }}</span>小时</span>
+            <span class="uptime-unit"><span class="uptime-value" data-unit="minutes">{{ uptime.minutes }}</span>分</span>
+            <span class="uptime-unit"><span class="uptime-value" data-unit="seconds">{{ uptime.seconds }}</span>秒</span>
+          </span>
         </p>
       </div>
 
@@ -133,6 +182,46 @@ const loungeLinks = [
   font-family: 'LXGW WenKai', serif;
   font-size: clamp(1.05rem, 2vw, 1.25rem);
   line-height: 1.8;
+}
+
+.site-uptime {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.65rem;
+  margin: clamp(1.5rem, 3vw, 2.5rem) 0 0;
+  color: var(--ctp-mocha-subtext0);
+  font-size: 0.88rem;
+  line-height: 1.8;
+}
+
+.uptime-label,
+.uptime-unit {
+  white-space: nowrap;
+}
+
+.uptime-units {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.55rem;
+}
+
+.uptime-unit {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.15em;
+}
+
+.uptime-value {
+  min-width: 2ch;
+  color: var(--ctp-mocha-sky);
+  font-family: 'Fira Code', monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.uptime-unit:first-child .uptime-value {
+  min-width: 3ch;
 }
 
 .hero-visual {

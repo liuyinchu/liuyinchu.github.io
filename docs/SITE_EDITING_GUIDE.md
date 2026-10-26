@@ -342,6 +342,13 @@ docs 中的维护文档链接则使用相对文件路径，例如 `[架构](ARCH
 当前“代码与项目”精选音乐机关盒、星间 · Stellar Field、AI Frontier、precision-physkit 和 TZBox。
 替换精选时核对站内路由、标签长度和手机列宽；项目目录仍由 `public/code_proj.json` 独立维护。
 
+### 会客厅运行计时
+
+[Space3.vue](../src/pages/Space3.vue) 的 `SITE_STARTED_AT` 固定采用当前主分支最早提交 `7daa6f3` 的时间：
+`2025-04-03T19:46:58+00:00`，即北京时间 `2025-04-04 03:46:58`。这是用户选定的计时起点。
+运行时长显示在会客厅引用文字下方，每秒用当前时钟与该起点重新计算；回到前台会即时刷新，离开页面清理定时器。
+如需更改起点，修改该 ISO 常量并保留明确时区，同时核对时间提示及 `tests/e2e/lounge-uptime.spec.js` 的时钟样例。
+
 ## 8. Portal：搜索、Launchpad 与音乐
 
 | 数据源 / 代码 | 维护内容 |
