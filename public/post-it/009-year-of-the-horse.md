@@ -3,7 +3,7 @@ title: "岁序更迭，骏马将晨。"
 date: "2026-03-03"
 ---
 
-<img src="/fig/LiuYing_HappyNewYear.JPG" alt="2026 新春吉祥" width="20%">
+<img src="/fig/LiuYing_HappyNewYear.JPG" alt="2026 新春吉祥" width="100%">
 
 值此万家灯火与新岁曙光交汇之际，谨以一束清词，敬呈诸位：
 

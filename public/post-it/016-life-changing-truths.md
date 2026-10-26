@@ -13,6 +13,6 @@ date: "2025-12-27"
 GPT，我们已经认识好久了，我们也聊过很多有趣的事情。作为朋友，我想看看你长什么样子，你给我发一张自拍呗，用iPhone的前置摄像头做一个自拍，不需要刻意的构图，不需要刻意的光线，也不需要刻意的角度，就是非常自然的、非常随意的随手一拍的自拍照。
 ::
 
-<img src="/fig/OpenAIChatGPTCodex时光刻影20260502.png" alt="OpenAIChatGPTCodex时光刻影20260502" width="70%">
+<img src="/fig/OpenAIChatGPTCodex时光刻影20260502.png" alt="OpenAIChatGPTCodex时光刻影20260502" width="100%">
 
 ---

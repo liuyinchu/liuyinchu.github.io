@@ -3,7 +3,7 @@ title: "小马过河"
 date: "2026-09-03"
 ---
 
-<img src="/fig/Little_Horse_Crossing_the_River.png" alt="小马过河" width="40%">
+<img src="/fig/Little_Horse_Crossing_the_River.png" alt="小马过河" width="100%">
 
 从前，一匹小马和妈妈住在一起。小马渐渐长大了，很想帮妈妈做事。  
 一天，马妈妈把一袋麦子放在小马背上，请他送到河对岸的磨坊。小马高兴地答应了，背着麦子出发。走着走着，一条小河挡住了去路。河上没有桥，小马也不知道水有多深，于是站在岸边犹豫起来。  

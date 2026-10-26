@@ -3,7 +3,7 @@ title: "引力井与太空探索的代价"
 date: "2025-12-27"
 ---
 
-<img src="/fig/gravity_wells_large.png" alt="太阳系引力井示意图" width="70%">
+<img src="/fig/gravity_wells_large.png" alt="太阳系引力井示意图" width="100%">
 
 这张图生动地展示了太阳系中各大天体的“引力井”（Gravity Wells）深度。
 
