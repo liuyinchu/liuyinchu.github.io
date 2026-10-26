@@ -1,9 +1,25 @@
 import { BONGO_WIDTH, BONGO_HEIGHT, BONGO_PALETTE, BONGO_RUNS, BONGO_ALTERNATE_PALETTE, BONGO_ALTERNATE_RUNS } from './bongo-reference.js'
 
 // Point positions come only from the pinned second source frame, not drawn paths.
-// Its own slanted pose, two paws, facial negative space and red marks stay intact.
+// Its slanted pose, paws and facial negative space stay intact; isolated impact
+// strokes retain their point IDs but are transparent in both source poses.
 let cached
 const decode = (text) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0))
+
+// These are the three detached strike components in each pinned source frame,
+// including their light-pink edge pixels. Both real paw-pad regions lie above them.
+function isSourceImpact(x,y,pixels,kinds) {
+  if (!((x<80&&y>=180)||(x>=245&&y>=245))) return false
+  const kind=kinds[pixels[y*BONGO_WIDTH+x]]
+  return kind===3 || kind===4
+}
+function hideSourceImpact(points,pixels,kinds) {
+  for(let offset=0;offset<points.length;offset+=8) {
+    const x=Math.floor((points[offset]+.5)*BONGO_WIDTH)
+    const y=Math.floor(BONGO_HEIGHT-points[offset+1]*BONGO_WIDTH)
+    if(isSourceImpact(x,y,pixels,kinds)) points[offset+7]=0
+  }
+}
 
 export function createCatGeometry() {
   if (cached) return cached
@@ -58,6 +74,8 @@ export function createCatGeometry() {
   }
   const staticBody=new Float32Array(body)
   const typing=buildTypingPose(staticBody,{palette,pixels,kinds})
+  hideSourceImpact(staticBody,pixels,kinds)
+  for(const point of fallback) if(isSourceImpact(Math.floor(point.x),Math.floor(point.y),pixels,kinds)) point.alpha=0
   cached = { body: staticBody, fallback, width: BONGO_WIDTH, height: BONGO_HEIGHT, ...typing }
   return cached
 }
@@ -147,5 +165,6 @@ function buildTypingPose(body, base) {
       alternate.set(target.value,ids[nearest].index*8)
     }
   }
+  hideSourceImpact(alternate,pixels,kinds)
   return {alternate,motionRole}
 }
