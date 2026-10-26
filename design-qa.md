@@ -1,3 +1,15 @@
+# 历史设计与验收记录
+
+> 记录属性：以下内容是过去任务的历史 QA 原文，已完整保留；其中的“当前任务”和“passed”均指当时任务，不代表 2026-10-26 基线或此后的版本已经通过验证。
+> 本次导航说明核对基线：main / c1c3b96。维护流程见 [开发、验证与部署](docs/DEVELOPMENT_AND_DEPLOYMENT.md)，全站说明见 [文档索引](docs/README.md)，未覆盖项见 [已知问题](docs/KNOWN_ISSUES.md)。
+> 旧记录中的绝对截图路径来自另一工作区；本次未访问这些文件，也不保证路径仍可达。会话截图标识只描述原会话证据，并不是可下载的文件路径。
+> 历史上的测试、构建和视觉通过结论只适用于相应任务与当时环境；本轮文档维护没有重新运行这些验收，也没有核实线上部署状态。
+
+下方记录按原内容保留，供设计决策和历史对照使用。当前维护入口：
+[项目背景](docs/PROJECT_CONTEXT.md) · [架构](docs/ARCHITECTURE.md) · [编辑指南](docs/SITE_EDITING_GUIDE.md) · [交互功能](docs/INTERACTIVE_FEATURES.md) · [AI Frontier 内容](docs/ai-frontier-content.md)。
+
+---
+
 # Design QA — precision-physkit 文档主页
 
 - Source visual truth: `/Users/ysyspace/workspace/dev/agent-code-helper-test/tmp/cache/20260801-precision-physkit-page/source-markdown-components-final-1440x900.png`
