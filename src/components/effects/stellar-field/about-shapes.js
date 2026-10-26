@@ -1,3 +1,5 @@
+import { createCatGeometry } from '../../about/stack-keyboard/cat-geometry.js'
+
 // Procedural About formations and the projection shared with their DOM anchors.
 export const ABOUT_NODES = [
   { id: 'notes', position: [-.60, .42, .10], fallbackPath: 'M-14-17H14V17H-14ZM-8-8H8M-8-1H8M-8 6H4' },
@@ -228,6 +230,82 @@ export const ABOUT_ENDING_KNOTS = [.11, .31, .54, .77, .93].map((u) => {
   return { x: x * scale, y: -y * scale }
 })
 
+export function getAboutCatFallback() {
+  return createCatGeometry().fallback
+}
+export function getAboutCatWeight(progress) {
+  const section = Math.max(0, Math.min(1, progress)) * 5
+  const segment = Math.min(4, Math.floor(section))
+  const t = smoothstep(.18, .82, section - segment)
+  return segment === 3 ? t : segment === 4 ? 1 - t : 0
+}
+export function resolveAboutCatFrame(frame, rect) {
+  if (frame && [frame.origin, frame.axisX, frame.axisY].every((pair) => pair?.length === 2 && pair.every(Number.isFinite))
+    && Math.hypot(...frame.axisX) > 0 && Math.hypot(...frame.axisY) > 0) return frame
+  const size = Math.min(rect.width * .72, rect.height * .84, 520)
+  return { origin: [rect.left + rect.width * .56 - size * .5, rect.top + rect.height * .22], axisX: [size, 0], axisY: [0, size] }
+}
+export function getAboutCatMapping(frame, rect, width, height) {
+  const source = resolveAboutCatFrame(frame, rect)
+  const scaleX = width / Math.max(1, rect.width)
+  const scaleY = height / Math.max(1, rect.height)
+  return {
+    origin: [(source.origin[0] - rect.left) * scaleX, (source.origin[1] - rect.top) * scaleY],
+    axisX: [source.axisX[0] * scaleX, source.axisX[1] * scaleY],
+    axisY: [source.axisY[0] * scaleX, source.axisY[1] * scaleY],
+    source,
+  }
+}
+export function getAboutCatTarget(point, seed, state) {
+  const { progress, rotationX, rotationY, hoverX, hoverY, time, motion, width, height, catFrame, canvasRect } = state
+  const rect = canvasRect || { left: 0, top: 0, width, height }
+  const mapping = getAboutCatMapping(catFrame, rect, width, height)
+  const u = point[0] + .5
+  const v = 289 / 457 - point[1]
+  const px = mapping.origin[0] + mapping.axisX[0] * u + mapping.axisY[0] * v
+  const py = mapping.origin[1] + mapping.axisX[1] * u + mapping.axisY[1] * v
+  const view = getAboutView(width, height, progress)
+  const perspective = 3.8 / (3.8 - point[2])
+  const x = (px - width * .5 + view.offsetX) / (view.scene * perspective)
+  const y = (height * .5 - py - view.offsetY) / (view.scene * perspective)
+  const z = point[2]
+  const rx = rotationX + hoverY + Math.sin(time * .12) * .024 * motion
+  const ry = rotationY + hoverX + Math.sin(time * .09) * .032 * motion
+  const iy = y * Math.cos(rx) + z * Math.sin(rx)
+  const iz = -y * Math.sin(rx) + z * Math.cos(rx)
+  const breathe = Math.sin(time * .19 + seed * .025) * .007 * motion
+  return [
+    x * Math.cos(ry) - iz * Math.sin(ry) - Math.cos(seed) * breathe,
+    iy - Math.sin(seed) * breathe,
+    x * Math.sin(ry) + iz * Math.cos(ry) - Math.sin(time * .10 + seed * .021) * .004 * motion * smoothstep(.8, 1, progress),
+  ]
+}
+function attachAboutCat(result, foreground) {
+  const { body } = createCatGeometry()
+  const priority = []
+  const interior = []
+  for (let index = 0; index < body.length / 8; index++) {
+    const offset = index * 8
+    const colored = body[offset + 3] - body[offset + 4] > .10
+    const edge = Math.abs(body[offset + 6] - 1.35) < .0001
+    const core = body[offset + 6] >= 1.95
+    if (colored || edge || core) priority.push(index)
+    else interior.push(index)
+  }
+  const selected = priority.slice()
+  const remaining = foreground - selected.length
+  for (let index = 0; index < remaining; index++) selected.push(interior[Math.floor((index + .5) * interior.length / remaining)])
+  selected.sort((a, b) => a - b)
+  result.catStyle = new Float32Array(result.count * 4)
+  result.catSize = new Float32Array(result.count)
+  for (let index = 0; index < foreground; index++) {
+    const offset = selected[index] * 8
+    result.field.set(body.subarray(offset, offset + 3), index * 3)
+    result.catStyle.set([body[offset + 3], body[offset + 4], body[offset + 5], body[offset + 7]], index * 4)
+    result.catSize[index] = body[offset + 6]
+  }
+}
+
 export function createAboutParticles({ dustCount, starCount, backgroundCount, random, cursor, cursorStyle }) {
   const count = dustCount + starCount + backgroundCount
   const result = { count, arrow: cursor }
@@ -296,10 +374,12 @@ export function createAboutParticles({ dustCount, starCount, backgroundCount, ra
     const brightness = background ? .58 + random() * .46 : hero ? .58 + random() * .65 : .12 + random() * .30
     result.style.set([size, brightness, temperature, background ? 0 : hero ? 1 : .5], i * 4)
   }
+  // The original loop and its random calls remain untouched. Only field is replaced.
+  attachAboutCat(result, dustCount + starCount)
   return result
 }
 
-export function projectAboutAnchors(particles, { progress, replay, rotationX, rotationY, hoverX, hoverY, time, motion, width, height }) {
+export function projectAboutAnchors(particles, { progress, replay, rotationX, rotationY, hoverX, hoverY, time, motion, width, height, catFrame, canvasRect }) {
   const section = Math.max(0, Math.min(1, progress)) * 5
   const segment = Math.min(4, Math.floor(section))
   const t = smoothstep(.18, .82, section - segment)
@@ -312,9 +392,11 @@ export function projectAboutAnchors(particles, { progress, replay, rotationX, ro
     const seed = Math.fround(Math.fround(index) * Math.fround(1.61803398875))
     const from = particles[names[segment]]
     const to = particles[names[segment + 1]]
+    const catTarget = particles.catStyle ? getAboutCatTarget(Array.from(particles.field.subarray(index * 3, index * 3 + 3)), seed, { progress, rotationX, rotationY, hoverX, hoverY, time, motion, width, height, catFrame, canvasRect }) : null
     let p = Array.from({ length: 3 }, (_, axis) => {
-      const start = from[index * 3 + axis]
-      const mixed = start + (to[index * 3 + axis] - start) * t
+      const start = names[segment] === 'field' && catTarget ? catTarget[axis] : from[index * 3 + axis]
+      const finish = names[segment + 1] === 'field' && catTarget ? catTarget[axis] : to[index * 3 + axis]
+      const mixed = start + (finish - start) * t
       return mixed + (particles.scatter[index * 3 + axis] - mixed) * flight * (segment === 4 ? .12 : .72)
     })
     const angle = flight * .38 * Math.sin(seed * .17)

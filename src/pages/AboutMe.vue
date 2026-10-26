@@ -7,6 +7,8 @@ import StackKeyboard from '../components/about/StackKeyboard.vue'
 const experience = ref(null)
 const stage = ref(null)
 const field = ref(null)
+const keyboard = ref(null)
+const catFrame = ref(null)
 const progress = ref(0)
 const activeChapter = ref(0)
 const paused = ref(false)
@@ -33,6 +35,12 @@ let previousTitle
 
 function clamp(value, min = 0, max = 1) {
   return Math.max(min, Math.min(max, value))
+}
+function updateCatFrame() {
+  const next = keyboard.value?.getCatFrame?.() || null
+  const current = catFrame.value
+  if (next && current && ['origin', 'axisX', 'axisY'].every((key) => next[key].every((value, index) => value === current[key][index]))) return
+  catFrame.value = next
 }
 function updateProjection() {
   const canvasRect = field.value?.getCanvasRect?.()
@@ -73,6 +81,7 @@ function updateProgress() {
   }
   activeChapter.value = readingChapter
   keyboardProgress.value = clamp((stage.value.offsetHeight * .55 - positions[4]) / Math.max(1, stage.value.offsetHeight * .55))
+  updateCatFrame()
   updateProjection()
 }
 function scheduleProgress() {
@@ -119,6 +128,7 @@ onBeforeUnmount(() => {
           ref="field"
           profile="about"
           :progress="progress"
+          :cat-frame="catFrame"
           :active-node="activeChapter === 3 ? selectedNode : ''"
           :paused="paused || activeChapter === 4"
           :interactive="activeChapter !== 4"
@@ -223,7 +233,7 @@ onBeforeUnmount(() => {
             <h2 id="about-making-title">一边使用，一边搭建。</h2>
             <p>写作、计算、编程，把想法慢慢做成东西。按一枚键，看看我手边的工具。</p>
           </div>
-          <StackKeyboard class="about-making__keyboard" :active="activeChapter === 4" :progress="keyboardProgress" :paused="paused" />
+          <StackKeyboard ref="keyboard" class="about-making__keyboard" :active="activeChapter === 4" :progress="keyboardProgress" :paused="paused" @layout="updateCatFrame" />
         </section>
 
         <section id="about-curiosity" class="about-chapter about-closing" tabindex="-1" aria-labelledby="about-curiosity-title">
@@ -260,7 +270,7 @@ onBeforeUnmount(() => {
 .about-experience { position: relative; }
 .about-stage { position: sticky; top: var(--site-header-height, 72px); width: 100%; height: var(--about-stage-height); overflow: hidden; z-index: 0; }
 .about-stage :deep(.stellar-field) { transition: opacity .65s; }
-.about-stage--making :deep(.stellar-field) { opacity: .16; pointer-events: none; }
+.about-stage--making :deep(.stellar-field) { pointer-events: none; }
 .about-stage__shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgb(3 9 13 / 35%), transparent 37%, transparent 63%, rgb(3 9 13 / 20%)), linear-gradient(0deg, #03090d 0%, transparent 14%, transparent 88%, rgb(3 9 13 / 20%) 100%); }
 .about-stage--directory .about-stage__shade { background: linear-gradient(0deg, #03090d 0%, transparent 16%, transparent 90%, rgb(3 9 13 / 12%) 100%); }
 .about-instruments { position: sticky; top: var(--site-header-height, 72px); height: var(--about-stage-height); margin-top: calc(-1 * var(--about-stage-height)); z-index: 3; pointer-events: none; }

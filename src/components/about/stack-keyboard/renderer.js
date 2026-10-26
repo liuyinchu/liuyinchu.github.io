@@ -1,5 +1,4 @@
-import { keyGeometry, baseGeometry, plateGeometry, keyboardLayout, keyboardCamera, keyboardScene, projectedKeys, project, KEY_TRAVEL } from './geometry.js'
-import { createCatGeometry } from './cat-geometry.js'
+import { keyGeometry, baseGeometry, plateGeometry, keyboardLayout, keyboardCamera, keyboardCatFrame, projectedKeys, KEY_TRAVEL } from './geometry.js'
 
 const VERTEX = `#version 300 es
 precision highp float;
@@ -79,42 +78,6 @@ void main() {
   outColor = vec4(color, 1.);
 }`
 
-const CAT_VERTEX = `#version 300 es
-precision highp float;
-in vec3 aPosition; in vec3 aColor; in vec2 aStyle;
-uniform mat4 uCatViewProjection;
-uniform vec3 uCatOrigin; uniform vec3 uCatRight; uniform vec3 uCatUp; uniform vec3 uCatForward;
-uniform float uCatScale; uniform float uCatDpr; uniform float uCatPresentationScale; uniform float uCatMinPointSize;
-out vec3 vCatColor; out float vCatAlpha; out float vCatStar; out float vCatDust;
-void main() {
- vec3 p=uCatRight*aPosition.x+uCatUp*aPosition.y+uCatForward*aPosition.z;
- vec4 clip=uCatViewProjection*vec4(p*uCatScale+uCatOrigin,1.);
- gl_Position=clip;
- // Settle the unchanged source pose onto the back row: 5.5% of canvas height.
- gl_Position.y-=.11*clip.w;
- float perspective=clamp(18./max(clip.w,.2),.75,1.6);
- float star=step(.975,fract(float(gl_VertexID)*.6180339));
- float desired=aStyle.x*uCatDpr*1.40*perspective*(1.+star*.42)*uCatPresentationScale;
- float raster=max(uCatMinPointSize,min(desired,6.*uCatDpr));
- gl_PointSize=raster;
- // Subpixel dots keep their intended energy when the GPU rasterizes at least one pixel.
- float coverage=min(1.,desired*desired/(raster*raster));
- vCatColor=aColor; vCatAlpha=aStyle.y*coverage;
- vCatDust=1.-smoothstep(.72,.84,aStyle.y); vCatStar=star;
-}`
-const CAT_FRAGMENT = `#version 300 es
-precision highp float;
-in vec3 vCatColor; in float vCatAlpha; in float vCatStar; in float vCatDust;
-out vec4 outColor;
-void main() {
- vec2 p=gl_PointCoord*2.-1.; float r=dot(p,p); if(r>1.) discard;
- float light=exp(-r*4.2)*.50+exp(-r*26.)*1.05;
- float dust=exp(-r*2.4)*.90+exp(-r*22.)*.35;
- light=mix(light,dust,vCatDust);
- light+=vCatStar*(exp(-abs(p.x)*32.)*exp(-p.y*p.y*7.)+exp(-abs(p.y)*32.)*exp(-p.x*p.x*7.))*.18;
- outColor=vec4(vCatColor,light*vCatAlpha);
-}`
-
 export function createKeyboardRenderer(canvas, { keys, onReady, onUnavailable, onPositions }) {
   let gl
   try { gl = canvas.getContext('webgl2', { alpha: true, antialias: true, depth: true, stencil: false, premultipliedAlpha: true, powerPreference: 'low-power' }) }
@@ -122,12 +85,6 @@ export function createKeyboardRenderer(canvas, { keys, onReady, onUnavailable, o
   if (!gl) { onUnavailable(); return null }
   let program = null
   let texture = null
-  let catProgram = null
-  let catMeshes = []
-  let catLocations = {}
-  let catMinPointSize = 1
-  let catBody
-  const catGeometry = createCatGeometry()
   let meshes = []
   let locations = {}
   let frame = 0
@@ -212,68 +169,9 @@ export function createKeyboardRenderer(canvas, { keys, onReady, onUnavailable, o
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
     gl.generateMipmap(gl.TEXTURE_2D)
   }
-  function catMesh(data) {
-    const vao = gl.createVertexArray(), buffer = gl.createBuffer()
-    gl.bindVertexArray(vao)
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
-    for (const [name,size,offset] of [['aPosition',3,0],['aColor',3,12],['aStyle',2,24]]) {
-      const location=gl.getAttribLocation(catProgram,name)
-      gl.enableVertexAttribArray(location)
-      gl.vertexAttribPointer(location,size,gl.FLOAT,false,32,offset)
-    }
-    const result={vao,buffer,count:data.length/8}
-    catMeshes.push(result)
-    return result
-  }
-  function initializeCat() {
-    let vertex, fragment
-    try {
-      vertex=shader(gl.VERTEX_SHADER,CAT_VERTEX)
-      fragment=shader(gl.FRAGMENT_SHADER,CAT_FRAGMENT)
-      catProgram=gl.createProgram()
-      gl.attachShader(catProgram,vertex); gl.attachShader(catProgram,fragment)
-      gl.linkProgram(catProgram)
-      if(!gl.getProgramParameter(catProgram,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(catProgram))
-      catLocations=Object.fromEntries(['uCatViewProjection','uCatOrigin','uCatScale','uCatRight','uCatUp','uCatForward','uCatDpr','uCatPresentationScale','uCatMinPointSize'].map((name)=>[name,gl.getUniformLocation(catProgram,name)]))
-      catMinPointSize=gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE)[0]
-      catBody=catMesh(catGeometry.body)
-    } finally {
-      if(vertex) gl.deleteShader(vertex)
-      if(fragment) gl.deleteShader(fragment)
-    }
-  }
-  function drawCat(matrix,right,up,forward) {
-    const scene=keyboardScene(layout)
-    gl.useProgram(catProgram)
-    gl.uniformMatrix4fv(catLocations.uCatViewProjection,false,matrix)
-    gl.uniform3fv(catLocations.uCatOrigin,scene.catOrigin)
-    gl.uniform3fv(catLocations.uCatRight,right)
-    gl.uniform3fv(catLocations.uCatUp,up)
-    gl.uniform3fv(catLocations.uCatForward,forward)
-    gl.uniform1f(catLocations.uCatScale,scene.catScale)
-    gl.uniform1f(catLocations.uCatDpr,dpr)
-    const left=scene.catOrigin.map((n,i)=>n-right[i]*scene.catScale*.5)
-    const edge=scene.catOrigin.map((n,i)=>n+right[i]*scene.catScale*.5)
-    const frameWidth=Math.abs(project(matrix,...edge)[0]-project(matrix,...left)[0])*width*.5
-    // The accepted desktop frame is about 300 CSS px (visible cat about 280).
-    // Source-pixel radii must shrink with the presentation, never grow on desktop.
-    gl.uniform1f(catLocations.uCatPresentationScale,Math.min(1,frameWidth/240))
-    gl.uniform1f(catLocations.uCatMinPointSize,catMinPointSize)
-    gl.depthMask(false)
-    gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE,gl.ONE,gl.ONE_MINUS_SRC_ALPHA)
-    gl.bindVertexArray(catBody.vao)
-    gl.drawArrays(gl.POINTS,0,catBody.count)
-    gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA)
-    gl.depthMask(true)
-  }
   function release() {
     meshes.forEach(({ vao, buffer }) => { gl.deleteVertexArray(vao); gl.deleteBuffer(buffer) })
     meshes = []
-    catMeshes.forEach(({vao,buffer})=>{gl.deleteVertexArray(vao);gl.deleteBuffer(buffer)})
-    catMeshes=[]
-    if(catProgram) gl.deleteProgram(catProgram)
-    catProgram=null
     if (texture) gl.deleteTexture(texture)
     if (program) gl.deleteProgram(program)
     texture = program = null
@@ -302,7 +200,6 @@ export function createKeyboardRenderer(canvas, { keys, onReady, onUnavailable, o
         -1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, -1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0,
       ]))
       labelAtlas()
-      initializeCat()
       gl.enable(gl.DEPTH_TEST)
       gl.enable(gl.BLEND)
       gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
@@ -352,7 +249,7 @@ export function createKeyboardRenderer(canvas, { keys, onReady, onUnavailable, o
         moving ||= Math.abs(key.position-key.target)>.00015 || Math.abs(key.velocity)>.001
       } else if (!paused) { key.position = key.target; key.velocity = 0 }
     })
-    const { matrix, eye, right, up, forward } = keyboardCamera(width, height, layout, currentProgress, reduced)
+    const { matrix, eye } = keyboardCamera(width, height, layout, currentProgress, reduced)
     gl.viewport(0, 0, canvas.width, canvas.height)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.useProgram(program)
@@ -370,7 +267,6 @@ export function createKeyboardRenderer(canvas, { keys, onReady, onUnavailable, o
     centers.forEach(([x, , z]) => drawMesh(planeMesh, [x, .281, z], [0, 0, 0], { scale: [.65, 1, .63], kind: 2 }))
     gl.depthMask(true)
     centers.forEach(([x, , z], index) => drawMesh(keyMesh, [x, -movement[index].position, z], colors[index], { index, highlight: index === selected ? 1 : 0, depression: movement[index].position / KEY_TRAVEL }))
-    drawCat(matrix,right,up,forward)
     onPositions(projectedKeys(matrix, layout))
     if (!ready) {
       if (gl.getError() !== gl.NO_ERROR) { release(); lost = true; onUnavailable(); return }
@@ -419,8 +315,6 @@ export function createKeyboardRenderer(canvas, { keys, onReady, onUnavailable, o
   function onRestored() {
     if (disposed) return
     meshes = []
-    catMeshes = []
-    catProgram = null
     program = texture = null
     lost = false
     if (initialize()) { resize(); wake() }
@@ -441,6 +335,12 @@ export function createKeyboardRenderer(canvas, { keys, onReady, onUnavailable, o
   observer.observe(canvas)
   resize()
   return {
+    getCatFrame() {
+      if (disposed || lost) return null
+      const rect=canvas.getBoundingClientRect()
+      const {matrix}=keyboardCamera(width,height,layout,currentProgress,reduced)
+      return keyboardCatFrame(matrix,layout,rect)
+    },
     setState(state) {
       if (typeof state.selected === 'number') selected = state.selected
       if (typeof state.progress === 'number') progress = Math.max(0, Math.min(1, state.progress))

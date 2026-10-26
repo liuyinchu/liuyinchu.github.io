@@ -1,5 +1,5 @@
 import { createParticles } from './shapes.js'
-import { projectAboutAnchors } from './about-shapes.js'
+import { projectAboutAnchors, getAboutCatMapping } from './about-shapes.js'
 
 const VERTEX = `#version 300 es
 precision highp float;
@@ -13,6 +13,8 @@ in vec3 aField;
 in vec3 aEnding;
 in float aNode;
 in vec4 aDetails;
+in vec4 aCatStyle;
+in float aCatSize;
 uniform float uProgress;
 uniform float uProfile;
 uniform float uActiveNode;
@@ -23,10 +25,15 @@ uniform vec2 uResolution;
 uniform vec2 uRotation;
 uniform vec2 uHover;
 uniform float uMotion;
+uniform vec2 uCatOrigin;
+uniform vec2 uCatAxisX;
+uniform vec2 uCatAxisY;
+uniform float uCatScale;
 out vec3 vColor;
 out float vAlpha;
 out float vHero;
 out float vSeed;
+out float vCatWeight;
 
 mat3 rotationX(float a) {
   float c=cos(a), s=sin(a);
@@ -36,8 +43,42 @@ mat3 rotationY(float a) {
   float c=cos(a), s=sin(a);
   return mat3(c,0.,-s, 0.,1.,0., s,0.,c);
 }
+
+void screenView(out float scene,out vec2 offset) {
+  scene=min(uResolution.y*.458,uResolution.x*(uProfile>.5?.45:.565));
+  offset=vec2(0.);
+  if(uProfile>.5) {
+    float contents=1.-smoothstep(.04,.14,abs(uProgress-.6));
+    float ending=smoothstep(.8,1.,uProgress);
+    float expression=1.-smoothstep(.04,.12,abs(uProgress-.2));
+    float pointer=1.-smoothstep(.04,.12,abs(uProgress-.4));
+    float desktop=smoothstep(700.,1000.,uResolution.x);
+    float mobile=1.-desktop;
+    scene*=1.-mobile*(.12*contents+.32*ending+.08*expression+.40*pointer)-desktop*(.12*ending+.22*expression+.12*pointer);
+    offset=vec2(uResolution.x*desktop*(.16*contents+.18*expression-.17*pointer-.18*ending),
+      uResolution.y*mobile*(.07*contents+.036*ending+.06*expression));
+  }
+}
+vec3 catFieldTarget(vec3 point,float seed,mat3 viewRotation,float scene,vec2 offset) {
+  vec2 uv=vec2(point.x+.5,289./457.-point.y);
+  vec2 pixel=uCatOrigin+uCatAxisX*uv.x+uCatAxisY*uv.y;
+  vec3 camera=vec3((pixel.x-uResolution.x*.5+offset.x)/scene,
+    (uResolution.y*.5-pixel.y-offset.y)/scene,point.z);
+  camera.xy*=(3.8-point.z)/3.8;
+  vec3 target=transpose(viewRotation)*camera;
+  float breathe=sin(uTime*.19+seed*.025)*.007*uMotion;
+  target.xy-=vec2(cos(seed),sin(seed))*breathe;
+  target.z-=sin(uTime*.10+seed*.021)*.004*uMotion*smoothstep(.8,1.,uProgress);
+  return target;
+}
 void main() {
   float seed = float(gl_VertexID) * 1.61803398875;
+  float scene; vec2 viewOffset;
+  screenView(scene,viewOffset);
+  mat3 viewRotation=rotationX(uRotation.x+uHover.y+sin(uTime*.12)*.024*uMotion)*
+    rotationY(uRotation.y+uHover.x+sin(uTime*.09)*.032*uMotion);
+  vec3 fieldPosition=aField;
+  if(uProfile>.5 && uProgress>=.6 && aStyle.w>.2) fieldPosition=catFieldTarget(aField,seed,viewRotation,scene,viewOffset);
   float section = clamp(uProgress,0.,1.)*4.;
   float t = smoothstep(0.,1.,fract(section));
   vec3 p;
@@ -49,8 +90,8 @@ void main() {
     if(section<1.) p=mix(aSix,aEmoji,t);
     else if(section<2.) p=mix(aEmoji,aArrow,t);
     else if(section<3.) p=mix(aArrow,aKnot,t);
-    else if(section<4.) p=mix(aKnot,aField,t);
-    else p=mix(aField,aEnding,t);
+    else if(section<4.) p=mix(aKnot,fieldPosition,t);
+    else p=mix(fieldPosition,aEnding,t);
     p=mix(p,aScatter,sin(t*3.14159265)*(section<4.?.72:.12));
     dispersed=sin(t*3.14159265)*.6;
   } else {
@@ -60,6 +101,7 @@ void main() {
     else { t=smoothstep(0.,1.,section-3.); p=mix(aScatter,aKnot,t); dispersed=1.-t; }
   }
   float flight = sin(t*3.14159265);
+  float catWeight=uProfile>.5?(section<3.?0.:section<4.?t:1.-t):0.;
   float endingWeight=uProfile>.5?smoothstep(.8,1.,uProgress):0.;
   float expressionWeight=uProfile>.5?1.-smoothstep(.04,.12,abs(uProgress-.2)):0.;
   float pointerWeight=uProfile>.5?1.-smoothstep(.04,.12,abs(uProgress-.4)):0.;
@@ -73,23 +115,16 @@ void main() {
     float breathe=sin(uTime*.19+seed*.025)*.007*uMotion;
     p.xy+=vec2(cos(seed),sin(seed))*breathe;
     p.z+=sin(uTime*.10+seed*.021)*.004*uMotion*endingWeight;
-    p=rotationX(uRotation.x+uHover.y+sin(uTime*.12)*.024*uMotion)*
-      rotationY(uRotation.y+uHover.x+sin(uTime*.09)*.032*uMotion)*p;
+    p=viewRotation*p;
   }
   // Rotation can carry scattered stars behind the camera. Clip the near plane
   // before projection so those stars cannot reappear as mirrored points.
   float cameraDepth=3.8-p.z;
   float perspective=3.8/max(cameraDepth,.25);
-  float scene=min(uResolution.y*.458,uResolution.x*(uProfile>.5?.45:.565));
   float contentWeight=1.-smoothstep(.04,.14,abs(uProgress-.6));
-  float desktop=smoothstep(700.,1000.,uResolution.x);
-  float mobile=1.-desktop;
-  if(uProfile>.5) scene*=1.-mobile*(.12*contentWeight+.32*endingWeight+.08*expressionWeight+.40*pointerWeight)-desktop*(.12*endingWeight+.22*expressionWeight+.12*pointerWeight);
   vec2 screen=p.xy*scene*perspective;
-  if(uProfile>.5) {
-    screen.x-=uResolution.x*desktop*(.16*contentWeight+.18*expressionWeight-.17*pointerWeight-.18*endingWeight);
-    screen.y+=uResolution.y*mobile*(.07*contentWeight+.036*endingWeight+.06*expressionWeight);
-  }
+  screen.x-=viewOffset.x;
+  screen.y+=viewOffset.y;
   gl_Position=vec4(screen/uResolution*2.,cameraDepth<=.25?2.:0.,1.);
   float mobileScale=clamp(uResolution.x/720.,.64,1.);
   float nucleusScale=1.;
@@ -142,6 +177,14 @@ void main() {
   }
   vHero=step(.8,aStyle.w)*(1.-expressionWeight)
     +expressionWeight*step(.2,aStyle.w)*(aDetails.x>5.5?.12:aDetails.x>=4.?.45:aDetails.x<1.5?.08:.22);
+  if(catWeight>0. && aStyle.w>.2) {
+    vColor=mix(vColor,aCatStyle.rgb,catWeight);
+    float colored=step(.10,aCatStyle.r-aCatStyle.g);
+    vAlpha=mix(vAlpha,min(1.,aCatStyle.a*mix(1.20,1.,colored)),catWeight);
+    gl_PointSize=mix(gl_PointSize,max(1.,aCatSize*uCatScale*mix(1.65,1.30,colored)),catWeight);
+    vHero=mix(vHero,0.,catWeight);
+  }
+  vCatWeight=catWeight*step(.2,aStyle.w);
   vSeed=seed;
 }`
 
@@ -151,6 +194,7 @@ in vec3 vColor;
 in float vAlpha;
 in float vHero;
 in float vSeed;
+in float vCatWeight;
 out vec4 outColor;
 void main() {
   vec2 p=gl_PointCoord*2.-1.;
@@ -163,6 +207,10 @@ void main() {
     +exp(-abs(p.y)*90.)*exp(-p.x*p.x*9.))*.13;
   flare*=step(.71,fract(vSeed*.73));
   float intensity=mix(dust,halo+core+flare,vHero);
+  if(vCatWeight>0.) {
+    float catDust=exp(-r2*3.4)*.82+exp(-r2*32.)*.42;
+    intensity=mix(intensity,catDust,vCatWeight);
+  }
   outColor=vec4(vColor,intensity*vAlpha);
 }`
 
@@ -209,6 +257,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
   let interactive = true
   let reduced = false
   let activeNode = 0
+  let catFrame = null
   let lastAnchorTime = -Infinity
   let targetProgress = 0
   let progress = 0
@@ -280,9 +329,9 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
         ['aKnot', particles.knot, 3], ['aScatter', particles.scatter, 3],
         ['aStyle', particles.style, 4],
       ]
-      if (aboutProfile) attributes.push(['aEmoji', particles.emoji, 3], ['aField', particles.field, 3], ['aEnding', particles.ending, 3], ['aNode', particles.nodeGroup, 1], ['aDetails', particles.details, 4])
+      if (aboutProfile) attributes.push(['aEmoji', particles.emoji, 3], ['aField', particles.field, 3], ['aEnding', particles.ending, 3], ['aNode', particles.nodeGroup, 1], ['aDetails', particles.details, 4], ['aCatStyle', particles.catStyle, 4], ['aCatSize', particles.catSize, 1])
       else {
-        for (const name of ['aEmoji', 'aField', 'aEnding', 'aNode', 'aDetails']) {
+        for (const name of ['aEmoji', 'aField', 'aEnding', 'aNode', 'aDetails', 'aCatStyle', 'aCatSize']) {
           const attribute = gl.getAttribLocation(program, name)
           gl.disableVertexAttribArray(attribute)
           gl.vertexAttrib1f(attribute, 0)
@@ -298,7 +347,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
         gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, 0, 0)
       }
       locations = {}
-      for (const name of ['Progress', 'Profile', 'ActiveNode', 'Time', 'Replay', 'Dpr', 'Resolution', 'Rotation', 'Hover', 'Motion']) {
+      for (const name of ['Progress', 'Profile', 'ActiveNode', 'Time', 'Replay', 'Dpr', 'Resolution', 'Rotation', 'Hover', 'Motion', 'CatOrigin', 'CatAxisX', 'CatAxisY', 'CatScale']) {
         locations[name] = gl.getUniformLocation(program, 'u' + name)
       }
       backgroundVertex = shader(gl.VERTEX_SHADER, BACKGROUND_VERTEX)
@@ -367,6 +416,8 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
       }
       if (elapsed >= 2.04 || reduced) { replayStart = -1; replayValue = 0 }
     }
+    const canvasRect = aboutProfile ? canvas.getBoundingClientRect() : null
+    const catMapping = aboutProfile ? getAboutCatMapping(catFrame, canvasRect, width, height) : null
     gl.viewport(0, 0, canvas.width, canvas.height)
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.bindVertexArray(vao)
@@ -386,12 +437,18 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
     gl.uniform2f(locations.Rotation, rotationX, rotationY)
     gl.uniform2f(locations.Hover, hoverX, hoverY)
     gl.uniform1f(locations.Motion, paused || reduced ? 0 : 1)
+    if (catMapping) {
+      gl.uniform2fv(locations.CatOrigin, catMapping.origin)
+      gl.uniform2fv(locations.CatAxisX, catMapping.axisX)
+      gl.uniform2fv(locations.CatAxisY, catMapping.axisY)
+      gl.uniform1f(locations.CatScale, Math.hypot(...catMapping.source.axisX) / 457 * canvas.width / Math.max(1, canvasRect.width))
+    }
     gl.drawArrays(gl.POINTS, 0, particles.count)
     const continuing = (!paused && !reduced) || replayStart >= 0 || resetPending || progress !== targetProgress ||
       Math.abs(hoverX - targetHoverX) + Math.abs(hoverY - targetHoverY) > .0001
     if (aboutProfile && (timestamp - lastAnchorTime >= 1000 / 30 || !continuing)) {
       lastAnchorTime = timestamp
-      onAnchors(projectAboutAnchors(particles, { progress, replay: replayValue, rotationX, rotationY, hoverX, hoverY, time, motion: paused || reduced ? 0 : 1, width, height }))
+      onAnchors(projectAboutAnchors(particles, { progress, replay: replayValue, rotationX, rotationY, hoverX, hoverY, time, motion: paused || reduced ? 0 : 1, width, height, catFrame, canvasRect }))
     }
     if (continuing) schedule()
   }
@@ -534,6 +591,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
     update(options) {
       targetProgress = Math.max(0, Math.min(1, Number(options.progress) || 0))
       activeNode = ['notes', 'talk', 'resources', 'projects'].indexOf(options.activeNode) + 1
+      catFrame = options.catFrame
       paused = options.paused
       interactive = options.interactive
       if (!interactive) {

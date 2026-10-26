@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { createStellarRenderer } from './stellar-field/renderer.js'
-import { ABOUT_NODES, ABOUT_ENDING_PATHS, ABOUT_ENDING_KNOTS, ABOUT_EXPRESSION_DOTS, getAboutView } from './stellar-field/about-shapes.js'
+import { ABOUT_NODES, ABOUT_ENDING_PATHS, ABOUT_ENDING_KNOTS, ABOUT_EXPRESSION_DOTS, getAboutView, getAboutCatFallback, getAboutCatWeight, resolveAboutCatFrame } from './stellar-field/about-shapes.js'
 
 const props = defineProps({
   profile: { type: String, default: 'stellar' },
@@ -9,11 +9,12 @@ const props = defineProps({
   paused: { type: Boolean, default: false },
   interactive: { type: Boolean, default: true },
   activeNode: { type: String, default: '' },
+  catFrame: { type: Object, default: null },
 })
 const emit = defineEmits(['ready', 'unavailable', 'anchors'])
 const canvas = ref(null)
 const status = ref('initializing')
-const fallbackSize = ref({ width: 1, height: 1 })
+const fallbackSize = ref({ width: 1, height: 1, left: 0, top: 0 })
 const phase = computed(() => {
   const p = Math.max(0, Math.min(1, props.progress))
   if (props.profile === 'about') {
@@ -35,7 +36,7 @@ const description = computed(() => ({
   expression: '星光组成的智慧表情：贴脸眼镜、笑口中恰好两颗醒目门牙，旁边握拳并抬起食指',
   pointer: '原星光组件中由立体星尘组成的鼠标指针',
   contents: '由书页、对话泡、资源光环和立体方块组成的四簇内容星图',
-  field: '舒展到四周、为键盘让出中央空间的星域',
+  field: '同一片星光凝聚成固定姿态的猫，右爪落在键盘上',
   open: '两道有立体厚度的扭转星带交错穿行，一端向远处舒展',
   six: '由星尘组成的数字 6',
   scatter: '向边缘散开的星尘',
@@ -48,6 +49,14 @@ const fallbackTransform = computed(() => {
   const { scene, offsetX, offsetY } = getAboutView(width, height, props.progress)
   return `translate(${width / 2 - offsetX} ${height / 2 - offsetY}) scale(${scene / 90})`
 })
+
+const fallbackCatDots = computed(() => props.profile === 'about' && phase.value === 'field' ? getAboutCatFallback() : [])
+const fallbackCatOpacity = computed(() => getAboutCatWeight(props.progress))
+const fallbackCatTransform = computed(() => {
+  const rect = fallbackSize.value
+  const frame = resolveAboutCatFrame(props.catFrame, rect)
+  return `matrix(${frame.axisX[0] / 457} ${frame.axisX[1] / 457} ${frame.axisY[0] / 457} ${frame.axisY[1] / 457} ${frame.origin[0] - rect.left} ${frame.origin[1] - rect.top})`
+})
 let renderer
 let fallbackObserver
 
@@ -56,7 +65,7 @@ function updateFallbackAnchors() {
   if (!rect) return
   const width = Math.max(1, rect.width)
   const height = Math.max(1, rect.height)
-  fallbackSize.value = { width, height }
+  fallbackSize.value = { width, height, left: rect.left, top: rect.top }
   if (props.profile !== 'about' || status.value !== 'unavailable') return
   const { scene, offsetX, offsetY } = getAboutView(width, height, props.progress)
   emit('anchors', ABOUT_NODES.map((node) => ({
@@ -83,7 +92,7 @@ onMounted(() => {
   fallbackObserver.observe(canvas.value)
 })
 watch(() => props.profile, initializeRenderer)
-watch(() => [props.progress, props.paused, props.interactive, props.activeNode], () => {
+watch(() => [props.progress, props.paused, props.interactive, props.activeNode, props.catFrame], () => {
   renderer?.update(props)
   if (status.value === 'unavailable') updateFallbackAnchors()
 })
@@ -121,6 +130,9 @@ defineExpose({
         <defs>
           <filter id="stellar-static-glow"><feGaussianBlur stdDeviation="1.3" /></filter>
         </defs>
+        <g v-if="profile === 'about' && phase === 'field'" :transform="fallbackCatTransform" :opacity="fallbackCatOpacity" stroke="none">
+          <circle v-for="(dot, index) in fallbackCatDots" :key="index" :cx="dot.x" :cy="dot.y" :r="dot.radius" :fill="dot.color" :opacity="dot.alpha" />
+        </g>
         <g :transform="fallbackTransform">
         <g class="stellar-field__static-stars">
           <circle cx="-95" cy="-63" r=".6"/><circle cx="90" cy="-85" r=".7"/>
@@ -142,9 +154,6 @@ defineExpose({
               <circle r="2" fill="currentColor" stroke="none" />
             </g>
           </g>
-          <g v-else-if="phase === 'field'" fill="currentColor" stroke="none">
-            <circle v-for="i in 38" :key="i" :cx="Math.cos(i * 2.4) * (90 + i % 5 * 7)" :cy="Math.sin(i * 2.4) * (78 + i % 4 * 7)" :r="i % 4 === 0 ? 1.1 : .55" />
-          </g>
           <g v-else-if="phase === 'open'">
             <path v-for="(ribbon, index) in ABOUT_ENDING_PATHS" :key="index" :d="ribbon.d" :opacity="ribbon.opacity" :stroke="ribbon.stream ? '#d5c19c' : '#d7e8f2'" :stroke-width="ribbon.stream ? .7 : .9" stroke-dasharray=".4 1.5" />
             <circle v-for="(point, index) in ABOUT_ENDING_KNOTS" :key="index" :cx="point.x" :cy="point.y" r="1.15" fill="#e5d2af" stroke="none" />
@@ -160,7 +169,7 @@ defineExpose({
         </g>
         </g>
       </svg>
-      <span class="stellar-field__fallback-note">当前设备显示静态星图</span>
+      <span class="stellar-field__fallback-note">{{ profile === 'about' && phase === 'field' ? '当前设备显示静态星光猫' : '当前设备显示静态星图' }}</span>
     </div>
   </div>
 </template>

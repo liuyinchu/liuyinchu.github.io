@@ -1,14 +1,14 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { createKeyboardRenderer } from './stack-keyboard/renderer.js'
-import { createCatGeometry } from './stack-keyboard/cat-geometry.js'
+import { fitCatFrame } from './stack-keyboard/geometry.js'
 
 const props = defineProps({
   active: { type: Boolean, default: true },
   progress: { type: Number, default: 1 },
   paused: { type: Boolean, default: false },
 })
-const emit = defineEmits(['ready', 'unavailable', 'selection'])
+const emit = defineEmits(['ready', 'unavailable', 'selection', 'layout'])
 const technologies = [
   { id: 'python', name: 'Python', mark: 'PY', shortcut: 'y', color: '#c5d5b7', description: '处理数据、写小脚本，把重复步骤交给程序。' },
   { id: 'rust', name: 'Rust', mark: 'RS', shortcut: 'u', color: '#d5a68e', description: '用类型与所有权，表达更明确的程序边界。' },
@@ -35,8 +35,8 @@ const selectedIndex = ref(0)
 const selected = computed(() => technologies[selectedIndex.value])
 const rendererState = ref('loading')
 const positions = ref([])
-const fallbackCat = createCatGeometry().fallback
 let renderer = null
+let layoutObserver
 let heldPointer = -1
 let heldLetter = -1
 
@@ -90,6 +90,21 @@ function keyStyle(index) {
     clipPath: `polygon(${position.polygon})`,
   }
 }
+function getCatFrame() {
+  const projected=renderer?.getCatFrame()
+  if (projected) return projected
+  const keys=surface.value?.querySelector('.stack-keyboard__keys')
+  const buttons=keys?.querySelectorAll('button')
+  if (!buttons?.length) return null
+  const first=buttons[0].getBoundingClientRect()
+  if (!(first.width>0 && first.height>0)) return null
+  const columns=getComputedStyle(keys).gridTemplateColumns.trim().split(/\s+/).length
+  const last=buttons[columns>=6?4:3].getBoundingClientRect()
+  return fitCatFrame([first.left+first.width*.5,first.top+first.height*.5],
+    [last.left+last.width*.5,last.top+last.height*.5])
+}
+function layoutAfterUpdate() { nextTick(()=>emit('layout')) }
+defineExpose({ getCatFrame })
 watch(() => [props.active, props.progress, props.paused], () => {
   renderer?.setState({ active: props.active, progress: props.progress, paused: props.paused })
   if (!props.active) { releaseLetter(); releasePointer() }
@@ -97,11 +112,19 @@ watch(() => [props.active, props.progress, props.paused], () => {
 onMounted(() => {
   renderer = createKeyboardRenderer(canvas.value, {
     keys: technologies,
-    onReady: () => { rendererState.value = 'ready'; emit('ready') },
-    onUnavailable: () => { rendererState.value = 'unavailable'; emit('unavailable') },
-    onPositions: (value) => { positions.value = value },
+    onReady: () => { rendererState.value = 'ready'; emit('ready'); layoutAfterUpdate() },
+    onUnavailable: () => { rendererState.value = 'unavailable'; emit('unavailable'); layoutAfterUpdate() },
+    onPositions: (value) => {
+      const changed=value.length!==positions.value.length || value.some((point,index)=>{
+        const old=positions.value[index]
+        return !old || point.left!==old.left || point.top!==old.top || point.width!==old.width || point.height!==old.height || point.polygon!==old.polygon
+      })
+      if (changed) { positions.value=value; emit('layout') }
+    },
   })
   renderer?.setState({ selected: selectedIndex.value, active: props.active, progress: props.progress, paused: props.paused })
+  layoutObserver=new ResizeObserver(()=>emit('layout'))
+  layoutObserver.observe(surface.value)
   window.addEventListener('pointerup', releasePointer, { passive: true })
   window.addEventListener('pointercancel', releasePointer, { passive: true })
   window.addEventListener('blur', releaseInput)
@@ -114,6 +137,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('blur', releaseInput)
   document.removeEventListener('visibilitychange', releaseHiddenInput)
   window.removeEventListener('keyup', handleKeyup)
+  layoutObserver?.disconnect()
   renderer?.dispose()
 })
 </script>
@@ -130,9 +154,6 @@ onBeforeUnmount(() => {
   >
     <div ref="surface" class="stack-keyboard__surface" @keydown="handleKeydown" @focusout="onFocusOut">
       <canvas ref="canvas" class="stack-keyboard__canvas" aria-hidden="true" data-testid="stack-keyboard-canvas"></canvas>
-      <svg v-if="rendererState === 'unavailable'" class="stack-keyboard__fallback-cat" viewBox="0 0 457 289" aria-hidden="true" focusable="false">
-        <circle v-for="(point, index) in fallbackCat" :key="index" :cx="point.x" :cy="point.y" :r="point.radius" :fill="point.color" :opacity="point.alpha" />
-      </svg>
       <div class="stack-keyboard__keys" aria-label="选择一种技术">
         <button
           v-for="(key, index) in technologies"
@@ -176,7 +197,6 @@ onBeforeUnmount(() => {
 .stack-keyboard__surface { position: relative; height: clamp(480px, 36vw, 540px); min-width: 0; touch-action: pan-y; }
 .stack-keyboard__canvas { position: absolute; inset: 0; width: 100%; height: 100%; visibility: hidden; pointer-events: none; }
 .is-ready .stack-keyboard__canvas { visibility: visible; }
-.stack-keyboard__fallback-cat { position: absolute; top: 5.5%; left: 50%; width: min(100%, 430px); height: 175px; transform: translateX(-50%); pointer-events: none; }
 .stack-keyboard:not(.is-ready) .stack-keyboard__surface { height: 560px; }
 .stack-keyboard:not(.is-ready) .stack-keyboard__keys { padding-top: 180px; }
 .stack-keyboard__keys {

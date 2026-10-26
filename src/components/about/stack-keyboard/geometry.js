@@ -166,6 +166,26 @@ export function keyboardCamera(width, height, layout, progress, reduced = false)
   projection[9] = (maximumY + minimumY) / 2 * zoom
   return { matrix: multiply(projection, view), eye, right, up, forward }
 }
+// A similarity transform from source pixels / 457 to viewport client coordinates.
+// The hypothetical left-down anchor and actual right-down anchor land on key crowns.
+export function fitCatFrame(left, right) {
+  if (!left || !right) return null
+  const dx=right[0]-left[0], dy=right[1]-left[1]
+  if (dx===0 && dy===0) return null
+  const du=(325-70)/BONGO_WIDTH, dv=(244-195)/BONGO_WIDTH, denominator=du*du+dv*dv
+  const ax=(dx*du+dy*dv)/denominator, ay=(dy*du-dx*dv)/denominator
+  const axisX=[ax,ay], axisY=[-ay,ax]
+  return { origin:[left[0]-70/BONGO_WIDTH*ax+195/BONGO_WIDTH*ay,
+    left[1]-70/BONGO_WIDTH*ay-195/BONGO_WIDTH*ax], axisX, axisY }
+}
+export function keyboardCatFrame(matrix, layout, rect) {
+  if (!(rect.width>0 && rect.height>0)) return null
+  const clientPoint=(index)=>{
+    const [x,,z]=layout.centers[index], p=project(matrix,x,KEY_HIT_HEIGHT,z)
+    return [rect.left+(p[0]+1)*rect.width*.5,rect.top+(1-p[1])*rect.height*.5]
+  }
+  return fitCatFrame(clientPoint(0),clientPoint(layout.columns===6?4:3))
+}
 export function projectedKeys(matrix, layout) {
   return layout.centers.map(([x, , z], index) => {
     // Keep the target on the resting crown plane while the cap moves beneath it.
