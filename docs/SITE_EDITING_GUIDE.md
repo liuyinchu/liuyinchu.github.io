@@ -336,6 +336,12 @@ docs 中的维护文档链接则使用相对文件路径，例如 `[架构](ARCH
 已移除的 `/research`、`/academic` 没有恢复入口，继续由全站 404 处理。
 新增或调整固定入口时同步路由、Footer 和 Portal；不能仅改可见标题而留下旧地址。
 
+### 页脚精选项目
+
+页脚入口由 [Footer.vue](../src/components/Footer.vue) 的 `footerColumns` 手工维护，不会随项目目录自动改变。
+当前“代码与项目”精选音乐机关盒、星间 · Stellar Field、AI Frontier、precision-physkit 和 TZBox。
+替换精选时核对站内路由、标签长度和手机列宽；项目目录仍由 `public/code_proj.json` 独立维护。
+
 ## 8. Portal：搜索、Launchpad 与音乐
 
 | 数据源 / 代码 | 维护内容 |
