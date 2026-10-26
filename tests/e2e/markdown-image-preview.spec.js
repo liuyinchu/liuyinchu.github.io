@@ -90,8 +90,8 @@ test('linked images open a preview on ordinary activation and preserve modified 
   await expect(preview(page)).toBeVisible()
   await expect(page).toHaveURL(new RegExp(articlePath + '$'))
   await expect(preview(page).getByRole('link', { name: '原链接 ↗', exact: true })).toHaveAttribute('href', 'https://example.com/source-page')
-  await expect(preview(page).getByRole('link', { name: '在新标签页打开原图', exact: true })).toHaveAttribute('href', /\/preview-linked\.svg$/)
-  await expect(preview(page).getByRole('link', { name: '在新标签页打开原图', exact: true })).toHaveAttribute('rel', 'noopener noreferrer')
+  await expect(preview(page).getByRole('link', { name: '在新标签页打开原图', exact: true })).toHaveCount(0)
+  await expect(preview(page).getByRole('link', { name: '原链接 ↗', exact: true })).toHaveAttribute('rel', 'noopener noreferrer')
   await page.keyboard.press('Escape')
 
   // The listener must leave native link activation uncancelled for both cases.
@@ -178,8 +178,6 @@ test('failed body images keep recovery controls usable and only empty-stage clic
   await trigger.click()
   await expect(preview(page).getByRole('status')).toContainText('暂时无法载入图片')
   await expect(preview(page).getByRole('button', { name: '重新载入', exact: true })).toBeVisible()
-  await expect(preview(page).getByRole('link', { name: '在新标签页打开原图', exact: true }))
-    .toHaveAttribute('href', /\/preview-failed\.svg$/)
   await preview(page).getByRole('button', { name: '下一张图片', exact: true }).click()
   await expect(previewImage(page)).toHaveAttribute('alt', '可正常查看的正文图')
   await expect(previewImage(page)).toHaveClass(/is-ready/)

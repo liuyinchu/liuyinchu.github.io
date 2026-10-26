@@ -376,7 +376,6 @@ onBeforeUnmount(() => {
             <button type="button" aria-label="缩小图片" :disabled="scale <= 1 || loadState !== 'ready'" @click="setZoom(scale - 0.5)">−</button>
             <button type="button" class="md-image-preview__reset" aria-label="复位图片" :disabled="loadState !== 'ready'" @click="setZoom(1)">{{ Math.round(scale * 100) }}%</button>
             <button type="button" aria-label="放大图片" :disabled="scale >= 4 || loadState !== 'ready'" @click="setZoom(scale + 0.5)">+</button>
-            <a :href="selected.src" target="_blank" rel="noopener noreferrer" aria-label="在新标签页打开原图">原图 ↗</a>
             <a v-if="selected.href" :href="selected.href" target="_blank" rel="noopener noreferrer">原链接 ↗</a>
             <button type="button" class="md-image-preview__close" aria-label="关闭图片预览" autofocus @click="close()">×</button>
           </div>

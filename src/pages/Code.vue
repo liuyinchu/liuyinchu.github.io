@@ -1,8 +1,8 @@
 <template>
   <div class="code-projects-page">
     
-    <div class="bg-cosmos"></div>
-    <div class="bg-noise"></div>
+    <div class="bg-cosmos" aria-hidden="true"></div>
+    <div class="bg-noise" aria-hidden="true"></div>
 
     <header class="page-header">
       <div class="header-content">
@@ -27,7 +27,8 @@
 
     <section class="directory-section">
       <div class="directory-toolbar">
-        <nav class="tabs" aria-label="项目分类">
+        <nav ref="tabsElement" class="tabs" aria-label="项目分类">
+          <span class="tab-indicator" :style="indicatorStyle" aria-hidden="true"></span>
           <button
             v-for="t in tabs"
             :key="t.key"
@@ -38,7 +39,6 @@
             @click="activeTab = t.key"
           >
             {{ t.label }}
-            <span v-if="activeTab === t.key" class="tab-glow"></span>
           </button>
         </nav>
 
@@ -59,50 +59,59 @@
 
       <p v-if="!loading && !error" class="results-count" role="status">找到 {{ filtered.length }} 个项目<span v-if="query"> · “{{ query }}”</span></p>
 
-      <div v-if="loading" class="state-hint loading">
-        <span class="loader-spin"></span> 正在载入星图数据...
-      </div>
-      <div v-else-if="error" class="state-hint error">载入失败：{{ error }}</div>
+      <div ref="resultsStage" class="results-stage">
+        <div v-if="loading" class="state-hint loading">
+          <span class="loader-spin"></span> 正在载入星图数据...
+        </div>
+        <div v-else-if="error" class="state-hint error">载入失败：{{ error }}</div>
 
-      <TransitionGroup v-else tag="div" name="projects" class="grid">
-        <article 
-          v-for="p in filtered" 
-          :key="p.name" 
-          class="card spotlight-card"
-          @pointermove="handleCardMove"
-          @pointerleave="resetSpotlight"
+        <TransitionGroup
+          v-else tag="div" name="projects" class="grid"
+          @before-leave="prepareCardLeave"
+          @after-leave="releaseCardLeave"
+          @leave-cancelled="releaseCardLeave"
+          @before-enter="releaseCardLeave"
         >
-          <div class="spotlight-border"></div>
-          
-          <div class="card-inner">
-            <header class="card-head">
-              <h3 class="card-title">{{ p.name }}</h3>
-              <span class="card-tag">{{ p.category }}</span>
-            </header>
-            <p class="card-desc">{{ p.desc }}</p>
-            <footer class="card-actions">
-              <a v-if="p.homepage" class="action-btn primary" :href="p.homepage" target="_blank" rel="noopener noreferrer">
-                <span>项目主页</span>
-              </a>
-              <a v-if="p.repo" class="action-btn secondary" :href="p.repo" target="_blank" rel="noopener noreferrer">
-                <span>GitHub</span>
-              </a>
-            </footer>
-          </div>
-        </article>
-      </TransitionGroup>
-      <div v-if="!loading && !error && !filtered.length" class="state-hint empty-state">
-        <span aria-hidden="true">⌕</span>
-        <p>暂时没有匹配的项目</p>
-        <small>试试其他关键词，或切换项目分类。</small>
-        <button type="button" class="reset-filters" @click="resetFilters">重置筛选</button>
+          <article
+            v-for="p in filtered"
+            :key="p.name"
+            class="card spotlight-card"
+            @pointermove="handleCardMove"
+            @pointerleave="resetSpotlight"
+            @pointercancel="resetSpotlight"
+          >
+            <div class="spotlight-border"></div>
+
+            <div class="card-inner">
+              <header class="card-head">
+                <h3 class="card-title">{{ p.name }}</h3>
+                <span class="card-tag">{{ p.category }}</span>
+              </header>
+              <p class="card-desc">{{ p.desc }}</p>
+              <footer class="card-actions">
+                <a v-if="p.homepage" class="action-btn primary" :href="p.homepage" target="_blank" rel="noopener noreferrer">
+                  <span>项目主页</span>
+                </a>
+                <a v-if="p.repo" class="action-btn secondary" :href="p.repo" target="_blank" rel="noopener noreferrer">
+                  <span>GitHub</span>
+                </a>
+              </footer>
+            </div>
+          </article>
+        </TransitionGroup>
+        <div v-if="!loading && !error && !filtered.length" class="state-hint empty-state">
+          <span aria-hidden="true">⌕</span>
+          <p>暂时没有匹配的项目</p>
+          <small>试试其他关键词，或切换项目分类。</small>
+          <button type="button" class="reset-filters" @click="resetFilters">重置筛选</button>
+        </div>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import SiteIcon from '../components/common/SiteIcon.vue'
 import GitHubContributions from '../components/code/GitHubContributions.vue'
 
@@ -114,41 +123,142 @@ let spotlightFrame = 0
 let spotlightCard = null
 let pointerPosition = null
 let spotlightMedia
+let motionMedia
+const tabsElement = ref(null)
+const resultsStage = ref(null)
+const indicatorStyle = ref({})
+let tabsObserver
+let resultsObserver
+let resultsWidth = 0
+let resultsAnimation
+let resultsRevision = 0
+const cardLayouts = new WeakMap()
+
+function updateTabIndicator() {
+  const active = tabsElement.value?.querySelector('.tab.active')
+  if (!active) return
+  indicatorStyle.value = {
+    width: active.offsetWidth + 'px',
+    height: active.offsetHeight + 'px',
+    transform: 'translate3d(' + active.offsetLeft + 'px,' + active.offsetTop + 'px,0)',
+  }
+}
+
+/** Leave cards keep their measured grid slot and stop accepting focus immediately. */
+function prepareCardLeave(card) {
+  const layout = cardLayouts.get(card)
+  if (card.contains(document.activeElement)) {
+    document.getElementById('project-search')?.focus({ preventScroll: true })
+  }
+  if (card === spotlightCard) resetSpotlight()
+  Object.assign(card.style, {
+    left: layout.left + 'px', top: layout.top + 'px',
+    width: layout.width + 'px', height: layout.height + 'px',
+  })
+  card.inert = true
+  card.setAttribute('aria-hidden', 'true')
+}
+function releaseCardLeave(card) {
+  for (const property of ['left', 'top', 'width', 'height']) card.style.removeProperty(property)
+  card.inert = false
+  card.removeAttribute('aria-hidden')
+}
+
+function stopResultsMotion() {
+  resultsRevision += 1
+  resultsAnimation?.cancel()
+  resultsAnimation = null
+}
+
+/** Animate only the changing results, always returning to natural content height. */
+async function animateResults() {
+  resetSpotlight()
+  const stage = resultsStage.value
+  if (!stage || loading.value || error.value || !stage.querySelector('.grid')) return
+  // Read the entire old grid before any leave hook takes cards out of its flow.
+  for (const card of stage.querySelectorAll('.grid > .card')) {
+    cardLayouts.set(card, {
+      left: card.offsetLeft, top: card.offsetTop,
+      width: card.offsetWidth, height: card.offsetHeight,
+    })
+  }
+  const from = stage.getBoundingClientRect().height
+  stopResultsMotion()
+  const revision = resultsRevision
+  await nextTick()
+  if (revision !== resultsRevision || !stage.isConnected || motionMedia?.matches) return
+  const to = stage.getBoundingClientRect().height
+  if (Math.abs(from - to) < 1) return
+  const animation = stage.animate([{ height: from + 'px' }, { height: to + 'px' }], {
+    duration: 360, easing: 'cubic-bezier(.22, 1, .36, 1)',
+  })
+  resultsAnimation = animation
+  animation.finished.then(() => {
+    if (resultsAnimation === animation) resultsAnimation = null
+  }, () => {})
+}
 
 /** One card per pointer event; coalesce style writes into the next frame. */
 function handleCardMove(event) {
-  if (!spotlightMedia?.matches) return
+  if (!spotlightMedia?.matches || event.pointerType === 'touch') return
   const card = event.currentTarget
   const rect = card.getBoundingClientRect()
   if (spotlightCard && spotlightCard !== card) resetSpotlight()
   spotlightCard = card
-  pointerPosition = { x: event.clientX - rect.left, y: event.clientY - rect.top }
+  card.classList.add('is-tracking')
+  pointerPosition = {
+    x: event.clientX - rect.left, y: event.clientY - rect.top,
+    tiltX: (0.5 - (event.clientY - rect.top) / rect.height) * 2.4,
+    tiltY: ((event.clientX - rect.left) / rect.width - 0.5) * 2.4,
+  }
   if (spotlightFrame) return
   spotlightFrame = requestAnimationFrame(() => {
     spotlightFrame = 0
     if (!spotlightCard || !pointerPosition || !spotlightMedia?.matches) return
     spotlightCard.style.setProperty('--mouse-x', pointerPosition.x + 'px')
     spotlightCard.style.setProperty('--mouse-y', pointerPosition.y + 'px')
+    spotlightCard.style.setProperty('--tilt-x', pointerPosition.tiltX.toFixed(2) + 'deg')
+    spotlightCard.style.setProperty('--tilt-y', pointerPosition.tiltY.toFixed(2) + 'deg')
   })
 }
 function resetSpotlight() {
   if (spotlightFrame) cancelAnimationFrame(spotlightFrame)
   spotlightFrame = 0
-  spotlightCard?.style.removeProperty('--mouse-x')
-  spotlightCard?.style.removeProperty('--mouse-y')
+  spotlightCard?.classList.remove('is-tracking')
+  for (const property of ['--mouse-x', '--mouse-y', '--tilt-x', '--tilt-y']) {
+    spotlightCard?.style.removeProperty(property)
+  }
   spotlightCard = null
   pointerPosition = null
 }
-function onMotionChange() { if (!spotlightMedia.matches) resetSpotlight() }
+function onMotionChange() {
+  if (!spotlightMedia.matches) resetSpotlight()
+  if (motionMedia.matches) stopResultsMotion()
+}
 onBeforeUnmount(() => {
   resetSpotlight()
+  stopResultsMotion()
+  tabsObserver?.disconnect()
+  resultsObserver?.disconnect()
   spotlightMedia?.removeEventListener('change', onMotionChange)
+  motionMedia?.removeEventListener('change', onMotionChange)
 })
 
 /** 载入数据 */
 onMounted(async () => {
   spotlightMedia = window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)')
+  motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
   spotlightMedia.addEventListener('change', onMotionChange)
+  motionMedia.addEventListener('change', onMotionChange)
+  tabsObserver = new ResizeObserver(updateTabIndicator)
+  tabsObserver.observe(tabsElement.value)
+  resultsObserver = new ResizeObserver(([entry]) => {
+    const width = entry.contentRect.width
+    if (resultsWidth && Math.abs(width - resultsWidth) > 1) stopResultsMotion()
+    resultsWidth = width
+  })
+  resultsObserver.observe(resultsStage.value)
+  updateTabIndicator()
   try {
     const res = await fetch('/code_proj.json', { cache: 'no-cache' })
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -176,6 +286,7 @@ const tabs = [
 ]
 const activeTab = ref('all')
 const query = ref('')
+watch(activeTab, updateTabIndicator, { flush: 'post' })
 async function clearQuery() {
   query.value = ''
   await nextTick()
@@ -195,6 +306,7 @@ const filtered = computed(() => {
     return matchTab && matchText
   })
 })
+watch(filtered, animateResults)
 </script>
 
 <style scoped>
@@ -221,15 +333,16 @@ const filtered = computed(() => {
   /* 尺寸 */
   --max-w: 1200px;
   --header-h: 60vh;
+  --page-fade: clamp(12rem, 24vw, 22rem);
   
   /* 全局设置 */
   width: 100%;
-  min-height: 100vh;
-  background-color: var(--c-bg);
+  display: flow-root;
+  background: linear-gradient(180deg, var(--c-bg) 0%, var(--c-bg) calc(100% - var(--page-fade)), var(--background-color, #1e1e2e) 100%);
   color: var(--c-text-main);
   font-family: "LXGW WenKai", system-ui, sans-serif;
   position: relative;
-  overflow-x: hidden;
+  overflow: clip;
   isolation: isolate; /* 创建层叠上下文 */
 }
 
@@ -237,9 +350,17 @@ const filtered = computed(() => {
    背景氛围 (Atmosphere)
    ========================================= */
 
+/* Atmosphere belongs to this page and fades at its natural content boundary. */
+.bg-cosmos,
+.bg-noise {
+  position: absolute;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 calc(100% - var(--page-fade)), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 calc(100% - var(--page-fade)), transparent 100%);
+}
+
 /* 1. 深空渐变 */
 .bg-cosmos {
-  position: fixed;
   inset: 0;
   z-index: -2;
   background: 
@@ -250,7 +371,6 @@ const filtered = computed(() => {
 
 /* 2. 噪点纹理 (Film Grain) - 增加胶片质感 */
 .bg-noise {
-  position: fixed;
   inset: 0;
   z-index: -1;
   opacity: 0.05;
@@ -386,6 +506,8 @@ const filtered = computed(() => {
 /* Tabs: 胶囊式设计 */
 .tabs {
   display: flex;
+  position: relative;
+  isolation: isolate;
   gap: 0.5rem;
   background: rgba(255,255,255,0.03);
   padding: 0.4rem;
@@ -404,7 +526,7 @@ const filtered = computed(() => {
   font-weight: bold;
   position: relative;
   overflow: hidden;
-  transition: color .2s ease, background .2s ease, box-shadow .2s ease;
+  transition: color .2s ease, transform .38s cubic-bezier(.22, 1, .36, 1);
   z-index: 1;
 }
 
@@ -416,15 +538,18 @@ const filtered = computed(() => {
   color: #111; /* 激活时文字变深色 */
 }
 
-/* 激活背景流光 */
-.tab-glow {
+/* A single highlight carries the selection continuously between segments. */
+.tab-indicator {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
   background: var(--c-gold);
-  z-index: -1;
+  z-index: 0;
   border-radius: 99px;
-  box-shadow: 0 0 15px var(--c-gold);
+  box-shadow: 0 0 15px rgba(243, 233, 198, .38);
   opacity: .95;
+  pointer-events: none;
+  transition: transform .42s cubic-bezier(.22, 1, .36, 1), width .42s cubic-bezier(.22, 1, .36, 1), height .42s cubic-bezier(.22, 1, .36, 1);
 }
 
 /* 搜索框：极简 */
@@ -450,7 +575,7 @@ const filtered = computed(() => {
   width: 290px;
   padding-right: 2.6rem;
   font-family: inherit;
-  transition: all 0.3s;
+  transition: border-color .25s ease, background .25s ease, box-shadow .25s ease;
 }
 .search-input:focus {
   outline: none;
@@ -477,11 +602,13 @@ const filtered = computed(() => {
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.06);
   cursor: default;
-  transition: transform 0.3s ease, background 0.3s;
+  transition: background .3s ease, border-color .3s ease;
   overflow: hidden;
   /* 默认聚光灯坐标 */
   --mouse-x: -100px;
   --mouse-y: -100px;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
 }
 
 .card:hover {
@@ -564,7 +691,7 @@ const filtered = computed(() => {
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: bold;
-  transition: all 0.2s;
+  transition: color .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .38s cubic-bezier(.22, 1, .36, 1);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -703,18 +830,27 @@ const filtered = computed(() => {
 .empty-state p { margin: 0; color: var(--c-gold); }
 .empty-state small { font-size: .85rem; }
 .reset-filters { margin-top: .3rem; padding: .6rem 1.1rem; border: 1px solid #cba6f74d; border-radius: 7px; color: var(--c-gold); background: #cba6f70d; font: inherit; font-size: .85rem; cursor: pointer; }
-.projects-enter-active, .projects-leave-active { transition: opacity .2s ease, transform .2s ease; }
-.projects-enter-from, .projects-leave-to { opacity: 0; transform: translateY(5px); }
-.projects-leave-active { position: absolute; pointer-events: none; }
-.projects-move { transition: transform .25s ease; }
+.results-stage { position: relative; }
+.projects-enter-active { transition: opacity .32s ease, transform .42s cubic-bezier(.22, 1, .36, 1); }
+.projects-leave-active { position: absolute; pointer-events: none; transition: opacity .18s ease, transform .22s ease; }
+.projects-enter-from { opacity: 0; transform: translateY(12px) scale(.985); }
+.projects-leave-to { opacity: 0; transform: translateY(4px) scale(.985); }
+.projects-move { transition: transform .42s cubic-bezier(.22, 1, .36, 1); }
+.tab:active, .action-btn:active, .reset-filters:active, .search-clear:active { transform: scale(.96); }
+.reset-filters, .search-clear { transition: transform .38s cubic-bezier(.22, 1, .36, 1), background .2s ease; }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .card:hover { transform: translateY(-3px); }
+  .card-inner { transition: transform .5s cubic-bezier(.22, 1, .36, 1); transform-origin: center; }
+  .card.is-tracking .card-inner {
+    transform: perspective(900px) translateY(-2px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+    transition-duration: .12s;
+  }
+  .card:hover { border-color: rgba(243, 233, 198, .19); }
   .card:hover .spotlight-border { opacity: 1; }
-  .tab:active, .action-btn:active, .reset-filters:active { transform: scale(.98); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .spotlight-border { display: none; }
-  .projects-enter-from, .projects-leave-to { transform: none; }
+  .card-inner, .projects-enter-from, .projects-leave-to { transform: none !important; }
+  .tab:active, .action-btn:active, .reset-filters:active, .search-clear:active { transform: none; }
 }
 </style>

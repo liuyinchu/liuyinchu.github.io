@@ -48,6 +48,9 @@ test('real-data panel switches accounts and periods with consistent statistics',
   })
   await page.goto('/code', { waitUntil: 'domcontentloaded' })
   await expect(stat(page, 'total')).toHaveText('17次')
+  await expect(panel(page).locator('.panel-heading')).toHaveText('把想法，写进每一天.')
+  await expect(panel(page).locator('.panel-heading .eyebrow, .panel-heading p')).toHaveCount(0)
+  await expect(panel(page).locator('.panel-source > a')).toHaveText('@pifuyuini')
   await expect(stat(page, 'active')).toHaveText('3天')
   await expect(stat(page, 'streak')).toHaveText('3天')
   await expect(stat(page, 'latest')).toHaveText(today)
@@ -55,6 +58,7 @@ test('real-data panel switches accounts and periods with consistent statistics',
   await expect(panel(page).locator('.contribution-day')).toHaveCount(primary.contributions.length)
   await panel(page).getByRole('button', { name: '@liuyinchu', exact: true }).click()
   await expect(stat(page, 'total')).toHaveText('7次')
+  await expect(panel(page).locator('.panel-source > a')).toHaveText('@liuyinchu')
   await expect(stat(page, 'active')).toHaveText('2天')
   await expect(stat(page, 'streak')).toHaveText('1天')
   await panel(page).getByRole('combobox', { name: '贡献期间' }).selectOption('2025')
@@ -219,10 +223,19 @@ test('reduced motion stops JavaScript spotlight and CSS motion', async ({ page }
   await card.dispatchEvent('pointermove', { clientX: 100, clientY: 100, pointerType: 'mouse' })
   const style = await card.evaluate(element => ({
     x: element.style.getPropertyValue('--mouse-x'),
+    tilt: element.style.getPropertyValue('--tilt-x'),
+    innerTransform: getComputedStyle(element.querySelector('.card-inner')).transform,
     transition: getComputedStyle(element).transitionDuration,
     panelAnimation: getComputedStyle(document.querySelector('.github-panel')).animationName,
   }))
   expect(style.x).toBe('')
+  expect(style.tilt).toBe('')
+  expect(style.innerTransform).toBe('none')
+  const category = page.getByRole('button', { name: '巧 思', exact: true })
+  await category.click()
+  await expect(page.locator('.grid .card')).toHaveCount(1)
+  expect(await page.locator('.results-stage').evaluate(element => element.getAnimations().length)).toBe(0)
+  expect(await page.locator('.tab-indicator').evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s')
   expect(style.transition).toBe('0s')
   expect(style.panelAnimation).toBe('none')
 })
@@ -237,6 +250,8 @@ test('normal desktop motion updates only the hovered card and cleans up on leave
   const firstCard = cards.first()
   await firstCard.hover({ position: { x: 80, y: 55 } })
   await expect.poll(() => firstCard.evaluate(element => element.style.getPropertyValue('--mouse-x'))).not.toBe('')
+  await expect.poll(() => firstCard.evaluate(element => element.style.getPropertyValue('--tilt-x'))).not.toBe('')
+  expect(await firstCard.locator('.card-inner').evaluate(element => getComputedStyle(element).transform)).not.toBe('none')
   expect(await cards.evaluateAll(elements => elements.slice(1).map(element => element.style.getPropertyValue('--mouse-x')))).toEqual(['', ''])
   await page.mouse.move(2, 2)
   await expect.poll(() => firstCard.evaluate(element => element.style.getPropertyValue('--mouse-x'))).toBe('')
@@ -244,6 +259,8 @@ test('normal desktop motion updates only the hovered card and cleans up on leave
   await expect.poll(() => firstCard.evaluate(element => element.style.getPropertyValue('--mouse-x'))).not.toBe('')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect.poll(() => firstCard.evaluate(element => element.style.getPropertyValue('--mouse-x'))).toBe('')
+  expect(await firstCard.evaluate(element => element.style.getPropertyValue('--tilt-x'))).toBe('')
+  expect(await firstCard.locator('.card-inner').evaluate(element => getComputedStyle(element).transform)).toBe('none')
   await firstCard.dispatchEvent('pointermove', { clientX: 120, clientY: 100, pointerType: 'mouse' })
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
   expect(await firstCard.evaluate(element => element.style.getPropertyValue('--mouse-x'))).toBe('')
@@ -254,4 +271,116 @@ test('normal desktop motion updates only the hovered card and cleans up on leave
   await expect(cards.locator('a')).toHaveCount(1)
   await expect(cards.locator('a')).toBeVisible()
   await expect(cards.locator('a')).toHaveAttribute('href', '/music-box')
+})
+
+
+test('filter transitions are continuous, interruptible and leave no hidden keyboard targets', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await mockData(page)
+  const projects = Array.from({ length: 9 }, (_, index) => ({
+    ...projectFixture[index % projectFixture.length], name: projectFixture[index % projectFixture.length].name + ' ' + index,
+  }))
+  await page.route('**/code_proj.json', route => route.fulfill({ json: projects }))
+  await page.goto('/code', { waitUntil: 'domcontentloaded' })
+  await expect(page.locator('.grid .card')).toHaveCount(9)
+  await page.locator('.grid .card a').first().focus()
+  const motion = await page.locator('.tabs').evaluate(async nav => {
+    const buttons = nav.querySelectorAll('button')
+    const indicator = nav.querySelector('.tab-indicator')
+    const frame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+    const grid = document.querySelector('.grid')
+    const origin = grid.getBoundingClientRect()
+    const initialPositions = new Map([...grid.children].map(card => {
+      const rect = card.getBoundingClientRect()
+      return [card, { left: rect.left - origin.left, top: rect.top - origin.top }]
+    }))
+    buttons[3].click()
+    await frame()
+    const stage = document.querySelector('.results-stage')
+    const leaving = [...document.querySelectorAll('.projects-leave-active')]
+    const currentOrigin = grid.getBoundingClientRect()
+    const result = {
+      exitOriginsStable: leaving.slice(0, 3).every(card => {
+        const before = initialPositions.get(card)
+        const current = card.getBoundingClientRect()
+        return Math.abs(current.left - currentOrigin.left - before.left) < 6 && Math.abs(current.top - currentOrigin.top - before.top) < 6
+      }),
+      sliderRunning: indicator.getAnimations().some(animation => animation.playState === 'running'),
+      heightRunning: stage.getAnimations().some(animation => animation.playState === 'running'),
+      exitHasSize: leaving.length > 0 && leaving.every(card => card.inert && card.getAttribute('aria-hidden') === 'true' && parseFloat(card.style.width) > 0 && parseFloat(card.style.height) > 0),
+    }
+    buttons[0].click()
+    await frame()
+    buttons[2].click()
+    await frame()
+    result.sameIndicator = indicator === nav.querySelector('.tab-indicator')
+    return result
+  })
+  expect(motion).toEqual({ exitOriginsStable: true, sliderRunning: true, heightRunning: true, exitHasSize: true, sameIndicator: true })
+  const search = page.getByRole('searchbox', { name: '搜索项目名称或简介' })
+  await expect(search).toBeFocused()
+  await expect(page.locator('.grid .card')).toHaveCount(3)
+  await expect(page.locator('.projects-leave-active, .grid [inert], .grid [aria-hidden="true"]')).toHaveCount(0)
+  await expect.poll(() => page.locator('.results-stage').evaluate(element => element.getAnimations().length)).toBe(0)
+  expect(await page.locator('.results-stage').evaluate(element => element.style.height)).toBe('')
+  expect(await page.locator('.grid .card').evaluateAll(cards => cards.every(card => !card.style.width && !card.style.height))).toBe(true)
+  await page.keyboard.press('Tab')
+  await expect(page.locator('.grid a').first()).toBeFocused()
+  const stage = page.locator('.results-stage')
+  await page.getByRole('button', { name: '全 部', exact: true }).click()
+  await expect.poll(() => stage.evaluate(element => element.getAnimations().length)).toBeGreaterThan(0)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect.poll(() => stage.evaluate(element => element.getAnimations().length)).toBe(0)
+  await expect(page.locator('.grid .card')).toHaveCount(9)
+  expect(await stage.evaluate(element => element.style.height)).toBe('')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.getByRole('button', { name: '巧 思', exact: true }).click()
+  await expect.poll(() => stage.evaluate(element => element.getAnimations().length)).toBeGreaterThan(0)
+  const viewport = page.viewportSize()
+  await page.setViewportSize({ width: viewport.width - 40, height: viewport.height })
+  await expect.poll(() => stage.evaluate(element => element.getAnimations().length)).toBe(0)
+  await expectNoHorizontalOverflow(page)
+})
+
+test('page atmosphere fades at the content boundary and grows naturally with future projects', async ({ page }) => {
+  await mockData(page)
+  let projects = projectFixture.slice(0, 1)
+  await page.route('**/code_proj.json', route => route.fulfill({ json: projects }))
+  const heights = []
+  for (const count of [1, 18]) {
+    projects = Array.from({ length: count }, (_, index) => ({
+      ...projectFixture[index % projectFixture.length], name: projectFixture[index % projectFixture.length].name + ' ' + index,
+    }))
+    await page.goto('/code', { waitUntil: 'domcontentloaded' })
+    await expect(page.locator('.grid .card')).toHaveCount(count)
+    await expect.poll(() => page.locator('.code-projects-page').evaluate(element => element.style.minHeight)).toBe('')
+    const layout = await page.locator('.code-projects-page').evaluate(element => {
+      const style = getComputedStyle(element)
+      const atmosphere = getComputedStyle(element.querySelector('.bg-noise'))
+      const rect = element.getBoundingClientRect()
+      const lastCard = element.querySelector('.grid .card:last-child').getBoundingClientRect()
+      // The palette CDN may still be pending: transparent ancestors defer to the page's Mocha fallback.
+      const canvasOrThemeBackground = [element.parentElement, document.body, document.documentElement]
+        .map(node => getComputedStyle(node).backgroundColor)
+        .find(color => color !== 'rgba(0, 0, 0, 0)' && color !== 'transparent') || 'rgb(30, 30, 46)'
+      return {
+        height: rect.height, minHeight: style.minHeight, maxHeight: style.maxHeight,
+        inlineHeight: element.style.height, reachesContent: rect.bottom >= lastCard.bottom,
+        background: style.backgroundImage, canvasOrThemeBackground,
+        atmospherePosition: atmosphere.position, atmosphereMask: atmosphere.maskImage,
+      }
+    })
+    expect(layout.minHeight).toBe('0px')
+    expect(layout.maxHeight).toBe('none')
+    expect(layout.inlineHeight).toBe('')
+    expect(layout.reachesContent).toBe(true)
+    expect(layout.background).toContain('linear-gradient')
+    expect(layout.background).toContain(layout.canvasOrThemeBackground)
+    expect(layout.atmospherePosition).toBe('absolute')
+    expect(layout.atmosphereMask).toContain('linear-gradient')
+    expect(layout.atmosphereMask).toContain('100%')
+    heights.push(layout.height)
+    await expectNoHorizontalOverflow(page)
+  }
+  expect(heights[1]).toBeGreaterThan(heights[0] + 200)
 })

@@ -2,12 +2,11 @@
   <section class="github-panel" aria-labelledby="contributions-title" :aria-busy="loading">
     <header class="panel-header">
       <div class="panel-heading">
-        <span class="eyebrow"><span class="activity-dot"></span> OPEN SOURCE ACTIVITY</span>
         <h2 id="contributions-title">把想法，写进每一天<span>.</span></h2>
-        <p>GitHub 贡献轨迹</p>
       </div>
       <div class="panel-controls">
         <div class="account-switch" role="group" aria-label="GitHub 账号">
+          <span class="account-switch__thumb" :class="{ 'is-secondary': login === accounts[1].login }" aria-hidden="true"></span>
           <button v-for="account in accounts" :key="account.login" type="button"
             :aria-pressed="login === account.login" @click="selectAccount(account.login)">
             <span class="account-at">@</span>{{ account.login }}
@@ -98,7 +97,7 @@
       <span>来源：GitHub 公开贡献 · <a href="https://github.com/grubersjoe/github-contributions-api" target="_blank" rel="noopener noreferrer">第三方数据服务</a>
         <span v-if="fetchedAt" class="fetched-time"> · 获取于 {{ fetchedTime }}</span>
         <span class="source-delay"> · 服务缓存约一小时，GitHub 记录可能另有延迟</span></span>
-      <a :href="profileUrl" target="_blank" rel="noopener noreferrer">@{{ login }} ↗</a>
+      <a :href="profileUrl" target="_blank" rel="noopener noreferrer">@{{ login }}</a>
     </footer>
   </section>
 </template>
@@ -234,15 +233,17 @@ onBeforeUnmount(() => { requestId += 1; controller?.abort() })
   box-shadow: 0 20px 60px -35px rgba(0,0,0,.7), inset 0 1px 0 rgba(243,233,198,.035);
 }
 .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-bottom: 2rem; }
-.eyebrow { display: flex; align-items: center; gap: .5rem; font: 10px/1.4 system-ui,sans-serif; letter-spacing: .17em; color: var(--c-text-dim); }
-.activity-dot { width: 5px; height: 5px; border-radius: 50%; background: #cba6f7; box-shadow: 0 0 10px #cba6f760; }
-.panel-heading h2 { font-size: clamp(1.2rem,2.2vw,1.55rem); color: var(--c-gold); font-weight: 500; letter-spacing: .03em; margin: .7rem 0 .4rem; }
+.panel-heading h2 { font-size: clamp(1.2rem,2.2vw,1.55rem); color: var(--c-gold); font-weight: 500; letter-spacing: .03em; margin: 0; }
 .panel-heading h2 > span { color: #b4befe; }
-.panel-heading > p { margin: 0; color: var(--c-text-dim); font-size: .8rem; }
 .panel-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem; }
-.account-switch { display: flex; padding: 4px; gap: 3px; border: 1px solid #cba6f71a; border-radius: 11px; background: #11111b65; }
-.account-switch button { padding: .55rem .75rem; color: var(--c-text-dim); background: transparent; border: 1px solid transparent; border-radius: 7px; cursor: pointer; font: 12px/1.3 system-ui,sans-serif; transition: background .2s,color .2s,box-shadow .2s; }
-.account-switch button[aria-pressed="true"] { background: #313244; border-color: #cba6f724; color: #f3e9c6; box-shadow: 0 2px 8px #0002; }
+.account-switch { position: relative; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); padding: 4px; gap: 3px; border: 1px solid #cba6f71a; border-radius: 11px; background: #11111b65; }
+.account-switch__thumb { position: absolute; inset: 4px auto 4px 4px; width: calc((100% - 11px) / 2); box-sizing: border-box; border: 1px solid #cba6f724; border-radius: 7px; background: #313244; box-shadow: 0 2px 8px #0002; pointer-events: none; transition: transform 360ms cubic-bezier(.22,1,.36,1); }
+.account-switch__thumb.is-secondary { transform: translateX(calc(100% + 3px)); }
+.account-switch button { position: relative; z-index: 1; padding: .55rem .75rem; color: var(--c-text-dim); background: transparent; border: 1px solid transparent; border-radius: 7px; cursor: pointer; font: 12px/1.3 system-ui,sans-serif; transition: color .2s ease, transform 160ms cubic-bezier(.22,1,.36,1); }
+.account-switch button[aria-pressed="true"] { color: #f3e9c6; }
+@media (prefers-reduced-motion: no-preference) {
+  .account-switch button:active { transform: scale(.97); }
+}
 .account-at { opacity: .6; padding-right: 2px; }
 .period-label select { appearance: auto; border: 1px solid #cba6f72b; border-radius: 9px; padding: .7rem .6rem; background: #1e1e2e; color: var(--c-text-main); font: inherit; font-size: .8rem; line-height: 1.2; cursor: pointer; color-scheme: dark; }
 .calendar-meta { display: flex; justify-content: space-between; align-items: center; gap: .5rem; min-height: 1.5rem; margin-bottom: 1rem; }
