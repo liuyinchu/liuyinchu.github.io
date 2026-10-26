@@ -1,6 +1,9 @@
 <script setup>
 import MarkdownIt from 'markdown-it'
+import MarkdownImagePreview from './MarkdownImagePreview.vue'
 import { computed, onMounted, ref, watch } from 'vue'
+
+defineOptions({ inheritAttrs: false })
 
 const props = defineProps({
   title: {
@@ -28,6 +31,7 @@ const categoryNav = [
 
 const md = new MarkdownIt({ html: true, breaks: true, linkify: true })
 
+const resourceBodyRef = ref(null)
 const items = ref([])
 const loading = ref(true)
 const error = ref(null)
@@ -95,7 +99,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="resource-detail-page">
+  <main v-bind="$attrs" class="resource-detail-page">
     <section class="resource-hero" aria-labelledby="resource-title">
       <RouterLink class="back-link" to="/rd">返回资源目录</RouterLink>
       <div class="hero-copy">
@@ -145,7 +149,7 @@ onMounted(() => {
         </div>
       </aside>
 
-      <div class="resource-main">
+      <div ref="resourceBodyRef" class="resource-main">
         <div v-if="loading" class="state-block">
           正在读取资源。
         </div>
@@ -196,6 +200,11 @@ onMounted(() => {
       </div>
     </section>
   </main>
+  <MarkdownImagePreview
+    :root="resourceBodyRef"
+    :content-key="[loading, filteredItems]"
+    image-selector=".markdown-content img"
+  />
 </template>
 
 <style scoped>

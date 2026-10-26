@@ -1,6 +1,7 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import MarkdownIt from 'markdown-it'
+import MarkdownImagePreview from './MarkdownImagePreview.vue'
 import mdAnchor from 'markdown-it-anchor'
 import markdownItAttrs from 'markdown-it-attrs'
 import markdownItContainer from 'markdown-it-container'
@@ -12,6 +13,8 @@ import {
   installMarkdownComponentRules,
   renderMarkdownWithComponents,
 } from '../utils/markdownComponents'
+
+defineOptions({ inheritAttrs: false })
 
 const props = defineProps({
   src: { type: String, default: '' },
@@ -26,6 +29,7 @@ const emit = defineEmits(['tocGenerated', 'markdownLoaded'])
 
 const renderedHtml = ref('')
 const markdownBodyRef = ref(null)
+const imagePreviewVersion = ref(0)
 let renderToken = 0
 let mathJaxReadyPromise = null
 let mermaidModule = null
@@ -443,6 +447,7 @@ function scopeMarkdownAnchors(html) {
 }
 
 async function renderMarkdown() {
+  imagePreviewVersion.value += 1
   const token = ++renderToken
   cleanupEnhancedInlineMath()
   try {
@@ -494,10 +499,12 @@ onBeforeUnmount(() => {
 <template>
   <div
     ref="markdownBodyRef"
+    v-bind="$attrs"
     class="markdown-body"
     :class="[`markdown-body--${variant}`, { 'use-cjk': useCJK, 'markdown-body--enhanced': enhanced && variant === 'article' }]"
     v-html="renderedHtml"
   ></div>
+  <MarkdownImagePreview :root="markdownBodyRef" :content-key="[renderedHtml, imagePreviewVersion]" />
 </template>
 
 <style scoped>

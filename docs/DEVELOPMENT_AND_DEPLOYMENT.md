@@ -170,6 +170,7 @@ npm run check:markdown
 [检查脚本](../scripts/check-rich-markdown.mjs) 验证普通 Markdown 保持原行为，以及富组件、脚注、围栏、未闭合块和链接处理。
 它使用内置样例调用解析器，不会遍历所有 public Markdown 文件，也不是全站文档链接检查器。
 文章排版、MathJax 基线、Mermaid、复制和目录跳转仍需对应页面检查。
+正文图片预览另由 `tests/e2e/markdown-image-preview.spec.js` 验证，需覆盖原始 HTML 图、链接图片、文内图组、键盘、缩放和正文渲染器的接入边界。其受控图片样例不等于全部外部图片服务的可用性验证。
 
 ### Playwright：全量与定向命令
 
@@ -182,6 +183,7 @@ npm run test:e2e -- tests/e2e/frontier.spec.js
 npm run test:e2e -- tests/e2e/talk.spec.js
 npm run test:e2e -- tests/e2e/music-box.spec.js
 npm run test:e2e -- tests/e2e/about-story.spec.js tests/e2e/article-typography.spec.js
+npm run test:e2e -- tests/e2e/markdown-image-preview.spec.js
 ~~~
 
 这些是可选运行方式，不要求每次逐条重复执行。
