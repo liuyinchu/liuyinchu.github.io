@@ -298,10 +298,6 @@ PC Game Cheats and Mods.
 
 暂时先列出这些。
 
-### 更多学习资源
-
-可以在我的[学术主页](/research)找到！
-
 <h2 id="sec-others" class="sec">其它 <a href="#top" class="back-top">TOP ↑</a></h2>
 
 ### [该链接已失效](https://naiixi.com)

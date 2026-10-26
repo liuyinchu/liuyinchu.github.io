@@ -29,3 +29,8 @@ droplets.svg <- droplets.svg
 gauge.svg <- gauge.svg
 eye.svg <- eye.svg
 check.svg <- check.svg
+
+Weather upgrade — retrieved 2026-10-25 from the same Lucide source and license:
+sunrise.svg <- sunrise.svg
+sunset.svg <- sunset.svg
+refresh-cw.svg <- refresh-cw.svg
