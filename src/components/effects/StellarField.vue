@@ -10,8 +10,9 @@ const props = defineProps({
   interactive: { type: Boolean, default: true },
   activeNode: { type: String, default: '' },
   catFrame: { type: Object, default: null },
+  catMotion: { type: Boolean, default: false },
 })
-const emit = defineEmits(['ready', 'unavailable', 'anchors'])
+const emit = defineEmits(['ready', 'unavailable', 'anchors', 'cat-strike'])
 const canvas = ref(null)
 const status = ref('initializing')
 const fallbackSize = ref({ width: 1, height: 1, left: 0, top: 0 })
@@ -36,7 +37,7 @@ const description = computed(() => ({
   expression: '星光组成的智慧表情：贴脸眼镜、笑口中恰好两颗醒目门牙，旁边握拳并抬起食指',
   pointer: '原星光组件中由立体星尘组成的鼠标指针',
   contents: '由书页、对话泡、资源光环和立体方块组成的四簇内容星图',
-  field: '同一片星光凝聚成固定姿态的猫，右爪落在键盘上',
+  field: status.value === 'unavailable' ? '同一片星光凝聚成固定姿态的猫，右爪落在键盘上' : '同一片星光凝聚成猫，两只爪与键盘对齐',
   open: '两道有立体厚度的扭转星带交错穿行，一端向远处舒展',
   six: '由星尘组成的数字 6',
   scatter: '向边缘散开的星尘',
@@ -83,6 +84,7 @@ function initializeRenderer() {
     onReady() { status.value = 'webgl2'; emit('ready') },
     onUnavailable() { status.value = 'unavailable'; emit('unavailable'); updateFallbackAnchors() },
     onAnchors(anchors) { emit('anchors', anchors) },
+    onCatStrike(side) { emit('cat-strike', side) },
   })
   renderer?.update(props)
 }
@@ -92,7 +94,7 @@ onMounted(() => {
   fallbackObserver.observe(canvas.value)
 })
 watch(() => props.profile, initializeRenderer)
-watch(() => [props.progress, props.paused, props.interactive, props.activeNode, props.catFrame], () => {
+watch(() => [props.progress, props.paused, props.interactive, props.activeNode, props.catFrame, props.catMotion], () => {
   renderer?.update(props)
   if (status.value === 'unavailable') updateFallbackAnchors()
 })

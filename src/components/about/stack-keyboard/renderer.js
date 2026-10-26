@@ -354,6 +354,13 @@ export function createKeyboardRenderer(canvas, { keys, onReady, onUnavailable, o
       movement[index].target = held ? KEY_TRAVEL : 0
       wake()
     },
+    tapByCat(side, heldIndices = []) {
+      if (disposed || lost || !active || paused || reduced || !visible || !inViewport) return
+      if (side !== 'left' && side !== 'right') return
+      const index=side==='left'?0:layout.columns===6?4:3
+      if (heldIndices.includes(index) || movement[index].target>0) return
+      this.pulse(index)
+    },
     pulse(index) {
       if (!movement[index]) return
       this.press(index, true)

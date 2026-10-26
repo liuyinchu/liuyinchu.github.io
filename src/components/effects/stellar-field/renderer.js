@@ -1,5 +1,5 @@
 import { createParticles } from './shapes.js'
-import { projectAboutAnchors, getAboutCatMapping } from './about-shapes.js'
+import { projectAboutAnchors, getAboutCatMapping, getAboutCatWeight, getAboutCatPose, getAboutCatStrikes } from './about-shapes.js'
 
 const VERTEX = `#version 300 es
 precision highp float;
@@ -15,6 +15,9 @@ in float aNode;
 in vec4 aDetails;
 in vec4 aCatStyle;
 in float aCatSize;
+in vec3 aCatAlternate;
+in vec4 aCatAlternateStyle;
+in float aCatAlternateSize;
 uniform float uProgress;
 uniform float uProfile;
 uniform float uActiveNode;
@@ -29,6 +32,7 @@ uniform vec2 uCatOrigin;
 uniform vec2 uCatAxisX;
 uniform vec2 uCatAxisY;
 uniform float uCatScale;
+uniform float uCatPose;
 out vec3 vColor;
 out float vAlpha;
 out float vHero;
@@ -78,7 +82,7 @@ void main() {
   mat3 viewRotation=rotationX(uRotation.x+uHover.y+sin(uTime*.12)*.024*uMotion)*
     rotationY(uRotation.y+uHover.x+sin(uTime*.09)*.032*uMotion);
   vec3 fieldPosition=aField;
-  if(uProfile>.5 && uProgress>=.6 && aStyle.w>.2) fieldPosition=catFieldTarget(aField,seed,viewRotation,scene,viewOffset);
+  if(uProfile>.5 && uProgress>=.6 && aStyle.w>.2) fieldPosition=catFieldTarget(aField+(aCatAlternate-aField)*uCatPose,seed,viewRotation,scene,viewOffset);
   float section = clamp(uProgress,0.,1.)*4.;
   float t = smoothstep(0.,1.,fract(section));
   vec3 p;
@@ -178,10 +182,12 @@ void main() {
   vHero=step(.8,aStyle.w)*(1.-expressionWeight)
     +expressionWeight*step(.2,aStyle.w)*(aDetails.x>5.5?.12:aDetails.x>=4.?.45:aDetails.x<1.5?.08:.22);
   if(catWeight>0. && aStyle.w>.2) {
-    vColor=mix(vColor,aCatStyle.rgb,catWeight);
-    float colored=step(.10,aCatStyle.r-aCatStyle.g);
-    vAlpha=mix(vAlpha,min(1.,aCatStyle.a*mix(1.20,1.,colored)),catWeight);
-    gl_PointSize=mix(gl_PointSize,max(1.,aCatSize*uCatScale*mix(1.65,1.30,colored)),catWeight);
+    vec4 catStyle=aCatStyle+(aCatAlternateStyle-aCatStyle)*uCatPose;
+    float catSize=aCatSize+(aCatAlternateSize-aCatSize)*uCatPose;
+    vColor=mix(vColor,catStyle.rgb,catWeight);
+    float colored=step(.10,catStyle.r-catStyle.g);
+    vAlpha=mix(vAlpha,min(1.,catStyle.a*mix(1.20,1.,colored)),catWeight);
+    gl_PointSize=mix(gl_PointSize,max(1.,catSize*uCatScale*mix(1.65,1.30,colored)),catWeight);
     vHero=mix(vHero,0.,catWeight);
   }
   vCatWeight=catWeight*step(.2,aStyle.w);
@@ -233,7 +239,7 @@ void main() {
   outColor=vec4(vec3(.008,.020,.027)+haze*vec3(.017,.030,.052),1.);
 }`
 
-export function createStellarRenderer(canvas, { profile = 'stellar', onReady, onUnavailable, onAnchors = () => {} }) {
+export function createStellarRenderer(canvas, { profile = 'stellar', onReady, onUnavailable, onAnchors = () => {}, onCatStrike = () => {} }) {
   const gl = canvas.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: 'high-performance' })
   if (!gl) {
     onUnavailable()
@@ -258,6 +264,10 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
   let reduced = false
   let activeNode = 0
   let catFrame = null
+  let catMotion = false
+  let catClock = 0
+  let catPose = 0
+  let catLastFrame = 0
   let lastAnchorTime = -Infinity
   let targetProgress = 0
   let progress = 0
@@ -329,9 +339,9 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
         ['aKnot', particles.knot, 3], ['aScatter', particles.scatter, 3],
         ['aStyle', particles.style, 4],
       ]
-      if (aboutProfile) attributes.push(['aEmoji', particles.emoji, 3], ['aField', particles.field, 3], ['aEnding', particles.ending, 3], ['aNode', particles.nodeGroup, 1], ['aDetails', particles.details, 4], ['aCatStyle', particles.catStyle, 4], ['aCatSize', particles.catSize, 1])
+      if (aboutProfile) attributes.push(['aEmoji', particles.emoji, 3], ['aField', particles.field, 3], ['aEnding', particles.ending, 3], ['aNode', particles.nodeGroup, 1], ['aDetails', particles.details, 4], ['aCatStyle', particles.catStyle, 4], ['aCatSize', particles.catSize, 1], ['aCatAlternate', particles.catAlternate, 3], ['aCatAlternateStyle', particles.catAlternateStyle, 4], ['aCatAlternateSize', particles.catAlternateSize, 1])
       else {
-        for (const name of ['aEmoji', 'aField', 'aEnding', 'aNode', 'aDetails', 'aCatStyle', 'aCatSize']) {
+        for (const name of ['aEmoji', 'aField', 'aEnding', 'aNode', 'aDetails', 'aCatStyle', 'aCatSize', 'aCatAlternate', 'aCatAlternateStyle', 'aCatAlternateSize']) {
           const attribute = gl.getAttribLocation(program, name)
           gl.disableVertexAttribArray(attribute)
           gl.vertexAttrib1f(attribute, 0)
@@ -347,7 +357,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
         gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, 0, 0)
       }
       locations = {}
-      for (const name of ['Progress', 'Profile', 'ActiveNode', 'Time', 'Replay', 'Dpr', 'Resolution', 'Rotation', 'Hover', 'Motion', 'CatOrigin', 'CatAxisX', 'CatAxisY', 'CatScale']) {
+      for (const name of ['Progress', 'Profile', 'ActiveNode', 'Time', 'Replay', 'Dpr', 'Resolution', 'Rotation', 'Hover', 'Motion', 'CatOrigin', 'CatAxisX', 'CatAxisY', 'CatScale', 'CatPose']) {
         locations[name] = gl.getUniformLocation(program, 'u' + name)
       }
       backgroundVertex = shader(gl.VERTEX_SHADER, BACKGROUND_VERTEX)
@@ -416,6 +426,24 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
       }
       if (elapsed >= 2.04 || reduced) { replayStart = -1; replayValue = 0 }
     }
+    const catWeight = aboutProfile ? getAboutCatWeight(progress) : 0
+    const catComplete = catWeight >= .98 && replayStart < 0 && replayValue < .02
+    const catRunning = catComplete && catMotion && !reduced && getAboutCatWeight(targetProgress) >= .98
+    let catStrikes = []
+    if (catWeight === 0 || reduced) {
+      catClock = 0
+      catPose = 0
+      catLastFrame = 0
+    } else {
+      if (catRunning) {
+        const elapsed = catLastFrame ? Math.min((timestamp - catLastFrame) / 1000, .05) : 0
+        const previousClock = catClock
+        catClock += elapsed
+        catStrikes = getAboutCatStrikes(previousClock, catClock)
+        catLastFrame = timestamp
+      } else catLastFrame = 0
+      catPose = getAboutCatPose(catClock)
+    }
     const canvasRect = aboutProfile ? canvas.getBoundingClientRect() : null
     const catMapping = aboutProfile ? getAboutCatMapping(catFrame, canvasRect, width, height) : null
     gl.viewport(0, 0, canvas.width, canvas.height)
@@ -437,6 +465,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
     gl.uniform2f(locations.Rotation, rotationX, rotationY)
     gl.uniform2f(locations.Hover, hoverX, hoverY)
     gl.uniform1f(locations.Motion, paused || reduced ? 0 : 1)
+    gl.uniform1f(locations.CatPose, catPose)
     if (catMapping) {
       gl.uniform2fv(locations.CatOrigin, catMapping.origin)
       gl.uniform2fv(locations.CatAxisX, catMapping.axisX)
@@ -444,11 +473,12 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
       gl.uniform1f(locations.CatScale, Math.hypot(...catMapping.source.axisX) / 457 * canvas.width / Math.max(1, canvasRect.width))
     }
     gl.drawArrays(gl.POINTS, 0, particles.count)
-    const continuing = (!paused && !reduced) || replayStart >= 0 || resetPending || progress !== targetProgress ||
+    for (const side of catStrikes) onCatStrike(side)
+    const continuing = catRunning || (!paused && !reduced) || replayStart >= 0 || resetPending || progress !== targetProgress ||
       Math.abs(hoverX - targetHoverX) + Math.abs(hoverY - targetHoverY) > .0001
     if (aboutProfile && (timestamp - lastAnchorTime >= 1000 / 30 || !continuing)) {
       lastAnchorTime = timestamp
-      onAnchors(projectAboutAnchors(particles, { progress, replay: replayValue, rotationX, rotationY, hoverX, hoverY, time, motion: paused || reduced ? 0 : 1, width, height, catFrame, canvasRect }))
+      onAnchors(projectAboutAnchors(particles, { progress, replay: replayValue, rotationX, rotationY, hoverX, hoverY, time, motion: paused || reduced ? 0 : 1, width, height, catFrame, canvasRect, catPose }))
     }
     if (continuing) schedule()
   }
@@ -467,6 +497,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
     cancelAnimationFrame(raf)
     raf = 0
     lastFrame = 0
+    catLastFrame = 0
   }
   function visibility() {
     pageVisible = !document.hidden
@@ -592,6 +623,7 @@ export function createStellarRenderer(canvas, { profile = 'stellar', onReady, on
       targetProgress = Math.max(0, Math.min(1, Number(options.progress) || 0))
       activeNode = ['notes', 'talk', 'resources', 'projects'].indexOf(options.activeNode) + 1
       catFrame = options.catFrame
+      catMotion = Boolean(options.catMotion)
       paused = options.paused
       interactive = options.interactive
       if (!interactive) {

@@ -267,6 +267,51 @@ async function expectCurrentNavigation(page) {
   await expect(footer.getByRole('link', { name: '版权说明', exact: true })).toHaveAttribute('href', '/credit')
 }
 
+async function expectStableCanvasRegion(page, canvas) {
+  const chapter = page.getByRole('navigation', { name: '关于我与本站：章节索引' }).getByRole('link', { name: '第5节：一边搭建', exact: true })
+  await chapter.press('Enter')
+  await expect(chapter).toHaveAttribute('aria-current', 'step')
+  await expect.poll(() => page.locator('#about-making').evaluate(section => {
+    const stage = document.querySelector('.about-stage')
+    return Math.abs(section.getBoundingClientRect().top - stage.getBoundingClientRect().top)
+  }), { message: 'the keyboard chapter should finish positioning before observing pixels' }).toBeLessThanOrEqual(1)
+  const stage = page.getByTestId('about-story').locator('.about-stage')
+  await expect(stage).toBeInViewport({ ratio: 1 })
+  await expect(canvas).toBeVisible()
+  let previousFrame
+  let previousRect
+  let stableSince = 0
+  let samples = 0
+  // Observe the entire visible canvas, including intentional mobile stage clipping.
+  // The quiet window must still span multiple cat-strike beats.
+  await expect.poll(async () => {
+    const visible = await canvas.evaluate(element => {
+      const rect = element.getBoundingClientRect()
+      const stage = element.closest('.about-stage').getBoundingClientRect()
+      const x = Math.max(0, rect.left, stage.left)
+      const y = Math.max(0, rect.top, stage.top)
+      const right = Math.min(window.innerWidth, rect.right, stage.right)
+      const bottom = Math.min(window.innerHeight, rect.bottom, stage.bottom)
+      return { clip: { x, y, width: right - x, height: bottom - y }, stageWidth: stage.width, stageHeight: stage.height }
+    })
+    const rect = visible.clip
+    expect(rect.width, 'the observed canvas must occupy a substantial part of the stage').toBeGreaterThanOrEqual(visible.stageWidth / 2)
+    expect(rect.height, 'position the scene before observing a useful canvas region').toBeGreaterThanOrEqual(visible.stageHeight / 2)
+    const frame = await page.screenshot({ clip: rect, animations: 'allow', scale: 'css' })
+    const now = performance.now()
+    const sameRegion = previousRect && ['x', 'y', 'width', 'height'].every(dimension => rect[dimension] === previousRect[dimension])
+    if (!previousFrame || !sameRegion || !frame.equals(previousFrame)) {
+      previousFrame = frame
+      previousRect = rect
+      stableSince = now
+      samples = 1
+      return false
+    }
+    samples += 1
+    return now - stableSince >= 750 && samples >= 4
+  }, { message: 'the visible canvas region should remain still throughout a quiet observation window', timeout: 10_000, intervals: [80, 110, 130] }).toBe(true)
+}
+
 async function finishAudit(page, audit) {
   await audit.settle()
   await expectNoHorizontalOverflow(page)
@@ -332,6 +377,12 @@ test('reduced motion keeps every chapter and the Footer readable', async ({ page
   else await codex.click()
   const codexDescription = await expectStackSelection(keyboard, 'Codex')
   expect(codexDescription).not.toBe(initialDescription)
+  const field = page.locator('.stellar-field[data-profile="about"]')
+  await expect(field).toHaveAttribute('data-renderer', /^(?:webgl2|unavailable)$/)
+  if (await field.getAttribute('data-renderer') === 'webgl2') {
+    await page.mouse.move(0, 0)
+    await expectStableCanvasRegion(page, field.locator(':scope > canvas.stellar-field__canvas'))
+  }
   await expectReadableToFooter(page)
   await finishAudit(page, audit)
 })
@@ -462,6 +513,25 @@ test('the mechanical keyboard renders on supported browsers and responds to touc
     expect(await canvas.evaluate(element => element.width > 0 && element.height > 0)).toBe(true)
   } else {
     await expect(keyboard).toHaveClass(/is-fallback/)
+  }
+  if (await field.getAttribute('data-renderer') === 'webgl2') {
+    const markdownBeforePause = await expectStackSelection(keyboard, 'Markdown')
+    const pause = page.getByRole('button', { name: '暂停星空动画', exact: true })
+    await pointAtVisibleNode(page, pause, isMobile)
+    const resume = page.getByRole('button', { name: '继续星空动画', exact: true })
+    await expect(resume).toHaveAttribute('aria-pressed', 'true')
+    await page.mouse.move(0, 0)
+    await expectStableCanvasRegion(page, mainCanvas)
+    const pausedCodex = stackKey(keyboard, 'Codex')
+    if (isMobile) await pausedCodex.tap()
+    else await pausedCodex.click()
+    expect(await expectStackSelection(keyboard, 'Codex')).not.toBe(markdownBeforePause)
+    if (isMobile) await stackKey(keyboard, 'Markdown').tap()
+    else await pausedCodex.press('m')
+    expect(await expectStackSelection(keyboard, 'Markdown')).toBe(markdownBeforePause)
+    await pointAtVisibleNode(page, resume, isMobile)
+    await expect(pause).toHaveAttribute('aria-pressed', 'false')
+    await expectSameMainCanvas()
   }
   // Keep a returning keycap from passing under the navigation pointer and selecting itself.
   await page.mouse.move(0, 0)

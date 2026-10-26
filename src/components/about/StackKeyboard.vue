@@ -104,7 +104,11 @@ function getCatFrame() {
     [last.left+last.width*.5,last.top+last.height*.5])
 }
 function layoutAfterUpdate() { nextTick(()=>emit('layout')) }
-defineExpose({ getCatFrame })
+function tapByCat(side) {
+  if (!props.active || props.paused) return
+  renderer?.tapByCat(side, [heldPointer, heldLetter])
+}
+defineExpose({ getCatFrame, tapByCat })
 watch(() => [props.active, props.progress, props.paused], () => {
   renderer?.setState({ active: props.active, progress: props.progress, paused: props.paused })
   if (!props.active) { releaseLetter(); releasePointer() }

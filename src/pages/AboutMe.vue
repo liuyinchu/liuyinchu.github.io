@@ -42,6 +42,9 @@ function updateCatFrame() {
   if (next && current && ['origin', 'axisX', 'axisY'].every((key) => next[key].every((value, index) => value === current[key][index]))) return
   catFrame.value = next
 }
+function onCatStrike(side) {
+  keyboard.value?.tapByCat?.(side)
+}
 function updateProjection() {
   const canvasRect = field.value?.getCanvasRect?.()
   const stageRect = stage.value?.getBoundingClientRect()
@@ -129,9 +132,11 @@ onBeforeUnmount(() => {
           profile="about"
           :progress="progress"
           :cat-frame="catFrame"
+          :cat-motion="activeChapter === 4 && !paused"
           :active-node="activeChapter === 3 ? selectedNode : ''"
           :paused="paused || activeChapter === 4"
           :interactive="activeChapter !== 4"
+          @cat-strike="onCatStrike"
           @anchors="onAnchors"
           @ready="onReady"
           @unavailable="ready = false"

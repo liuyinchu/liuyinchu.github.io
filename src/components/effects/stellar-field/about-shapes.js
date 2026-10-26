@@ -239,6 +239,18 @@ export function getAboutCatWeight(progress) {
   const t = smoothstep(.18, .82, section - segment)
   return segment === 3 ? t : segment === 4 ? 1 - t : 0
 }
+export function getAboutCatPose(clock) {
+  const beat = Math.floor(clock / .34)
+  const within = clock - beat * .34
+  const transition = smoothstep(.26, .34, within)
+  return beat % 2 === 0 ? transition : 1 - transition
+}
+export function getAboutCatStrikes(previous, current) {
+  const strikes = []
+  for (let beat = Math.floor(previous / .34) + 1; beat <= Math.floor(current / .34); beat++) strikes.push(beat % 2 ? 'left' : 'right')
+  return strikes
+}
+
 export function resolveAboutCatFrame(frame, rect) {
   if (frame && [frame.origin, frame.axisX, frame.axisY].every((pair) => pair?.length === 2 && pair.every(Number.isFinite))
     && Math.hypot(...frame.axisX) > 0 && Math.hypot(...frame.axisY) > 0) return frame
@@ -281,7 +293,8 @@ export function getAboutCatTarget(point, seed, state) {
   ]
 }
 function attachAboutCat(result, foreground) {
-  const { body } = createCatGeometry()
+  const geometry = createCatGeometry()
+  const { body, alternate, motionRole } = geometry
   const priority = []
   const interior = []
   for (let index = 0; index < body.length / 8; index++) {
@@ -298,11 +311,20 @@ function attachAboutCat(result, foreground) {
   selected.sort((a, b) => a - b)
   result.catStyle = new Float32Array(result.count * 4)
   result.catSize = new Float32Array(result.count)
+  result.catSourceIndex = Uint32Array.from(selected)
+  result.catMotionRole = new Uint8Array(foreground)
+  result.catAlternate = new Float32Array(result.count * 3)
+  result.catAlternateStyle = new Float32Array(result.count * 4)
+  result.catAlternateSize = new Float32Array(result.count)
   for (let index = 0; index < foreground; index++) {
     const offset = selected[index] * 8
     result.field.set(body.subarray(offset, offset + 3), index * 3)
     result.catStyle.set([body[offset + 3], body[offset + 4], body[offset + 5], body[offset + 7]], index * 4)
     result.catSize[index] = body[offset + 6]
+    result.catAlternate.set(alternate.subarray(offset, offset + 3), index * 3)
+    result.catAlternateStyle.set([alternate[offset + 3], alternate[offset + 4], alternate[offset + 5], alternate[offset + 7]], index * 4)
+    result.catAlternateSize[index] = alternate[offset + 6]
+    result.catMotionRole[index] = motionRole[selected[index]]
   }
 }
 
@@ -379,7 +401,7 @@ export function createAboutParticles({ dustCount, starCount, backgroundCount, ra
   return result
 }
 
-export function projectAboutAnchors(particles, { progress, replay, rotationX, rotationY, hoverX, hoverY, time, motion, width, height, catFrame, canvasRect }) {
+export function projectAboutAnchors(particles, { progress, replay, rotationX, rotationY, hoverX, hoverY, time, motion, width, height, catFrame, canvasRect, catPose = 0 }) {
   const section = Math.max(0, Math.min(1, progress)) * 5
   const segment = Math.min(4, Math.floor(section))
   const t = smoothstep(.18, .82, section - segment)
@@ -392,7 +414,8 @@ export function projectAboutAnchors(particles, { progress, replay, rotationX, ro
     const seed = Math.fround(Math.fround(index) * Math.fround(1.61803398875))
     const from = particles[names[segment]]
     const to = particles[names[segment + 1]]
-    const catTarget = particles.catStyle ? getAboutCatTarget(Array.from(particles.field.subarray(index * 3, index * 3 + 3)), seed, { progress, rotationX, rotationY, hoverX, hoverY, time, motion, width, height, catFrame, canvasRect }) : null
+    const catPoint = Array.from(particles.field.subarray(index * 3, index * 3 + 3), (value, axis) => value + ((particles.catAlternate?.[index * 3 + axis] ?? value) - value) * catPose)
+    const catTarget = particles.catStyle ? getAboutCatTarget(catPoint, seed, { progress, rotationX, rotationY, hoverX, hoverY, time, motion, width, height, catFrame, canvasRect }) : null
     let p = Array.from({ length: 3 }, (_, axis) => {
       const start = names[segment] === 'field' && catTarget ? catTarget[axis] : from[index * 3 + axis]
       const finish = names[segment + 1] === 'field' && catTarget ? catTarget[axis] : to[index * 3 + axis]
