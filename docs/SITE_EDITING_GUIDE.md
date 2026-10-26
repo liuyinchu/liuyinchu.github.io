@@ -207,6 +207,20 @@ ResourceDetailPage 自己创建 `MarkdownIt({ html: true, breaks: true, linkify:
 项目卡片不会由 JSON 创建新的 Vue 路由，站内主页必须已注册。
 Portal 优先使用 homepage，缺少时使用 repo；两者都为空的项目不会加入 Portal 项目搜索。
 
+### GitHub 贡献面板
+
+`/code` 的贡献面板与项目清单独立维护。界面及取数在 [GitHubContributions.vue](../src/components/code/GitHubContributions.vue)，日期归一、统计和按周排布在 [githubContributions.mjs](../src/utils/githubContributions.mjs)。账号配置当前为 `pifuyuini`（2023 年起）和 `liuyinchu`（2025 年起），默认前者；新增账号时同时核对可选年份的起点。
+
+面板在浏览器中请求 [github-contributions-api](https://github.com/grubersjoe/github-contributions-api) 的公开接口，支持近一年及指定年份，不需要前端令牌、手工 SVG、构建快照或新后端。它是第三方服务，数据来自 GitHub 公开贡献记录；服务自身缓存约一小时，GitHub 的记录另可能存在延迟。不能把这些数据标成实时提交次数或编码时长。
+
+四项统计均以所选期间内逐日记录为依据：贡献总量、活跃天数、区间最长连续天数、该期间最近活跃日期。贡献包含提交、Pull Request、Issue 等活动；私有贡献仅反映账号主动公开的匿名数量。图上日期使用接口的 ISO 日期，避免时区转换造成日期移位。
+
+客户端按账号和期间缓存成功结果一小时；页面显示实际获取时间。请求失败时，已有记录明确标为缓存数据，没有记录则显示失败与重试入口。切换账号或年份会取消旧请求，并防止晚到结果覆盖当前选择。手动重试重新取数，仍受第三方服务的缓存与可用性影响。
+
+热图支持悬停、点按和方向键查看，只有一个格子进入 Tab 顺序；手机仅在日历容器内横向滚动。日格保留局部小尺寸，不继承全站触控按钮的最小高度，防止格子重叠。代码页卡片聚光只更新当前鼠标所在卡片，按动画帧合并写入；减少动态效果时关闭该逻辑与位移动画。
+
+修改后运行贡献模型单测与 `tests/e2e/code.spec.js`，并核对真实服务、双账号/年份切换、缓存失败、键盘、窄屏触控及正常/减少动态两种偏好。
+
 ### 网络邻居
 
 编辑 [friends.json](../public/friends.json) 数组，顺序即显示顺序：

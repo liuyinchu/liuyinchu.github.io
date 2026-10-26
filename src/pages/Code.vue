@@ -1,5 +1,5 @@
 <template>
-  <div class="code-projects-page" ref="containerRef" @mousemove="handleMouseMove">
+  <div class="code-projects-page">
     
     <div class="bg-cosmos"></div>
     <div class="bg-noise"></div>
@@ -21,26 +21,20 @@
       </div>
     </section>
 
-    <section class="contrib-section">
-      <div class="contrib-wrapper">
-        <img
-          src="/fig/github_user_contribution.svg"
-          alt="GitHub 贡献图"
-          class="contrib-img"
-          loading="lazy"
-        />
-        <div class="contrib-glow"></div>
-      </div>
+    <section class="contrib-section" aria-label="GitHub 贡献面板">
+      <GitHubContributions />
     </section>
 
     <section class="directory-section">
       <div class="directory-toolbar">
-        <nav class="tabs">
+        <nav class="tabs" aria-label="项目分类">
           <button
             v-for="t in tabs"
             :key="t.key"
             class="tab"
             :class="{ active: activeTab === t.key }"
+            :aria-pressed="activeTab === t.key"
+            type="button"
             @click="activeTab = t.key"
           >
             {{ t.label }}
@@ -49,27 +43,34 @@
         </nav>
 
         <div class="search-box">
+          <label for="project-search" class="sr-only">搜索项目名称或简介</label>
           <SiteIcon name="search" class="search-icon" />
           <input
+            id="project-search"
             v-model.trim="query"
             type="search"
             class="search-input"
-            placeholder="搜索..."
+            placeholder="搜索项目名称或简介…"
+            autocomplete="off"
           />
+          <button v-if="query" type="button" class="search-clear" aria-label="清除搜索" @click="clearQuery">×</button>
         </div>
       </div>
+
+      <p v-if="!loading && !error" class="results-count" role="status">找到 {{ filtered.length }} 个项目<span v-if="query"> · “{{ query }}”</span></p>
 
       <div v-if="loading" class="state-hint loading">
         <span class="loader-spin"></span> 正在载入星图数据...
       </div>
       <div v-else-if="error" class="state-hint error">载入失败：{{ error }}</div>
 
-      <div v-else class="grid">
+      <TransitionGroup v-else tag="div" name="projects" class="grid">
         <article 
           v-for="p in filtered" 
           :key="p.name" 
           class="card spotlight-card"
-          tabindex="0"
+          @pointermove="handleCardMove"
+          @pointerleave="resetSpotlight"
         >
           <div class="spotlight-border"></div>
           
@@ -80,47 +81,74 @@
             </header>
             <p class="card-desc">{{ p.desc }}</p>
             <footer class="card-actions">
-              <a v-if="p.homepage" class="action-btn primary" :href="p.homepage" target="_blank">
+              <a v-if="p.homepage" class="action-btn primary" :href="p.homepage" target="_blank" rel="noopener noreferrer">
                 <span>项目主页</span>
               </a>
-              <a v-if="p.repo" class="action-btn secondary" :href="p.repo" target="_blank">
+              <a v-if="p.repo" class="action-btn secondary" :href="p.repo" target="_blank" rel="noopener noreferrer">
                 <span>GitHub</span>
               </a>
             </footer>
           </div>
         </article>
+      </TransitionGroup>
+      <div v-if="!loading && !error && !filtered.length" class="state-hint empty-state">
+        <span aria-hidden="true">⌕</span>
+        <p>暂时没有匹配的项目</p>
+        <small>试试其他关键词，或切换项目分类。</small>
+        <button type="button" class="reset-filters" @click="resetFilters">重置筛选</button>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import SiteIcon from '../components/common/SiteIcon.vue'
+import GitHubContributions from '../components/code/GitHubContributions.vue'
 
 /** 数据状态 */
 const loading = ref(true)
 const error = ref(null)
 const items = ref([])
-const containerRef = ref(null)
+let spotlightFrame = 0
+let spotlightCard = null
+let pointerPosition = null
+let spotlightMedia
 
-/** 鼠标移动逻辑：计算聚光灯位置 */
-const handleMouseMove = (e) => {
-  if (!containerRef.value) return
-  
-  // 更新卡片的光照坐标
-  const cards = containerRef.value.querySelectorAll('.spotlight-card')
-  cards.forEach(card => {
-    const rect = card.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    card.style.setProperty('--mouse-x', `${x}px`)
-    card.style.setProperty('--mouse-y', `${y}px`)
+/** One card per pointer event; coalesce style writes into the next frame. */
+function handleCardMove(event) {
+  if (!spotlightMedia?.matches) return
+  const card = event.currentTarget
+  const rect = card.getBoundingClientRect()
+  if (spotlightCard && spotlightCard !== card) resetSpotlight()
+  spotlightCard = card
+  pointerPosition = { x: event.clientX - rect.left, y: event.clientY - rect.top }
+  if (spotlightFrame) return
+  spotlightFrame = requestAnimationFrame(() => {
+    spotlightFrame = 0
+    if (!spotlightCard || !pointerPosition || !spotlightMedia?.matches) return
+    spotlightCard.style.setProperty('--mouse-x', pointerPosition.x + 'px')
+    spotlightCard.style.setProperty('--mouse-y', pointerPosition.y + 'px')
   })
 }
+function resetSpotlight() {
+  if (spotlightFrame) cancelAnimationFrame(spotlightFrame)
+  spotlightFrame = 0
+  spotlightCard?.style.removeProperty('--mouse-x')
+  spotlightCard?.style.removeProperty('--mouse-y')
+  spotlightCard = null
+  pointerPosition = null
+}
+function onMotionChange() { if (!spotlightMedia.matches) resetSpotlight() }
+onBeforeUnmount(() => {
+  resetSpotlight()
+  spotlightMedia?.removeEventListener('change', onMotionChange)
+})
 
 /** 载入数据 */
 onMounted(async () => {
+  spotlightMedia = window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)')
+  spotlightMedia.addEventListener('change', onMotionChange)
   try {
     const res = await fetch('/code_proj.json', { cache: 'no-cache' })
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -148,6 +176,15 @@ const tabs = [
 ]
 const activeTab = ref('all')
 const query = ref('')
+async function clearQuery() {
+  query.value = ''
+  await nextTick()
+  document.getElementById('project-search')?.focus()
+}
+function resetFilters() {
+  activeTab.value = 'all'
+  clearQuery()
+}
 
 const filtered = computed(() => {
   const q = query.value.toLowerCase()
@@ -322,24 +359,10 @@ const filtered = computed(() => {
    贡献图 (Contribution)
    ========================================= */
 .contrib-section {
-  width: min(var(--max-w), 96vw);
+  width: min(var(--max-w), 92vw);
   margin: 4rem auto;
   display: flex;
   justify-content: center;
-}
-
-.contrib-wrapper {
-  position: relative;
-  padding: 10px;
-  background: rgba(255,255,255,0.02);
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.05);
-}
-
-.contrib-img {
-  width: 100%;
-  display: block;
-  filter: drop-shadow(0 0 8px rgba(137, 180, 250, 0.2)); /* 蓝色微光 */
 }
 
 /* =========================================
@@ -381,7 +404,7 @@ const filtered = computed(() => {
   font-weight: bold;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: color .2s ease, background .2s ease, box-shadow .2s ease;
   z-index: 1;
 }
 
@@ -401,7 +424,7 @@ const filtered = computed(() => {
   z-index: -1;
   border-radius: 99px;
   box-shadow: 0 0 15px var(--c-gold);
-  animation: pulse-gold 2s infinite;
+  opacity: .95;
 }
 
 /* 搜索框：极简 */
@@ -424,7 +447,8 @@ const filtered = computed(() => {
   padding: 0.7rem 1rem 0.7rem 2.4rem;
   border-radius: 12px;
   color: var(--c-text-main);
-  width: 260px;
+  width: 290px;
+  padding-right: 2.6rem;
   font-family: inherit;
   transition: all 0.3s;
 }
@@ -440,7 +464,8 @@ const filtered = computed(() => {
    ========================================= */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  position: relative;
   gap: 20px;
 }
 
@@ -460,7 +485,6 @@ const filtered = computed(() => {
 }
 
 .card:hover {
-  transform: translateY(-4px);
   background-color: rgba(30, 30, 46, 0.6);
 }
 
@@ -479,7 +503,7 @@ const filtered = computed(() => {
     transparent 40%
   );
 }
-.card:hover .spotlight-border { opacity: 1; }
+
 
 .card-inner {
   position: relative;
@@ -597,10 +621,7 @@ const filtered = computed(() => {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes pulse-gold {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; box-shadow: 0 0 20px var(--c-gold); }
-}
+
 
 /* =========================================
    响应式适配 (Responsive)
@@ -667,5 +688,33 @@ const filtered = computed(() => {
   .hero-title { font-size: clamp(2.4rem, 7vw, 4rem); }
   .hero-subtitle { font-size: 0.78rem; letter-spacing: 0.16em; }
   .intro-section { margin-top: -2rem; }
+}
+
+.results-count { margin: -1rem 0 1.5rem; font-size: .8rem; color: var(--c-text-dim); min-height: 1.3rem; }
+.results-count > span { opacity: .8; overflow-wrap: anywhere; }
+.search-clear { position: absolute; right: 5px; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--c-text-dim); font: 1.25rem/1 system-ui,sans-serif; cursor: pointer; }
+.search-clear:hover { background: #cba6f71a; color: var(--c-gold); }
+.search-input::-webkit-search-cancel-button { display: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.code-projects-page :is(button,a):focus-visible { outline: 2px solid var(--c-gold); outline-offset: 4px; }
+.card:focus-within { border-color: #cba6f760; background: rgba(30,30,46,.7); }
+.empty-state { display: flex; align-items: center; flex-direction: column; gap: .8rem; background: #1e1e2e55; }
+.empty-state > span { font-size: 2rem; color: var(--c-gold-dim); }
+.empty-state p { margin: 0; color: var(--c-gold); }
+.empty-state small { font-size: .85rem; }
+.reset-filters { margin-top: .3rem; padding: .6rem 1.1rem; border: 1px solid #cba6f74d; border-radius: 7px; color: var(--c-gold); background: #cba6f70d; font: inherit; font-size: .85rem; cursor: pointer; }
+.projects-enter-active, .projects-leave-active { transition: opacity .2s ease, transform .2s ease; }
+.projects-enter-from, .projects-leave-to { opacity: 0; transform: translateY(5px); }
+.projects-leave-active { position: absolute; pointer-events: none; }
+.projects-move { transition: transform .25s ease; }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .card:hover { transform: translateY(-3px); }
+  .card:hover .spotlight-border { opacity: 1; }
+  .tab:active, .action-btn:active, .reset-filters:active { transform: scale(.98); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .spotlight-border { display: none; }
+  .projects-enter-from, .projects-leave-to { transform: none; }
 }
 </style>

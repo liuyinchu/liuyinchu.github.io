@@ -131,15 +131,17 @@ Playwright 的 4174 是例外：当前配置禁止复用既有服务，须为测
 | 天气 | `weather-model.test.mjs` | 真实服务、城市时区、部分失败、保留旧数据、分区重试 |
 | Music Box | 五个 music-box Node 文件、`music-box.spec.js` | 实际听感、触摸、浏览器音频解锁、离开后静音 |
 | 说说 | `post-it.test.mjs`、`talk.spec.js` | public/post-it 自动收录/过滤、真实时间倒序、搜索与键盘、卡内横滚/锚点、复制回退、返回列表与 Space1 轮播 |
+| 代码页贡献与交互 | `github-contributions.test.mjs`、`code.spec.js` | 双账号/年份、真实服务、缓存/错误/请求切换、热图触控与键盘、正常/减少动态、筛选与空状态 |
 | AI Frontier | `frontier.spec.js`、路由与排版相关 E2E | 远端真实内容、数据字段、失败重试、谱图与窄屏 |
 | 构建 / SEO / 部署 | `npm run build`，检查生成文件与 preview | 生产直达路径、HTTP 状态、资源地址、线上部署结果 |
 
-### Node 内容与模型测试：8 个文件
+### Node 内容与模型测试：9 个文件
 
 可按改动单独运行：
 
 ~~~sh
 node --test tests/post-it.test.mjs
+node --test tests/github-contributions.test.mjs
 node --test tests/portal-window-model.test.mjs
 node --test tests/weather-model.test.mjs
 node --test tests/music-box-engine.test.js
@@ -149,13 +151,14 @@ node --test tests/music-box-bowed-audio.test.js
 node --test tests/music-box-composition.test.js
 ~~~
 
-需要完整运行这 8 个文件时：
+需要完整运行这 9 个文件时：
 
 ~~~sh
-node --test tests/post-it.test.mjs tests/portal-window-model.test.mjs tests/weather-model.test.mjs tests/music-box-engine.test.js tests/music-box-sequencer.test.js tests/music-box-string-audio.test.js tests/music-box-bowed-audio.test.js tests/music-box-composition.test.js
+node --test tests/post-it.test.mjs tests/github-contributions.test.mjs tests/portal-window-model.test.mjs tests/weather-model.test.mjs tests/music-box-engine.test.js tests/music-box-sequencer.test.js tests/music-box-string-audio.test.js tests/music-box-bowed-audio.test.js tests/music-box-composition.test.js
 ~~~
 
 说说 Node 测试验证简单 frontmatter、日期有效性、摘要、public/post-it 文件扫描/过滤、稳定 ID 与真实时间顺序；不验证浏览器布局。
+GitHub 贡献模型测试验证日期有效性、跨年/闰日排序、区间统计、日历周对齐和键盘位置，不请求第三方服务。
 Portal 测试验证窗口模型与序列化，不会操作真实 DOM。
 天气测试验证数值缺失、时区 / 夏令时、日出日落、请求分区成功失败和重试；请求由测试替身控制。
 音乐测试涵盖模拟、碰撞、编曲、节拍和合成模型；部分音频测试使用替身，不等于真实扬声器验收。
@@ -184,9 +187,10 @@ npm run test:e2e -- tests/e2e/talk.spec.js
 npm run test:e2e -- tests/e2e/music-box.spec.js
 npm run test:e2e -- tests/e2e/about-story.spec.js tests/e2e/article-typography.spec.js
 npm run test:e2e -- tests/e2e/markdown-image-preview.spec.js
+npm run test:e2e -- tests/e2e/code.spec.js
 ~~~
 
-这些是可选运行方式，不要求每次逐条重复执行。
+这些是可选运行方式，不要求每次逐条重复执行。贡献面板 E2E 使用受控 API 响应验证切换、缓存、错误、统计和交互；外部数据服务可用性需另查实际页面。正常鼠标动效场景仅在桌面运行，移动项目跳过该场景，仍执行触控日历和减少动态检查。
 配置见 [playwright.config.js](../playwright.config.js)：
 
 - 测试目录为 tests/e2e；普通用例 timeout 30 秒，expect timeout 10 秒，导航 timeout 20 秒；部分用例自行延长。
