@@ -18,6 +18,13 @@ const stars = Array.from({ length: 46 }, (_, index) => ({
 }))
 const dialog = ref(null)
 const draft = ref('')
+const hasDraft = ref(false)
+const invitationLabel = computed(() => {
+  if (hasDraft.value && draft.value.trim() && draft.value !== (currentLetter.value?.text || '')) {
+    return '继续写，给下一岁的自己'
+  }
+  return currentLetter.value ? '再写几句，给下一岁的自己' : '写封信，给下一岁的自己'
+})
 const selectedLetter = ref(null)
 const mode = ref('write')
 const notice = ref('')
@@ -69,6 +76,12 @@ function handleVisibility() {
   if (document.hidden) stopMelody()
 }
 
+function prepareDraft(letter = currentLetter.value) {
+  if (hasDraft.value) return
+  draft.value = letter?.text || ''
+  hasDraft.value = true
+}
+
 async function openLetter(letter = null) {
   now.value = new Date()
   notice.value = ''
@@ -77,14 +90,14 @@ async function openLetter(letter = null) {
     mode.value = isLetterOpen(letter, now.value) ? 'read' : 'sealed'
   } else {
     mode.value = 'write'
-    draft.value = currentLetter.value?.text || ''
+    prepareDraft()
   }
   await nextTick()
   dialog.value.showModal()
 }
 
 function editLetter() {
-  draft.value = selectedLetter.value?.text || ''
+  prepareDraft(selectedLetter.value)
   mode.value = 'write'
   notice.value = ''
   nextTick(() => dialog.value.querySelector('textarea')?.focus())
@@ -98,6 +111,7 @@ function storeLetter() {
     letters.value = updated
     selectedLetter.value = updated.find(letter => letter.year === cycleYear.value)
     mode.value = 'sealed'
+    hasDraft.value = false
     storageWarning.value = ''
     notice.value = '信已存好。下一圈光里，我们再见。'
   } catch {
@@ -156,7 +170,7 @@ onBeforeUnmount(() => {
     </div>
 
     <header class="planet-header">
-      <RouterLink to="/" class="planet-home"><span aria-hidden="true">↙</span> 返回人间</RouterLink>
+      <RouterLink to="/" class="planet-home">返回</RouterLink>
       <span class="planet-coordinates">A PRIVATE ORBIT</span>
       <span class="planet-date"><i aria-hidden="true"></i> 10.28</span>
     </header>
@@ -166,17 +180,6 @@ onBeforeUnmount(() => {
         <p class="planet-eyebrow"><span aria-hidden="true">✦</span> FOR YOU, ON YOUR BIRTHDAY</p>
         <h1 id="birthday-title">又绕着太阳，<br>走了<span class="planet-handwritten">一圈。</span></h1>
         <p class="planet-intro">{{ birthday.isBirthday ? '生日快乐。今天，宇宙为你多亮一颗星。' : '这里，永远为 10 月 28 日留一束光。' }}</p>
-        <div class="planet-wish">
-          <p>愿你的好奇心一直有地方落脚，<br>认真做的事慢慢有回声。</p>
-          <p>身边有人，心里有光，<br>也有许多单纯因为喜欢而度过的日子。</p>
-        </div>
-        <button class="letter-invitation" @click="openLetter()">
-          {{ currentLetter ? '再写几句，给下一岁的自己' : '写封信，给下一岁的自己' }}
-          <span aria-hidden="true">↗</span>
-        </button>
-        <p class="planet-small-note">一封信，一段旋律，一颗只为你转动的星球。</p>
-      </div>
-
       <div class="planet-observatory">
         <span class="orbit-label orbit-label--top">NO. {{ String(birthday.anniversary).padStart(2, '0') }}<br><span>YOUR LITTLE UNIVERSE</span></span>
         <button class="planet-instrument" :aria-label="isPlaying ? '暂停生日旋律' : '轻触星球，播放生日旋律'" :aria-pressed="isPlaying" @click="toggleMelody">
@@ -217,6 +220,7 @@ onBeforeUnmount(() => {
             <g transform="rotate(-24 300 300)">
               <ellipse v-for="ring in annualRings" :key="ring" cx="300" cy="300" :rx="246 + ring * 24 / annualRings.length" :ry="70 + ring * 24 / annualRings.length" stroke="url(#birthday-ring)" :stroke-width="ring === 0 ? 1.3 : .7" :opacity="ring === 0 ? .7 : .35" />
               <ellipse cx="300" cy="300" rx="258" ry="78" stroke="#cbb58f" stroke-opacity=".16" stroke-dasharray="3 8" />
+              <ellipse class="melody-orbit" cx="300" cy="300" rx="258" ry="78" pathLength="1000" stroke="#f2d9a2" stroke-width="2.5" stroke-linecap="round" />
             </g>
             <circle cx="300" cy="300" r="145" fill="url(#birthday-sphere)" />
             <g clip-path="url(#birthday-globe-clip)">
@@ -237,11 +241,26 @@ onBeforeUnmount(() => {
             <path d="M462 143 L465 152 L474 155 L465 158 L462 167 L459 158 L450 155 L459 152 Z" fill="#dfc99c" opacity=".8" />
             <path d="M131 426 L133 432 L139 434 L133 436 L131 442 L129 436 L123 434 L129 432 Z" fill="#a9bfd2" opacity=".6" />
           </svg>
-          <span class="planet-touch-hint"><span aria-hidden="true">{{ isPlaying ? 'Ⅱ' : '♪' }}</span> {{ isPlaying ? '星球正在为你轻轻哼唱' : '轻触星球，听一段生日旋律' }}</span>
+          <span class="planet-touch-hint">
+            <span class="melody-indicator" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>{{ isPlaying ? '正在轻轻哼唱 · 点按暂停' : '轻触星球，听一段生日旋律' }}</span>
+          </span>
         </button>
         <span class="orbit-label orbit-label--bottom">EST. 2026.10.28<br><span>每过一次生日，多留下一圈光。</span></span>
         <p v-if="audioNotice" class="audio-notice" role="status">{{ audioNotice }}</p>
       </div>
+
+        <div class="planet-wish">
+          <p>愿你的好奇心一直有地方落脚，<br>认真做的事慢慢有回声。</p>
+          <p>身边有人，心里有光，<br>也有许多单纯因为喜欢而度过的日子。</p>
+        </div>
+        <button class="letter-invitation" @click="openLetter()">
+          {{ invitationLabel }}
+        </button>
+        <p class="planet-small-note">一封信，一段旋律，一颗只为你转动的星球。</p>
+      </div>
+
+
     </section>
 
     <footer class="planet-footer">
@@ -263,9 +282,9 @@ onBeforeUnmount(() => {
         <p class="letter-description">记下今天的小事、一个愿望，或一句想对未来说的话。<br>在 {{ dateLabel(displayedOpening) }}，再来读读它。</p>
         <label class="visually-hidden" for="birthday-letter-text">写给下一岁的自己</label>
         <textarea id="birthday-letter-text" v-model="draft" maxlength="5000" rows="8" placeholder="此刻的我，想告诉你……" autofocus></textarea>
-        <div class="letter-word-count">{{ draft.length }} / 5000</div>
+        <div class="letter-draft-meta"><span>暂时关上，也能留在这页继续写。</span><span>{{ draft.length }} / 5000</span></div>
         <div class="letter-actions">
-          <button class="letter-primary" :disabled="!draft.trim()" @click="storeLetter">存好这封信 <span aria-hidden="true">↗</span></button>
+          <button class="letter-primary" :disabled="!draft.trim()" @click="storeLetter">存好这封信</button>
           <button class="letter-secondary" :disabled="!draft.trim()" @click="copyLetter">复制留存</button>
         </div>
       </template>
@@ -292,7 +311,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .birthday-planet {
   --planet-ink: #f0ece4;
-  --planet-muted: #9ca8b8;
+  --planet-muted: #b0bac9;
   --planet-gold: #ddc699;
   position: relative;
   isolation: isolate;
@@ -310,67 +329,77 @@ onBeforeUnmount(() => {
 .birthday-sky { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .birthday-sky i { position: absolute; border-radius: 50%; background: #e1e4ee; opacity: .35; animation: birthday-twinkle 9s ease-in-out infinite alternate; }
 .planet-header { display: flex; align-items: center; justify-content: space-between; height: 102px; max-width: 1400px; margin: auto; border-bottom: 1px solid #bbc9e014; }
-.planet-home { display: inline-flex; align-items: center; gap: 12px; color: #b3bdcc; text-decoration: none; font-size: 13px; transition: color .2s; }
+.planet-home { display: inline-flex; align-items: center; min-height: 44px; padding: 0 5px; color: #c1c9d6; text-decoration: none; font-size: 13px; letter-spacing: .1em; transition: color .2s; }
 .planet-home:hover { color: var(--planet-gold); }
-.planet-home > span { font-size: 22px; }
 .planet-coordinates, .planet-date, .planet-eyebrow, .orbit-label, .planet-signature, .letter-eyebrow { font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace; }
 .planet-coordinates { color: #8490a2; font-size: 10px; letter-spacing: .25em; }
 .planet-date { color: var(--planet-gold); font-size: 12px; letter-spacing: .15em; display: flex; align-items: center; gap: 10px; }
 .planet-date i { width: 4px; height: 4px; border-radius: 50%; background: var(--planet-gold); box-shadow: 0 0 12px #e1cd9b; }
-.planet-hero { display: grid; grid-template-columns: 1fr 1.12fr; align-items: center; gap: 10px; max-width: 1280px; min-height: calc(100svh - 222px); margin: 0 auto; padding: 58px 0 54px; }
-.planet-story { padding-left: clamp(0px, 1.5vw, 24px); z-index: 1; }
+.planet-hero { display: grid; grid-template-columns: 1fr 1.12fr; grid-template-areas: "eyebrow planet" "title planet" "intro planet" "wish planet" "action planet" "note planet"; align-content: center; column-gap: 24px; max-width: 1250px; min-height: calc(100svh - 222px); margin: 0 auto; padding: 52px 0; }
+.planet-story { display: contents; }
+.planet-eyebrow { grid-area: eyebrow; }
+.planet-story h1 { grid-area: title; }
+.planet-intro { grid-area: intro; }
+.planet-wish { grid-area: wish; }
+.letter-invitation { grid-area: action; justify-self: start; }
+.planet-small-note { grid-area: note; }
 .planet-eyebrow { margin: 0 0 28px; color: var(--planet-gold); font-size: 10px; letter-spacing: .16em; line-height: 1.8; }
 .planet-eyebrow > span { margin-right: 9px; font-size: 15px; }
 .planet-story h1 { margin: 0; font-family: 'LXGW WenKai', 'Songti SC', 'STSong', serif; font-weight: 400; font-size: clamp(38px, 4.3vw, 64px); line-height: 1.5; letter-spacing: .025em; color: var(--planet-ink); }
 .planet-handwritten { color: var(--planet-gold); }
-.planet-intro { margin: 25px 0 27px; color: #c1c8d3; font-size: 13px; line-height: 1.9; }
-.planet-wish { border-left: 1px solid #ddc69940; padding-left: 20px; color: var(--planet-muted); font-size: 13px; line-height: 2.1; letter-spacing: .045em; }
+.planet-intro { margin: 24px 0; color: #c9d0db; font-size: 14px; line-height: 1.9; }
+.planet-wish { border-left: 1px solid #ddc69955; padding-left: 20px; color: var(--planet-muted); font-size: 14px; line-height: 2; letter-spacing: .035em; }
 .planet-wish p { margin: 0 0 10px; }
-.letter-invitation { display: inline-flex; align-items: center; gap: 28px; margin-top: 30px; padding: 16px 20px; border: 1px solid #ddc69960; border-radius: 3px; color: #e9d5b0; background: #ddc69909; font-size: 13px !important; transition: background .2s, border-color .2s; }
+.letter-invitation { display: inline-flex; align-items: center; justify-content: center; margin-top: 28px; min-height: 50px; padding: 14px 24px; border: 1px solid #ddc69970; border-radius: 4px; color: #f0dbb6; background: #ddc6990c; font-size: 14px !important; letter-spacing: .035em; transition: background .2s, border-color .2s; }
 .letter-invitation:hover { background: #ddc69914; border-color: #ddc699b0; }
-.letter-invitation span { font-size: 19px; }
-.planet-small-note { margin: 14px 0 0; color: #778499; font-size: 10px; letter-spacing: .06em; line-height: 1.8; }
-.planet-observatory { position: relative; min-width: 0; align-self: stretch; display: grid; align-content: center; }
+.planet-small-note { margin: 15px 0 0; color: #94a1b5; font-size: 11px; letter-spacing: .035em; line-height: 1.9; }
+.planet-observatory { grid-area: planet; position: relative; min-width: 0; align-self: stretch; display: grid; align-content: center; padding-bottom: 52px; }
 .planet-instrument { display: block; position: relative; width: 100%; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--planet-muted); }
 .planet-art { display: block; width: 100%; overflow: visible; transition: filter .6s; animation: birthday-float 12s ease-in-out infinite; }
 .planet-instrument:hover .planet-art { filter: brightness(1.08); }
 .is-playing .planet-art { filter: brightness(1.12) drop-shadow(0 0 20px #e6c99020); }
-.planet-touch-hint { position: absolute; left: 0; right: 0; bottom: 4%; font-size: 11px; letter-spacing: .09em; color: #96a3b7; }
-.planet-touch-hint > span { display: inline-block; width: 20px; color: var(--planet-gold); font-size: 14px; }
+.planet-touch-hint { position: absolute; left: 0; right: 0; bottom: 3%; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 12px; letter-spacing: .045em; color: #b3bfd1; }
+.melody-indicator { display: inline-flex; align-items: center; justify-content: center; gap: 3px; width: 20px; height: 18px; }
+.melody-indicator i { width: 2px; height: 5px; border-radius: 2px; background: var(--planet-gold); transform-origin: center; transition: height .3s; }
+.melody-indicator i:nth-child(2) { height: 10px; }
+.is-playing .melody-indicator i { height: 14px; animation: birthday-notes 1.1s ease-in-out infinite alternate; }
+.is-playing .melody-indicator i:nth-child(2) { animation-delay: -.4s; }
+.is-playing .melody-indicator i:nth-child(3) { animation-delay: -.8s; }
+.melody-orbit { opacity: 0; stroke-dasharray: 32 968; transition: opacity .5s; }
+.is-playing .melody-orbit { opacity: .8; animation: birthday-orbit 8.8s linear infinite; }
 .orbit-label { position: absolute; color: #d5c4a4; font-size: 10px; line-height: 2.2; letter-spacing: .12em; pointer-events: none; z-index: 1; }
-.orbit-label > span { color: #7f8da3; font-size: 8px; letter-spacing: .12em; }
+.orbit-label > span { color: #98a5ba; font-size: 9px; letter-spacing: .1em; }
 .orbit-label--top { top: 9%; right: 5%; }
-.orbit-label--bottom { bottom: 1%; left: 9%; }
-.orbit-label--bottom > span { font-family: 'LXGW WenKai', sans-serif; font-size: 10px; }
+.orbit-label--bottom { bottom: 0; left: 9%; }
+.orbit-label--bottom > span { font-family: 'LXGW WenKai', sans-serif; font-size: 11px; }
 .audio-notice { position: absolute; bottom: -24px; left: 0; right: 0; color: var(--planet-gold); font-size: 12px; text-align: center; }
 .planet-footer { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; max-width: 1400px; margin: auto; min-height: 120px; padding: 22px 0; border-top: 1px solid #bbc9e014; }
 .planet-year { display: flex; align-items: center; gap: 14px; color: #d4c5a9; font-size: 12px; letter-spacing: .08em; flex-shrink: 0; }
 .planet-year-mark { font-size: 33px; color: #ad9570; }
-.planet-year small { display: block; margin-top: 6px; color: #758298; font-size: 10px; letter-spacing: .04em; }
-.planet-footer-note { color: #8997aa; font-family: 'LXGW WenKai', serif; font-size: 12px; line-height: 1.8; margin: 0; }
-.planet-signature { color: #66738a; font-size: 8px; letter-spacing: .13em; }
+.planet-year small { display: block; margin-top: 6px; color: #94a1b5; font-size: 11px; letter-spacing: .04em; }
+.planet-footer-note { color: #aab7c9; font-family: 'LXGW WenKai', serif; font-size: 12px; line-height: 1.8; margin: 0; }
+.planet-signature { color: #8c9ab0; font-size: 9px; letter-spacing: .13em; }
 .planet-letters { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
-.planet-letters button { color: #d3c6b0; border: 1px solid #b5c0d126; background: #d4bc8f08; border-radius: 3px; padding: 9px 12px; font-size: 11px; line-height: 1.7; }
+.planet-letters button { color: #d3c6b0; border: 1px solid #b5c0d126; background: #d4bc8f08; border-radius: 3px; padding: 9px 12px; font-size: 12px; line-height: 1.7; }
 .planet-letters button > span:first-child { padding-right: 5px; }
-.letter-state { display: block; color: #8593a9; font-size: 9px; }
+.letter-state { display: block; color: #9eabc0; font-size: 11px; }
 .birthday-letter { position: fixed; inset: 0; width: min(570px, calc(100vw - 36px)); max-height: calc(100svh - 36px); padding: 42px; margin: auto; overflow: auto; color: #ece6d9; background: #131c2a; border: 1px solid #b6a78c55; border-radius: 8px; box-shadow: 0 30px 120px #0009; }
 .birthday-letter::backdrop { background: #030914ce; backdrop-filter: blur(9px); }
-.letter-close { position: absolute; right: 15px; top: 11px; width: 34px; height: 34px; color: #aab5c5; border: 0; background: none; font-size: 26px !important; }
+.letter-close { position: absolute; right: 12px; top: 8px; width: 44px; height: 44px; color: #aab5c5; border: 0; background: none; font-size: 26px !important; }
 .letter-eyebrow { display: block; margin-bottom: 20px; color: #c6b18b; font-size: 9px; letter-spacing: .14em; }
 .birthday-letter h2 { margin: 0 0 15px; color: #f0e7d8; font-family: 'LXGW WenKai', serif; font-size: clamp(22px, 4vw, 29px); font-weight: 400; }
-.letter-description { margin: 0 0 22px; color: #9eacbf; font-size: 12px; line-height: 1.9; }
+.letter-description { margin: 0 0 22px; color: #b3bed0; font-size: 14px; line-height: 1.9; }
 .letter-description strong { color: #dfc79b; font-weight: 400; }
 .birthday-letter textarea { display: block; width: 100%; padding: 15px; resize: vertical; min-height: 180px; max-height: 45svh; border: 1px solid #b2bdce35; border-radius: 3px; outline: none; color: #eee6d8; background: #0b1321; font-family: 'LXGW WenKai', serif; font-size: 16px; line-height: 1.9; }
 .birthday-letter textarea:focus { border-color: #d8bc81a0; box-shadow: 0 0 0 2px #d8bc8110; }
 .birthday-letter textarea::placeholder { color: #64748c; }
-.letter-word-count { margin-top: 7px; text-align: right; color: #77869d; font-size: 10px; }
+.letter-draft-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 9px; color: #99a7bd; font-size: 11px; line-height: 1.6; }
 .letter-actions { display: flex; align-items: center; gap: 18px; margin-top: 20px; }
 .letter-actions--center { justify-content: center; }
-.letter-primary { border: 1px solid #dcc299; border-radius: 3px; padding: 11px 15px; background: #ddc699; color: #18202d; font-size: 12px !important; }
-.letter-primary span { margin-left: 15px; }
-.letter-secondary { padding: 10px 0; border: 0; background: none; color: #c5b08c; font-size: 12px !important; text-decoration: underline; text-underline-offset: 4px; }
+.letter-primary { border: 1px solid #dcc299; border-radius: 3px; min-height: 44px; padding: 12px 20px; background: #ddc699; color: #18202d; font-size: 14px !important; }
+.letter-secondary { min-height: 44px; padding: 11px 0; border: 0; background: none; color: #d3bd96; font-size: 13px !important; text-decoration: underline; text-underline-offset: 4px; }
 .letter-primary:disabled, .letter-secondary:disabled { cursor: default; opacity: .4; }
-.letter-privacy { margin: 25px 0 0; padding-top: 17px; border-top: 1px solid #bbc9e01a; color: #7f8da3; font-size: 10px; line-height: 1.8; }
+.letter-privacy { margin: 25px 0 0; padding-top: 17px; border-top: 1px solid #bbc9e01a; color: #99a7bd; font-size: 12px; line-height: 1.8; }
 .letter-notice { color: #dec79a; font-size: 12px; line-height: 1.8; margin: 16px 0 0; }
 .sealed-envelope { position: relative; width: 190px; height: 110px; margin: 38px auto 28px; display: grid; place-items: end center; padding-bottom: 18px; border: 1px solid #b6a17b77; border-radius: 3px; background: linear-gradient(28deg, transparent 49.5%, #b6a17b33 50%, transparent 50.7%), linear-gradient(-28deg, transparent 49.5%, #b6a17b33 50%, transparent 50.7%), #a99a7510; }
 .sealed-envelope > span { font-family: ui-monospace, monospace; color: #b49d77; font-size: 10px; letter-spacing: .2em; }
@@ -380,32 +409,36 @@ onBeforeUnmount(() => {
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @keyframes birthday-twinkle { from { opacity: .18; } to { opacity: .65; } }
 @keyframes birthday-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-.is-hidden .birthday-sky i, .is-hidden .planet-art { animation-play-state: paused; }
+@keyframes birthday-orbit { to { stroke-dashoffset: -1000; } }
+@keyframes birthday-notes { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
+.is-hidden .birthday-sky i, .is-hidden .planet-art, .is-hidden .melody-orbit, .is-hidden .melody-indicator i { animation-play-state: paused; }
 @media (max-width: 760px) {
   .planet-header { height: 76px; }
-  .planet-coordinates { font-size: 8px; letter-spacing: .12em; }
-  .planet-home { font-size: 11px; gap: 7px; }
-  .planet-date { font-size: 10px; }
-  .planet-hero { grid-template-columns: 1fr; gap: 10px; padding: 42px 0 34px; min-height: auto; }
-  .planet-story { padding: 0 5px; }
-  .planet-story h1 { font-size: clamp(38px, 9.5vw, 56px); }
-  .planet-eyebrow { margin-bottom: 18px; font-size: 8px; }
-  .planet-intro { margin: 18px 0 21px; font-size: 12px; }
-  .planet-wish { font-size: 12px; }
-  .letter-invitation { margin-top: 23px; font-size: 12px !important; }
-  .planet-small-note { font-size: 9px; }
-  .planet-observatory { width: min(100%, 480px); margin: 0 auto; }
-  .orbit-label--top { top: 3%; right: 0; }
-  .orbit-label--bottom { bottom: -2%; left: 0; font-size: 8px; }
-  .planet-touch-hint { font-size: 9px; bottom: 3%; }
+  .planet-coordinates { font-size: 9px; letter-spacing: .12em; }
+  .planet-home { font-size: 13px; padding: 0; }
+  .planet-date { font-size: 11px; }
+  .planet-hero { grid-template-columns: 1fr; grid-template-areas: "eyebrow" "title" "intro" "planet" "wish" "action" "note"; column-gap: 0; padding: 28px 0 34px; min-height: auto; }
+  .planet-story h1 { font-size: clamp(36px, 9.3vw, 52px); line-height: 1.45; }
+  .planet-eyebrow { margin-bottom: 14px; font-size: 9px; letter-spacing: .12em; }
+  .planet-intro { margin: 16px 0 0; font-size: 13px; }
+  .planet-wish { font-size: 14px; padding-left: 17px; }
+  .letter-invitation { justify-self: stretch; margin-top: 22px; font-size: 14px !important; }
+  .planet-small-note { font-size: 11px; text-align: center; }
+  .planet-observatory { width: min(100%, 390px); margin: 8px auto 28px; padding: 24px 0 38px; }
+  .orbit-label--top { top: 0; right: 0; font-size: 10px; }
+  .orbit-label--bottom { bottom: 0; left: 5px; font-size: 9px; }
+  .orbit-label--bottom > span { font-size: 10px; }
+  .planet-touch-hint { font-size: 11px; bottom: 0; letter-spacing: 0; }
   .planet-footer { flex-wrap: wrap; min-height: 130px; gap: 20px; padding: 22px 0; }
-  .planet-signature { width: 100%; font-size: 7px; text-align: right; }
+  .planet-signature { width: 100%; font-size: 8px; text-align: right; }
   .planet-letters { justify-content: flex-start; }
-  .birthday-letter { padding: 36px 24px 24px; }
+  .birthday-letter { padding: 38px 22px 24px; }
+  .letter-description { font-size: 13px; }
+  .letter-privacy { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .birthday-sky i, .planet-art { animation: none; }
-  .planet-art, .planet-home, .letter-invitation { transition: none; }
+  .birthday-sky i, .planet-art, .is-playing .melody-orbit, .is-playing .melody-indicator i { animation: none; }
+  .planet-art, .planet-home, .letter-invitation, .melody-orbit, .melody-indicator i { transition: none; }
 }
 @media (forced-colors: active) {
   .planet-art { forced-color-adjust: none; }

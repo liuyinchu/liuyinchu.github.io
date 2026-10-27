@@ -20,7 +20,7 @@ test('hidden entrance lazy loads the planet and leaving restores the normal shel
   await expect(page.locator('meta[data-birthday-robots]')).toHaveAttribute('content', 'noindex, nofollow')
   expect(planetRequests.length).toBeGreaterThan(0)
   await expectNoHorizontalOverflow(page)
-  await page.getByRole('link', { name: '返回人间' }).click()
+  await page.getByRole('link', { name: '返回', exact: true }).click()
   await expect(page.locator('[data-page="birthday-planet"]')).toHaveCount(0)
   await expect(page.locator('meta[data-birthday-robots]')).toHaveCount(0)
   await expect(page).not.toHaveTitle(/生日星球/)
@@ -79,14 +79,15 @@ test('audio starts only by gesture and stops on pause and navigation', async ({ 
   await expect.poll(() => page.evaluate(() => window.birthdayAudioContexts[0]?.state)).toBe('closed')
   await page.getByRole('button', { name: '轻触星球，播放生日旋律' }).click()
   await expect(page.getByRole('button', { name: '暂停生日旋律' })).toBeVisible()
-  await page.getByRole('link', { name: '返回人间' }).click()
+  await page.getByRole('link', { name: '返回', exact: true }).click()
   await expect.poll(() => page.evaluate(() => window.birthdayAudioContexts.every(context => context.state === 'closed'))).toBe(true)
 })
 
-test('reduced motion, dialog keyboard dismissal and mobile width work', async ({ page }) => {
+test('reduced motion, dialog keyboard dismissal and mobile width work', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/birthday-planet', { waitUntil: 'domcontentloaded' })
   await expect(page.locator('.planet-art')).toHaveCSS('animation-name', 'none')
+  await page.screenshot({ path: testInfo.outputPath('birthday-planet.jpg'), type: 'jpeg', quality: 78, scale: 'css', fullPage: true, animations: 'disabled' })
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: '写封信，给下一岁的自己' }).click()
   await expect(page.getByLabel('写给下一岁的自己', { exact: true })).toBeFocused()
@@ -128,4 +129,16 @@ test('saving across birthday midnight preserves the previous year letter', async
   expect(saved.find(letter => letter.year === 2026).text).toBe('上一圈的信，应该留下。')
   expect(saved.find(letter => letter.year === 2027)).toMatchObject({ text: '这是新一圈的信。', opensOn: '2028-10-28' })
   await expect(page.getByRole('dialog')).toContainText('2028.10.28')
+})
+
+test('an unsaved letter survives dismissing and reopening the dialog', async ({ page }) => {
+  await page.goto('/birthday-planet', { waitUntil: 'domcontentloaded' })
+  await page.getByRole('button', { name: '写封信，给下一岁的自己' }).click()
+  await page.getByLabel('写给下一岁的自己', { exact: true }).fill('先记下一束光，稍后再慢慢写。')
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: '继续写，给下一岁的自己' }).click()
+  await expect(page.getByLabel('写给下一岁的自己', { exact: true })).toHaveValue('先记下一束光，稍后再慢慢写。')
+  expect(await page.evaluate(key => localStorage.getItem(key), key)).toBeNull()
+  await page.getByRole('button', { name: '存好这封信', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('信已存好')
 })
