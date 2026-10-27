@@ -295,6 +295,16 @@ onBeforeUnmount(() => {
         </RouterLink>
       </div>
 
+      <RouterLink
+        v-if="section.heroOnly"
+        to="/birthday-planet"
+        class="home-birthday-star"
+        aria-label="一颗留给你的生日星球"
+        title="有一颗星星，在等你发现"
+      >
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" aria-hidden="true"><path d="M12 2 14.4 9.6 22 12 14.4 14.4 12 22 9.6 14.4 2 12 9.6 9.6Z" fill="currentColor" /></svg>
+      </RouterLink>
+
       <a
         v-if="section.anchor"
         class="home-panel__scroll-cue"
@@ -308,6 +318,30 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.home-birthday-star {
+  position: absolute;
+  right: clamp(22px, 4vw, 56px);
+  bottom: 36px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: #ead6ad;
+  opacity: .65;
+  border-radius: 50%;
+  text-decoration: none;
+  transition: opacity .2s, background .2s;
+}
+.home-birthday-star:hover, .home-birthday-star:focus-visible {
+  opacity: 1;
+  background: #ead6ad16;
+  outline: 1px solid #ead6ad80;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-birthday-star { transition: none; }
+}
+
 .entry-intro {
   position: fixed;
   inset: 0;

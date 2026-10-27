@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const site = 'https://liuyinchu.github.io'
+// The birthday surprise has a working deep link but stays out of search listings.
+const hiddenRoutes = new Set(['/birthday-planet'])
 const read = (file) => readFile(path.join(root, file), 'utf8')
 const html = await read('dist/index.html')
 const router = await read('src/router/index.js')
@@ -25,13 +27,16 @@ for (const route of pages) {
   if (route === '/') continue
   const file = path.join(root, 'dist', `${route.slice(1)}.html`)
   await mkdir(path.dirname(file), { recursive: true })
-  await writeFile(file, html)
+  const entry = hiddenRoutes.has(route)
+    ? html.replace('</head>', '<meta name="robots" content="noindex, nofollow" data-birthday-robots>\n</head>')
+    : html
+  await writeFile(file, entry)
 }
 
 const escapeXml = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;')
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pages.map((route) => `  <url><loc>${escapeXml(new URL(route, site).href)}</loc></url>`).join('\n')}
+${pages.filter((route) => !hiddenRoutes.has(route)).map((route) => `  <url><loc>${escapeXml(new URL(route, site).href)}</loc></url>`).join('\n')}
 </urlset>
 `
 await writeFile(path.join(root, 'dist/sitemap.xml'), sitemap)
