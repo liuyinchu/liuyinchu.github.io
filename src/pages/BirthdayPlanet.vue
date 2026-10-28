@@ -1,14 +1,11 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { birthdayState, FIRST_YEAR, formatLetterDownload, isLetterOpen, letterDaysRemaining, letterOpeningDate, normalizeLetters, saveLetter } from '../birthday/letters.mjs'
+import { birthdayState } from '../birthday/letters.mjs'
+import { birthdayGiftLetter } from '../birthday/giftLetter.js'
 import { createBirthdayMelody } from '../birthday/melody.js'
 
-const STORAGE_KEY = 'birthday-planet-letters-v1'
 const now = ref(new Date())
 const birthday = computed(() => birthdayState(now.value))
-const cycleYear = computed(() => FIRST_YEAR + birthday.value.anniversary - 1)
-const letters = ref([])
-const currentLetter = computed(() => letters.value.find(letter => letter.year === cycleYear.value))
 const annualRings = computed(() => Array.from({ length: birthday.value.anniversary }, (_, index) => index))
 const stars = Array.from({ length: 46 }, (_, index) => ({
   x: (index * 47.37 + 3) % 100,
@@ -18,44 +15,55 @@ const stars = Array.from({ length: 46 }, (_, index) => ({
 }))
 const dialog = ref(null)
 const letterTitle = ref(null)
-const draftInput = ref(null)
-const copyInput = ref(null)
-const copyFallback = ref(null)
-const draft = ref('')
-const hasDraft = ref(false)
-const invitationLabel = computed(() => {
-  if (hasDraft.value && draft.value.trim() && draft.value !== (currentLetter.value?.text || '')) {
-    return '继续写，给下一岁的自己'
-  }
-  return currentLetter.value ? '再写几句，给下一岁的自己' : '写封信，给下一岁的自己'
-})
-const selectedLetter = ref(null)
-const mode = ref('write')
-const remainingDays = computed(() => selectedLetter.value ? letterDaysRemaining(selectedLetter.value, now.value) : 0)
-const notice = ref('')
-const storageWarning = ref('')
+const letterBody = ref(null)
+const planetButton = ref(null)
+const planetAngle = ref(0)
+const isDragging = ref(false)
 const isPlaying = ref(false)
 const isHidden = ref(false)
 const audioNotice = ref('')
+const audioProgress = ref(0)
+const audioLevel = ref(0)
 const melody = createBirthdayMelody()
-const displayedOpening = computed(() => selectedLetter.value?.opensOn || currentLetter.value?.opensOn || letterOpeningDate(now.value))
+const clockLabel = seconds => '0:' + String(Math.floor(seconds)).padStart(2, '0')
+const elapsedLabel = computed(() => clockLabel(audioProgress.value * melody.duration))
+const durationLabel = clockLabel(melody.duration)
+const soundStyle = computed(() => ({
+  '--melody-level': audioLevel.value,
+  '--melody-progress': audioProgress.value,
+}))
 let audioRequest = 0
-let audioTimer = 0
+let audioFrame = 0
 let dateTimer = 0
 let disposed = false
 let previousTitle = ''
 let robotsMeta = null
 let pressedBackdrop = false
-let downloadUrl = null
-
-const dateLabel = value => value.replaceAll('-', '.')
-const letterLabel = letter => isLetterOpen(letter, now.value) ? '可以拆开了' : dateLabel(letter.opensOn) + ' 开启'
+let drag = null
+let suppressPlanetClick = false
 
 function stopMelody() {
   audioRequest += 1
-  clearTimeout(audioTimer)
+  cancelAnimationFrame(audioFrame)
+  audioFrame = 0
   melody.stop()
   isPlaying.value = false
+  audioProgress.value = 0
+  audioLevel.value = 0
+}
+
+function paintSound() {
+  if (!melody.isPlaying) {
+    isPlaying.value = false
+    audioProgress.value = 1
+    audioLevel.value = 0
+    audioFrame = 0
+    return
+  }
+  const frame = melody.readFrame()
+  audioProgress.value = frame.progress
+  audioLevel.value = frame.level
+  audioFrame = requestAnimationFrame(paintSound)
 }
 
 async function toggleMelody() {
@@ -72,53 +80,83 @@ async function toggleMelody() {
     return
   }
   isPlaying.value = started
+  audioProgress.value = 0
+  audioLevel.value = 0
   if (!started) audioNotice.value = '声音暂时没有醒来，再轻触一次星球试试。'
-  clearTimeout(audioTimer)
-  if (started) audioTimer = window.setTimeout(() => { isPlaying.value = false }, melody.duration * 1000)
+  cancelAnimationFrame(audioFrame)
+  if (started) audioFrame = requestAnimationFrame(paintSound)
+}
+
+function activatePlanet(event) {
+  if (event.detail !== 0 && suppressPlanetClick) {
+    suppressPlanetClick = false
+    return
+  }
+  toggleMelody()
+}
+
+function setPlanetAngle(angle) {
+  planetAngle.value = Math.max(-35, Math.min(35, angle))
+}
+
+function beginPlanetDrag(event) {
+  if (!event.isPrimary || event.button !== 0) return
+  suppressPlanetClick = false
+  drag = {
+    id: event.pointerId,
+    target: event.currentTarget,
+    pointerType: event.pointerType,
+    startX: event.clientX,
+    startY: event.clientY,
+    angle: planetAngle.value,
+    moved: false,
+  }
+  if (event.pointerType !== 'touch') event.currentTarget.setPointerCapture(event.pointerId)
+}
+
+function movePlanetDrag(event) {
+  if (!drag || drag.id !== event.pointerId) return
+  const dx = event.clientX - drag.startX
+  const dy = event.clientY - drag.startY
+  if (!drag.moved) {
+    if (Math.abs(dx) < 7) return
+    if (drag.pointerType === 'touch' && Math.abs(dx) < Math.abs(dy)) return
+    drag.moved = true
+    suppressPlanetClick = true
+    isDragging.value = true
+    drag.target.setPointerCapture(drag.id)
+  }
+  event.preventDefault()
+  setPlanetAngle(drag.angle + dx * .15)
+}
+
+function endPlanetDrag(event) {
+  if (!drag || (event && drag.id !== event.pointerId)) return
+  const ended = drag
+  drag = null
+  isDragging.value = false
+  if (ended.target.hasPointerCapture(ended.id)) ended.target.releasePointerCapture(ended.id)
+}
+
+function resetPlanet() {
+  setPlanetAngle(0)
+  nextTick(() => planetButton.value?.focus())
 }
 
 function handleVisibility() {
   isHidden.value = document.hidden
   now.value = new Date()
-  if (document.hidden) stopMelody()
-}
-
-function prepareDraft(letter = currentLetter.value) {
-  if (hasDraft.value) return
-  draft.value = letter?.text || ''
-  hasDraft.value = true
-}
-
-async function openLetter(letter = null) {
-  now.value = new Date()
-  notice.value = ''
-  copyFallback.value = null
-  selectedLetter.value = letter
-  if (letter) {
-    mode.value = isLetterOpen(letter, now.value) ? 'read' : 'sealed'
-  } else {
-    mode.value = 'write'
-    prepareDraft()
+  if (document.hidden) {
+    endPlanetDrag()
+    stopMelody()
   }
+}
+
+async function openLetter() {
   await nextTick()
   dialog.value.showModal()
-  if (mode.value === 'write') draftInput.value?.focus()
-  else letterTitle.value?.focus()
-}
-
-function editLetter() {
-  prepareDraft(selectedLetter.value)
-  mode.value = 'write'
-  notice.value = ''
-  copyFallback.value = null
-  nextTick(() => draftInput.value?.focus())
-}
-
-function openSealedLetter() {
-  mode.value = 'read'
-  notice.value = ''
-  copyFallback.value = null
-  nextTick(() => letterTitle.value?.focus())
+  letterBody.value.scrollTop = 0
+  letterTitle.value.focus()
 }
 
 function isBackdropEvent(event) {
@@ -137,54 +175,6 @@ function closeFromBackdrop(event) {
   pressedBackdrop = false
 }
 
-async function storeLetter() {
-  now.value = new Date()
-  try {
-    const updated = saveLetter(letters.value, draft.value, now.value)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
-    letters.value = updated
-    selectedLetter.value = updated.find(letter => letter.year === cycleYear.value)
-    mode.value = 'sealed'
-    hasDraft.value = false
-    storageWarning.value = ''
-    notice.value = '信已存好。下一圈光里，我们再见。'
-    copyFallback.value = null
-    await nextTick()
-    letterTitle.value?.focus()
-  } catch {
-    notice.value = '暂时没有存成功，请先复制这封信留存。你的文字还在这里。'
-  }
-}
-
-async function copyLetter() {
-  const text = mode.value === 'write' ? draft.value : selectedLetter.value.text
-  copyFallback.value = null
-  try {
-    await navigator.clipboard.writeText(text)
-    notice.value = '已复制，记得放到你喜欢的地方。'
-  } catch {
-    copyFallback.value = text
-    notice.value = '自动复制暂不可用，已选中下方原文，可以手动复制。'
-    await nextTick()
-    copyInput.value?.focus()
-    copyInput.value?.select()
-  }
-}
-
-function downloadLetter() {
-  const { filename, content } = formatLetterDownload(selectedLetter.value)
-  if (downloadUrl) URL.revokeObjectURL(downloadUrl)
-  downloadUrl = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }))
-  const link = document.createElement('a')
-  link.href = downloadUrl
-  link.download = filename
-  link.hidden = true
-  dialog.value.append(link)
-  link.click()
-  link.remove()
-  notice.value = '信件文件已准备好，可以留一份在身边。'
-}
-
 onMounted(() => {
   previousTitle = document.title
   document.title = "生日星球 · LiuYinChu'Space"
@@ -193,22 +183,17 @@ onMounted(() => {
   robotsMeta.content = 'noindex, nofollow'
   robotsMeta.setAttribute('data-birthday-robots', '')
   if (!robotsMeta.isConnected) document.head.append(robotsMeta)
-  try {
-    letters.value = normalizeLetters(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'))
-  } catch {
-    storageWarning.value = '当前浏览器暂时无法读取信件。写好后可以先复制留存。'
-  }
   dateTimer = window.setInterval(() => { now.value = new Date() }, 60_000)
   document.addEventListener('visibilitychange', handleVisibility)
 })
 
 onBeforeUnmount(() => {
   disposed = true
-  clearTimeout(audioTimer)
+  cancelAnimationFrame(audioFrame)
   clearInterval(dateTimer)
   document.removeEventListener('visibilitychange', handleVisibility)
+  endPlanetDrag()
   melody.dispose()
-  if (downloadUrl) URL.revokeObjectURL(downloadUrl)
   dialog.value?.close()
   robotsMeta?.remove()
   document.title = previousTitle
@@ -216,7 +201,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="birthday-planet" :class="{ 'is-hidden': isHidden, 'is-playing': isPlaying }" data-page="birthday-planet">
+  <main class="birthday-planet" :class="{ 'is-hidden': isHidden, 'is-playing': isPlaying, 'is-dragging': isDragging }" data-page="birthday-planet">
     <div class="birthday-sky" aria-hidden="true">
       <i v-for="(star, index) in stars" :key="index" :style="{ left: star.x + '%', top: star.y + '%', width: star.size + 'px', height: star.size + 'px', animationDelay: star.delay + 's' }"></i>
     </div>
@@ -234,7 +219,7 @@ onBeforeUnmount(() => {
         <p class="planet-intro">{{ birthday.isBirthday ? '生日快乐。今天，宇宙为你多亮一颗星。' : '这里，永远为 10 月 28 日留一束光。' }}</p>
       <div class="planet-observatory">
         <span class="orbit-label orbit-label--top">NO. {{ String(birthday.anniversary).padStart(2, '0') }}<br><span>YOUR LITTLE UNIVERSE</span></span>
-        <button class="planet-instrument" :aria-label="isPlaying ? '暂停生日旋律' : '轻触星球，播放生日旋律'" :aria-pressed="isPlaying" @click="toggleMelody">
+        <button ref="planetButton" class="planet-instrument" :style="soundStyle" :aria-label="isPlaying ? '停止生日旋律' : '轻触星球，播放生日旋律'" :aria-pressed="isPlaying" aria-describedby="planet-control-help" @click="activatePlanet" @pointerdown="beginPlanetDrag" @pointermove="movePlanetDrag" @pointerup="endPlanetDrag" @pointercancel="endPlanetDrag" @lostpointercapture="endPlanetDrag" @keydown.left.prevent="setPlanetAngle(planetAngle - 5)" @keydown.right.prevent="setPlanetAngle(planetAngle + 5)" @keydown.home.prevent="resetPlanet">
           <svg class="planet-art" viewBox="0 0 600 600" fill="none" aria-hidden="true">
             <defs>
               <radialGradient id="birthday-aura">
@@ -267,6 +252,7 @@ onBeforeUnmount(() => {
                 <feBlend in="SourceGraphic" mode="soft-light" />
               </filter>
             </defs>
+            <g class="planet-orientation" :style="{ transform: 'rotate(' + planetAngle + 'deg)' }">
             <circle cx="300" cy="300" r="292" fill="url(#birthday-aura)" />
             <circle cx="300" cy="300" r="234" stroke="#b2bcd1" stroke-opacity=".08" stroke-dasharray="2 9" />
             <g transform="rotate(-24 300 300)">
@@ -274,6 +260,7 @@ onBeforeUnmount(() => {
               <ellipse cx="300" cy="300" rx="258" ry="78" stroke="#cbb58f" stroke-opacity=".16" stroke-dasharray="3 8" />
               <ellipse class="melody-orbit" cx="300" cy="300" rx="258" ry="78" pathLength="1000" stroke="#f2d9a2" stroke-width="2.5" stroke-linecap="round" />
             </g>
+            <circle class="planet-resonance" cx="300" cy="300" r="151" stroke="#f0d1a0" stroke-width="5" />
             <circle cx="300" cy="300" r="145" fill="url(#birthday-sphere)" />
             <g clip-path="url(#birthday-globe-clip)">
               <g class="planet-clouds" opacity=".28" transform="rotate(-24 300 300)">
@@ -292,12 +279,17 @@ onBeforeUnmount(() => {
             </g>
             <path d="M462 143 L465 152 L474 155 L465 158 L462 167 L459 158 L450 155 L459 152 Z" fill="#dfc99c" opacity=".8" />
             <path d="M131 426 L133 432 L139 434 L133 436 L131 442 L129 436 L123 434 L129 432 Z" fill="#a9bfd2" opacity=".6" />
+            </g>
           </svg>
           <span class="planet-touch-hint">
             <span class="melody-indicator" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span>{{ isPlaying ? '正在轻轻哼唱 · 点按暂停' : '轻触星球，听一段生日旋律' }}</span>
+            <span>{{ isPlaying ? '正在轻轻哼唱 · 点按停止' : audioProgress === 1 ? '这一段光，愿意再听一次吗' : '轻触星球，听一段生日旋律' }}</span>
           </span>
+          <span class="melody-progress" aria-hidden="true"><i></i></span>
+          <span class="melody-time" aria-hidden="true">{{ elapsedLabel }} / {{ durationLabel }}</span>
         </button>
+        <span id="planet-control-help" class="visually-hidden">点击或按回车播放旋律，再次点击停止。横向拖动或按左右方向键调整角度，Home 键复位。当前角度 {{ Math.round(planetAngle) }} 度。</span>
+        <div class="planet-controls"><span>拖动调整角度</span><button :disabled="Math.abs(planetAngle) < .1" aria-label="重置星球角度" @click="resetPlanet">复位</button></div>
         <span class="orbit-label orbit-label--bottom">EST. 2026.10.28<br><span>每过一次生日，多留下一圈光。</span></span>
         <p v-if="audioNotice" class="audio-notice" role="status">{{ audioNotice }}</p>
       </div>
@@ -307,7 +299,7 @@ onBeforeUnmount(() => {
           <p>身边有人，心里有光，<br>也有许多单纯因为喜欢而度过的日子。</p>
         </div>
         <button class="letter-invitation" @click="openLetter()">
-          {{ invitationLabel }}
+          有一封信，写给你
         </button>
         <p class="planet-small-note">一封信，一段旋律，一颗只为你转动的星球。</p>
       </div>
@@ -317,60 +309,24 @@ onBeforeUnmount(() => {
 
     <footer class="planet-footer">
       <div class="planet-year"><span class="planet-year-mark" aria-hidden="true">◌</span><span>第 {{ birthday.anniversary }} 圈光 <small>从我们相遇的这个生日开始</small></span></div>
-      <div v-if="letters.length" class="planet-letters" aria-label="生日信件">
-        <button v-for="letter in [...letters].reverse()" :key="letter.year" @click="openLetter(letter)">
-          <span aria-hidden="true">✉</span> {{ letter.year }} 的信 <span class="letter-state">{{ letterLabel(letter) }}</span>
-        </button>
-      </div>
-      <p v-else class="planet-footer-note">宇宙很大，<br>这一小片属于你。</p>
+      <p class="planet-footer-note">宇宙很大，<br>这一小片属于你。</p>
       <span class="planet-signature">WITH A LITTLE STARDUST, CODEX</span>
     </footer>
 
     <dialog ref="dialog" class="birthday-letter" aria-labelledby="birthday-letter-title" @pointerdown="rememberDialogPointer" @click="closeFromBackdrop">
-      <button class="letter-close" aria-label="关闭信件" @click="dialog.close()">×</button>
-      <span class="letter-eyebrow">A LETTER TO YOUR NEXT ORBIT</span>
-      <h2 id="birthday-letter-title" ref="letterTitle" tabindex="-1">{{ mode === 'read' ? '嘿，又见面了。' : mode === 'sealed' ? '把这一天，轻轻收好。' : '亲爱的，下一岁的我：' }}</h2>
-      <template v-if="mode === 'write'">
-        <p class="letter-description">记下今天的小事、一个愿望，或一句想对未来说的话。<br>在 {{ dateLabel(displayedOpening) }}，再来读读它。</p>
-        <label class="visually-hidden" for="birthday-letter-text">写给下一岁的自己</label>
-        <textarea id="birthday-letter-text" ref="draftInput" v-model="draft" maxlength="5000" rows="8" placeholder="此刻的我，想告诉你……" autofocus></textarea>
-        <div class="letter-draft-meta"><span>暂时关上，也能留在这页继续写。</span><span>{{ draft.length }} / 5000</span></div>
-        <div class="letter-actions">
-          <button class="letter-primary" :disabled="!draft.trim()" @click="storeLetter">存好这封信</button>
-          <button class="letter-secondary" :disabled="!draft.trim()" @click="copyLetter">复制留存</button>
-        </div>
-      </template>
-      <template v-else-if="mode === 'sealed'">
-        <div class="letter-postmark"><span>{{ selectedLetter.year }} · 这一圈的来信</span><span>留给未来的你</span></div>
-        <div class="sealed-envelope" aria-hidden="true"><span>TO MY FUTURE SELF</span><i>✦</i></div>
-        <div class="letter-arrival">
-          <span class="letter-arrival-label">下一次相见</span>
-          <time :datetime="selectedLetter.opensOn">{{ dateLabel(selectedLetter.opensOn) }}</time>
-          <p class="letter-countdown" v-if="remainingDays > 0">还有 <b>{{ remainingDays }}</b> 天，来拆这封信吧。</p>
-          <p class="letter-countdown" v-else>今天，可以和那时的自己相见了。</p>
-        </div>
-        <div class="letter-actions letter-actions--center">
-          <button v-if="remainingDays === 0" class="letter-primary" @click="openSealedLetter">拆开这封信</button>
-          <button v-if="selectedLetter.year === cycleYear" class="letter-secondary" @click="editLetter">再写几句</button>
-          <button class="letter-secondary" @click="copyLetter">复制留存</button>
-          <button class="letter-secondary" @click="downloadLetter">下载信件</button>
-        </div>
-      </template>
-      <template v-else>
-        <p class="letter-description">这是 {{ selectedLetter.year }} 年的你，留给今天的一束光。</p>
-        <div class="opened-letter">{{ selectedLetter.text }}</div>
-        <div class="letter-actions">
-          <button class="letter-secondary" @click="copyLetter">复制留存</button>
-          <button class="letter-secondary" @click="downloadLetter">下载信件</button>
-        </div>
-      </template>
-      <section v-if="copyFallback !== null" class="letter-copy-fallback">
-        <label for="birthday-letter-copy">手动复制原文</label>
-        <textarea id="birthday-letter-copy" ref="copyInput" :value="copyFallback" readonly rows="4"></textarea>
-      </section>
-      <p v-if="notice" class="letter-notice" role="status">{{ notice }}</p>
-      <p v-if="storageWarning" class="letter-notice" role="status">{{ storageWarning }}</p>
-      <p class="letter-privacy">信件只保存在当前浏览器，不会上传。清除浏览数据后会丢失；存好后可以复制或下载留存。</p>
+      <header class="gift-letter-heading">
+        <button class="letter-close" aria-label="关闭信件" @click="dialog.close()">×</button>
+        <span class="letter-eyebrow">A LITTLE LIGHT, FOR YOU</span>
+        <h2 id="birthday-letter-title" ref="letterTitle" tabindex="-1">{{ birthdayGiftLetter.title }}</h2>
+      </header>
+      <div ref="letterBody" class="gift-letter-body" tabindex="0" aria-label="生日信正文">
+        <p class="gift-letter-salutation">{{ birthdayGiftLetter.salutation }}</p>
+        <p v-for="(paragraph, index) in birthdayGiftLetter.paragraphs" :key="index">{{ paragraph }}</p>
+      </div>
+      <footer class="gift-letter-signature">
+        <span>{{ birthdayGiftLetter.signature }}</span>
+        <time :datetime="birthdayGiftLetter.date">{{ birthdayGiftLetter.dateLabel }}</time>
+      </footer>
     </dialog>
   </main>
 </template>
@@ -424,16 +380,16 @@ onBeforeUnmount(() => {
 .planet-instrument { display: block; position: relative; width: 100%; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--planet-muted); }
 .planet-art { display: block; width: 100%; overflow: visible; transition: filter .6s; animation: birthday-float 12s ease-in-out infinite; }
 .planet-instrument:hover .planet-art { filter: brightness(1.08); }
-.is-playing .planet-art { filter: brightness(1.12) drop-shadow(0 0 20px #e6c99020); }
+.is-playing .planet-art { filter: brightness(calc(1.02 + var(--melody-level, 0) * .3)) drop-shadow(0 0 18px #e6c99018); }
 .planet-touch-hint { position: absolute; left: 0; right: 0; bottom: 3%; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 12px; letter-spacing: .045em; color: #b3bfd1; }
 .melody-indicator { display: inline-flex; align-items: center; justify-content: center; gap: 3px; width: 20px; height: 18px; }
 .melody-indicator i { width: 2px; height: 5px; border-radius: 2px; background: var(--planet-gold); transform-origin: center; transition: height .3s; }
 .melody-indicator i:nth-child(2) { height: 10px; }
-.is-playing .melody-indicator i { height: 14px; animation: birthday-notes 1.1s ease-in-out infinite alternate; }
-.is-playing .melody-indicator i:nth-child(2) { animation-delay: -.4s; }
-.is-playing .melody-indicator i:nth-child(3) { animation-delay: -.8s; }
-.melody-orbit { opacity: 0; stroke-dasharray: 32 968; transition: opacity .5s; }
-.is-playing .melody-orbit { opacity: .8; animation: birthday-orbit 8.8s linear infinite; }
+.is-playing .melody-indicator i { height: 14px; transform: scaleY(calc(.25 + var(--melody-level, 0) * 1.25)); }
+.is-playing .melody-indicator i:nth-child(2) { height: 18px; }
+.is-playing .melody-indicator i:nth-child(3) { height: 10px; }
+.melody-orbit { opacity: 0; stroke-dasharray: 32 968; stroke-dashoffset: calc(-1000 * var(--melody-progress, 0)); transition: opacity .5s; }
+.is-playing .melody-orbit { opacity: calc(.2 + var(--melody-level, 0) * .8); }
 .orbit-label { position: absolute; color: #d5c4a4; font-size: 10px; line-height: 2.2; letter-spacing: .12em; pointer-events: none; z-index: 1; }
 .orbit-label > span { color: #98a5ba; font-size: 9px; letter-spacing: .1em; }
 .orbit-label--top { top: 9%; right: 5%; }
@@ -446,49 +402,34 @@ onBeforeUnmount(() => {
 .planet-year small { display: block; margin-top: 6px; color: #94a1b5; font-size: 11px; letter-spacing: .04em; }
 .planet-footer-note { color: #aab7c9; font-family: 'LXGW WenKai', serif; font-size: 12px; line-height: 1.8; margin: 0; }
 .planet-signature { color: #8c9ab0; font-size: 9px; letter-spacing: .13em; }
-.planet-letters { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
-.planet-letters button { color: #d3c6b0; border: 1px solid #b5c0d126; background: #d4bc8f08; border-radius: 3px; padding: 9px 12px; font-size: 12px; line-height: 1.7; }
-.planet-letters button > span:first-child { padding-right: 5px; }
-.letter-state { display: block; color: #9eabc0; font-size: 11px; }
-.birthday-letter { position: fixed; inset: 0; width: min(570px, calc(100vw - 36px)); max-height: calc(100svh - 36px); padding: 42px; margin: auto; overflow: auto; color: #ece6d9; background: #131c2a; border: 1px solid #b6a78c55; border-radius: 8px; box-shadow: 0 30px 120px #0009; }
+.birthday-letter { position: fixed; inset: 0; width: min(680px, calc(100vw - 36px)); max-height: min(820px, calc(100svh - 36px)); padding: 34px 38px 26px; margin: auto; overflow: hidden; color: #ece6d9; background: #131c2a; border: 1px solid #b6a78c55; border-radius: 8px; box-shadow: 0 30px 120px #0009; }
+.birthday-letter[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
 .birthday-letter::backdrop { background: #030914ce; backdrop-filter: blur(9px); }
-.letter-close { position: absolute; right: 12px; top: 8px; width: 44px; height: 44px; color: #aab5c5; border: 0; background: none; font-size: 26px !important; }
-.letter-eyebrow { display: block; margin-bottom: 20px; color: #c6b18b; font-size: 9px; letter-spacing: .14em; }
-.birthday-letter h2 { margin: 0 0 15px; color: #f0e7d8; font-family: 'LXGW WenKai', serif; font-size: clamp(22px, 4vw, 29px); font-weight: 400; }
-.letter-description { margin: 0 0 22px; color: #b3bed0; font-size: 14px; line-height: 1.9; }
-.letter-description strong { color: #dfc79b; font-weight: 400; }
-.birthday-letter textarea { display: block; width: 100%; padding: 15px; resize: vertical; min-height: 180px; max-height: 45svh; border: 1px solid #b2bdce35; border-radius: 3px; outline: none; color: #eee6d8; background: #0b1321; font-family: 'LXGW WenKai', serif; font-size: 16px; line-height: 1.9; }
-.birthday-letter textarea:focus { border-color: #d8bc81a0; box-shadow: 0 0 0 2px #d8bc8110; }
-.birthday-letter textarea::placeholder { color: #64748c; }
-.letter-draft-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 9px; color: #99a7bd; font-size: 11px; line-height: 1.6; }
-.letter-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 18px; margin-top: 20px; }
-.letter-actions--center { justify-content: center; }
-.letter-primary { border: 1px solid #dcc299; border-radius: 3px; min-height: 44px; padding: 12px 20px; background: #ddc699; color: #18202d; font-size: 14px !important; }
-.letter-secondary { min-height: 44px; padding: 11px 0; border: 0; background: none; color: #d3bd96; font-size: 13px !important; text-decoration: underline; text-underline-offset: 4px; }
-.letter-primary:disabled, .letter-secondary:disabled { cursor: default; opacity: .4; }
-.letter-privacy { margin: 25px 0 0; padding-top: 17px; border-top: 1px solid #bbc9e01a; color: #99a7bd; font-size: 12px; line-height: 1.8; }
-.letter-notice { color: #dec79a; font-size: 12px; line-height: 1.8; margin: 16px 0 0; }
-.sealed-envelope { position: relative; width: 214px; height: 124px; margin: 30px auto 24px; animation: birthday-letter-arrive .45s ease-out; display: grid; place-items: end center; padding-bottom: 18px; border: 1px solid #b6a17b77; border-radius: 3px; background: linear-gradient(28deg, transparent 49.5%, #b6a17b33 50%, transparent 50.7%), linear-gradient(-28deg, transparent 49.5%, #b6a17b33 50%, transparent 50.7%), #a99a7510; }
-.sealed-envelope > span { font-family: ui-monospace, monospace; color: #b49d77; font-size: 10px; letter-spacing: .2em; }
-.sealed-envelope > i { position: absolute; left: calc(50% - 15px); top: 42px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #c9ad7c; color: #19202a; font-size: 16px; font-style: normal; }
-.birthday-letter { overscroll-behavior: contain; }
+.gift-letter-heading { position: relative; padding-bottom: 20px; border-bottom: 1px solid #b9a48330; }
+.letter-close { position: absolute; right: -16px; top: -19px; width: 44px; height: 44px; color: #aab5c5; border: 0; background: none; font-size: 26px !important; }
+.letter-eyebrow { display: block; margin: 0 40px 17px 0; color: #c6b18b; font-size: 10px; letter-spacing: .14em; }
+.birthday-letter h2 { margin: 0; color: #f0e7d8; font-family: 'LXGW WenKai', serif; font-size: clamp(24px, 4vw, 31px); font-weight: 400; }
 .birthday-letter h2:focus { outline: none; }
-.letter-postmark { display: flex; justify-content: space-between; gap: 12px; margin-top: 22px; padding: 12px 0; border-block: 1px dashed #b9a48335; color: #a99b85; font-size: 11px; letter-spacing: .04em; }
-.letter-arrival { text-align: center; }
-.letter-arrival-label { display: block; color: #9eabbf; font-size: 12px; letter-spacing: .15em; }
-.letter-arrival time { display: block; margin-top: 10px; color: #ead5af; font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace; font-size: clamp(25px, 5vw, 31px); letter-spacing: .08em; font-variant-numeric: tabular-nums; }
-.letter-countdown { margin: 13px 0 0; color: #9faec3; font-size: 13px; line-height: 1.8; }
-.letter-countdown b { margin: 0 3px; color: #d9c298; font-weight: 400; font-variant-numeric: tabular-nums; }
-.letter-copy-fallback { margin-top: 20px; padding-top: 17px; border-top: 1px solid #bbc9e026; }
-.letter-copy-fallback label { display: block; margin-bottom: 9px; color: #c7b28d; font-size: 12px; }
-.letter-copy-fallback textarea { min-height: 110px; max-height: 180px; font-size: 16px; }
-@keyframes birthday-letter-arrive { from { opacity: 0; transform: translateY(8px) rotate(-2deg); } to { opacity: 1; transform: none; } }
-.opened-letter { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 42svh; overflow-y: auto; padding: 20px; border-left: 1px solid #b7a17e77; background: #0b132155; color: #d8d3ca; font-family: 'LXGW WenKai', serif; font-size: 16px; line-height: 2; }
+.gift-letter-body { padding: 8px 13px 0 0; margin: 12px -13px 12px 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #8d80604d transparent; font-family: 'LXGW WenKai', 'Songti SC', serif; font-size: 16px; line-height: 2.05; letter-spacing: .025em; color: #c5cbd3; }
+.gift-letter-body:focus-visible { outline: 1px solid #ddc69980; outline-offset: 4px; border-radius: 2px; }
+.gift-letter-body p { margin: 0 0 20px; }
+.gift-letter-body .gift-letter-salutation { color: #e2cda6; }
+.gift-letter-signature { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-top: 17px; border-top: 1px solid #b9a48330; color: #a8b3c4; font-size: 11px; }
+.gift-letter-signature > span { color: #d7c29d; font-family: 'LXGW WenKai', serif; font-size: 19px; }
+.planet-instrument { cursor: grab !important; touch-action: pan-y; user-select: none; }
+.is-dragging .planet-instrument { cursor: grabbing !important; }
+.planet-orientation { transform-box: view-box; transform-origin: 300px 300px; transition: transform .18s ease-out; }
+.is-dragging .planet-orientation { transition: none; }
+.planet-resonance { opacity: calc(.04 + var(--melody-level, 0) * .34); }
+.melody-progress { position: absolute; width: 38%; height: 1px; left: 31%; bottom: .5%; background: #ddc69925; overflow: hidden; }
+.melody-progress > i { display: block; width: 100%; height: 100%; background: #d8be8b; transform: scaleX(var(--melody-progress, 0)); transform-origin: left; }
+.melody-time { position: absolute; right: 10%; bottom: .1%; font-family: ui-monospace, monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8e9aae; }
+.planet-controls { position: absolute; right: 4%; bottom: 0; display: flex; align-items: center; gap: 10px; color: #8e9aae; font-size: 10px; }
+.planet-controls button { min-width: 44px; min-height: 44px; padding: 0 5px; color: #cfb78f; border: 0; background: none; font-size: 11px; }
+.planet-controls button:disabled { opacity: .35; cursor: default; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @keyframes birthday-twinkle { from { opacity: .18; } to { opacity: .65; } }
 @keyframes birthday-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-@keyframes birthday-orbit { to { stroke-dashoffset: -1000; } }
-@keyframes birthday-notes { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
 .is-hidden .birthday-sky i, .is-hidden .planet-art, .is-hidden .melody-orbit, .is-hidden .melody-indicator i { animation-play-state: paused; }
 @media (max-width: 760px) {
   .planet-header { height: 76px; }
@@ -502,21 +443,26 @@ onBeforeUnmount(() => {
   .planet-wish { font-size: 14px; padding-left: 17px; }
   .letter-invitation { justify-self: stretch; margin-top: 22px; font-size: 14px !important; }
   .planet-small-note { font-size: 11px; text-align: center; }
-  .planet-observatory { width: min(100%, 390px); margin: 8px auto 28px; padding: 24px 0 38px; }
+  .planet-observatory { width: min(100%, 390px); margin: 8px auto 28px; padding: 24px 0 68px; }
   .orbit-label--top { top: 0; right: 0; font-size: 10px; }
   .orbit-label--bottom { bottom: 0; left: 5px; font-size: 9px; }
   .orbit-label--bottom > span { font-size: 10px; }
   .planet-touch-hint { font-size: 11px; bottom: 0; letter-spacing: 0; }
   .planet-footer { flex-wrap: wrap; min-height: 130px; gap: 20px; padding: 22px 0; }
   .planet-signature { width: 100%; font-size: 8px; text-align: right; }
-  .planet-letters { justify-content: flex-start; }
-  .birthday-letter { padding: 38px 22px 24px; }
-  .letter-description { font-size: 13px; }
-  .letter-privacy { font-size: 11px; }
+  .birthday-letter { padding: 29px 22px 20px; }
+  .gift-letter-body { font-size: 16px; line-height: 1.95; }
+  .letter-close { top: -17px; right: -12px; }
+  .planet-controls { right: 0; gap: 3px; font-size: 9px; }
+  .melody-time { right: 5%; font-size: 8px; bottom: -14px; }
+  .melody-progress { bottom: -10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .birthday-sky i, .planet-art, .sealed-envelope, .is-playing .melody-orbit, .is-playing .melody-indicator i { animation: none; }
-  .planet-art, .planet-home, .letter-invitation, .melody-orbit, .melody-indicator i { transition: none; }
+  .birthday-sky i, .planet-art { animation: none; }
+  .melody-orbit, .planet-resonance { display: none; }
+  .is-playing .planet-art { filter: brightness(1.03); }
+  .is-playing .melody-indicator i { transform: none; }
+  .planet-art, .planet-home, .letter-invitation, .melody-orbit, .melody-indicator i, .planet-orientation { transition: none; }
 }
 @media (forced-colors: active) {
   .planet-art { forced-color-adjust: none; }
