@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { birthdayState, FIRST_YEAR, isLetterOpen, letterOpeningDate, normalizeLetters, saveLetter } from '../birthday/letters.mjs'
+import { birthdayState, FIRST_YEAR, formatLetterDownload, isLetterOpen, letterDaysRemaining, letterOpeningDate, normalizeLetters, saveLetter } from '../birthday/letters.mjs'
 import { createBirthdayMelody } from '../birthday/melody.js'
 
 const STORAGE_KEY = 'birthday-planet-letters-v1'
@@ -17,6 +17,10 @@ const stars = Array.from({ length: 46 }, (_, index) => ({
   delay: -(index % 11),
 }))
 const dialog = ref(null)
+const letterTitle = ref(null)
+const draftInput = ref(null)
+const copyInput = ref(null)
+const copyFallback = ref(null)
 const draft = ref('')
 const hasDraft = ref(false)
 const invitationLabel = computed(() => {
@@ -27,6 +31,7 @@ const invitationLabel = computed(() => {
 })
 const selectedLetter = ref(null)
 const mode = ref('write')
+const remainingDays = computed(() => selectedLetter.value ? letterDaysRemaining(selectedLetter.value, now.value) : 0)
 const notice = ref('')
 const storageWarning = ref('')
 const isPlaying = ref(false)
@@ -40,6 +45,8 @@ let dateTimer = 0
 let disposed = false
 let previousTitle = ''
 let robotsMeta = null
+let pressedBackdrop = false
+let downloadUrl = null
 
 const dateLabel = value => value.replaceAll('-', '.')
 const letterLabel = letter => isLetterOpen(letter, now.value) ? '可以拆开了' : dateLabel(letter.opensOn) + ' 开启'
@@ -85,6 +92,7 @@ function prepareDraft(letter = currentLetter.value) {
 async function openLetter(letter = null) {
   now.value = new Date()
   notice.value = ''
+  copyFallback.value = null
   selectedLetter.value = letter
   if (letter) {
     mode.value = isLetterOpen(letter, now.value) ? 'read' : 'sealed'
@@ -94,16 +102,42 @@ async function openLetter(letter = null) {
   }
   await nextTick()
   dialog.value.showModal()
+  if (mode.value === 'write') draftInput.value?.focus()
+  else letterTitle.value?.focus()
 }
 
 function editLetter() {
   prepareDraft(selectedLetter.value)
   mode.value = 'write'
   notice.value = ''
-  nextTick(() => dialog.value.querySelector('textarea')?.focus())
+  copyFallback.value = null
+  nextTick(() => draftInput.value?.focus())
 }
 
-function storeLetter() {
+function openSealedLetter() {
+  mode.value = 'read'
+  notice.value = ''
+  copyFallback.value = null
+  nextTick(() => letterTitle.value?.focus())
+}
+
+function isBackdropEvent(event) {
+  if (event.target !== dialog.value) return false
+  const bounds = dialog.value.getBoundingClientRect()
+  return event.clientX < bounds.left || event.clientX > bounds.right ||
+    event.clientY < bounds.top || event.clientY > bounds.bottom
+}
+
+function rememberDialogPointer(event) {
+  pressedBackdrop = isBackdropEvent(event)
+}
+
+function closeFromBackdrop(event) {
+  if (pressedBackdrop && isBackdropEvent(event)) dialog.value.close()
+  pressedBackdrop = false
+}
+
+async function storeLetter() {
   now.value = new Date()
   try {
     const updated = saveLetter(letters.value, draft.value, now.value)
@@ -114,24 +148,41 @@ function storeLetter() {
     hasDraft.value = false
     storageWarning.value = ''
     notice.value = '信已存好。下一圈光里，我们再见。'
+    copyFallback.value = null
+    await nextTick()
+    letterTitle.value?.focus()
   } catch {
     notice.value = '暂时没有存成功，请先复制这封信留存。你的文字还在这里。'
   }
 }
 
 async function copyLetter() {
-  const text = mode.value === 'write' ? draft.value : selectedLetter.value?.text
+  const text = mode.value === 'write' ? draft.value : selectedLetter.value.text
+  copyFallback.value = null
   try {
     await navigator.clipboard.writeText(text)
     notice.value = '已复制，记得放到你喜欢的地方。'
   } catch {
-    if (mode.value === 'sealed') editLetter()
+    copyFallback.value = text
+    notice.value = '自动复制暂不可用，已选中下方原文，可以手动复制。'
     await nextTick()
-    const field = dialog.value.querySelector('textarea')
-    field?.focus()
-    field?.select()
-    notice.value = '请选中文字手动复制留存。'
+    copyInput.value?.focus()
+    copyInput.value?.select()
   }
+}
+
+function downloadLetter() {
+  const { filename, content } = formatLetterDownload(selectedLetter.value)
+  if (downloadUrl) URL.revokeObjectURL(downloadUrl)
+  downloadUrl = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = downloadUrl
+  link.download = filename
+  link.hidden = true
+  dialog.value.append(link)
+  link.click()
+  link.remove()
+  notice.value = '信件文件已准备好，可以留一份在身边。'
 }
 
 onMounted(() => {
@@ -157,6 +208,7 @@ onBeforeUnmount(() => {
   clearInterval(dateTimer)
   document.removeEventListener('visibilitychange', handleVisibility)
   melody.dispose()
+  if (downloadUrl) URL.revokeObjectURL(downloadUrl)
   dialog.value?.close()
   robotsMeta?.remove()
   document.title = previousTitle
@@ -274,14 +326,14 @@ onBeforeUnmount(() => {
       <span class="planet-signature">WITH A LITTLE STARDUST, CODEX</span>
     </footer>
 
-    <dialog ref="dialog" class="birthday-letter" aria-labelledby="birthday-letter-title" @click="event => { if (event.target === dialog) dialog.close() }">
+    <dialog ref="dialog" class="birthday-letter" aria-labelledby="birthday-letter-title" @pointerdown="rememberDialogPointer" @click="closeFromBackdrop">
       <button class="letter-close" aria-label="关闭信件" @click="dialog.close()">×</button>
       <span class="letter-eyebrow">A LETTER TO YOUR NEXT ORBIT</span>
-      <h2 id="birthday-letter-title">{{ mode === 'read' ? '嘿，又见面了。' : mode === 'sealed' ? '把这一天，轻轻收好。' : '亲爱的，下一岁的我：' }}</h2>
+      <h2 id="birthday-letter-title" ref="letterTitle" tabindex="-1">{{ mode === 'read' ? '嘿，又见面了。' : mode === 'sealed' ? '把这一天，轻轻收好。' : '亲爱的，下一岁的我：' }}</h2>
       <template v-if="mode === 'write'">
         <p class="letter-description">记下今天的小事、一个愿望，或一句想对未来说的话。<br>在 {{ dateLabel(displayedOpening) }}，再来读读它。</p>
         <label class="visually-hidden" for="birthday-letter-text">写给下一岁的自己</label>
-        <textarea id="birthday-letter-text" v-model="draft" maxlength="5000" rows="8" placeholder="此刻的我，想告诉你……" autofocus></textarea>
+        <textarea id="birthday-letter-text" ref="draftInput" v-model="draft" maxlength="5000" rows="8" placeholder="此刻的我，想告诉你……" autofocus></textarea>
         <div class="letter-draft-meta"><span>暂时关上，也能留在这页继续写。</span><span>{{ draft.length }} / 5000</span></div>
         <div class="letter-actions">
           <button class="letter-primary" :disabled="!draft.trim()" @click="storeLetter">存好这封信</button>
@@ -289,21 +341,36 @@ onBeforeUnmount(() => {
         </div>
       </template>
       <template v-else-if="mode === 'sealed'">
-        <div class="sealed-envelope" aria-hidden="true"><span>10.28</span><i>✦</i></div>
-        <p class="letter-description letter-center">有些话，留给未来的自己刚刚好。<br><strong>{{ dateLabel(selectedLetter.opensOn) }}</strong>，来拆这封信吧。</p>
+        <div class="letter-postmark"><span>{{ selectedLetter.year }} · 这一圈的来信</span><span>留给未来的你</span></div>
+        <div class="sealed-envelope" aria-hidden="true"><span>TO MY FUTURE SELF</span><i>✦</i></div>
+        <div class="letter-arrival">
+          <span class="letter-arrival-label">下一次相见</span>
+          <time :datetime="selectedLetter.opensOn">{{ dateLabel(selectedLetter.opensOn) }}</time>
+          <p class="letter-countdown" v-if="remainingDays > 0">还有 <b>{{ remainingDays }}</b> 天，来拆这封信吧。</p>
+          <p class="letter-countdown" v-else>今天，可以和那时的自己相见了。</p>
+        </div>
         <div class="letter-actions letter-actions--center">
+          <button v-if="remainingDays === 0" class="letter-primary" @click="openSealedLetter">拆开这封信</button>
           <button v-if="selectedLetter.year === cycleYear" class="letter-secondary" @click="editLetter">再写几句</button>
           <button class="letter-secondary" @click="copyLetter">复制留存</button>
+          <button class="letter-secondary" @click="downloadLetter">下载信件</button>
         </div>
       </template>
       <template v-else>
         <p class="letter-description">这是 {{ selectedLetter.year }} 年的你，留给今天的一束光。</p>
         <div class="opened-letter">{{ selectedLetter.text }}</div>
-        <div class="letter-actions"><button class="letter-secondary" @click="copyLetter">复制留存</button></div>
+        <div class="letter-actions">
+          <button class="letter-secondary" @click="copyLetter">复制留存</button>
+          <button class="letter-secondary" @click="downloadLetter">下载信件</button>
+        </div>
       </template>
+      <section v-if="copyFallback !== null" class="letter-copy-fallback">
+        <label for="birthday-letter-copy">手动复制原文</label>
+        <textarea id="birthday-letter-copy" ref="copyInput" :value="copyFallback" readonly rows="4"></textarea>
+      </section>
       <p v-if="notice" class="letter-notice" role="status">{{ notice }}</p>
       <p v-if="storageWarning" class="letter-notice" role="status">{{ storageWarning }}</p>
-      <p class="letter-privacy">信件只保存在当前浏览器，不会上传。清除浏览数据后会丢失，请复制一份留存。</p>
+      <p class="letter-privacy">信件只保存在当前浏览器，不会上传。清除浏览数据后会丢失；存好后可以复制或下载留存。</p>
     </dialog>
   </main>
 </template>
@@ -394,17 +461,28 @@ onBeforeUnmount(() => {
 .birthday-letter textarea:focus { border-color: #d8bc81a0; box-shadow: 0 0 0 2px #d8bc8110; }
 .birthday-letter textarea::placeholder { color: #64748c; }
 .letter-draft-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 9px; color: #99a7bd; font-size: 11px; line-height: 1.6; }
-.letter-actions { display: flex; align-items: center; gap: 18px; margin-top: 20px; }
+.letter-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 18px; margin-top: 20px; }
 .letter-actions--center { justify-content: center; }
 .letter-primary { border: 1px solid #dcc299; border-radius: 3px; min-height: 44px; padding: 12px 20px; background: #ddc699; color: #18202d; font-size: 14px !important; }
 .letter-secondary { min-height: 44px; padding: 11px 0; border: 0; background: none; color: #d3bd96; font-size: 13px !important; text-decoration: underline; text-underline-offset: 4px; }
 .letter-primary:disabled, .letter-secondary:disabled { cursor: default; opacity: .4; }
 .letter-privacy { margin: 25px 0 0; padding-top: 17px; border-top: 1px solid #bbc9e01a; color: #99a7bd; font-size: 12px; line-height: 1.8; }
 .letter-notice { color: #dec79a; font-size: 12px; line-height: 1.8; margin: 16px 0 0; }
-.sealed-envelope { position: relative; width: 190px; height: 110px; margin: 38px auto 28px; display: grid; place-items: end center; padding-bottom: 18px; border: 1px solid #b6a17b77; border-radius: 3px; background: linear-gradient(28deg, transparent 49.5%, #b6a17b33 50%, transparent 50.7%), linear-gradient(-28deg, transparent 49.5%, #b6a17b33 50%, transparent 50.7%), #a99a7510; }
+.sealed-envelope { position: relative; width: 214px; height: 124px; margin: 30px auto 24px; animation: birthday-letter-arrive .45s ease-out; display: grid; place-items: end center; padding-bottom: 18px; border: 1px solid #b6a17b77; border-radius: 3px; background: linear-gradient(28deg, transparent 49.5%, #b6a17b33 50%, transparent 50.7%), linear-gradient(-28deg, transparent 49.5%, #b6a17b33 50%, transparent 50.7%), #a99a7510; }
 .sealed-envelope > span { font-family: ui-monospace, monospace; color: #b49d77; font-size: 10px; letter-spacing: .2em; }
-.sealed-envelope > i { position: absolute; left: calc(50% - 15px); top: 35px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #c9ad7c; color: #19202a; font-size: 16px; font-style: normal; }
-.letter-center { text-align: center; }
+.sealed-envelope > i { position: absolute; left: calc(50% - 15px); top: 42px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #c9ad7c; color: #19202a; font-size: 16px; font-style: normal; }
+.birthday-letter { overscroll-behavior: contain; }
+.birthday-letter h2:focus { outline: none; }
+.letter-postmark { display: flex; justify-content: space-between; gap: 12px; margin-top: 22px; padding: 12px 0; border-block: 1px dashed #b9a48335; color: #a99b85; font-size: 11px; letter-spacing: .04em; }
+.letter-arrival { text-align: center; }
+.letter-arrival-label { display: block; color: #9eabbf; font-size: 12px; letter-spacing: .15em; }
+.letter-arrival time { display: block; margin-top: 10px; color: #ead5af; font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace; font-size: clamp(25px, 5vw, 31px); letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.letter-countdown { margin: 13px 0 0; color: #9faec3; font-size: 13px; line-height: 1.8; }
+.letter-countdown b { margin: 0 3px; color: #d9c298; font-weight: 400; font-variant-numeric: tabular-nums; }
+.letter-copy-fallback { margin-top: 20px; padding-top: 17px; border-top: 1px solid #bbc9e026; }
+.letter-copy-fallback label { display: block; margin-bottom: 9px; color: #c7b28d; font-size: 12px; }
+.letter-copy-fallback textarea { min-height: 110px; max-height: 180px; font-size: 16px; }
+@keyframes birthday-letter-arrive { from { opacity: 0; transform: translateY(8px) rotate(-2deg); } to { opacity: 1; transform: none; } }
 .opened-letter { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 42svh; overflow-y: auto; padding: 20px; border-left: 1px solid #b7a17e77; background: #0b132155; color: #d8d3ca; font-family: 'LXGW WenKai', serif; font-size: 16px; line-height: 2; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @keyframes birthday-twinkle { from { opacity: .18; } to { opacity: .65; } }
@@ -437,7 +515,7 @@ onBeforeUnmount(() => {
   .letter-privacy { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .birthday-sky i, .planet-art, .is-playing .melody-orbit, .is-playing .melody-indicator i { animation: none; }
+  .birthday-sky i, .planet-art, .sealed-envelope, .is-playing .melody-orbit, .is-playing .melody-indicator i { animation: none; }
   .planet-art, .planet-home, .letter-invitation, .melody-orbit, .melody-indicator i { transition: none; }
 }
 @media (forced-colors: active) {

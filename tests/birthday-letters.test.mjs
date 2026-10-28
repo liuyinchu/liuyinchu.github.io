@@ -9,6 +9,8 @@ import {
   normalizeLetters,
   saveLetter,
   isLetterOpen,
+  letterDaysRemaining,
+  formatLetterDownload,
 } from '../src/birthday/letters.mjs';
 
 const at = value => new Date(value);
@@ -186,4 +188,50 @@ test('letters open exactly at Shanghai midnight and remain open afterward', () =
   assert.equal(isLetterOpen(letter, at('2028-01-01T00:00:00+08:00')), true);
   assert.equal(isLetterOpen({ opensOn: '2027-02-29' }, at(originalTime)), false);
   assert.equal(isLetterOpen(null, at(originalTime)), false);
+});
+
+test('letter waiting days change at Shanghai midnight', () => {
+  const [letter] = normalizeLetters([{ year: 2026, text: '愿望', opensOn: '2027-10-28' }]);
+  assert.equal(letterDaysRemaining(letter, at('2027-10-26T16:00:00.000Z')), 1);
+  assert.equal(letterDaysRemaining(letter, at('2027-10-27T15:59:59.999Z')), 1);
+  assert.equal(letterDaysRemaining(letter, at('2027-10-27T16:00:00.000Z')), 0);
+});
+
+test('letter waiting days stay zero throughout the birthday and after it', () => {
+  const [letter] = normalizeLetters([{ year: 2026, text: '愿望', opensOn: '2027-10-28' }]);
+  for (const date of [
+    '2027-10-28T12:00:00+08:00',
+    '2027-10-28T23:59:59.999+08:00',
+    '2027-10-29T00:00:00+08:00',
+    '2028-10-28T00:00:00+08:00',
+  ]) {
+    assert.equal(letterDaysRemaining(letter, at(date)), 0, date);
+  }
+});
+
+test('letter waiting days include leap day when crossing a leap year', () => {
+  const [letter] = normalizeLetters([{ year: 2027, text: '愿望', opensOn: '2028-10-28' }]);
+  for (const [date, expected] of [
+    ['2027-10-28', 366],
+    ['2028-02-28', 243],
+    ['2028-02-29', 242],
+    ['2028-03-01', 241],
+  ]) {
+    assert.equal(letterDaysRemaining(letter, at(date + 'T00:00:00+08:00')), expected, date);
+  }
+});
+
+test('plain-text downloads preserve Chinese text and body line breaks with matching dates', () => {
+  const body = '  亲爱的自己：\n\n愿你平安、快乐。\n继续向前。  ';
+  for (const [year, opensOn, expectedFilename, expectedHeading, expectedOpening] of [
+    [2026, '2027-10-28', '生日星球-2026.txt', '2026 年留给自己的信', '开启日期：2027.10.28'],
+    [2027, '2028-02-29', '生日星球-2027.txt', '2027 年留给自己的信', '开启日期：2028.02.29'],
+  ]) {
+    const [letter] = normalizeLetters([{ year, text: body, opensOn }]);
+    assert.deepEqual(formatLetterDownload(letter), {
+      filename: expectedFilename,
+      content: '生日星球\n' + expectedHeading + '\n' + expectedOpening + '\n\n' + body + '\n',
+    });
+    assert.equal(letter.text, body);
+  }
 });

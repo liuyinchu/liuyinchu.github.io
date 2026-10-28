@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 import { expectNoHorizontalOverflow } from './test-helpers.js'
 
 const key = 'birthday-planet-letters-v1'
@@ -56,6 +57,7 @@ test('letters survive reload, can be edited, and open on the next Shanghai birth
   await expect(page.locator('.planet-year')).toContainText('第 2 圈光')
   await page.getByRole('button', { name: /2026 的信/ }).click()
   await expect(letter).toContainText('嘿，又见面了')
+  await expect(page.getByRole('heading', { name: '嘿，又见面了。' })).toBeFocused()
   await expect(page.locator('.opened-letter')).toHaveText('愿明年的我仍然好奇。\n记得看星星。')
 })
 
@@ -141,4 +143,67 @@ test('an unsaved letter survives dismissing and reopening the dialog', async ({ 
   expect(await page.evaluate(key => localStorage.getItem(key), key)).toBeNull()
   await page.getByRole('button', { name: '存好这封信', exact: true }).click()
   await expect(page.getByRole('status')).toContainText('信已存好')
+})
+
+test('dialog whitespace and an outward drag do not dismiss the letter', async ({ page }) => {
+  await page.goto('/birthday-planet', { waitUntil: 'domcontentloaded' })
+  await page.getByRole('button', { name: '写封信，给下一岁的自己' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.click({ position: { x: 8, y: 90 } })
+  await expect(dialog).toBeVisible()
+  const box = await page.getByLabel('写给下一岁的自己', { exact: true }).boundingBox()
+  await page.mouse.move(box.x + 20, box.y + 20)
+  await page.mouse.down()
+  await page.mouse.move(2, 2)
+  await page.mouse.up()
+  await expect(dialog).toBeVisible()
+  await page.mouse.click(2, 2)
+  await expect(dialog).not.toBeVisible()
+})
+
+test('failed copying keeps the sealed letter and pending draft separate', async ({ page }) => {
+  await page.clock.setFixedTime(birthday2026)
+  await page.addInitScript(key => {
+    localStorage.setItem(key, JSON.stringify([{ year: 2026, text: '已经存好的原信。', createdAt: '2026-10-28T04:00:00.000Z', opensOn: '2027-10-28' }]))
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
+      writeText: async () => { throw new DOMException('Copy unavailable', 'NotAllowedError') },
+    } })
+  }, key)
+  await page.goto('/birthday-planet', { waitUntil: 'domcontentloaded' })
+  await page.getByRole('button', { name: '再写几句，给下一岁的自己' }).click()
+  await page.getByLabel('写给下一岁的自己', { exact: true }).fill('没有保存的新草稿。')
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: /2026 的信/ }).click()
+  await page.getByRole('button', { name: '复制留存' }).click()
+  await expect(page.getByRole('heading', { name: '把这一天，轻轻收好。' })).toBeVisible()
+  const fallback = page.getByLabel('手动复制原文')
+  await expect(fallback).toHaveValue('已经存好的原信。')
+  await expect(fallback).toHaveAttribute('readonly', '')
+  await expect(fallback).toBeFocused()
+  expect(await fallback.evaluate(input => input.selectionEnd - input.selectionStart)).toBe('已经存好的原信。'.length)
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: '继续写，给下一岁的自己' }).click()
+  await expect(page.getByLabel('写给下一岁的自己', { exact: true })).toHaveValue('没有保存的新草稿。')
+  expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key))[0].text, key)).toBe('已经存好的原信。')
+})
+
+test('sealed letters show the waiting date, focus the receipt and download as text', async ({ page }, testInfo) => {
+  await page.clock.setFixedTime(birthday2026)
+  await page.goto('/birthday-planet', { waitUntil: 'domcontentloaded' })
+  await page.getByRole('button', { name: '写封信，给下一岁的自己' }).click()
+  await page.getByLabel('写给下一岁的自己', { exact: true }).fill('愿下一岁的我，依然好奇。\n  留住一点星光。')
+  await page.getByRole('button', { name: '存好这封信', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '把这一天，轻轻收好。' })).toBeFocused()
+  await expect(page.locator('.letter-countdown')).toContainText('365')
+  await expect(page.locator('.letter-arrival time')).toHaveText('2027.10.28')
+  await page.screenshot({ path: testInfo.outputPath('birthday-letter.jpg'), type: 'jpeg', quality: 78, scale: 'css', animations: 'disabled' })
+  const downloaded = page.waitForEvent('download')
+  await page.getByRole('button', { name: '下载信件' }).click()
+  const download = await downloaded
+  expect(download.suggestedFilename()).toBe('生日星球-2026.txt')
+  const file = testInfo.outputPath('birthday-letter.txt')
+  await download.saveAs(file)
+  const content = await readFile(file, 'utf8')
+  expect(content).toContain('开启日期：2027.10.28')
+  expect(content).toContain('愿下一岁的我，依然好奇。\n  留住一点星光。')
 })

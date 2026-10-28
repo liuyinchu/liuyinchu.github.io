@@ -92,3 +92,22 @@ export function saveLetter(letters, text, now = new Date()) {
 export function isLetterOpen(letter, now = new Date()) {
   return Boolean(letter && validDate(letter.opensOn) && shanghaiDay(now).key >= letter.opensOn);
 }
+
+export function letterDaysRemaining(letter, now = new Date()) {
+  const openingDay = new Date(letter.opensOn + 'T00:00:00.000Z').getTime();
+  return Math.max(0, (openingDay - shanghaiDay(now).utcDay) / DAY_MS);
+}
+
+export function formatLetterDownload(letter) {
+  return {
+    filename: '生日星球-' + letter.year + '.txt',
+    content: [
+      '生日星球',
+      letter.year + ' 年留给自己的信',
+      '开启日期：' + letter.opensOn.replaceAll('-', '.'),
+      '',
+      letter.text,
+      '',
+    ].join('\n'),
+  };
+}
