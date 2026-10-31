@@ -1,5 +1,13 @@
 [
   {
+    "id": "open_source_redis_nvm_multiplane",
+    "title": "三个值得安利的开源项目：redis-py、nvm 与 Multiplane",
+    "author": "pifuyuini",
+    "date": "2026-10-31",
+    "desc": "最近给 redis-py、nvm 和 Multiplane 贡献了 PR，借此安利三个各有用处的开源项目：用 Python 连接 Redis、为项目切换 Node.js 版本，以及把网页动画逐帧渲染成视频。",
+    "image": "/bg/open_source_redis_nvm_multiplane.jpg"
+  },
+  {
     "id": "claude_mem_intro",
     "title": "给 AI 编程助手补一份项目记忆：聊聊 claude-mem",
     "author": "pifuyuini",
