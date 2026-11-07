@@ -3,10 +3,13 @@ import { readFile } from 'node:fs/promises'
 import { auditPage, BASE_URL, expectKnownRouteShell, expectNoHorizontalOverflow, gotoRoute } from './test-helpers.js'
 import { mockFrontierNotes, NOTES_SOURCE, FRONTIER_MARKDOWN_FIXTURE } from './frontier-fixture.js'
 import { mockAvis3Spectra, spectraFixtures } from './avis3-spectra-fixture.js'
+import { mockPlusSpectra, plusSpectrum } from './avis3-plus-spectra-fixture.js'
 
 const overview = '/ai-frontier'
 const arena = overview + '/arena/avis3'
-const dataUrl = '**/ai-frontier/avis3.json'
+const preview = overview + '/arena/avis3-preview'
+const officialPath = '/ai-frontier/evaluation-1108/evaluation-1108.json'
+const dataUrl = '**' + officialPath
 const leaderboard = page => page.getByTestId('avis3-leaderboard')
 
 async function finishAudit(page, audit) {
@@ -27,30 +30,26 @@ test.describe('AI Frontier', () => {
   test.beforeEach(async ({ page }) => { await mockFrontierNotes(page); await mockAvis3Spectra(page) })
 
   test('the overview presents verified models and tools in score order with live-source notes', async ({ page }) => {
-    const response = await page.request.get(BASE_URL + '/ai-frontier/avis3.json')
+    const response = await page.request.get(BASE_URL + officialPath)
     const data = await response.json()
     const audit = auditPage(page)
     await openOverview(page)
     await expect(page.getByRole('link', { name: 'Ysy AI Frontier 首页', exact: true })).toBeVisible()
     const rows = leaderboard(page).getByTestId('avis3-result')
-    await expect(rows).toHaveCount(3)
-    expect(await rows.locator('.avis3-contestant-id').allTextContents()).toEqual(['contestant-2', 'contestant-1', 'contestant-3'])
-    for (const result of data.results) {
-      const row = rows.filter({ has: page.getByText(result.contestantId, { exact: true }) })
-      const contestant = data.contestants.find(item => item.id === result.contestantId)
-      await expect(row.locator('.avis3-contestant strong')).toHaveText(contestant.model)
-      await expect(row.locator('.avis3-harness')).toHaveText(contestant.harness)
-      await expect(row.locator('.avis3-result-score strong')).toHaveText(result.mean.toFixed(4))
-      await expect(row.locator('.avis3-result-score strong')).toHaveAttribute('title', String(result.mean))
-      if (typeof result.std === 'number') await expect(row.locator('.avis3-number')).toHaveText(result.std.toFixed(4))
+    await expect(rows).toHaveCount(5)
+    expect(await rows.locator('.avis3-contestant-id').allTextContents()).toEqual(['04', '14', '05', '10', '01'])
+    for (const entry of [...data.entrants].sort((a, b) => b.mean - a.mean).slice(0, 5)) {
+      const row = rows.filter({ has: page.locator('[title="' + entry.id + '"]') })
+      await expect(row.locator('.avis3-contestant strong')).toHaveText(entry.model)
+      await expect(row.locator('.avis3-harness')).toHaveText(entry.harness)
+      await expect(row.locator('.avis3-result-score strong')).toHaveText(entry.mean.toFixed(4))
+      await expect(row.locator('.avis3-result-score strong')).toHaveAttribute('title', String(entry.mean))
+      await expect(row.locator('.avis3-number')).toHaveText(entry.std.toFixed(4))
     }
     await expect(page.getByRole('link', { name: '源仓库', exact: true })).toHaveAttribute('href', 'https://github.com/liuyinchu/deepsight-ai-today')
     await expect(page.locator('.frontier-intelligence .markdown-body')).toContainText('用于页面验证的固定内容')
     await expect(page.locator('.benchmark-deck, .frontier-tier-list')).toHaveCount(0)
     await expect(page.locator('.frontier-shell')).not.toContainText('演示数据')
-    if (!data.results.some(result => typeof result.std === 'number')) {
-      await expect(leaderboard(page).getByRole('columnheader', { name: '样本标准差', exact: true })).toHaveCount(0)
-    }
     await finishAudit(page, audit)
   })
 
@@ -85,15 +84,19 @@ test.describe('AI Frontier', () => {
     await expect(page).toHaveTitle('AI Trivia · Ysy AI Frontier')
     await expect(page.locator('.frontier-report-title h1')).toHaveText('AI Trivia')
     await expect(page.locator('.frontier-markdown')).toHaveAttribute('aria-busy', 'false')
-    await expect(reader).toBeEmpty()
+    const triviaSource = await readFile(new URL('../../public/ai-frontier/trivia.md', import.meta.url), 'utf8')
+    const triviaHeading = triviaSource.match(/^#{1,6} (.+)$/m)?.[1]
+    if (triviaHeading) await expect(reader.getByRole('heading').first()).toContainText(triviaHeading)
+    else await expect(reader).toBeEmpty()
     await expect(page.getByRole('alert')).toHaveCount(0)
     const trivia = await page.request.get(BASE_URL + '/ai-frontier/trivia.md')
     expect(trivia.ok()).toBe(true)
-    expect(await trivia.text()).toBe('')
+    expect(await trivia.text()).toBe(triviaSource)
     await page.reload()
     await expect(page.locator('.frontier-report-title h1')).toHaveText('AI Trivia')
     await expect(page.locator('.frontier-markdown')).toHaveAttribute('aria-busy', 'false')
-    await expect(reader).toBeEmpty()
+    if (triviaHeading) await expect(reader.getByRole('heading').first()).toContainText(triviaHeading)
+    else await expect(reader).toBeEmpty()
     await expect(page.locator('.frontier-shell')).toHaveCSS('background-color', 'rgb(236, 229, 214)')
     await expect(page.locator('.frontier-shell')).not.toContainText('↗')
     await finishAudit(page, audit)
@@ -114,16 +117,30 @@ test.describe('AI Frontier', () => {
     await page.getByRole('link', { name: '查看规则与完整结果', exact: true }).click()
     await expect(page).toHaveURL(BASE_URL + arena)
     await expectKnownRouteShell(page, arena)
-    await expect(page.locator('.frontier-report-cover h1')).toHaveText('AVIS3 Arena')
-    await expect(leaderboard(page).getByTestId('avis3-result')).toHaveCount(3)
-    await expect(page.locator('.frontier-markdown .markdown-body')).toBeVisible()
-    await expect(page.locator('.avis3-round-card')).toHaveCount(3)
-    await expect(page.locator('.avis3-round-list li')).toHaveCount(30)
-    await expect(page.locator('.frontier-shell')).not.toContainText('↗')
-    await expect(page.locator('.frontier-markdown').getByRole('heading').first()).toContainText('AVIS3')
-    const folding = page.locator('.frontier-markdown details').first()
-    await folding.locator('summary').click()
-    await expect(folding).toHaveAttribute('open', '')
+    await expect(page.locator('.frontier-report-cover h1')).toHaveText('AVIS3 Arena Plus')
+    const rows = leaderboard(page).getByTestId('avis3-result')
+    await expect(rows).toHaveCount(14)
+    expect(await rows.locator('.avis3-contestant-id').allTextContents()).toEqual(['04','14','05','10','01','02','06','12','07','08','03','15','09','11'])
+    await expect(page.getByTestId('avis3-spectra')).toHaveCount(0)
+    await rows.first().getByRole('button').click()
+    const details = page.getByTestId('avis3-result-details')
+    await expect(details).toHaveCount(1)
+    await expect(details.locator('.result-round-scores li')).toHaveCount(20)
+    await details.locator('summary').click()
+    await expect(details.locator('details')).toHaveAttribute('open', '')
+    await expect(details.locator('.markdown-body')).toBeVisible()
+    await rows.nth(1).getByRole('button').click()
+    await expect(details).toHaveCount(1)
+    await expect(rows.first().getByRole('button')).toHaveAttribute('aria-expanded', 'false')
+    await expect(details.locator('h3')).toContainText('14')
+    await mockPlusSpectra(page)
+    await details.getByRole('link', { name: '查看该选手频谱' }).click()
+    await expect(page.getByTestId('avis3-spectra').getByLabel('参测组合 / CONTESTANT')).toHaveValue('official-014')
+    await expect(page.getByTestId('avis3-spectra').getByRole('img')).toHaveCount(3)
+    await expect(page.locator('.frontier-markdown .markdown-body').last()).toBeVisible()
+    await rows.nth(3).getByRole('button').click()
+    await expect(details).toContainText('API 路由')
+    await expect(details).toContainText('OpenCode API')
     await finishAudit(page, audit)
   })
 
@@ -169,7 +186,7 @@ test.describe('AI Frontier', () => {
     await page.reload()
     await expect(page.locator('.frontier-shell')).toHaveAttribute('data-theme', 'light')
     expect(await readMainTheme()).toEqual(mainTheme)
-    await page.getByRole('banner').getByRole('link', { name: 'AVIS3 Arena', exact: true }).click()
+    await page.getByRole('banner').getByRole('link', { name: 'AVIS3 Arena Plus', exact: true }).click()
     await expect(page).toHaveURL(BASE_URL + arena)
     expect(await readMainTheme()).toEqual(mainTheme)
     await page.getByRole('banner').getByRole('link', { name: '返回主站', exact: true }).click()
@@ -321,7 +338,7 @@ test.describe('AI Frontier', () => {
   }
 
   test('raw precision determines order and exact ties share competition ranks', async ({ page }) => {
-    const response = await page.request.get(BASE_URL + '/ai-frontier/avis3.json')
+    const response = await page.request.get(BASE_URL + '/ai-frontier/archive/avis3-preview.json')
     const data = await response.json()
     data.results = [
       { contestantId: 'contestant-3', mean: 850.1234568, std: 9, rounds: 10, failures: 0, roundScores: null },
@@ -340,11 +357,11 @@ test.describe('AI Frontier', () => {
   })
 
   test('round context remains visible when the method Markdown fails and the report retries', async ({ page }) => {
-    const methodUrl = '**/ai-frontier/arena/avis3.md'
+    const methodUrl = '**/ai-frontier/archive/avis3-preview.md'
     const failing = route => route.fulfill({ status: 503, contentType: 'text/plain', body: 'Temporary report failure' })
     await page.route(methodUrl, failing)
-    await gotoRoute(page, arena)
-    await expect(page.locator('.avis3-comparison-note')).toHaveText('各选手同编号轮次使用不同随机场景，不能按轮号做配对比较。')
+    await gotoRoute(page, preview)
+    await expect(page.locator('.avis3-comparison-note')).toHaveText('预览版为各选手分别抽取随机场景，同编号轮次使用不同场景。')
     await expect(page.locator('.avis3-round-list li')).toHaveCount(30)
     const error = page.locator('.frontier-markdown').getByRole('alert')
     await expect(error).toBeVisible()
@@ -401,22 +418,30 @@ test.describe('AVIS3 spectra', () => {
 
   test('spectra load one selected round and keep all thirty scores and file bindings', async ({ page }) => {
     test.setTimeout(90_000)
-    const response = await page.request.get(BASE_URL + '/ai-frontier/avis3.json')
+    const response = await page.request.get(BASE_URL + '/ai-frontier/archive/avis3-preview.json')
     const data = await response.json()
     const requests = []
     page.on('request', request => {
       if (request.url().includes('/arena/avis3/spectra/')) requests.push(new URL(request.url()).pathname)
     })
-    await gotoRoute(page, arena)
+    await gotoRoute(page, preview)
+    await page.getByRole('button', { name: '打开频谱查看器', exact: true }).click()
     const viewer = page.getByTestId('avis3-spectra')
     const plots = viewer.getByRole('img')
     const contestantSelect = viewer.getByLabel('参测组合 / CONTESTANT')
     const roundSelect = viewer.getByLabel('轮次 / ROUND')
     await expect(plots).toHaveCount(3)
+    await expect(page.locator('.frontier-report-cover h1')).toHaveText('AVIS3 Arena · Preview')
+    await expect(leaderboard(page).getByTestId('avis3-result')).toHaveCount(3)
+    await expect(page.locator('.avis3-round-card')).toHaveCount(3)
+    await expect(page.locator('.avis3-round-list li')).toHaveCount(30)
+    const folding = page.locator('.frontier-markdown details').first()
+    await folding.locator('summary').click()
+    await expect(folding).toHaveAttribute('open', '')
     await expect(contestantSelect).toHaveValue('contestant-2')
     await expect(roundSelect).toHaveValue('1')
     expect(requests).toEqual(['/ai-frontier/arena/avis3/spectra/contestant-2/round-01.json'])
-    await expect(page.getByRole('link', { name: '查看逐轮频谱', exact: true })).toHaveAttribute('href', '#spectra')
+    await expect(page.getByRole('link', { name: /查看逐轮频谱/ })).toHaveAttribute('href', '#spectra')
 
     for (const id of ['contestant-2', 'contestant-1', 'contestant-3']) {
       await contestantSelect.selectOption(id)
@@ -442,12 +467,13 @@ test.describe('AVIS3 spectra', () => {
         expect(requests.at(-1)).toBe('/ai-frontier/arena/avis3/spectra/' + path)
       }
     }
-    await expect(viewer).toContainText('不同选手同编号轮次使用不同场景')
+    await expect(viewer).toContainText('各选手的同编号轮次使用不同场景')
     await expectNoHorizontalOverflow(page)
   })
 
   test('spectra clear old curves during switching and ignore a late response', async ({ page }) => {
-    await gotoRoute(page, arena)
+    await gotoRoute(page, preview)
+    await page.getByRole('button', { name: '打开频谱查看器', exact: true }).click()
     const viewer = page.getByTestId('avis3-spectra')
     await expect(viewer.getByRole('img')).toHaveCount(3)
     let releaseSlow
@@ -487,10 +513,11 @@ test.describe('AVIS3 spectra', () => {
       const url = '**/arena/avis3/spectra/contestant-2/round-01.json'
       const failing = route => route.fulfill({ status: failure.status, contentType: failure.contentType, body: failure.body })
       await page.route(url, failing)
-      await gotoRoute(page, arena)
+      await gotoRoute(page, preview)
+    await page.getByRole('button', { name: '打开频谱查看器', exact: true }).click()
       const viewer = page.getByTestId('avis3-spectra')
       const error = viewer.getByRole('alert')
-      await expect(error).toContainText('本轮频谱暂时无法加载')
+      await expect(error).toContainText('本次频谱暂时无法加载')
       await expect(viewer.getByRole('img')).toHaveCount(0)
       await page.unroute(url, failing)
       const audit = auditPage(page)
@@ -504,7 +531,8 @@ test.describe('AVIS3 spectra', () => {
 
   test('spectra retain readable legends, log axes and native keyboard controls at each viewport', async ({ page, isMobile }) => {
     const audit = auditPage(page)
-    await gotoRoute(page, arena)
+    await gotoRoute(page, preview)
+    await page.getByRole('button', { name: '打开频谱查看器', exact: true }).click()
     const viewer = page.getByTestId('avis3-spectra')
     await expect(viewer.getByRole('img')).toHaveCount(3)
     await viewer.scrollIntoViewIfNeeded()
@@ -562,4 +590,123 @@ test.describe('AVIS3 spectra', () => {
     await expect(viewer.locator('svg title').first()).toContainText('第 10 轮')
     await finishAudit(page, audit)
   })
+})
+
+test.describe('AVIS3 Arena Plus spectra', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockFrontierNotes(page)
+    await mockPlusSpectra(page)
+  })
+
+  test('all fourteen entries expose pooled and shared first-round curves lazily', async ({ page }) => {
+    test.setTimeout(90_000)
+    const data = await (await page.request.get(BASE_URL + officialPath)).json()
+    const requests = []
+    page.on('request', request => {
+      if (request.url().includes('/evaluation-1108/spectra/')) requests.push(new URL(request.url()).pathname.split('/').at(-1))
+    })
+    await gotoRoute(page, arena)
+    await expect(leaderboard(page).getByTestId('avis3-result')).toHaveCount(14)
+    await expect(page.getByTestId('avis3-spectra')).toHaveCount(0)
+    expect(requests).toEqual([])
+    await page.getByRole('link', { name: /查看公开频谱/ }).click()
+    const viewer = page.getByTestId('avis3-spectra')
+    const contestant = viewer.getByLabel('参测组合 / CONTESTANT')
+    const selection = viewer.getByLabel('频谱 / SPECTRUM')
+    await expect(viewer.getByRole('img')).toHaveCount(3)
+    await expect(contestant).toHaveValue('official-004')
+    await expect(selection).toHaveValue('pooled')
+    await expect(contestant.locator('option')).toHaveCount(14)
+    await expect(selection.locator('option')).toHaveCount(2)
+    for (const entry of data.entrants) {
+      await contestant.selectOption(entry.id)
+      for (const mode of ['pooled', 'round_01']) {
+        await selection.selectOption(mode)
+        await expect(viewer.getByRole('img')).toHaveCount(3)
+        const label = mode === 'pooled' ? '20 轮功率平均' : '统一第 1 轮'
+        await expect(viewer.locator('svg title').first()).toHaveText(entry.model + '，' + label + '，y1 位移等效 ASD')
+        const score = mode === 'pooled' ? entry.mean : entry.rounds.find(round => round.index === 1).score
+        await expect(viewer.getByTestId('spectra-round-score')).toHaveAttribute('title', String(score))
+        const file = entry.id + '-' + (mode === 'pooled' ? 'pooled' : 'round-01') + '.json'
+        await expect(viewer.getByRole('link', { name: '当前频谱 JSON', exact: true })).toHaveAttribute('href', '/ai-frontier/evaluation-1108/spectra/' + file)
+        expect(requests).toContain(file)
+        const points = await viewer.locator('.spectra-curves path').evaluateAll(paths => paths.map(path => (path.getAttribute('d').match(/[ML]/g) || []).length))
+        expect(points).toEqual([5, 5, 5, 5, 5, 5])
+      }
+    }
+    for (const file of ['frequency.json', 'baseline-pooled.json', 'baseline-round-01.json']) {
+      expect(requests.filter(request => request === file)).toHaveLength(1)
+    }
+    await expectNoHorizontalOverflow(page)
+  })
+
+  test('switching entries clears curves and ignores a late official response', async ({ page }) => {
+    await gotoRoute(page, arena)
+    await page.getByRole('button', { name: '打开频谱查看器', exact: true }).click()
+    const viewer = page.getByTestId('avis3-spectra')
+    await expect(viewer.getByRole('img')).toHaveCount(3)
+    let releaseSlow
+    let notifyStarted
+    let notifyFinished
+    const released = new Promise(resolve => { releaseSlow = resolve })
+    const started = new Promise(resolve => { notifyStarted = resolve })
+    const finished = new Promise(resolve => { notifyFinished = resolve })
+    await page.route('**/evaluation-1108/spectra/official-014-pooled.json', async route => {
+      notifyStarted()
+      await released
+      await route.fulfill({ json: plusSpectrum('official-014', 'pooled') })
+      notifyFinished()
+    })
+    const contestant = viewer.getByLabel('参测组合 / CONTESTANT')
+    await contestant.selectOption('official-014')
+    await started
+    await expect(viewer.getByRole('img')).toHaveCount(0)
+    await expect(viewer.getByRole('status')).toContainText('official-014')
+    await contestant.selectOption('official-005')
+    await expect(viewer.getByRole('img')).toHaveCount(3)
+    const paths = await viewer.locator('.spectra-curves path').evaluateAll(elements => elements.map(element => element.getAttribute('d')))
+    releaseSlow()
+    await finished
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    await expect(contestant).toHaveValue('official-005')
+    expect(await viewer.locator('.spectra-curves path').evaluateAll(elements => elements.map(element => element.getAttribute('d')))).toEqual(paths)
+  })
+
+  for (const failure of [
+    { label: 'HTTP failure', status: 503, contentType: 'application/json', body: '{"error":"temporary"}' },
+    { label: 'HTML fallback', status: 200, contentType: 'text/html', body: '<html>Unexpected fallback</html>' },
+  ]) {
+    test('official spectra recover after ' + failure.label, async ({ page }) => {
+      const url = '**/evaluation-1108/spectra/official-004-pooled.json'
+      const failing = route => route.fulfill({ status: failure.status, contentType: failure.contentType, body: failure.body })
+      await page.route(url, failing)
+      await gotoRoute(page, arena)
+      await page.getByRole('button', { name: '打开频谱查看器', exact: true }).click()
+      const viewer = page.getByTestId('avis3-spectra')
+      const alert = viewer.getByRole('alert')
+      await expect(alert).toContainText('本次频谱暂时无法加载')
+      await expect(viewer.getByRole('img')).toHaveCount(0)
+      await page.unroute(url, failing)
+      await alert.getByRole('button', { name: '重新加载频谱' }).click()
+      await expect(viewer.getByRole('img')).toHaveCount(3)
+      await expect(alert).toHaveCount(0)
+      await expect(viewer.locator('.spectra-registration')).toContainText('official-004')
+    })
+  }
+})
+
+test('official results remain available while the methodology retries', async ({ page }) => {
+  await mockFrontierNotes(page)
+  const url = '**/evaluation-1108/methodology.md'
+  const failing = route => route.fulfill({ status: 503, body: 'Temporary report failure' })
+  await page.route(url, failing)
+  await gotoRoute(page, arena)
+  await expect(leaderboard(page).getByTestId('avis3-result')).toHaveCount(14)
+  await expect(page.locator('.avis3-comparison-note')).toContainText('相同的 20 个场景')
+  const error = page.locator('.frontier-reading-card .frontier-markdown').getByRole('alert')
+  await expect(error).toBeVisible()
+  await page.unroute(url, failing)
+  await error.getByRole('button', { name: '重新加载', exact: true }).click()
+  await expect(page.locator('.frontier-reading-card .markdown-body')).toBeVisible()
+  await expect(error).toHaveCount(0)
 })

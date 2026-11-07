@@ -1,28 +1,54 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, useId, watch } from 'vue'
 import { displayScore, orderedResults } from './useAvis3Data'
 import { buildSpectraCharts, SPECTRA_FRAME } from './avis3SpectraPlot'
 
-const props = defineProps({ arena: { type: Object, required: true } })
-const contestantId = ref(orderedResults(props.arena)[0]?.contestantId || props.arena.contestants[0]?.id)
+const props = defineProps({
+  arena: { type: Object, required: true },
+  selectedContestant: { type: String, default: '' },
+})
+const instanceId = 'spectra-' + useId()
+const contestantId = ref(props.selectedContestant || orderedResults(props.arena)[0]?.contestantId || props.arena.contestants[0]?.id)
 const roundIndex = ref(1)
+const selection = ref('pooled')
 const source = shallowRef(null)
 const charts = shallowRef([])
 const loading = ref(true)
 const error = ref('')
+const sharedAssets = new Map()
 let controller
 
+const isOfficial = computed(() => Boolean(props.arena.spectraBase))
 const contestants = computed(() => orderedResults(props.arena).map(result =>
   props.arena.contestants.find(contestant => contestant.id === result.contestantId)).filter(Boolean))
 const contestant = computed(() => props.arena.contestants.find(item => item.id === contestantId.value))
 const roundResult = computed(() => props.arena.results.find(item => item.contestantId === contestantId.value))
 const roundCount = computed(() => roundResult.value?.roundScores?.length || props.arena.scoring?.roundCount || 10)
-const roundScore = computed(() => roundResult.value?.roundScores?.[roundIndex.value - 1])
 const roundLabel = computed(() => String(roundIndex.value).padStart(2, '0'))
-const dataPath = computed(() => '/ai-frontier/arena/avis3/spectra/' + contestantId.value + '/round-' + roundLabel.value + '.json')
+const viewLabel = computed(() => isOfficial.value ? (selection.value === 'pooled' ? '20 轮功率平均' : '统一第 1 轮') : '第 ' + roundIndex.value + ' 轮')
+const shownScore = computed(() => isOfficial.value && selection.value === 'pooled' ? roundResult.value?.mean : roundResult.value?.roundScores?.[isOfficial.value ? 0 : roundIndex.value - 1])
+const scoreLabel = computed(() => isOfficial.value && selection.value === 'pooled' ? '20 轮积分均分' : '本轮分数')
+const dataPath = computed(() => isOfficial.value
+  ? props.arena.spectraBase + '/' + contestant.value.spectra[selection.value]
+  : '/ai-frontier/arena/avis3/spectra/' + contestantId.value + '/round-' + roundLabel.value + '.json')
+const frequencyPath = computed(() => props.arena.spectraBase + '/spectra/frequency.json')
+const baselinePath = computed(() => props.arena.spectraBase + '/spectra/baseline-' + (selection.value === 'pooled' ? 'pooled' : 'round-01') + '.json')
 const xTicks = [0.01, 0.1, 1, 10, 100].map(value => ({
   label: String(value), x: SPECTRA_FRAME.left + (Math.log10(value) + 2) / 4 * SPECTRA_FRAME.width,
 }))
+
+async function readJson(path, signal) {
+  const response = await fetch(path, { signal })
+  if (!response.ok) throw new Error('Spectra unavailable')
+  return response.json()
+}
+
+async function readShared(path, signal) {
+  if (sharedAssets.has(path)) return sharedAssets.get(path)
+  const result = await readJson(path, signal)
+  if (!signal.aborted) sharedAssets.set(path, result)
+  return result
+}
 
 async function load() {
   controller?.abort()
@@ -30,72 +56,100 @@ async function load() {
   controller = request
   const id = contestantId.value
   const round = roundIndex.value
+  const mode = selection.value
   loading.value = true
   error.value = ''
   source.value = null
   charts.value = []
   try {
-    const response = await fetch(dataPath.value, { signal: request.signal })
-    if (!response.ok) throw new Error('Spectra unavailable')
-    const result = await response.json()
-    if (result.contestant_id !== id || result.round_index !== round) {
-      throw new Error('Spectra do not match the selected round')
+    let result
+    if (isOfficial.value) {
+      const [curve, baseline, frequency] = await Promise.all([
+        readJson(dataPath.value, request.signal),
+        readShared(baselinePath.value, request.signal),
+        readShared(frequencyPath.value, request.signal),
+      ])
+      const expectedSelection = mode === 'pooled' ? 'power_average_20_rounds' : 'round_01'
+      if (curve.series_id !== id || curve.evaluation_id !== props.arena.batch
+        || (mode === 'pooled' ? curve.selection !== expectedSelection : curve.round_index !== 1)
+        || curve.selection !== baseline.selection) throw new Error('Spectra do not match this entry')
+      result = {
+        channels: curve.output_names,
+        frequency_hz: frequency.values,
+        controlled_asd: frequency.values.map((_, index) => curve.asd_by_channel.map(channel => channel[index])),
+        baseline_asd: frequency.values.map((_, index) => baseline.asd_by_channel.map(channel => channel[index])),
+      }
+    } else {
+      result = await readJson(dataPath.value, request.signal)
+      if (result.contestant_id !== id || result.round_index !== round) throw new Error('Spectra do not match the selected round')
     }
     const plots = buildSpectraCharts(result)
     if (request.signal.aborted) return
     source.value = result
     charts.value = plots
   } catch (cause) {
-    if (!request.signal.aborted) error.value = '本轮频谱暂时无法加载，请稍后重试。'
+    if (!request.signal.aborted) error.value = '本次频谱暂时无法加载，请稍后重试。'
   } finally {
     if (!request.signal.aborted) loading.value = false
   }
 }
 
-watch([contestantId, roundIndex], load, { immediate: true, flush: 'sync' })
+watch(() => props.selectedContestant, id => { if (id) contestantId.value = id })
+watch([contestantId, roundIndex, selection], load, { immediate: true, flush: 'sync' })
 onBeforeUnmount(() => controller?.abort())
 </script>
 
 <template>
   <div class="avis3-spectra" data-testid="avis3-spectra" :aria-busy="loading">
     <div class="spectra-controls">
-      <label for="avis3-spectra-contestant"><span>参测组合 / CONTESTANT</span>
-        <select id="avis3-spectra-contestant" v-model="contestantId">
-          <option v-for="item in contestants" :key="item.id" :value="item.id">{{ item.model }} · {{ item.harness }}</option>
+      <label :for="instanceId + '-contestant'"><span>参测组合 / CONTESTANT</span>
+        <select :id="instanceId + '-contestant'" v-model="contestantId">
+          <option v-for="item in contestants" :key="item.id" :value="item.id">{{ item.number ? item.number + ' · ' : '' }}{{ item.model }} · {{ item.harness }}</option>
         </select>
       </label>
-      <label for="avis3-spectra-round"><span>轮次 / ROUND</span>
-        <select id="avis3-spectra-round" v-model.number="roundIndex">
+      <label v-if="isOfficial" :for="instanceId + '-selection'"><span>频谱 / SPECTRUM</span>
+        <select :id="instanceId + '-selection'" v-model="selection">
+          <option value="pooled">20 轮功率平均</option>
+          <option value="round_01">统一第 1 轮</option>
+        </select>
+      </label>
+      <label v-else :for="instanceId + '-round'"><span>轮次 / ROUND</span>
+        <select :id="instanceId + '-round'" v-model.number="roundIndex">
           <option v-for="round in roundCount" :key="round" :value="round">第 {{ round }} 轮</option>
         </select>
       </label>
     </div>
 
     <div class="spectra-current" aria-live="polite">
-      <div class="spectra-round-heading"><span class="spectra-registration">{{ contestantId }} / ROUND {{ roundLabel }}</span>
-        <h3>{{ contestant?.model }} <span>· 第 {{ roundIndex }} 轮</span></h3>
+      <div class="spectra-round-heading">
+        <span class="spectra-registration">{{ contestantId }} / {{ isOfficial ? viewLabel : 'ROUND ' + roundLabel }}</span>
+        <h3>{{ contestant?.model }} <span>· {{ viewLabel }}</span></h3>
       </div>
-      <div class="spectra-score"><span>本轮分数</span><strong :title="String(roundScore)" data-testid="spectra-round-score">{{ displayScore(roundScore) }}</strong></div>
+      <div class="spectra-score"><span>{{ scoreLabel }}</span><strong :title="String(shownScore)" data-testid="spectra-round-score">{{ displayScore(shownScore) }}</strong></div>
     </div>
 
     <div class="spectra-reading-key">
-      <p>同一轮受控真值 / 无控制基线</p>
+      <p>{{ isOfficial && selection === 'pooled' ? '受控真值 / 无控制基线 · 分别做 20 轮功率平均' : '同一轮受控真值 / 无控制基线' }}</p>
       <ul class="spectra-legend" aria-label="频谱图例">
         <li><i class="spectra-line controlled" aria-hidden="true"></i>受控真值</li>
         <li><i class="spectra-line baseline" aria-hidden="true"></i>无控制基线</li>
       </ul>
     </div>
 
-    <p v-if="loading" class="spectra-state" role="status">正在读取 {{ contestantId }} 第 {{ roundIndex }} 轮频谱…</p>
+    <p v-if="loading" class="spectra-state" role="status">正在读取 {{ contestantId }} {{ viewLabel }}频谱…</p>
     <div v-else-if="error" class="spectra-state" role="alert"><p>{{ error }}</p><button type="button" @click="load">重新加载频谱</button></div>
     <template v-else-if="source">
-      <div class="spectra-data-meta"><span>{{ source.frequency_hz.length.toLocaleString('en-US') }} 频率点 / 0.01–100 Hz</span><span>位移等效 ASD / m/√Hz</span><a :href="dataPath">当前轮频谱 JSON</a></div>
+      <div class="spectra-data-meta">
+        <span>{{ source.frequency_hz.length.toLocaleString('en-US') }} 频率点 / 0.01–100 Hz</span><span>位移等效 ASD / m/√Hz</span>
+        <a :href="dataPath">{{ isOfficial ? '当前频谱 JSON' : '当前轮频谱 JSON' }}</a>
+        <a v-if="isOfficial" :href="baselinePath">对应基线 JSON</a>
+      </div>
       <div class="spectra-grid">
         <figure v-for="chart in charts" :key="chart.channel" class="spectra-plot" :data-channel="chart.channel">
           <figcaption><strong>{{ chart.channel }}</strong><span>LOG / LOG</span></figcaption>
-          <svg viewBox="0 0 360 290" role="img" :aria-labelledby="'spectra-title-' + chart.channel + ' spectra-desc-' + chart.channel">
-            <title :id="'spectra-title-' + chart.channel">{{ contestant?.model }}，第 {{ roundIndex }} 轮，{{ chart.channel }} 位移等效 ASD</title>
-            <desc :id="'spectra-desc-' + chart.channel">受控真值为实线，无控制基线为虚线。横轴频率 0.01 至 100 Hz，纵轴单位 m/√Hz，两轴均为对数刻度。纵轴按本通道两条曲线的正值实际范围留白。</desc>
+          <svg viewBox="0 0 360 290" role="img" :aria-labelledby="instanceId + '-title-' + chart.channel + ' ' + instanceId + '-desc-' + chart.channel">
+            <title :id="instanceId + '-title-' + chart.channel">{{ contestant?.model }}，{{ viewLabel }}，{{ chart.channel }} 位移等效 ASD</title>
+            <desc :id="instanceId + '-desc-' + chart.channel">受控真值为实线，无控制基线为虚线。横轴频率 0.01 至 100 Hz，纵轴单位 m/√Hz，两轴均为对数刻度。纵轴按本通道两条曲线的正值实际范围留白。</desc>
             <text class="spectra-unit" :x="SPECTRA_FRAME.left" y="20">ASD / m/√Hz</text>
             <g class="spectra-grid-lines" aria-hidden="true">
               <line v-for="tick in xTicks" :key="'x-' + tick.label" :x1="tick.x" :x2="tick.x" :y1="SPECTRA_FRAME.top" :y2="SPECTRA_FRAME.bottom" />
@@ -116,8 +170,10 @@ onBeforeUnmount(() => controller?.abort())
       </div>
     </template>
 
-    <div class="spectra-notes"><p>不同选手同编号轮次使用不同场景，不能按轮号配对比较。各图纵轴随本通道两条曲线的实际范围变化，曲线高度不直接代表抑制比例。</p>
-      <p>曲线来自真实速度输出换算的位移等效 ASD，保留每个频率点。频谱用于读图，不是积分评分的来源。<a href="#methodology">查看频谱方法与评分说明 ↘</a></p>
+    <div class="spectra-notes">
+      <p v-if="isOfficial">所有选手的同编号轮次使用同一场景。功率平均谱对每个频率点的 20 轮 ASD 平方取均值后开方。两种视图均使用真实输出与对应的无控制基线。</p>
+      <p v-else>预览版各选手的同编号轮次使用不同场景。基线对应当前所选选手与轮次。</p>
+      <p>各图纵轴随本通道两条曲线的实际范围调整，比较时请同时查看刻度。完整保留公开数据的每个频率点；积分评分使用各轮时间域真实速度。<a href="#methodology">查看频谱方法与评分说明 ↓</a></p>
     </div>
   </div>
 </template>

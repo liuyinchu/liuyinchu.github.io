@@ -42,7 +42,7 @@ onBeforeUnmount(() => {
           <RouterLink class="frontier-nav-link" :class="{ 'is-active': isIntelligence }" :aria-current="isIntelligence ? 'location' : undefined" to="/ai-frontier#intelligence">前沿札记</RouterLink>
           <RouterLink class="frontier-nav-link" :class="{ 'is-active': isSkills }" :aria-current="isSkills ? 'page' : undefined" to="/ai-frontier/skills">Skill 收集</RouterLink>
           <RouterLink class="frontier-nav-link" :class="{ 'is-active': isTrivia }" :aria-current="isTrivia ? 'page' : undefined" to="/ai-frontier/trivia">AI Trivia</RouterLink>
-          <RouterLink class="frontier-nav-link" :class="{ 'is-active': isArena }" :aria-current="isArena ? 'page' : undefined" to="/ai-frontier/arena/avis3">AVIS3 Arena</RouterLink>
+          <RouterLink class="frontier-nav-link" :class="{ 'is-active': isArena }" :aria-current="isArena ? 'page' : undefined" to="/ai-frontier/arena/avis3">AVIS3 Arena Plus</RouterLink>
         </nav>
         <div class="frontier-utilities">
           <RouterLink class="frontier-return" to="/">返回主站</RouterLink>

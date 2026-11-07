@@ -38,6 +38,7 @@ export const STATIC_ROUTES = Object.freeze([
   '/ai-frontier/skills',
   '/ai-frontier/trivia',
   '/ai-frontier/arena/avis3',
+  '/ai-frontier/arena/avis3-preview',
 ])
 
 export const DISABLED_ROUTES = Object.freeze([

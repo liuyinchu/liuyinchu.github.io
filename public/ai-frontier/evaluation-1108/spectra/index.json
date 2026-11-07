@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "Evaluation-1108",
+  "source_round_spectra_count": 280,
+  "shared_baselines_verified": true,
+  "baseline_comparison_rtol": 1e-08,
+  "baseline_comparison_atol": 0,
+  "baseline_max_relative_difference": 1.2735569544132609e-11,
+  "shared_baseline_source": "official-001; same scenes, with native/Python floating-point differences checked below display precision",
+  "frequency_asset": "frequency.json",
+  "frequency_points": 10000,
+  "fmin_hz": 0.01,
+  "fmax_hz": 100.0,
+  "units": "m/sqrt(Hz)",
+  "output_names": [
+    "y1",
+    "y2",
+    "y3"
+  ],
+  "parameters": {
+    "fs": 10000.0,
+    "df": 0.01,
+    "fmin": 0.01,
+    "fmax": 100.0,
+    "window": "hann_periodic",
+    "nperseg": 1000000,
+    "nfft": 1000000,
+    "noverlap": 500000,
+    "detrend": "constant",
+    "scaling": "density",
+    "average": "mean",
+    "return_onesided": true,
+    "input_units": "m/s",
+    "output_units": "m/sqrt(Hz)",
+    "n_samples": 10000000,
+    "n_outputs": 3,
+    "duration_s": 1000.0,
+    "n_segments": 19
+  },
+  "default_selection": "power_average_20_rounds",
+  "pooling_formula": "A_pool(f)=sqrt(mean_r(A_r(f)^2)); equal weights across all 20 rounds",
+  "single_round_selection": {
+    "index": 1,
+    "policy": "same preselected index for all 14 entrants; no best-round selection"
+  },
+  "curve_type": "true_controlled_velocity_converted_to_displacement_equivalent_asd",
+  "not_exported": [
+    "noisy_observation_asd",
+    "raw_trajectories",
+    "seeds",
+    "realized_model_parameters",
+    "private_input_PSD",
+    "disturbance_noise_sequences"
+  ],
+  "baseline_assets": {
+    "power_average_20_rounds": "baseline-pooled.json",
+    "round_01": "baseline-round-01.json"
+  },
+  "entrants": [
+    {
+      "id": "official-001",
+      "power_average_20_rounds": "official-001-pooled.json",
+      "round_01": "official-001-round-01.json"
+    },
+    {
+      "id": "official-002",
+      "power_average_20_rounds": "official-002-pooled.json",
+      "round_01": "official-002-round-01.json"
+    },
+    {
+      "id": "official-003",
+      "power_average_20_rounds": "official-003-pooled.json",
+      "round_01": "official-003-round-01.json"
+    },
+    {
+      "id": "official-004",
+      "power_average_20_rounds": "official-004-pooled.json",
+      "round_01": "official-004-round-01.json"
+    },
+    {
+      "id": "official-005",
+      "power_average_20_rounds": "official-005-pooled.json",
+      "round_01": "official-005-round-01.json"
+    },
+    {
+      "id": "official-006",
+      "power_average_20_rounds": "official-006-pooled.json",
+      "round_01": "official-006-round-01.json"
+    },
+    {
+      "id": "official-007",
+      "power_average_20_rounds": "official-007-pooled.json",
+      "round_01": "official-007-round-01.json"
+    },
+    {
+      "id": "official-008",
+      "power_average_20_rounds": "official-008-pooled.json",
+      "round_01": "official-008-round-01.json"
+    },
+    {
+      "id": "official-009",
+      "power_average_20_rounds": "official-009-pooled.json",
+      "round_01": "official-009-round-01.json"
+    },
+    {
+      "id": "official-010",
+      "power_average_20_rounds": "official-010-pooled.json",
+      "round_01": "official-010-round-01.json"
+    },
+    {
+      "id": "official-011",
+      "power_average_20_rounds": "official-011-pooled.json",
+      "round_01": "official-011-round-01.json"
+    },
+    {
+      "id": "official-012",
+      "power_average_20_rounds": "official-012-pooled.json",
+      "round_01": "official-012-round-01.json"
+    },
+    {
+      "id": "official-014",
+      "power_average_20_rounds": "official-014-pooled.json",
+      "round_01": "official-014-round-01.json"
+    },
+    {
+      "id": "official-015",
+      "power_average_20_rounds": "official-015-pooled.json",
+      "round_01": "official-015-round-01.json"
+    }
+  ],
+  "assets": [
+    {
+      "path": "baseline-pooled.json",
+      "bytes": 417100
+    },
+    {
+      "path": "baseline-round-01.json",
+      "bytes": 417106
+    },
+    {
+      "path": "frequency.json",
+      "bytes": 75128
+    },
+    {
+      "path": "official-001-pooled.json",
+      "bytes": 417080
+    },
+    {
+      "path": "official-001-round-01.json",
+      "bytes": 417097
+    },
+    {
+      "path": "official-002-pooled.json",
+      "bytes": 417073
+    },
+    {
+      "path": "official-002-round-01.json",
+      "bytes": 417187
+    },
+    {
+      "path": "official-003-pooled.json",
+      "bytes": 417037
+    },
+    {
+      "path": "official-003-round-01.json",
+      "bytes": 417124
+    },
+    {
+      "path": "official-004-pooled.json",
+      "bytes": 417189
+    },
+    {
+      "path": "official-004-round-01.json",
+      "bytes": 417027
+    },
+    {
+      "path": "official-005-pooled.json",
+      "bytes": 417106
+    },
+    {
+      "path": "official-005-round-01.json",
+      "bytes": 417172
+    },
+    {
+      "path": "official-006-pooled.json",
+      "bytes": 417112
+    },
+    {
+      "path": "official-006-round-01.json",
+      "bytes": 417157
+    },
+    {
+      "path": "official-007-pooled.json",
+      "bytes": 417070
+    },
+    {
+      "path": "official-007-round-01.json",
+      "bytes": 417118
+    },
+    {
+      "path": "official-008-pooled.json",
+      "bytes": 417137
+    },
+    {
+      "path": "official-008-round-01.json",
+      "bytes": 417140
+    },
+    {
+      "path": "official-009-pooled.json",
+      "bytes": 417035
+    },
+    {
+      "path": "official-009-round-01.json",
+      "bytes": 417105
+    },
+    {
+      "path": "official-010-pooled.json",
+      "bytes": 417193
+    },
+    {
+      "path": "official-010-round-01.json",
+      "bytes": 417093
+    },
+    {
+      "path": "official-011-pooled.json",
+      "bytes": 417123
+    },
+    {
+      "path": "official-011-round-01.json",
+      "bytes": 417125
+    },
+    {
+      "path": "official-012-pooled.json",
+      "bytes": 417061
+    },
+    {
+      "path": "official-012-round-01.json",
+      "bytes": 417199
+    },
+    {
+      "path": "official-014-pooled.json",
+      "bytes": 417094
+    },
+    {
+      "path": "official-014-round-01.json",
+      "bytes": 417097
+    },
+    {
+      "path": "official-015-pooled.json",
+      "bytes": 417007
+    },
+    {
+      "path": "official-015-round-01.json",
+      "bytes": 417043
+    }
+  ],
+  "asset_bytes_excluding_index": 12588335,
+  "display": "Lazy-load only selected curves. Frequency is a common 0.01 Hz grid; no frequency downsampling or smoothing. ASD values have 8 significant digits. Suggested y limits cover control and baseline positive extrema with 10% margin."
+}

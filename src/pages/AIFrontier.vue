@@ -23,8 +23,8 @@ const contents = ref([])
       <div class="frontier-overview-stats" aria-label="内容概览">
         <div class="frontier-stats-top"><span>AVIS3 / TELEMETRY</span><span class="frontier-soft-badge">内部评测</span></div>
         <div class="frontier-instrument" aria-hidden="true"><span class="frontier-orbit"></span><span class="frontier-crosshair">+</span><span class="frontier-instrument-label">MODEL × HARNESS</span></div><div class="frontier-stats-numbers">
-          <div><strong>{{ String(data?.contestants.length || 0).padStart(2, '0') }}</strong><span>组模型与工具</span></div>
-          <div><strong>{{ String(data?.results.length || 0).padStart(2, '0') }}</strong><span>份核验记录</span></div>
+          <div><strong>{{ String(data?.contestants.length || 0).padStart(2, '0') }}</strong><span>个独立参赛条目</span></div>
+          <div><strong>{{ String(data?.results.length || 0).padStart(2, '0') }}</strong><span>份正式成绩</span></div>
         </div>
         <div class="frontier-stats-foot"><span>评测版本</span><span>{{ data?.evaluationVersion || '待核验' }}</span></div>
       </div>
@@ -41,10 +41,10 @@ const contents = ref([])
       <div v-else-if="error" class="frontier-state" role="alert"><p>{{ error }}</p><button type="button" class="frontier-text-button" @click="load">重新加载成绩</button></div>
       <article v-else class="avis3-overview-card">
         <div class="avis3-overview-intro">
-          <div><span class="frontier-soft-badge">内部 HPC 私有部署</span><h3>AVIS3 Arena</h3><p>公开项目介绍与已核验成绩，记录每组模型和运行工具的表现。</p></div>
+          <div><span class="frontier-soft-badge">Evaluation-1108 · 正式榜</span><h3>AVIS3 Arena Plus</h3><p>14 个独立参赛条目，每位 20 个相同私有场景。以下展示原始积分均分前 5 名。</p></div>
           <RouterLink class="frontier-primary-link" to="/ai-frontier/arena/avis3">查看规则与完整结果</RouterLink>
         </div>
-        <Avis3Leaderboard :arena="data" />
+        <Avis3Leaderboard :arena="data" :limit="5" />
       </article>
     </section>
 

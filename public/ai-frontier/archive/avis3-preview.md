@@ -1,3 +1,5 @@
+> 历史归档 · AVIS3 Arena Preview。以下保留 2026-10-09 测评及后续核验时的说明。
+
 # AVIS3 Arena
 
 > 评测版本 avis3-v1 · 发布版本 0.1.0-candidate.3\

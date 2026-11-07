@@ -1,0 +1,2341 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "Evaluation-1108",
+  "benchmark": "AVIS3 Arena Plus",
+  "arena_version": "avis3-plus-v1",
+  "release": "0.2.0-candidate.1",
+  "status": "completed",
+  "evaluation_date": "2026-11-08",
+  "timezone": "Asia/Shanghai",
+  "started_at": "2026-11-07T17:37:21.146712+00:00",
+  "completed_at": "2026-11-07T18:09:00.644800+00:00",
+  "evaluation_wall_time_s": 1899.498088,
+  "source_record_commit": "8b7a0cc",
+  "participant_count": 14,
+  "distinct_model_count": 12,
+  "total_rounds": 280,
+  "failed_rounds": 0,
+  "completed_simulation_steps": 2800000000,
+  "protocol": {
+    "fs_hz": 10000,
+    "round_duration_s": 1000,
+    "steps_per_round": 10000000,
+    "rounds_per_entrant": 20,
+    "state_dimension": 10,
+    "control_inputs": 3,
+    "velocity_outputs": 3,
+    "private_disturbance_channels": 2,
+    "control_limit_abs_n": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "shared_scenarios": true,
+    "scene_indices": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "entrant_order": [
+      "official-001",
+      "official-002",
+      "official-003",
+      "official-004",
+      "official-005",
+      "official-006",
+      "official-007",
+      "official-008",
+      "official-009",
+      "official-010",
+      "official-011",
+      "official-012",
+      "official-014",
+      "official-015"
+    ],
+    "rounds_within_entrant_may_run_in_parallel": true,
+    "max_conversation_turns": 3,
+    "max_turns_status": "competition_protocol_not_full_transcript_audit",
+    "highest_reasoning_status": "organizer_reported_configuration",
+    "development_scenarios": "independent_random",
+    "nominal_model_public": true,
+    "model_randomization": {
+      "per_round_fixed": true,
+      "high_frequency_modal_pairs": 3,
+      "frequency_multiplier": [
+        0.97,
+        1.03
+      ],
+      "damping_ratio_multiplier": [
+        0.8,
+        1.2
+      ],
+      "actuator_gain_multiplier": [
+        0.9,
+        1.1
+      ],
+      "two_low_frequency_pairs": "unchanged"
+    },
+    "disturbance_amplitudes": {
+      "H": [
+        1,
+        5
+      ],
+      "V": [
+        1,
+        5
+      ],
+      "distribution": "independent_uniform_per_round"
+    },
+    "observation": "current_noisy_output_and_own_history",
+    "allowed_rule_formats": [
+      "python",
+      "native",
+      "matrix"
+    ]
+  },
+  "scoring": {
+    "unit": "s",
+    "label_zh": "原始积分得分",
+    "aggregation": "arithmetic_mean",
+    "std_definition": "sample_ddof_1",
+    "rank_order": "descending_unrounded_mean",
+    "good_base_m_per_s": [
+      1.9547922240808726e-08,
+      1.9547922240808726e-08,
+      1.9547922240808726e-08
+    ],
+    "bad_base_m_per_s": [
+      1.6327546630968648e-06,
+      1.6327546630968648e-06,
+      1.6327546630968648e-06
+    ],
+    "channel_quality_at_good": 0.95,
+    "channel_quality_at_bad": 0.05,
+    "formula": "c_i(v)=sigmoid(clip(ln(19)*(g_i+b_i-2*abs(v))/(b_i-g_i),-60,60)); J=sum_k(product_i(c_i(y_true[k,i])))/fs",
+    "sample_window": "post_transition_true_velocities_y1_to_yN",
+    "anchor_scaling": "both_anchors_scaled_per_round_by_frozen_nominal_HV_power_weighted_amplitude",
+    "baseline_rms_normalization": false,
+    "theoretical_maximum": 866.2936695331011,
+    "calibration_id": "plus-20261027-physical-v1",
+    "rule_failure_score": -1,
+    "infrastructure_interruption": "incomplete_no_new_published_score",
+    "finite_velocity_exceedance": "diagnostic_continue_full_round"
+  },
+  "display_notes": {
+    "ranking_unit": "independent_submitted_rule_entry",
+    "duplicate_models": "Keep 01/14 and 07/08 separate; do not merge or select the maximum as a model aggregate.",
+    "self_reports": "Submitted before formal evaluation; developer test scores and historical status are not formal Evaluation-1108 measurements.",
+    "round_pairing": "Round i is the same hidden scenario for every entrant.",
+    "quantile_method": "linear interpolation",
+    "std_is_not_confidence_interval": true,
+    "preview": "The earlier AVIS3 Arena preview was easier and used different conditions; archive it separately, without mixing scores.",
+    "inference_scope": "This batch measures submitted-controller outcomes, not an isolated or universal measure of model capability.",
+    "public_contract_original_batch_id": "plus-v1-20261027-01",
+    "current_evaluation_batch_id": "Evaluation-1108"
+  },
+  "reserved_numbers": [
+    13,
+    16,
+    17
+  ],
+  "entrants": [
+    {
+      "id": "official-004",
+      "number": 4,
+      "rank": 1,
+      "model": "Claude Opus 5.5",
+      "label": "Claude Opus 5.5",
+      "independent_entry": 1,
+      "harness": "Claude Code",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "分块 LQG、在线增益辨识及带宽调度，结合短时预测处理限幅。",
+      "method_tags": [
+        "LQG",
+        "在线辨识",
+        "预测限幅处理"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "对象解耦为竖向单通道与水平/摇摆2×2两块。用开发测试观测估计噪声与H/V扰动谱（验证为高斯、平稳，谱形与力方向跨场景固定），拟合成形滤波器后按观测器形式设计LQG；闭环观测接近白化，未饱和轮次预测分与实测分相差约1分，线性部分已近最小方差极限。F3低频高通且ya低频不计代价，避开约0.044Hz右半平面零点。在线用扰动正交方向的预测误差辨识执行器增益比，用力RMS调度卡尔曼增益。主要损失是高H幅值下F3饱和，几乎是有效幅值aH/g3的单值函数，多数物理上不可避免；用预瞻速度管道削峰，并按滚动预测得分选带宽。",
+      "mean": 837.164148817832,
+      "std": 17.750002477989327,
+      "min": 785.5681203675543,
+      "max": 853.3099085081755,
+      "median": 844.4827842320192,
+      "q1": 828.4459551051573,
+      "q3": 849.7088068867826,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 837.1545312288749,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 785.5681203675543,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 814.7238137686305,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 828.5232012867255,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 849.7280424671883,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 849.6006529511365,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 841.5991801487053,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 851.5842635925646,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 811.6721883725071,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 849.7023950266473,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 850.5641353281719,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 848.54464421786,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 841.2268411818142,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 828.2142165604527,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 819.6025619018394,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 835.3969839317931,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 851.5136317418106,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 847.3663883153332,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 847.6872754588561,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 853.3099085081755,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-004-pooled.json",
+        "round_01": "spectra/official-004-round-01.json"
+      }
+    },
+    {
+      "id": "official-014",
+      "number": 14,
+      "rank": 2,
+      "model": "GPT-6 Astra",
+      "label": "GPT-6 Astra（另一个独立参赛）",
+      "independent_entry": 2,
+      "harness": "Codex",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "基于观测估计扰动并调节滤波，结合稳健增益探测和短时施力预测。",
+      "method_tags": [
+        "自适应滤波",
+        "在线辨识",
+        "短时预测"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "先从本方零力观测估计扰动频谱，再按本轮水平和垂向扰动强弱调整因果滤波。每拍用已执行的限幅动作更新观察器。增益探测的两次估计若不一致，仅追加所需的测量窗，按各轴有效激励稳健合并。第三路接近力上限时，用短时预测比较可行施力的积分。开发中用同一扰动和噪声对照策略，另用独立整轮检查稳定性。",
+      "mean": 835.9262451395156,
+      "std": 17.821438775759223,
+      "min": 784.2315612061041,
+      "max": 852.720021559208,
+      "median": 843.7826494686824,
+      "q1": 826.9902478493768,
+      "q3": 848.5658642095916,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 835.7887002943921,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 784.2315612061041,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 812.8721159667548,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 827.0846805288176,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 848.5491741947169,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 848.6159342542159,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 841.1316327038655,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 849.849353302262,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 810.6429806285266,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 848.7002045207331,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 847.3775119575798,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 847.4718698432364,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 840.5929026734682,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 826.7069498110545,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 818.5411022591871,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 833.7374834253379,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 850.9436920887197,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 846.4336662334991,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 846.5333653386314,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 852.720021559208,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-014-pooled.json",
+        "round_01": "spectra/official-014-round-01.json"
+      }
+    },
+    {
+      "id": "official-005",
+      "number": 5,
+      "rank": 3,
+      "model": "Claude Sonnet 5.5",
+      "label": "Claude Sonnet 5.5",
+      "independent_entry": 1,
+      "harness": "Claude Code",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "35 状态 LQG 与扰动内模，配合执行器增益探测及抗饱和。",
+      "method_tags": [
+        "LQG",
+        "扰动内模",
+        "在线增益辨识"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "方法：10kHz离散观测器式LQG（Rust原生，35状态；观测器使用限幅后的实际力以抗饱和）。对象用公开名义模型（探针验证5Hz至3kHz与精确ZOH一致、无额外延迟）。扰动模型来自开环探针实测：传感器噪声为白噪声约3.3e-9 m/s/√Hz；扰动谱形跨场景固定、仅整体缩放，含固定频率窄带谐振（y2约7.15/11.7/100Hz，y1=y3约22至44Hz），作为谐振器外系统并入滤波器与LQR；宽带力扰动建成160Hz低通有色力，压低高频噪声注入。每轮前30秒在三路执行器叠加小随机抖动，利用y(k+1)与抖动(k)的一步相关直接估计三路增益（实测落在0.9至1.1内），之后按1/增益归一化输出。传输零点随模态摄动漂移，故加低频惩罚并在约400个随机及角点对象上约束闭环稳定。主要损失来自V路7Hz峰超出F3的±0.5N能力（物理极限）。",
+      "mean": 820.737698814537,
+      "std": 20.51222600045967,
+      "min": 763.6461828524649,
+      "max": 840.7167777327031,
+      "median": 829.1062980025488,
+      "q1": 809.3320163087085,
+      "q3": 836.157293472069,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 819.5262147068346,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 763.6461828524649,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 794.2729246585685,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 809.6693948243993,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 836.1435158839666,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 835.8349221480619,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 827.1916873701152,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 838.4321493332073,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 792.4031216443354,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 836.562822071963,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 836.198626236376,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 834.2099064225436,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 826.4286380740718,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 809.4896863527227,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 802.4081346097606,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 808.8590061766658,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 838.8527637289828,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 831.0209086349823,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 832.8865928280142,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 840.7167777327031,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-005-pooled.json",
+        "round_01": "spectra/official-005-round-01.json"
+      }
+    },
+    {
+      "id": "official-010",
+      "number": 10,
+      "rank": 4,
+      "model": "Gemini 4 Argon",
+      "label": "Gemini 4 Argon",
+      "independent_entry": 1,
+      "harness": "Pi",
+      "api_route": "OpenCode API",
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "52 状态原生规则，结合在线增益辨识、扰动估计与模态误差补偿。",
+      "method_tags": [
+        "在线辨识",
+        "扰动估计",
+        "模态补偿"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "Gemini 4 Argon / Copilot续作：52状态原生规则。首秒合法探测辨识执行器增益，结合扰动估计、低频偏置分离、模态误差补偿与限幅实际动作回算；辨识异常回退基线，每轮初始化，无运行时文件或网络依赖。固定算法20轮独立开发均分809.88；最终去日志源码2轮完整回归得分765.18/825.74。同算法合计22轮均分808.57，样本标准差26.66，范围754.66–830.97，0故障。旧版8轮均分781.07，两批场景独立。心得：835–855频域预测尚未兑现；强扰动限幅仍是短板。正式测评未启动。",
+      "mean": 805.8453535907908,
+      "std": 28.460010214478068,
+      "min": 721.7933378669936,
+      "max": 828.302881702894,
+      "median": 820.0201675892433,
+      "q1": 796.8010145314854,
+      "q3": 824.4763740016471,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 811.7065368801387,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 721.7933378669936,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 766.2244734465602,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 797.5041076538309,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 828.302881702894,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 828.2948493846741,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 804.9276780232321,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 824.1530793920376,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 763.705891606639,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 822.250990487865,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 824.2243944657203,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 825.2323126094275,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 811.3123612826656,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 794.6917351644487,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 776.7215453655471,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 817.7893446906218,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 825.4856295889823,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 822.3361475671131,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 824.151711216493,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 826.0980634199302,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-010-pooled.json",
+        "round_01": "spectra/official-010-round-01.json"
+      }
+    },
+    {
+      "id": "official-001",
+      "number": 1,
+      "rank": 5,
+      "model": "GPT-6 Astra",
+      "label": "GPT-6 Astra",
+      "independent_entry": 1,
+      "harness": "Codex",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "34 状态 LQG，配合在线执行器增益辨识和抗饱和回算。",
+      "method_tags": [
+        "LQG",
+        "在线增益辨识",
+        "抗饱和"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "34状态相关扰动LQG，前32秒以0.02N合法探测辨识执行器增益，并检验可信度；从34秒起平滑增强反馈至R=7e-11。固定观测器采用实际限幅作用，每轮清零，无外部数据读写；持续低频异常撤销增益补偿并回退。最终独立开发复核8轮：均分780.00、标准差17.64、0失败；同期旧版6轮758.22，较强档8轮769.63。512个公开参数边界和192个渐变样本未发现线性失稳。独立场景均值比较仍有抽样不确定性。",
+      "mean": 776.9154714805064,
+      "std": 21.604989168454978,
+      "min": 721.4367400650175,
+      "max": 799.7959075340276,
+      "median": 785.2655803474922,
+      "q1": 761.0008476809477,
+      "q3": 791.9567316899172,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 770.0280154698324,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 721.4367400650175,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 742.8582292383344,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 759.8170636322955,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 792.1230056748985,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 787.8263646117198,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 782.7047960832646,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 791.8981787813783,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 748.4289508139016,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 790.2124840399372,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 794.1124725590558,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 791.9013070282568,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 781.9072363547144,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 757.3700695339709,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 761.3954423638318,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 779.8046763450947,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 798.7383529525938,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 794.0943368428246,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 791.8557996851752,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 799.7959075340276,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-001-pooled.json",
+        "round_01": "spectra/official-001-round-01.json"
+      }
+    },
+    {
+      "id": "official-002",
+      "number": 2,
+      "rank": 6,
+      "model": "GPT-6.1 Sol",
+      "label": "GPT-6.1 Sol",
+      "independent_entry": 1,
+      "harness": "Codex",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "共模/差模反馈、泄漏 PI 与 FxLMS 自适应前馈。",
+      "method_tags": [
+        "PI",
+        "FxLMS",
+        "自适应前馈"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "采用共模/差模分解、宽带阻尼和泄漏PI，将垂向积分记忆缩短以释放低频过强约束。FxLMS的误差和次级参考采用匹配带通，只在实际受其作用的执行器将限幅时暂停学习；状态回算使用实际限幅动作，每轮全部清零。整体比较支持按多个独立场景的平均表现和低分尾部选择，不能只依赖名义模型或单次高分。规则只使用公开模型及自身合法观测、动作历史，以Rust标准库原生执行。",
+      "mean": 606.1871179609013,
+      "std": 114.3242634947397,
+      "min": 310.8300008138226,
+      "max": 742.6456263055512,
+      "median": 653.9497131353324,
+      "q1": 522.3264482229899,
+      "q3": 686.0859194180464,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 528.5740895965403,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 310.8300008138226,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 439.5841632582591,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 495.5122090864731,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 663.5083980647039,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 648.626146917462,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 626.1944733028307,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 686.0196942184941,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 500.32934774488155,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 660.4357350721012,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 742.6456263055512,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 685.6631830506335,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 599.3024275875102,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 503.58352410233897,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 530.2643439754804,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 659.2732793532028,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 704.0618701267747,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 728.0288069151652,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 686.2845950167031,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 725.0204447090989,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-002-pooled.json",
+        "round_01": "spectra/official-002-round-01.json"
+      }
+    },
+    {
+      "id": "official-006",
+      "number": 6,
+      "rank": 7,
+      "model": "GLM-5.3",
+      "label": "GLM-5.3",
+      "independent_entry": 1,
+      "harness": "Qoder",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "python",
+      "controller_format_label": "Python",
+      "controller_summary": "20 状态增广 LQG，以扰动内模和实际限幅动作更新观测器。",
+      "method_tags": [
+        "LQG",
+        "扰动内模",
+        "抗饱和"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "20阶LQG+抗饱和(Python): KF+LQR于增广系统=10阶对象+5个扰动驼峰内模(2.85/7.15/25/45/100Hz,谱识别方向;2.85/7.15双倍信任,7.15内模加宽阻尼ζ=0.1覆盖频率漂移)+宽带输入白噪+低频状态噪声(减半防低频噪声注入)。饱和时用实际施加力更新观测器(真值更新)避免windup,混合幅值H/V∈[1,5]与46摄动工况下均稳定。",
+      "mean": 335.57737001317724,
+      "std": 35.987295428676376,
+      "min": 282.8002836722693,
+      "max": 408.0918803902265,
+      "median": 334.9068686734054,
+      "q1": 304.0999358062634,
+      "q3": 349.7349700523903,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 282.8002836722693,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 292.49903266856677,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 311.2811080524146,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 295.38152310369753,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 330.9025564167688,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 333.3787800048411,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 346.1264623479484,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 367.2741027315236,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 301.92915253404556,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 338.3854529607148,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 408.0918803902265,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 336.4349573419698,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 304.82353023033596,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 296.50073268557594,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 349.66281025896495,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 341.0842560344288,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 349.9514494326662,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 397.8167097261395,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 333.08302348102904,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 394.13959618941766,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-006-pooled.json",
+        "round_01": "spectra/official-006-round-01.json"
+      }
+    },
+    {
+      "id": "official-012",
+      "number": 12,
+      "rank": 8,
+      "model": "QoDuck",
+      "label": "QoDuck",
+      "independent_entry": 1,
+      "harness": "Qoder",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "13 状态输出扰动增广 LQG，使用实际限幅输入更新观测器。",
+      "method_tags": [
+        "LQG",
+        "输出扰动估计",
+        "抗饱和"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "输出扰动增广LQG+原生Rust抗饱和。13维观测器(10名义状态+3泄漏输出扰动alpha=0.995)，KF qd=1e-8/qs=1e-12/r=1e-14，LQR rho=1e-13惩罚输出速度；饱和输入观测器(h+=Aa h+Ba u_sat+L innov)防windup，非有限值防护。开发11轮均值456/866(244~639)。心得：抗饱和决定性(同参数无抗饱和矩阵版仅5分且NaN故障)；静态对角反馈因C/B符号在1.85Hz失稳；扰动快跟踪优于慢积分库；频率自适应(125控制器库+探针辨识+innovation监督回退)经6轮验证无益(428<456)——扰动库已吸收模态失配，辨识信号弱且错误snap代价大；场景方差大，排名需多轮重复。",
+      "mean": 324.42989546148067,
+      "std": 161.79624779003908,
+      "min": 52.51251989921248,
+      "max": 627.9036837978414,
+      "median": 294.5495544792555,
+      "q1": 220.71601763531646,
+      "q3": 446.20110546696,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 224.10209757855506,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 542.4716033879232,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 52.51251989921248,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 556.163476629078,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 273.57261268216206,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 289.840889588226,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 364.57892658687564,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 266.07485345519643,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 130.00331643250786,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 483.63948924281726,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 435.56302562331194,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 228.57901811543667,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 177.23659195039193,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 210.55777780560072,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 328.5200504717559,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 87.71068763067251,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 627.9036837978414,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 478.11534499790406,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 299.258219370285,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 432.19372398386037,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-012-pooled.json",
+        "round_01": "spectra/official-012-round-01.json"
+      }
+    },
+    {
+      "id": "official-007",
+      "number": 7,
+      "rank": 9,
+      "model": "DeepSeek-V4.1-Flash-1017",
+      "label": "DeepSeek-V4.1-Flash-1017",
+      "independent_entry": 1,
+      "harness": "DeepSeek Harness",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "LQR 与 Kalman 观测器，加入高通滤波、抗饱和及异常降增益。",
+      "method_tags": [
+        "LQG",
+        "高通滤波",
+        "异常恢复"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "LQR+Kalman LQG (rho=5e-11, disturbance-observer KF q=0.01 on input-matched process noise, output gain 1.3). Anti-windup: observer updated with actually-applied (clamped) force. 0.05Hz high-pass on measurement into observer to suppress slow nearly-uncontrollable modes. Runaway supervisor: sustained |y|>5e-4 resets observer and reduces gain x0.55 (max 3). Dev tests ~400/866 mean.",
+      "mean": 307.76782169925775,
+      "std": 210.18046624492675,
+      "min": 4.945453764184522,
+      "max": 528.6986457027195,
+      "median": 425.77650460485665,
+      "q1": 47.09477824562906,
+      "q3": 472.98788793096327,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 48.916360769983,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 373.6914263982931,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 4.945453764184522,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 395.64255255172736,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 41.630030672567216,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 488.2281632948812,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 451.3995751276763,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 485.43512467488347,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 16.01943756580085,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 424.9366200780888,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 528.6986457027195,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 468.8388090163232,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 72.89483515773976,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 426.61638913162443,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 433.5805781708651,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 432.569994786626,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 29.593696943675074,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 505.33360701387164,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 19.99027267951816,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 506.3948604841063,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-007-pooled.json",
+        "round_01": "spectra/official-007-round-01.json"
+      }
+    },
+    {
+      "id": "official-008",
+      "number": 8,
+      "rank": 10,
+      "model": "DeepSeek-V4.1-Flash-1017",
+      "label": "DeepSeek-V4.1-Flash-1017（另一个独立参赛）",
+      "independent_entry": 2,
+      "harness": "DeepSeek Harness",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "matrix",
+      "controller_format_label": "声明式矩阵",
+      "controller_summary": "10 状态矩阵 LQG，使用速度与位置代价和过程噪声设计观测器。",
+      "method_tags": [
+        "LQG",
+        "矩阵控制器"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "LQG on the public 3x3 force-to-velocity model: continuous LQR with velocity+position output penalties, Kalman filter using control-path process noise (loop-transfer recovery) to balance disturbance rejection against measurement-noise sensitivity; Tustin-discretized to a 10-state matrix controller at 10 kHz. Stability and performance screened over sampled modal-frequency/damping/actuator-gain uncertainty realizations. Dev: 24 random scenes, mean ~293, median ~129, max ~554; matrix-format execution is ~20x faster per round than Python callbacks.",
+      "mean": 243.2301601547062,
+      "std": 242.31288965135275,
+      "min": 2.5976883834288134,
+      "max": 566.1296526921594,
+      "median": 144.0629730943603,
+      "q1": 15.588177249355455,
+      "q3": 501.12645708078793,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 73.10495471324353,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 3.912182701814481,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 4.154055378400498,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 32.2298638602061,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 536.8608397407796,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 566.1296526921594,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 2.5976883834288134,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 500.5436603932889,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 7.790023450370721,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 287.340808154632,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 502.87484714328497,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 215.02099147547708,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 13.354800358535774,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 17.919634508112207,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 16.332636212962015,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 493.36838621007894,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 38.757430258580456,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 484.82850499105564,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 554.7597732799161,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 512.7224691877973,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-008-pooled.json",
+        "round_01": "spectra/official-008-round-01.json"
+      }
+    },
+    {
+      "id": "official-003",
+      "number": 3,
+      "rank": 11,
+      "model": "GPT-6.1 Terra",
+      "label": "GPT-6.1 Terra",
+      "independent_entry": 1,
+      "harness": "Codex",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "多通道相位超前反馈，持续限幅异常时降增益并渐进恢复。",
+      "method_tags": [
+        "相位超前反馈",
+        "异常恢复"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "保留多通道相位超前反馈；仅在持续同方向限幅且对应速度异常时降增益，短暂停控后渐进恢复。历史观测显示交替限幅与持续失稳并不相同；独立开发场景存在明显波动。",
+      "mean": 120.28222923726182,
+      "std": 20.137779790976385,
+      "min": 81.36476738289817,
+      "max": 158.17763680851635,
+      "median": 118.09629896665112,
+      "q1": 107.02979885646394,
+      "q3": 137.0650126584327,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 139.46422090464424,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 81.36476738289817,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 142.15520207720974,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 136.2652765763622,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 130.4735876357895,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 132.53994494534987,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 111.18344731010723,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 102.60951941892164,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 93.61256409679117,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 101.19694446910961,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 122.91203330128378,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 141.03391208622838,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 108.5032253356447,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 158.17763680851635,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 98.27870387155244,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 109.52296643093507,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 114.96058595677023,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 113.79288926490644,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 146.36514489568398,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 121.232011976532,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-003-pooled.json",
+        "round_01": "spectra/official-003-round-01.json"
+      }
+    },
+    {
+      "id": "official-015",
+      "number": 15,
+      "rank": 12,
+      "model": "Qwen3.8 Flash",
+      "label": "Qwen3.8 Flash",
+      "independent_entry": 1,
+      "harness": "Qoder",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "matrix",
+      "controller_format_label": "声明式矩阵",
+      "controller_summary": "13 状态矩阵控制器，通过设计阻尼展宽和增益选择应对模型失配。",
+      "method_tags": [
+        "矩阵控制器",
+        "阻尼展宽"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "否证目录内旧结论后重做：(1) 该3x3传递函数不正实(Hermitian最小特征值-0.22,对角Re G均<0)，静态速度反馈在α=100时127摄动对象全不稳，此路不通；(2) 原离线线性高斯评估只用一次零控制得分标定扰动功率，预测813-822而同一规则实测0.2-75.8，且对±3%频偏几乎不敏感——离线分数与127摄动屏幕都不能否决设计(dsign=2屏幕bad=47却为实测最优)；(3) 开发轮独立随机且分布重尾，n=1判据无效，以下结论均用n>=6实测均值。锚点随扰动幅值同比例缩放使线性区得分对幅值不变，故实测双峰只能来自限幅或逐轮失配；评分对残余速度指数敏感，均值99%来自最好几轮，故优先做深顺风轮。增益阶梯1e6->1e9->7e9实测0.8->28->93，1e10回落59.9，峰在7e9。关键改进：把设计对象模态阻尼放大dsign=2(展宽谐振使环路相位覆盖+-3%频偏)，发散轮4/10降到2/12，dsign=2/qy=7e9实测均值124.3+-22(n=12)。fc_aug=8/20、sn=1e-6、通道权重再平衡均更差。自适应辨识链路已实现，但估计器有~1.4%系统偏差(测得能量质心而非极点)，未达zeta~0.7%要求，且Python每步回调使单轮608s，本轮预算内未采用。",
+      "mean": 64.93521795294812,
+      "std": 87.1711852013386,
+      "min": 0.4756610435961079,
+      "max": 269.7230277517482,
+      "median": 10.493102667825708,
+      "q1": 2.2912307202027673,
+      "q3": 119.26275064578068,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 3.591852008853951,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 0.4756610435961079,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 0.5870965220068036,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 2.1112094683572558,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 18.09127735693288,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 96.65214608713022,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 0.61160291546626,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 13.439449194592433,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 2.351237804151271,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 72.25976136209451,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 269.7230277517482,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 122.12212459683221,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 2.7879282061830093,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 3.317133008294784,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 1.1935992497611403,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 7.5467561410589825,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 149.62380645516384,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 250.70383708161722,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 118.30962599543018,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 163.20522680969106,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-015-pooled.json",
+        "round_01": "spectra/official-015-round-01.json"
+      }
+    },
+    {
+      "id": "official-009",
+      "number": 9,
+      "rank": 13,
+      "model": "Kimi K3.1 Pro",
+      "label": "Kimi K3.1 Pro",
+      "independent_entry": 1,
+      "harness": "Qoder",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "联合 Kalman 估计与 LQR，低频越界后切换稳健增益。",
+      "method_tags": [
+        "LQG",
+        "增益切换"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "高带宽联合卡尔曼估计与精细权重LQR；7.11/7.22Hz内模仅分离窄带测量噪声，不反馈补偿。实际限幅量回送预测，低频越界时永久切换稳健增益，避免饱和发散。三次独立开发测试74.2987、69.2200、71.1176，平均71.5454。",
+      "mean": 63.62804882120778,
+      "std": 15.041096760373916,
+      "min": 4.496127432670339,
+      "max": 75.17635415897846,
+      "median": 67.84229902823105,
+      "q1": 61.52707944352749,
+      "q3": 70.49934128657154,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 57.885819806474785,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 64.26170753809883,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 71.93850732788604,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 69.46540845407583,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 60.56530144774866,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 75.17635415897846,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 60.71027179742251,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 61.799348658895816,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 67.78311245664227,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 68.80137911374453,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 70.01961927280003,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 74.4170981255136,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 65.81006964647524,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 73.38690865027475,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 4.496127432670339,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 53.83685540830357,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 67.97612866740148,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 67.90148559981982,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 72.36472158038627,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 63.964751280542664,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-009-pooled.json",
+        "round_01": "spectra/official-009-round-01.json"
+      }
+    },
+    {
+      "id": "official-011",
+      "number": 11,
+      "rank": 14,
+      "model": "Grok4.7",
+      "label": "Grok4.7",
+      "independent_entry": 1,
+      "harness": "Cursor",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "python",
+      "controller_format_label": "Python",
+      "controller_summary": "名义模型与速度自回归构成 LQG，控制量每 100 拍更新一次。",
+      "method_tags": [
+        "LQG",
+        "自回归",
+        "保持控制"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "名义模型加10阶速度自回归的100 Hz LQG，每100拍保持，峰值0.5抗饱和。两条独立开发场景33.7和44.2。16阶网格在新场景掉到4.5，说明高阶谱不能从单条记录迁移，故保留这一版。",
+      "mean": 25.553287006304412,
+      "std": 13.00340915200054,
+      "min": 1.992002806970138,
+      "max": 51.65387659490395,
+      "median": 25.93430786561082,
+      "q1": 18.20294805980322,
+      "q3": 29.429140921681462,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 40.76654235584683,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 25.885881773052926,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 44.403317256014574,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 51.65387659490395,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 24.020471882150012,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 26.653485815762384,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 22.155850203133323,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 8.867739418858365,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 26.784197283124108,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 14.62054506498916,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 26.378014120919257,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 29.55503053531269,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 25.98273395816871,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 46.79526170576669,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 6.220320792005456,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 1.992002806970138,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 22.665620349730684,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 18.267060873485775,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 29.38717771713772,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 18.010609618755552,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-011-pooled.json",
+        "round_01": "spectra/official-011-round-01.json"
+      }
+    }
+  ],
+  "spectrum_index": "spectra/index.json"
+}
