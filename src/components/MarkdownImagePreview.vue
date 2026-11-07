@@ -7,6 +7,7 @@ const props = defineProps({
   imageSelector: { type: String, default: 'img' },
 })
 
+const isFrontier = computed(() => Boolean(props.root?.closest('.frontier-shell')))
 const dialog = ref(null)
 const previewImage = ref(null)
 const stage = ref(null)
@@ -362,6 +363,7 @@ onBeforeUnmount(() => {
     <dialog
       ref="dialog"
       class="md-image-preview"
+      :class="{ 'md-image-preview--frontier': isFrontier }"
       aria-label="图片预览"
       tabindex="-1"
       @cancel.prevent="close()"
@@ -376,7 +378,7 @@ onBeforeUnmount(() => {
             <button type="button" aria-label="缩小图片" :disabled="scale <= 1 || loadState !== 'ready'" @click="setZoom(scale - 0.5)">−</button>
             <button type="button" class="md-image-preview__reset" aria-label="复位图片" :disabled="loadState !== 'ready'" @click="setZoom(1)">{{ Math.round(scale * 100) }}%</button>
             <button type="button" aria-label="放大图片" :disabled="scale >= 4 || loadState !== 'ready'" @click="setZoom(scale + 0.5)">+</button>
-            <a v-if="selected.href" :href="selected.href" target="_blank" rel="noopener noreferrer">原链接 ↗</a>
+            <a v-if="selected.href" :href="selected.href" target="_blank" rel="noopener noreferrer">原链接{{ isFrontier ? '' : ' ↗' }}</a>
             <button type="button" class="md-image-preview__close" aria-label="关闭图片预览" autofocus @click="close()">×</button>
           </div>
         </header>
@@ -412,8 +414,8 @@ onBeforeUnmount(() => {
             </template>
           </div>
           <template v-if="images.length > 1">
-            <button type="button" class="md-image-preview__previous" aria-label="上一张图片" @dblclick.stop @click.stop="move(-1)">‹</button>
-            <button type="button" class="md-image-preview__next" aria-label="下一张图片" @dblclick.stop @click.stop="move(1)">›</button>
+            <button type="button" class="md-image-preview__previous" aria-label="上一张图片" @dblclick.stop @click.stop="move(-1)">{{ isFrontier ? '上一张' : '‹' }}</button>
+            <button type="button" class="md-image-preview__next" aria-label="下一张图片" @dblclick.stop @click.stop="move(1)">{{ isFrontier ? '下一张' : '›' }}</button>
           </template>
         </div>
         <footer class="md-image-preview__footer">
@@ -494,4 +496,6 @@ onBeforeUnmount(() => {
   .md-image-preview[open], .md-image-preview__spinner { animation: none; }
   .md-image-preview button, .md-image-preview a { transition: none; }
 }
+.md-image-preview--frontier .md-image-preview__previous,
+.md-image-preview--frontier .md-image-preview__next { width: auto; padding: 10px 14px; font-size: 14px !important; }
 </style>

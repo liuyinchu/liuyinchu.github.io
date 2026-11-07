@@ -1,7 +1,7 @@
 # AI Frontier 内容维护
 
 核对日期：2026-10-26。源码基线：`c1c3b96`。
-AVIS3 正式榜与 Preview 归档说明于 2026-11-08 更新。
+AVIS3 正式榜与历史内容移除说明于 2026-11-08 更新。
 本文保留公开数据合同与发布边界；下文日期、数量和版本是当前快照，不是长期常量。
 常规站点编辑见 [内容编辑指南](SITE_EDITING_GUIDE.md)，文档入口见 [README](README.md)。
 
@@ -16,9 +16,7 @@ AI Frontier 公开 AVIS3 的项目介绍、正式评测规则、已核验成绩�
 | `/ai-frontier/skills` | [skills.md](../public/ai-frontier/skills.md) | [FrontierDocument.vue](../src/pages/FrontierDocument.vue) |
 | `/ai-frontier/trivia` | [trivia.md](../public/ai-frontier/trivia.md) | FrontierDocument.vue |
 | `/ai-frontier/arena/avis3` 正式榜 | [evaluation-1108.json](../public/ai-frontier/evaluation-1108/evaluation-1108.json)、[methodology.md](../public/ai-frontier/evaluation-1108/methodology.md) | [AVIS3Arena.vue](../src/pages/AVIS3Arena.vue) |
-| `/ai-frontier/arena/avis3-preview` 预览归档 | [avis3-preview.json](../public/ai-frontier/archive/avis3-preview.json)、[avis3-preview.md](../public/ai-frontier/archive/avis3-preview.md) | AVIS3Arena.vue |
 | 正式频谱清单与曲线 | `public/ai-frontier/evaluation-1108/spectra/` | [Avis3Spectra.vue](../src/components/frontier/Avis3Spectra.vue) |
-| Preview 频谱发布清单与单轮谱 | [spectra/manifest.json](../public/ai-frontier/arena/avis3/spectra/manifest.json)、`spectra/contestant-N/round-XX.json` | 旧路径保留，供 Preview 查看器使用 |
 
 旧演示榜单、虚构数据、S/A/B/C/D 档位和站内札记样刊已移除。
 当前真实成绩不应标成演示数据；札记的内容状态也不决定 AVIS3 的核验状态。
@@ -82,7 +80,7 @@ MathJax 仍需从 jsDelivr 运行时加载；Mermaid 由共享渲染器按需导
 主站文章的 Enhanced 偏好不会在 Frontier 启用；浅色主题也不意味着使用另一套 Markdown 解析器。
 
 成绩数据由 useAvis3Data 默认请求 `/ai-frontier/evaluation-1108/evaluation-1108.json`，
-Preview 请求 `/ai-frontier/archive/avis3-preview.json`。正式数据经适配后检查 contestants / results 为数组，
+仅加载正式数据，经适配后检查 contestants / results 为数组，
 出错时由页面提供成绩重试按钮；这不是完整的发布数据校验器。
 字段一致性、数值与公开范围仍需发布者按下面合同核对。
 
@@ -118,22 +116,19 @@ useAvis3Data 的 `officialArena` 将原始 `entrants` 转成页面使用的 cont
 
 最大 3 轮对话属于评测协议；最高可用思考档位属于组织者提供的配置。
 这些说明不构成对全部开发过程、人工帮助或配置执行的完整独立审计。
-公开评测说明由源方 METHOD.md 同步为 [methodology.md](../public/ai-frontier/evaluation-1108/methodology.md)。
+公开评测说明在 [methodology.md](../public/ai-frontier/evaluation-1108/methodology.md) 维护；网站负责公式说明、排版与配图，科学定义以正式源方规则为依据。
 
 源数据只读同步，Evaluation-1108 的原始记录保持冻结。
 后续批次应建立独立记录并注明版本与日期，不能直接改写这份冻结记录或混排不同条件。
 规则崩溃、非法输出或数值发散导致的失败轮次按正式规则记为 -1，并参与完整组统计；
 基础设施中断或取消按未完成处理，不补造完整轮次成绩。
 
-### Preview 归档
+### 历史记录
 
-旧入口内容归档到 `/ai-frontier/arena/avis3-preview`，数据与说明分别为
-[avis3-preview.json](../public/ai-frontier/archive/avis3-preview.json) 和
-[avis3-preview.md](../public/ai-frontier/archive/avis3-preview.md)。
-它保留 `avis3-v1` / `0.1.0-candidate.3` 的三个参赛组合、各 10 轮结果与原始公开元数据；
-最近完整验收为 2026-10-09，复核为 2026-10-11，失败轮数均为 0，原积分上限为 857.375。
-Preview 同编号轮次使用独立随机场景，不能按正式批次的共享场景解释。
-Preview 与 Plus 条件不同，成绩分别展示。
+Preview 的页面、JSON、说明与 30 份旧单轮谱及 manifest 已从网站移除，历史保留在 Git。
+`/ai-frontier/arena/avis3-preview` 进入 Arena 404，SEO 不生成该入口。
+正式页仅显示发布时间 2026-11-08，此字段表示网站发布日期；原始评测日期仍保存在 JSON 中。
+前台移除参赛编号、积分单位标签和完整成绩下载按钮，内部 ID、14 个独立条目、原始单位与完整精度数据继续用于加载、排序和科学记录。
 
 ## 6. 真实频谱快照与运行时选图
 
@@ -164,26 +159,15 @@ index 用于发布清单核对，运行时曲线路径取自成绩记录中的 s
 当前快照不包含 DC、其他频段、相位、互谱、相干性、置信区间或原始时域轨迹。
 频谱来自真实速度输出的位移等效换算，不等同于直接观测到的位移轨迹或实物验证。
 
-### Preview 频谱
-
-旧 30 份单轮频谱继续保留在 `public/ai-frontier/arena/avis3/spectra/`，
-来源与处理记录见 [manifest](../public/ai-frontier/arena/avis3/spectra/manifest.json)。
-Preview 查看器按 contestantId 和两位轮次拼接 `{contestantId}/round-{XX}.json`，
-轮数优先取 roundScores 长度，再回退到 scoring.roundCount。
-旧数组为 frequency_major，`frequency_hz[j]` 对应
-`controlled_asd[j][i]` 和 `baseline_asd[j][i]`，两类数组均为 10000×3。
-旧导出保留原始精度，未重采样、四舍五入、平滑或归一化。
-旧 manifest 不参与运行时选图；Preview 同编号轮次仍不能作配对比较。
-
 ## 7. 更新流程与发布边界
 
 ### 本仓库内容
 
 1. 编辑 skills / trivia Markdown；标题与简介变化时同步路由 props。
-2. 修改 AVIS3 时先取得获准公开的冻结批次，按源方记录只读同步 evaluation-1108.json 与 methodology.md；后续批次另建记录。
+2. 修改 AVIS3 时先取得获准公开的冻结批次，按源方记录只读同步 evaluation-1108.json；网站维护 methodology.md 的公式说明与配图，后续批次另建记录。
 3. 核对 contestantId、模型与 harness、均值、样本标准差、轮数、失败数、逐轮顺序和日期口径。
-4. 正式频谱同步 28 份条目曲线、两份基线、frequency 与 index，核对条目、批次、选择模式和数组方向；Preview 保留旧 30 份频谱与 manifest。
-5. 积分保留完整数值，正式频谱幅值保留源方 8 位有效数字；未知字段不补零、不估算，归档中的 publishedAt 未确定时继续为 null。
+4. 正式频谱同步 28 份条目曲线、两份基线、frequency 与 index，核对条目、批次、选择模式和数组方向。
+5. 积分保留完整数值，正式频谱幅值保留源方 8 位有效数字；未知字段不补零、不估算。
 6. 把获准公开的静态文件随网站部署，再在实际路径验证。
 
 ### 远端札记
@@ -203,13 +187,13 @@ Preview 查看器按 contestantId 和两位轮次拼接 `{contestantId}/round-{X
 ## 8. 发布前验证
 
 静态核对：JSON 结构、身份映射、完整版本、日期、均值 / 标准差与逐轮记录一致。
-频谱核对：正式快照的 32 份 JSON 与 14 个条目对应，另核对 Preview 的旧 30 份单轮谱；
+频谱核对：正式快照的 32 份 JSON 与 14 个条目对应；
 频率范围、数组方向、单位、功率平均方式和来源绑定一致；
 运行时的浅检查不能替代这一步，也不需要新增散列校验。
 
 浏览器核对：总览和详情完整数值、排序与并列、柱状量程、目录、浅色主题，
 以及桌面 / 手机的正式榜 14 行展开、20 轮分数、控制器与历史自述、频谱两种模式切换、图例刻度、错误重试和快速切换时的加载竞态。
-核对总览前 5 名与完整榜一致，Preview 的 3 个组合、10 轮成绩及旧频谱仍可访问。
+核对总览前 5 名与完整榜一致，旧 Preview 路径显示 Arena 404，页面、SEO 与公开静态资源中均已移除旧入口和数据。
 同时核对 Skill 计数、Trivia 内容、远端札记实际请求、公式和富组件。
 若未访问真实 Raw 地址，应明确保留“线上可用性未验证”。
 

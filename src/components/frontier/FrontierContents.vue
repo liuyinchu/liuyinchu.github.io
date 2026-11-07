@@ -20,6 +20,14 @@ const visibleItems = computed(() => {
 let headings = []
 let scrollFrame = 0
 let mounted = false
+let anchorObserver
+const readerActions = ['wheel', 'touchstart', 'pointerdown', 'keydown']
+
+function stopFollowingAnchor() {
+  anchorObserver?.disconnect()
+  anchorObserver = undefined
+  for (const action of readerActions) window.removeEventListener(action, stopFollowingAnchor)
+}
 
 function updateActiveHeading() {
   scrollFrame = 0
@@ -57,12 +65,26 @@ async function goToHeading(event, item) {
   if (!heading) return
 
   event.preventDefault()
+  stopFollowingAnchor()
   activeId.value = item.id
   await router.replace({ hash: '#' + item.id })
-  window.scrollTo({
-    top: Math.max(0, window.scrollY + heading.getBoundingClientRect().top - scrollOffset()),
-    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-  })
+  const alignHeading = (behavior = 'instant') => {
+    window.scrollTo({
+      top: Math.max(0, window.scrollY + heading.getBoundingClientRect().top - scrollOffset()),
+      behavior,
+    })
+    activeId.value = item.id
+  }
+  alignHeading(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth')
+
+  // Formula typesetting can resize a chapter after navigation has completed.
+  // Follow that layout change until the reader starts their next interaction.
+  const reader = heading.closest('.frontier-markdown')
+  if (reader) {
+    anchorObserver = new ResizeObserver(() => alignHeading())
+    anchorObserver.observe(reader)
+    for (const action of readerActions) window.addEventListener(action, stopFollowingAnchor, { passive: true })
+  }
 }
 
 watch(visibleItems, refreshHeadings, { flush: 'post' })
@@ -75,6 +97,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  stopFollowingAnchor()
   mounted = false
   window.removeEventListener('scroll', queueActiveUpdate)
   window.removeEventListener('resize', queueActiveUpdate)
@@ -87,7 +110,6 @@ onBeforeUnmount(() => {
     <details class="frontier-contents__disclosure" open>
       <summary class="frontier-contents__summary">
         <span class="frontier-contents__title">{{ title }}</span>
-        <span v-if="visibleItems.length" class="frontier-contents__count">{{ visibleItems.length }} 节</span>
       </summary>
       <ul v-if="visibleItems.length" class="frontier-contents__list">
         <li v-for="item in visibleItems" :key="item.id">
@@ -126,18 +148,8 @@ onBeforeUnmount(() => {
 }
 
 .frontier-contents__summary::-webkit-details-marker { display: none; }
-.frontier-contents__summary::after {
-  width: 5px;
-  height: 5px;
-  margin-left: auto;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  content: '';
-  transform: rotate(45deg);
-}
-.frontier-contents__disclosure[open] > summary::after { transform: rotate(225deg); }
+.frontier-contents__summary::marker { content: ""; }
 .frontier-contents__summary:focus-visible { outline: 2px solid var(--f-accent); outline-offset: 4px; }
-.frontier-contents__count { font-size: 11px; font-variant-numeric: tabular-nums; }
 
 .frontier-contents__title {
   margin: 0;

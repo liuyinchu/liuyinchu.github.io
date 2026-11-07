@@ -13,28 +13,28 @@ const props = defineProps({
 })
 const contents = ref([])
 const markdown = ref('')
+const isTrivia = computed(() => props.src === '/ai-frontier/trivia.md')
 const isSkillCollection = computed(() => props.src === '/ai-frontier/skills.md')
 const skillCount = computed(() => (markdown.value.match(/^- \[[^\]]+\]\(/gm) || []).length)
 </script>
 
 <template>
   <FrontierShell :title="title + ' · Ysy AI Frontier'">
-    <header class="frontier-report-cover" :class="{ 'skill-cover': isSkillCollection }">
+    <header class="frontier-report-cover" :class="{ 'skill-cover': isSkillCollection, 'trivia-cover': isTrivia }">
       <nav class="frontier-breadcrumb" aria-label="当前位置"><RouterLink to="/ai-frontier">AI Frontier</RouterLink><span aria-hidden="true">/</span><span>{{ title }}</span></nav>
       <div class="frontier-report-heading">
         <div class="frontier-report-title">
-          <div class="frontier-eyebrow">{{ eyebrow }}</div>
+          <div v-if="!isTrivia" class="frontier-eyebrow">{{ eyebrow }}</div>
           <h1>{{ title }}</h1>
-          <p>{{ description }}</p>
+          <p v-if="!isTrivia">{{ description }}</p>
         </div>
         <div v-if="isSkillCollection && skillCount" class="skill-summary" aria-label="收集概览">
           <strong>{{ String(skillCount).padStart(2, '0') }}</strong>
-          <div><span>条 Skill</span><small>持续收集，按需取用</small></div>
+          <span>条 Skill</span>
         </div>
       </div>
     </header>
     <section class="frontier-section frontier-document" :class="{ 'skill-document': isSkillCollection }" :aria-label="title + '正文'">
-      <div v-if="isSkillCollection" class="skill-list-heading"><span>收集索引</span><span>名称 · 简介 · 使用记录</span></div>
       <div class="frontier-reading-grid" :class="{ 'frontier-document-single': !contents.length }">
         <article class="frontier-reading-card"><FrontierMarkdown :src="src" @toc-generated="contents = $event" @markdown-loaded="markdown = $event" /></article>
         <aside v-if="contents.length" class="frontier-reading-sidebar"><FrontierContents :items="contents" /></aside>
@@ -45,20 +45,17 @@ const skillCount = computed(() => (markdown.value.match(/^- \[[^\]]+\]\(/gm) || 
 </template>
 
 <style scoped>
-/* A quiet index treatment, isolated to the Skill collection. */
+.trivia-cover .frontier-report-title h1 { margin-block: 0 8px; }
 .skill-cover, .skill-document { max-width: 1000px; margin-inline: auto; }
 .skill-cover .frontier-breadcrumb { margin-block: 28px 34px; font-size: 11px; }
 .skill-cover .frontier-report-heading { align-items: flex-end; padding-bottom: 26px; gap: 28px; }
 .skill-cover .frontier-eyebrow { padding-left: 12px; border-left: 3px solid var(--f-rust); letter-spacing: .15em; }
 .skill-cover .frontier-report-title h1 { margin-block: 16px 18px; font-size: clamp(38px, 5vw, 62px); letter-spacing: .015em; }
 .skill-cover .frontier-report-title > p { margin: 0; font-size: 14px; line-height: 1.8; }
-.skill-summary { display: flex; align-items: center; flex-shrink: 0; gap: 14px; padding-left: 24px; border-left: 1px solid var(--f-line); }
+.skill-summary { display: flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 14px; padding-left: 24px; border-left: 1px solid var(--f-line); }
 .skill-summary > strong { color: var(--f-blue); font: 500 44px/1 var(--f-mono); letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
 .skill-summary span { font: 600 12px/1.6 var(--f-font); }
-.skill-summary small { display: block; margin-top: 4px; color: var(--f-muted); font: 10px/1.6 var(--f-font); }
 .skill-document { margin-top: 12px; }
-.skill-list-heading { display: flex; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 2px solid var(--f-ink); color: var(--f-muted); font: 11px/1.5 var(--f-font); letter-spacing: .08em; }
-.skill-list-heading > :first-child { color: var(--f-ink); font-weight: 650; }
 .skill-document .frontier-document-single { max-width: none; }
 .skill-document .frontier-reading-card { padding: 0; border: 0; box-shadow: none; background: transparent; }
 .skill-document :deep(.markdown-body.markdown-body--frontier) { max-width: none; }
@@ -105,8 +102,6 @@ const skillCount = computed(() => (markdown.value.match(/^- \[[^\]]+\]\(/gm) || 
   .skill-cover .frontier-report-heading { gap: 22px; padding-bottom: 14px; align-items: stretch; }
   .skill-summary { padding: 16px 0 0; border-left: 0; border-top: 1px solid var(--f-line); gap: 12px; }
   .skill-summary > strong { font-size: 30px; }
-  .skill-summary > div { display: flex; align-items: baseline; flex: 1; justify-content: space-between; gap: 12px; }
-  .skill-summary small { margin: 0; }
   .skill-document :deep(.markdown-body > ul > li) { padding: 20px 18px 20px 52px; font-size: 14px; line-height: 1.9; }
   .skill-document :deep(.markdown-body > ul > li::before) { left: 17px; top: 24px; font-size: 10px; }
   .skill-document :deep(.markdown-body > ul > li > a:first-child) { font-size: 15px; }

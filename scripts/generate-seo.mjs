@@ -19,7 +19,6 @@ const pages = [...new Set([
   ...routes,
   ...articles.map((article) => `/space1/${article.id}`),
   '/ai-frontier/arena/avis3',
-  '/ai-frontier/arena/avis3-preview',
 ])]
 
 // GitHub Pages serves extensionless URLs from .html files. These real entries

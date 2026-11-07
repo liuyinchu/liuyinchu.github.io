@@ -34,8 +34,17 @@ onBeforeUnmount(() => {
     <header class="frontier-masthead">
       <div class="frontier-masthead-inner">
         <RouterLink class="frontier-brand" to="/ai-frontier" aria-label="Ysy AI Frontier 首页">
-          <span class="frontier-brand-mark" aria-hidden="true">F</span>
-          <span class="frontier-brand-wordmark">YSY AI FRONTIER<small>INDEPENDENT OBSERVATION UNIT</small></span>
+          <svg class="frontier-brand-mark" viewBox="0 0 42 42" aria-hidden="true" focusable="false">
+            <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 11H19L24 6H35" />
+              <path d="M5 21H13L19 15H29" />
+              <path d="M5 31H22L28 25H37" />
+            </g>
+            <circle cx="35" cy="6" r="3" fill="var(--f-rust)" />
+            <circle cx="29" cy="15" r="3" fill="currentColor" />
+            <circle cx="37" cy="25" r="3" fill="var(--f-rust)" />
+          </svg>
+          <span class="frontier-brand-wordmark">YSY AI FRONTIER</span>
         </RouterLink>
         <nav class="frontier-navigation" aria-label="AI Frontier 导航">
           <RouterLink class="frontier-nav-link" :class="{ 'is-active': isOverview }" :aria-current="isOverview ? 'page' : undefined" to="/ai-frontier">总览</RouterLink>
@@ -81,9 +90,8 @@ onBeforeUnmount(() => {
 .frontier-masthead-inner { display: flex; align-items: center; min-height: 82px; gap: 2rem; }
 .frontier-brand { display: inline-flex; align-items: center; gap: .75rem; flex: 0 0 auto; color: var(--f-ink); text-decoration: none; }
 .frontier-brand:hover { color: var(--f-ink); text-decoration: none; }
-.frontier-brand-mark { position: relative; display: grid; place-items: center; width: 42px; height: 42px; border: 2px solid var(--f-ink); font: 900 30px/1 var(--f-display); }
+.frontier-brand-mark { display: block; width: 42px; height: 42px; flex: 0 0 42px; }
 .frontier-brand-wordmark { font: 800 15px/1.35 var(--f-display); letter-spacing: .09em; }
-.frontier-brand-wordmark small { display: block; margin-top: 4px; font: 8px/1.4 var(--f-mono); letter-spacing: .12em; }
 .frontier-navigation { display: flex; align-items: stretch; gap: 0; margin-left: auto; }
 .frontier-nav-link { padding: .7rem 1rem; border: 1px solid transparent; color: var(--f-muted); font: 600 12px/1.5 var(--f-font); text-decoration: none; white-space: nowrap; }
 .frontier-nav-link:hover { color: var(--f-ink); text-decoration: none; background: var(--f-panel); }
@@ -104,7 +112,7 @@ onBeforeUnmount(() => {
 @media (max-width: 760px) {
   .frontier-shell { --f-scroll-offset: 138px; }
   .frontier-masthead-inner { flex-wrap: wrap; gap: 0 1rem; padding-block: .8rem .65rem; }
-  .frontier-brand-wordmark { font-size: 13px; } .frontier-brand-wordmark small { font-size: 7px; }
+  .frontier-brand-wordmark { font-size: 13px; }
   .frontier-utilities { margin-left: auto; padding-left: 0; border: 0; }
   .frontier-navigation { order: 3; width: 100%; flex-wrap: wrap; margin-top: .8rem; border-top: 1px solid var(--f-line); padding-top: .5rem; }
   .frontier-nav-link { padding: .4rem .55rem; font-size: 11px; }

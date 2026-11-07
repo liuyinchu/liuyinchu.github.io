@@ -33,24 +33,23 @@ watch(() => props.arena, () => { expandedId.value = null })
       <thead><tr><th scope="col" class="avis3-rank-heading">名次</th><th scope="col">模型 / 运行环境</th><th scope="col">{{ arena.scoring?.label || '成绩' }}</th><th v-if="hasStd" scope="col">样本标准差</th><th scope="col">轮次记录</th></tr></thead>
       <tbody>
         <template v-for="(result, index) in visibleResults" :key="result.contestantId">
-          <tr data-testid="avis3-result">
+          <tr data-testid="avis3-result" :data-entry-id="result.contestantId">
             <td class="avis3-rank" data-label="名次">{{ rank(index) }}</td>
             <td class="avis3-contestant">
-              <span class="avis3-contestant-id" :title="result.contestantId">{{ contestant(result.contestantId).number || result.contestantId }}</span>
               <strong>{{ contestant(result.contestantId).model }}</strong>
               <span class="avis3-harness">{{ contestant(result.contestantId).harness }}</span>
 
             </td>
             <td class="avis3-result-score" :data-label="arena.scoring?.label || '成绩'">
-              <strong :title="String(result.mean)">{{ displayScore(result.mean) }}</strong><small v-if="arena.scoring?.unit">{{ arena.scoring.unit }}</small>
+              <strong :title="String(result.mean)">{{ displayScore(result.mean) }}</strong>
               <span v-if="arena.scoring?.theoreticalMax > 0" class="avis3-score-track" aria-hidden="true"><i :style="{ width: barWidth(result.mean) }"></i></span>
             </td>
             <td v-if="hasStd" class="avis3-number" data-label="样本标准差" :title="typeof result.std === 'number' ? String(result.std) : undefined">{{ displayScore(result.std) }}</td>
-            <td class="avis3-round-status" data-label="轮次记录"><span>{{ result.rounds }} 轮</span><small>{{ result.failures }} 失败</small>
+            <td class="avis3-round-status" data-label="轮次记录"><span>{{ result.rounds }} 轮</span><small v-if="result.failures > 0">{{ result.failures }} 失败</small>
               <button v-if="expandable" type="button" class="avis3-expand-button"
                 :aria-expanded="expandedId === result.contestantId" :aria-controls="detailId(result.contestantId)"
-                :aria-label="(expandedId === result.contestantId ? '收起' : '展开') + '选手 ' + (contestant(result.contestantId).number || result.contestantId) + ' ' + contestant(result.contestantId).model + ' 的详细结果'"
-                @click="toggleDetails(result.contestantId)">{{ expandedId === result.contestantId ? '收起详情 −' : '展开详情 +' }}</button>
+                :aria-label="(expandedId === result.contestantId ? '收起' : '展开') + contestant(result.contestantId).model + ' · 均分 ' + displayScore(result.mean) + ' 的详细结果'"
+                @click="toggleDetails(result.contestantId)">{{ expandedId === result.contestantId ? '收起详情' : '展开详情' }}</button>
             </td>
           </tr>
           <tr v-if="expandable" v-show="expandedId === result.contestantId" :id="detailId(result.contestantId)" class="avis3-details-row">
@@ -62,16 +61,11 @@ watch(() => props.arena, () => { expandedId.value = null })
         </template>
         <tr v-for="item in pending" :key="item.id" data-testid="avis3-pending">
           <td class="avis3-rank">—</td>
-          <td class="avis3-contestant"><span class="avis3-contestant-id">{{ item.number || item.id }}</span><strong>{{ item.model }}</strong><span class="avis3-harness">{{ item.harness }}</span></td>
+          <td class="avis3-contestant"><strong>{{ item.model }}</strong><span class="avis3-harness">{{ item.harness }}</span></td>
           <td class="avis3-pending-cell" :colspan="hasStd ? 3 : 2">待核验</td>
         </tr>
       </tbody>
     </table>
-    <p class="avis3-results-note">
-      展示四位小数，按原始均值排序。编号仅用于识别选手，成绩按{{ arena.scoring?.higherIsBetter === false ? '升序' : '降序' }}展示；原始均值完全相等时并列，采用 1、1、3 的竞争名次。
-      <span v-if="arena.scoring?.theoreticalMax > 0">条形量程为 0 至 {{ arena.scoring.theoreticalMax }}。</span>
-      <span v-if="hasStd">标准差为样本标准差（ddof = 1）。</span><span v-else-if="results.length">标准差尚未公布。</span>
-    </p>
   </div>
 </template>
 
@@ -83,9 +77,10 @@ watch(() => props.arena, () => { expandedId.value = null })
   text-align: left; white-space: normal; cursor: pointer;
 }
 .avis3-expand-button:hover, .avis3-expand-button[aria-expanded="true"] { background: var(--f-panel); border-color: var(--f-ink); }
-.avis3-leaderboard .avis3-contestant-id { overflow-wrap: anywhere; }
+.avis3-leaderboard .avis3-result-score strong { font-size: 24px; }
 .avis3-leaderboard .avis3-details-row > td { padding: 0; }
 @media (max-width: 760px) {
+  .avis3-leaderboard .avis3-result-score strong { font-size: 20px; }
   .avis3-leaderboard .avis3-results-table .avis3-details-row { grid-template-columns: minmax(0, 1fr); padding: 0; }
   .avis3-leaderboard .avis3-results-table .avis3-details-row > td { grid-column: 1 / -1; padding: 0; min-width: 0; }
 }

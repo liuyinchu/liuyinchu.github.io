@@ -1,10 +1,9 @@
-import { onBeforeUnmount, ref, unref, watch } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 
 export const NOTES_SOURCE = 'https://raw.githubusercontent.com/liuyinchu/deepsight-ai-today/main/index.md'
 export const NOTES_REPOSITORY = 'https://github.com/liuyinchu/deepsight-ai-today'
 export const OFFICIAL_BASE = '/ai-frontier/evaluation-1108'
 export const OFFICIAL_DATA = OFFICIAL_BASE + '/evaluation-1108.json'
-export const PREVIEW_DATA = '/ai-frontier/archive/avis3-preview.json'
 
 export function officialArena(record) {
   return {
@@ -52,7 +51,7 @@ export function officialArena(record) {
   }
 }
 
-export function useAvis3Data(source = OFFICIAL_DATA) {
+export function useAvis3Data() {
   const data = ref(null)
   const error = ref('')
   const loading = ref(true)
@@ -62,13 +61,11 @@ export function useAvis3Data(source = OFFICIAL_DATA) {
     controller?.abort()
     const request = new AbortController()
     controller = request
-    const path = unref(source)
     data.value = null
     error.value = ''
-    loading.value = Boolean(path)
-    if (!path) return
+    loading.value = true
     try {
-      const response = await fetch(path, { signal: request.signal })
+      const response = await fetch(OFFICIAL_DATA, { signal: request.signal })
       if (!response.ok) throw new Error('AVIS3 data unavailable')
       const result = await response.json()
       const arena = Array.isArray(result.entrants) ? officialArena(result) : result
@@ -83,7 +80,7 @@ export function useAvis3Data(source = OFFICIAL_DATA) {
     }
   }
 
-  watch(() => unref(source), load, { immediate: true })
+  load()
   onBeforeUnmount(() => controller?.abort())
   return { data, loading, error, load }
 }
