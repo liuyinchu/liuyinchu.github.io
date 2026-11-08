@@ -1,1 +1,0 @@
-import{R as e}from"./ResourceDetailPage-B03jIlSZ.js";import{c as a,o as r}from"./index-DbhFlByP.js";import"./MarkdownImagePreview-CzB4qM0e.js";const m={__name:"ResourceMaterials",setup(t){return(o,s)=>(r(),a(e,{title:"资料收集","json-file":"materials.json","category-id":"materials"}))}};export{m as default};

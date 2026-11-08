@@ -1,5 +1,13 @@
 [
   {
+    "id": "investment_finance_beginner",
+    "title": "投资与理财：一个开始",
+    "author": "pifuyuini",
+    "date": "2026-11-08",
+    "desc": "我听闻，农人收获谷物，总要留下一部分，才有来年的种子和口粮。经营家中财用也是如此：辛劳得来的收入，如何留下一份积累，这份积累又如何照顾往后的生活，都值得慢慢思量。至于投资，人各有处境，能够承担的不确定也各不相同。看见一项产品说得好，不妨先想清自己的需要，再判断它是否适合自己。\n\n这份笔记便从原始积累讲起，接着梳理收益、风险，以及股票、债券和基金之间的关系。待这些道理渐渐明白，再谈如何将所学用在家庭财务管理和投资决策之中。如此，既顾眼前的柴米，也为将来的日子留一份打算。",
+    "image": "/fig/investment_finance_beginner/cover.png"
+  },
+  {
     "id": "open_source_redis_nvm_multiplane",
     "title": "三个值得安利的开源项目：redis-py、nvm 与 Multiplane",
     "author": "pifuyuini",

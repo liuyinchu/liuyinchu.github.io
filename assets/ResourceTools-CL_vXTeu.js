@@ -1,0 +1,1 @@
+import{R as o}from"./ResourceDetailPage-N6hECfA-.js";import{c as e,o as t}from"./index-DmX5STD1.js";import"./MarkdownImagePreview-B12pIn9G.js";const n={__name:"ResourceTools",setup(r){return(s,a)=>(t(),e(o,{title:"好用工具分享","json-file":"tools.json","category-id":"tools"}))}};export{n as default};
