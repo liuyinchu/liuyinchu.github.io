@@ -42,7 +42,7 @@ const contents = ref([])
     </section>
 
     <section class="frontier-section" aria-labelledby="frontier-collections-title">
-      <div class="frontier-section-heading"><div><div class="frontier-eyebrow">COLLECTIONS &amp; NOTES</div><h2 id="frontier-collections-title">收集与记录</h2></div></div>
+      <div class="frontier-section-heading"><div><h2 id="frontier-collections-title">收集与记录</h2></div></div>
       <div class="frontier-collection-grid">
         <RouterLink class="frontier-collection-card" to="/ai-frontier/skills"><h3>Skill 收集</h3><p>值得参考的 Skill 与使用经验。</p><span class="frontier-inline-link">阅读收集</span></RouterLink>
         <RouterLink class="frontier-collection-card" to="/ai-frontier/trivia"><h3>AI Trivia</h3><p>关于 AI 的零散知识与发现。</p><span class="frontier-inline-link">阅读随记</span></RouterLink>
@@ -51,7 +51,7 @@ const contents = ref([])
 
     <section id="intelligence" class="frontier-section frontier-intelligence" aria-labelledby="frontier-intelligence-title">
       <div class="frontier-section-heading">
-        <div><div class="frontier-eyebrow">FIELD NOTES</div><h2 id="frontier-intelligence-title">AI 前沿札记</h2></div>
+        <div><h2 id="frontier-intelligence-title">AI 前沿札记</h2></div>
       </div>
       <div class="frontier-reading-grid">
         <article class="frontier-reading-card">

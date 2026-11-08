@@ -724,6 +724,7 @@ function handleOutsidePointer(event) {
 }
 
 .article-desc {
+  white-space: pre-line;
   max-width: 50rem;
   margin: 1rem 0 0;
   color: rgba(205, 214, 244, 0.82);
