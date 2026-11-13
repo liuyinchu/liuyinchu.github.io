@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">VOO、VTI、VXUS 与 VT 的投资范围</title>
+  <desc id="desc">VT 覆盖美国与美国以外的全球股票。VTI 覆盖美国全市场，VOO 对应其中的大型股部分；VXUS 覆盖美国以外的发达与新兴市场。QQQ 和 SCHD 体现特定选股规则与风格倾向，和宽基有重叠。</desc>
+  <defs><style>text{font-family:Arial,"PingFang SC","Heiti SC","Microsoft YaHei",sans-serif;fill:#172738}.muted{fill:#657584}.title{font-size:27px;font-weight:600}.body{font-size:21px}.small{font-size:17px}.blue{fill:#2354B0}</style></defs>
+  <rect width="1200" height="650" fill="white"/>
+  <text x="48" y="53" font-size="30" font-weight="600">先看投资范围，再看基金代码</text>
+  <text x="48" y="90" class="body muted">股票层面的近似关系：VT ≈ 按全球市值比例组合的 VTI + VXUS</text>
+  <rect x="48" y="120" width="1104" height="368" rx="14" fill="#F8FAFC" stroke="#CCD7E5" stroke-width="2"/>
+  <text x="75" y="163" class="title">VT · 全球股票</text>
+  <text x="1125" y="160" text-anchor="end" class="small muted">区域面积仅作示意，不代表实时权重</text>
+  <rect x="74" y="188" width="610" height="272" rx="12" fill="#EAF0FB"/>
+  <text x="100" y="230" class="title blue">VTI · 美国全市场</text>
+  <rect x="100" y="258" width="350" height="176" rx="10" fill="white" stroke="#B2C5E8"/>
+  <text x="126" y="300" class="title">VOO · 美国大型股</text>
+  <text x="126" y="337" class="body muted">标普 500 指数</text>
+  <text x="126" y="375" class="small muted">大型公司在市值加权中占比较高</text>
+  <text x="126" y="405" class="small muted">因此 VOO 与 VTI 的走势常接近</text>
+  <text x="478" y="321" class="body">中型、小型</text>
+  <text x="478" y="355" class="body">及微型公司</text>
+  <text x="478" y="397" class="small muted">VTI 额外覆盖</text>
+  <rect x="706" y="188" width="420" height="272" rx="12" fill="#EAF3F1"/>
+  <text x="733" y="230" class="title" fill="#236A5B">VXUS · 美国以外</text>
+  <rect x="732" y="258" width="368" height="80" rx="10" fill="white" stroke="#B7D4CC"/>
+  <text x="752" y="289" class="body">发达市场</text>
+  <text x="752" y="318" class="small muted">日本（如 EWJ）、欧洲、加拿大等</text>
+  <rect x="732" y="354" width="368" height="80" rx="10" fill="white" stroke="#B7D4CC"/>
+  <text x="752" y="385" class="body">新兴市场</text>
+  <text x="752" y="414" class="small muted">中国、印度、巴西等</text>
+  <rect x="48" y="516" width="1104" height="86" rx="12" fill="#F5F6F8"/>
+  <text x="74" y="550" class="body">QQQ / QQQM：纳斯达克上市的大型非金融公司；SCHD：美国股息与质量筛选。</text>
+  <text x="74" y="581" class="small muted">这些策略与宽基持仓有重叠，加入后会改变投资风格和集中程度。</text>
+  <text x="48" y="634" font-size="15" class="muted">范围示意；基金采用的指数规则与抽样方式不同，图中近似关系不表示持仓逐项完全相同。</text>
+</svg>

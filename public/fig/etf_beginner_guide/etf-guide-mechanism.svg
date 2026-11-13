@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">ETF 的两层市场：日常交易与申购赎回</title>
+  <desc id="desc">普通投资者在交易所买卖 ETF 份额。授权参与商可以用一篮子证券或现金向基金申购大额份额，也可以反向赎回。套利交易通常促使市场价格接近基金净值。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#2354B0"/></marker>
+    <marker id="gray" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#6A7B8D"/></marker>
+    <style>text{font-family:Arial,"PingFang SC","Heiti SC","Microsoft YaHei",sans-serif;fill:#172738}.muted{fill:#657584}.blue{fill:#2354B0}.head{font-size:25px;font-weight:600}.body{font-size:20px}.small{font-size:17px}</style>
+  </defs>
+  <rect width="1200" height="630" fill="white"/>
+  <text x="48" y="54" font-size="30" font-weight="600">ETF 的两层市场</text>
+  <text x="48" y="89" class="body muted">交易已有份额，让投资方便；申购与赎回，让份额供给能够调整。</text>
+  <rect x="48" y="121" width="1104" height="173" rx="14" fill="#F4F7FB"/>
+  <text x="72" y="156" class="small blue">二级市场 · 普通投资者的日常买卖</text>
+  <rect x="78" y="180" width="210" height="79" rx="10" fill="white" stroke="#CCD7E5"/>
+  <text x="183" y="228" text-anchor="middle" class="head">普通投资者</text>
+  <rect x="568" y="180" width="278" height="79" rx="10" fill="white" stroke="#CCD7E5"/>
+  <text x="707" y="212" text-anchor="middle" class="head">证券交易所</text>
+  <text x="707" y="243" text-anchor="middle" class="small muted">其他投资者 / 做市商</text>
+  <path d="M307 196 H535" fill="none" stroke="#2354B0" stroke-width="2.2"/>
+  <path d="M535 190 L547 196 L535 202 Z" fill="#2354B0"/>
+  <text x="427" y="186" text-anchor="middle" class="small blue">买入时支付现金</text>
+  <path d="M547 247 H319" fill="none" stroke="#6A7B8D" stroke-width="2.2"/>
+  <path d="M319 241 L307 247 L319 253 Z" fill="#6A7B8D"/>
+  <text x="427" y="235" text-anchor="middle" class="small muted">取得 ETF 份额</text>
+  <text x="880" y="211" class="body">按市场价格成交</text>
+  <text x="880" y="246" class="small muted">卖出时方向相反</text>
+  <rect x="48" y="319" width="1104" height="184" rx="14" fill="#F6F7F8"/>
+  <text x="72" y="354" class="small blue">一级市场 · 以大额单位申购与赎回</text>
+  <rect x="78" y="382" width="210" height="83" rx="10" fill="white" stroke="#CCD7E5"/>
+  <text x="183" y="416" text-anchor="middle" class="head">授权参与商</text>
+  <text x="183" y="445" text-anchor="middle" class="small muted">AP · 专业机构</text>
+  <rect x="568" y="382" width="210" height="83" rx="10" fill="white" stroke="#CCD7E5"/>
+  <text x="673" y="432" text-anchor="middle" class="head">ETF 基金</text>
+  <path d="M307 399 H535" fill="none" stroke="#2354B0" stroke-width="2.2"/>
+  <path d="M535 393 L547 399 L535 405 Z" fill="#2354B0"/>
+  <text x="427" y="389" text-anchor="middle" class="small blue">交入证券篮子 / 现金</text>
+  <path d="M547 452 H319" fill="none" stroke="#6A7B8D" stroke-width="2.2"/>
+  <path d="M319 446 L307 452 L319 458 Z" fill="#6A7B8D"/>
+  <text x="427" y="440" text-anchor="middle" class="small muted">取得新创建的 ETF 份额</text>
+  <text x="825" y="408" class="body">基金持有底层资产</text>
+  <text x="825" y="440" class="small muted">证券、现金等共同形成净值</text>
+  <text x="825" y="468" class="small muted">赎回时注销 ETF 份额</text>
+  <rect x="48" y="529" width="6" height="63" fill="#2354B0"/>
+  <text x="73" y="551" class="body">市场价格偏高时，AP 可申购份额后卖出；偏低时，可买入份额后赎回。</text>
+  <text x="73" y="583" class="small muted">套利通常推动价格靠近净值。市场波动、交易时差和申赎限制会影响这一机制的效率。</text>
+</svg>
