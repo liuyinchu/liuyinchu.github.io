@@ -67,7 +67,7 @@ test.describe('AI Frontier', () => {
     await expect(page.getByRole('link', { name: 'Ysy AI Frontier 首页', exact: true })).toBeVisible()
     const rows = leaderboard(page).getByTestId('avis3-result')
     await expect(rows).toHaveCount(5)
-    expect(await rows.evaluateAll(elements => elements.map(element => element.dataset.entryId))).toEqual(['official-004', 'official-014', 'official-005', 'official-010', 'official-001'])
+    expect(await rows.evaluateAll(elements => elements.map(element => element.dataset.entryId))).toEqual(['official-004', 'official-014', 'official-013', 'official-016', 'official-005'])
     for (const entry of [...data.entrants].sort((a, b) => b.mean - a.mean).slice(0, 5)) {
       const row = page.locator('[data-testid="avis3-result"][data-entry-id="' + entry.id + '"]')
       await expect(row.locator('.avis3-contestant strong')).toHaveText(entry.model)
@@ -155,8 +155,8 @@ test.describe('AI Frontier', () => {
     await expect(page.locator('.avis3-report-actions a[download]')).toHaveCount(0)
     for (const heading of await page.locator('.frontier-section-heading').all()) await expect(heading).toHaveCSS('border-top-width', '0px')
     const rows = leaderboard(page).getByTestId('avis3-result')
-    await expect(rows).toHaveCount(14)
-    expect(await rows.evaluateAll(elements => elements.map(element => element.dataset.entryId))).toEqual([4,14,5,10,1,2,6,12,7,8,3,15,9,11].map(number => 'official-' + String(number).padStart(3, '0')))
+    await expect(rows).toHaveCount(17)
+    expect(await rows.evaluateAll(elements => elements.map(element => element.dataset.entryId))).toEqual([4,14,13,16,5,10,1,2,17,6,12,7,8,3,15,9,11].map(number => 'official-' + String(number).padStart(3, '0')))
     await expectCleanRanking(page)
     for (const ids of [['official-001', 'official-014'], ['official-007', 'official-008']]) {
       const names = []
@@ -185,7 +185,7 @@ test.describe('AI Frontier', () => {
     await expect(page.getByTestId('avis3-spectra').getByRole('img')).toHaveCount(3)
     await expect(page.locator('#spectra')).toBeInViewport()
     await expect(page.locator('.frontier-markdown .markdown-body').last()).toBeVisible()
-    await rows.nth(3).getByRole('button').click()
+    await page.locator('[data-entry-id="official-010"]').getByRole('button').click()
     await expect(details).toContainText('API 路由')
     await expect(details).toContainText('OpenCode API')
     await expectNoDecorativeArrows(page)
@@ -508,7 +508,7 @@ test.describe('AVIS3 Arena Plus spectra', () => {
     await mockPlusSpectra(page)
   })
 
-  test('all fourteen entries expose pooled and shared first-round curves lazily', async ({ page }) => {
+  test('all seventeen entries expose pooled and shared first-round curves lazily', async ({ page }) => {
     test.setTimeout(90_000)
     const data = await (await page.request.get(BASE_URL + officialPath)).json()
     const requests = []
@@ -516,7 +516,7 @@ test.describe('AVIS3 Arena Plus spectra', () => {
       if (request.url().includes('/evaluation-1108/spectra/')) requests.push(new URL(request.url()).pathname.split('/').at(-1))
     })
     await gotoRoute(page, arena)
-    await expect(leaderboard(page).getByTestId('avis3-result')).toHaveCount(14)
+    await expect(leaderboard(page).getByTestId('avis3-result')).toHaveCount(17)
     await expect(page.getByTestId('avis3-spectra')).toHaveCount(0)
     expect(requests).toEqual([])
     await page.getByRole('link', { name: /查看公开频谱/ }).click()
@@ -526,7 +526,7 @@ test.describe('AVIS3 Arena Plus spectra', () => {
     await expect(viewer.getByRole('img')).toHaveCount(3)
     await expect(contestant).toHaveValue('official-004')
     await expect(selection).toHaveValue('pooled')
-    await expect(contestant.locator('option')).toHaveCount(14)
+    await expect(contestant.locator('option')).toHaveCount(17)
     await expect(selection.locator('option')).toHaveCount(2)
     for (const entry of data.entrants) {
       await contestant.selectOption(entry.id)
@@ -610,7 +610,7 @@ test('official results remain available while the methodology retries', async ({
   const failing = route => route.fulfill({ status: 503, body: 'Temporary report failure' })
   await page.route(url, failing)
   await gotoRoute(page, arena)
-  await expect(leaderboard(page).getByTestId('avis3-result')).toHaveCount(14)
+  await expect(leaderboard(page).getByTestId('avis3-result')).toHaveCount(17)
   await expect(leaderboard(page).getByTestId('avis3-result').first().getByRole('button')).toBeEnabled()
   await page.getByRole('link', { name: '评测与评分说明', exact: true }).click()
   await expect(page.getByRole('heading', { name: '评测与评分说明', exact: true })).toBeInViewport()

@@ -95,15 +95,15 @@ useAvis3Data 的 `officialArena` 将原始 `entrants` 转成页面使用的 cont
 | `evaluation_id` | 冻结批次，当前为 `Evaluation-1108` |
 | `arena_version` / `release` | 评测条件 / 发布版本，当前为 `avis3-plus-v1` / `0.2.0-candidate.1` |
 | `evaluation_date` / `timezone` | 评测日期 / 日期口径，当前为 2026-11-08 / Asia/Shanghai |
-| `participant_count` / `distinct_model_count` | 14 个独立提交条目 / 12 个不同模型 |
-| `total_rounds` / `failed_rounds` | 280 轮完成 / 0 轮规则失败 |
+| `participant_count` / `distinct_model_count` | 17 个独立提交条目 / 15 个不同模型 |
+| `total_rounds` / `failed_rounds` | 340 轮完成 / 0 轮规则失败 |
 | `protocol` | 每条目 20 轮、每轮 1000 秒、10 kHz，以及共享私有场景等协议 |
 | `scoring` | 原始积分、单位、统计口径和理论上限 |
 | `entrants` | 身份、模型、harness、控制器摘要、自述、完整成绩与频谱路径 |
 
 所有条目使用同一组 20 个私有场景，第 i 轮可以按相同场景对照。
 01 / 14 号 GPT-6 Astra 与 07 / 08 号 DeepSeek 保留独立编号、成绩和排名，不合并或取最高分作为模型汇总。
-总览显示前 5 名；完整榜显示 14 个条目，可展开 20 轮积分、控制器说明和提交自述。
+总览显示前 5 名；完整榜显示 17 个条目，可展开 20 轮积分、控制器说明和提交自述。
 自述原文反映提交时的历史状态，其中开发测试成绩不作为本次正式成绩。
 
 当前原始积分越高越好，单位为积分秒（s），理论上限为 866.2936695331011。
@@ -128,12 +128,12 @@ useAvis3Data 的 `officialArena` 将原始 `entrants` 转成页面使用的 cont
 Preview 的页面、JSON、说明与 30 份旧单轮谱及 manifest 已从网站移除，历史保留在 Git。
 `/ai-frontier/arena/avis3-preview` 进入 Arena 404，SEO 不生成该入口。
 正式页仅显示发布时间 2026-11-08，此字段表示网站发布日期；原始评测日期仍保存在 JSON 中。
-前台移除参赛编号、积分单位标签和完整成绩下载按钮，内部 ID、14 个独立条目、原始单位与完整精度数据继续用于加载、排序和科学记录。
+前台移除参赛编号、积分单位标签和完整成绩下载按钮，内部 ID、17 个独立条目、原始单位与完整精度数据继续用于加载、排序和科学记录。
 
 ## 6. 真实频谱快照与运行时选图
 
 正式谱位于 `public/ai-frontier/evaluation-1108/spectra/`。
-共 32 份 JSON，包含 14 条目的 20 轮功率平均与统一第 1 轮曲线（共 28 份）、
+共 38 份 JSON，包含 17 条目的 20 轮功率平均与统一第 1 轮曲线（共 34 份）、
 两份对应的共享 baseline、frequency.json 和 index.json。
 每份曲线的 `asd_by_channel` 为 3×10000，通道为 y1 / y2 / y3；
 frequency.json 的 `values[j]` 对应每个通道的第 j 点。
@@ -166,7 +166,7 @@ index 用于发布清单核对，运行时曲线路径取自成绩记录中的 s
 1. 编辑 skills / trivia Markdown；标题与简介变化时同步路由 props。
 2. 修改 AVIS3 时先取得获准公开的冻结批次，按源方记录只读同步 evaluation-1108.json；网站维护 methodology.md 的公式说明与配图，后续批次另建记录。
 3. 核对 contestantId、模型与 harness、均值、样本标准差、轮数、失败数、逐轮顺序和日期口径。
-4. 正式频谱同步 28 份条目曲线、两份基线、frequency 与 index，核对条目、批次、选择模式和数组方向。
+4. 正式频谱同步 34 份条目曲线、两份基线、frequency 与 index，核对条目、批次、选择模式和数组方向。
 5. 积分保留完整数值，正式频谱幅值保留源方 8 位有效数字；未知字段不补零、不估算。
 6. 把获准公开的静态文件随网站部署，再在实际路径验证。
 

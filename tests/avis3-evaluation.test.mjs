@@ -5,17 +5,21 @@ import { officialArena, orderedResults } from '../src/components/frontier/useAvi
 
 const raw = JSON.parse(await readFile(new URL('../public/ai-frontier/evaluation-1108/evaluation-1108.json', import.meta.url), 'utf8'))
 
-test('official results retain fourteen independent entrants and all 280 scored rounds', () => {
-  assert.equal(raw.entrants.length, 14)
-  assert.equal(new Set(raw.entrants.map(entry => entry.id)).size, 14)
-  assert.equal(raw.total_rounds, 280)
+test('official results retain seventeen independent entrants and all 340 scored rounds', () => {
+  assert.equal(raw.entrants.length, 17)
+  assert.equal(new Set(raw.entrants.map(entry => entry.id)).size, 17)
+  assert.equal(raw.participant_count, 17)
+  assert.equal(raw.distinct_model_count, 15)
+  assert.equal(raw.total_rounds, 340)
+  assert.equal(raw.failed_rounds, 0)
   assert.equal(raw.scoring.theoretical_maximum, 866.2936695331011)
   assert.equal(raw.scoring.unit, 's')
   const ids = raw.entrants.map(entry => entry.id)
   for (const id of ['official-001', 'official-014', 'official-007', 'official-008']) assert.ok(ids.includes(id))
-  assert.equal(raw.entrants.reduce((sum, entry) => sum + entry.rounds.length, 0), 280)
+  assert.equal(raw.entrants.reduce((sum, entry) => sum + entry.rounds.length, 0), 340)
   for (const entry of raw.entrants) {
     assert.equal(entry.round_count, 20)
+    assert.equal(entry.failed_rounds, 0)
     assert.equal(entry.rounds.length, 20)
     assert.deepEqual(entry.rounds.map(round => round.index).sort((a, b) => a - b), Array.from({ length: 20 }, (_, index) => index + 1))
     const scores = entry.rounds.map(round => round.score)
@@ -28,10 +32,10 @@ test('official results retain fourteen independent entrants and all 280 scored r
   }
 })
 
-test('public mapping preserves raw precision and orders the official champion and runner-up', () => {
+test('public mapping preserves raw precision and orders all official entries', () => {
   const mapped = officialArena(raw)
   assert.deepEqual(orderedResults(mapped).map(entry => entry.contestantId),
-    [4,14,5,10,1,2,6,12,7,8,3,15,9,11].map(number => 'official-' + String(number).padStart(3, '0')))
+    [4,14,13,16,5,10,1,2,17,6,12,7,8,3,15,9,11].map(number => 'official-' + String(number).padStart(3, '0')))
   for (const entry of raw.entrants) {
     const result = mapped.results.find(result => result.contestantId === entry.id)
     assert.equal(result.mean, entry.mean)
