@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "evaluation_id": "Evaluation-1108",
-  "source_round_spectra_count": 280,
+  "source_round_spectra_count": 340,
   "shared_baselines_verified": true,
   "baseline_comparison_rtol": 1e-08,
   "baseline_comparison_atol": 0,
@@ -41,7 +41,7 @@
   "pooling_formula": "A_pool(f)=sqrt(mean_r(A_r(f)^2)); equal weights across all 20 rounds",
   "single_round_selection": {
     "index": 1,
-    "policy": "same preselected index for all 14 entrants; no best-round selection"
+    "policy": "same preselected index for all 17 entrants; no best-round selection"
   },
   "curve_type": "true_controlled_velocity_converted_to_displacement_equivalent_asd",
   "not_exported": [
@@ -118,6 +118,11 @@
       "round_01": "official-012-round-01.json"
     },
     {
+      "id": "official-013",
+      "power_average_20_rounds": "official-013-pooled.json",
+      "round_01": "official-013-round-01.json"
+    },
+    {
       "id": "official-014",
       "power_average_20_rounds": "official-014-pooled.json",
       "round_01": "official-014-round-01.json"
@@ -126,6 +131,16 @@
       "id": "official-015",
       "power_average_20_rounds": "official-015-pooled.json",
       "round_01": "official-015-round-01.json"
+    },
+    {
+      "id": "official-016",
+      "power_average_20_rounds": "official-016-pooled.json",
+      "round_01": "official-016-round-01.json"
+    },
+    {
+      "id": "official-017",
+      "power_average_20_rounds": "official-017-pooled.json",
+      "round_01": "official-017-round-01.json"
     }
   ],
   "assets": [
@@ -238,6 +253,14 @@
       "bytes": 417199
     },
     {
+      "path": "official-013-pooled.json",
+      "bytes": 414642
+    },
+    {
+      "path": "official-013-round-01.json",
+      "bytes": 415000
+    },
+    {
       "path": "official-014-pooled.json",
       "bytes": 417094
     },
@@ -252,8 +275,24 @@
     {
       "path": "official-015-round-01.json",
       "bytes": 417043
+    },
+    {
+      "path": "official-016-pooled.json",
+      "bytes": 414565
+    },
+    {
+      "path": "official-016-round-01.json",
+      "bytes": 415139
+    },
+    {
+      "path": "official-017-pooled.json",
+      "bytes": 407008
+    },
+    {
+      "path": "official-017-round-01.json",
+      "bytes": 407724
     }
   ],
-  "asset_bytes_excluding_index": 12588335,
+  "asset_bytes_excluding_index": 15062413,
   "display": "Lazy-load only selected curves. Frequency is a common 0.01 Hz grid; no frequency downsampling or smoothing. ASD values have 8 significant digits. Suggested y limits cover control and baseline positive extrema with 10% margin."
 }

@@ -10,12 +10,12 @@
   "started_at": "2026-11-07T17:37:21.146712+00:00",
   "completed_at": "2026-11-07T18:09:00.644800+00:00",
   "evaluation_wall_time_s": 1899.498088,
-  "source_record_commit": "8b7a0cc",
-  "participant_count": 14,
-  "distinct_model_count": 12,
-  "total_rounds": 280,
+  "source_record_commit": "1e359f2",
+  "participant_count": 17,
+  "distinct_model_count": 15,
+  "total_rounds": 340,
   "failed_rounds": 0,
-  "completed_simulation_steps": 2800000000,
+  "completed_simulation_steps": 3400000000,
   "protocol": {
     "fs_hz": 10000,
     "round_duration_s": 1000,
@@ -67,7 +67,10 @@
       "official-011",
       "official-012",
       "official-014",
-      "official-015"
+      "official-015",
+      "official-016",
+      "official-013",
+      "official-017"
     ],
     "rounds_within_entrant_may_run_in_parallel": true,
     "max_conversation_turns": 3,
@@ -469,9 +472,321 @@
       }
     },
     {
+      "id": "official-013",
+      "number": 13,
+      "rank": 3,
+      "model": "GPT-6.2 Astra",
+      "label": "GPT-6.2 Astra",
+      "independent_entry": 1,
+      "harness": "Codex",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "在线辨识执行器增益，结合多尺度预测、低频差动补偿与限幅下的控制分配。",
+      "method_tags": [
+        "在线增益辨识",
+        "多尺度预测",
+        "限幅补偿"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "开场保持速度反馈，扣除三音探测的名义响应，以实际施力同步辨识执行器增益。多尺度预测器在线学习三轴相关性，用斜率、窄带和弱方向约束稳住样本不足的估计。通过四阶低频差动补偿、短时预测与限幅时的通道积分权衡分配控制力。",
+      "mean": 834.161102953292,
+      "std": 18.830826443098168,
+      "min": 779.5470055042889,
+      "max": 851.5043468342488,
+      "median": 841.9190319450636,
+      "q1": 824.6706110153501,
+      "q3": 847.6592936976397,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 834.1335296602349,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 779.5470055042889,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 810.1958188127877,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 824.6905564136159,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 847.602108952141,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 847.5773712436206,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 839.4059670776531,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 849.7758218440088,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 807.099786719367,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 847.8308479341359,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 848.2004698759685,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 845.9666728392782,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 838.4935212893354,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 824.6107748205527,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 816.3156565474974,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 831.0893283144131,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 849.5725774830304,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 844.432096812474,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 845.1778000871888,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 851.5043468342488,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-013-pooled.json",
+        "round_01": "spectra/official-013-round-01.json"
+      }
+    },
+    {
+      "id": "official-016",
+      "number": 16,
+      "rank": 4,
+      "model": "Claude Fable 5.2",
+      "label": "Claude Fable 5.2",
+      "independent_entry": 1,
+      "harness": "Claude Code",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "182 状态控制器，配合启动标定、频域在线增益修正与安全回退。",
+      "method_tags": [
+        "在线增益辨识",
+        "频域投影",
+        "安全回退"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "Claude Fable 5.2，Copilot 续作 v6rel：保留 v5c 的182态控制器、启动标定、实际限幅输入反馈与安全回退；用合法观测和实际动作的频域投影在线修正相对执行器增益，修正限±2%并平滑应用。20轮独立开发测试均值826.71，样本标准差26.73，范围767.20–851.46，零故障、零回退。名义模型配对诊断支持该修正；独立场景均分不能证明整体提升。高幅值第三路限幅仍是主要瓶颈。最终构建关闭文件日志。",
+      "mean": 833.3348619308881,
+      "std": 21.102081165545115,
+      "min": 773.4300184893953,
+      "max": 852.4290294259288,
+      "median": 841.8057814042841,
+      "q1": 821.8294204485662,
+      "q3": 848.7540049434762,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 832.4664611437976,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 773.4300184893953,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 806.1744639693625,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 821.4993885297966,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 848.8145417983465,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 848.3155300120106,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 838.1108357123019,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 850.4769444992631,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 802.5572353650342,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 848.7338259918528,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 849.1197887543237,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 847.7430603497306,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 837.8688446434909,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 821.9394310881561,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 812.9089442775912,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 831.0427943720995,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 850.8976102682477,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 845.5007270962662,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 846.6677628307641,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 852.4290294259288,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-016-pooled.json",
+        "round_01": "spectra/official-016-round-01.json"
+      }
+    },
+    {
       "id": "official-005",
       "number": 5,
-      "rank": 3,
+      "rank": 5,
       "model": "Claude Sonnet 5.5",
       "label": "Claude Sonnet 5.5",
       "independent_entry": 1,
@@ -627,7 +942,7 @@
     {
       "id": "official-010",
       "number": 10,
-      "rank": 4,
+      "rank": 6,
       "model": "Gemini 4 Argon",
       "label": "Gemini 4 Argon",
       "independent_entry": 1,
@@ -783,7 +1098,7 @@
     {
       "id": "official-001",
       "number": 1,
-      "rank": 5,
+      "rank": 7,
       "model": "GPT-6 Astra",
       "label": "GPT-6 Astra",
       "independent_entry": 1,
@@ -939,7 +1254,7 @@
     {
       "id": "official-002",
       "number": 2,
-      "rank": 6,
+      "rank": 8,
       "model": "GPT-6.1 Sol",
       "label": "GPT-6.1 Sol",
       "independent_entry": 1,
@@ -1093,9 +1408,165 @@
       }
     },
     {
+      "id": "official-017",
+      "number": 17,
+      "rank": 9,
+      "model": "GPT-6.2 Sol",
+      "label": "GPT-6.2 Sol",
+      "independent_entry": 1,
+      "harness": "Codex",
+      "api_route": null,
+      "reasoning_level": "highest_available_for_this_model",
+      "controller_format": "native",
+      "controller_format_label": "Rust / C ABI",
+      "controller_summary": "基于观测创新并行预演滤波器，按短时预测和限幅情况切换三档反馈。",
+      "method_tags": [
+        "并行滤波",
+        "短时预测",
+        "反馈切换"
+      ],
+      "summary_source": "editorial_summary_of_submitted_self_report",
+      "self_report": "由实际施力估计名义对象的响应，使用观测创新并行预演若干滤波器。以同一段创新比较预测速度与限幅，并在三档反馈之间进行短时试用和回退。",
+      "mean": 404.1169728199108,
+      "std": 328.872213725828,
+      "min": 1.8941536944837445,
+      "max": 755.5421490387006,
+      "median": 571.5068804585079,
+      "q1": 30.23510396912104,
+      "q3": 736.5603853277079,
+      "round_count": 20,
+      "failed_rounds": 0,
+      "rounds": [
+        {
+          "index": 1,
+          "status": "completed",
+          "score": 84.21742516705388,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "score": 3.518320224924039,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 3,
+          "status": "completed",
+          "score": 1.8941536944837445,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 4,
+          "status": "completed",
+          "score": 75.45595742525845,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 5,
+          "status": "completed",
+          "score": 579.0743048079325,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 6,
+          "status": "completed",
+          "score": 637.1906088460705,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 7,
+          "status": "completed",
+          "score": 2.4790784475595893,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 8,
+          "status": "completed",
+          "score": 563.9394561090833,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 9,
+          "status": "completed",
+          "score": 32.12044194121311,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 10,
+          "status": "completed",
+          "score": 614.0105342970938,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 11,
+          "status": "completed",
+          "score": 745.0218271470056,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 12,
+          "status": "completed",
+          "score": 750.0502701386013,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 13,
+          "status": "completed",
+          "score": 329.9812230608897,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 14,
+          "status": "completed",
+          "score": 24.579090052844847,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 15,
+          "status": "completed",
+          "score": 7.399788026456867,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 16,
+          "status": "completed",
+          "score": 656.1295551081739,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 17,
+          "status": "completed",
+          "score": 740.2451981097008,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 18,
+          "status": "completed",
+          "score": 735.3321144003769,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 19,
+          "status": "completed",
+          "score": 755.5421490387006,
+          "valid_samples": 10000000
+        },
+        {
+          "index": 20,
+          "status": "completed",
+          "score": 744.1579603547932,
+          "valid_samples": 10000000
+        }
+      ],
+      "spectra": {
+        "pooled": "spectra/official-017-pooled.json",
+        "round_01": "spectra/official-017-round-01.json"
+      }
+    },
+    {
       "id": "official-006",
       "number": 6,
-      "rank": 7,
+      "rank": 10,
       "model": "GLM-5.3",
       "label": "GLM-5.3",
       "independent_entry": 1,
@@ -1251,7 +1722,7 @@
     {
       "id": "official-012",
       "number": 12,
-      "rank": 8,
+      "rank": 11,
       "model": "QoDuck",
       "label": "QoDuck",
       "independent_entry": 1,
@@ -1407,7 +1878,7 @@
     {
       "id": "official-007",
       "number": 7,
-      "rank": 9,
+      "rank": 12,
       "model": "DeepSeek-V4.1-Flash-1017",
       "label": "DeepSeek-V4.1-Flash-1017",
       "independent_entry": 1,
@@ -1563,7 +2034,7 @@
     {
       "id": "official-008",
       "number": 8,
-      "rank": 10,
+      "rank": 13,
       "model": "DeepSeek-V4.1-Flash-1017",
       "label": "DeepSeek-V4.1-Flash-1017（另一个独立参赛）",
       "independent_entry": 2,
@@ -1718,7 +2189,7 @@
     {
       "id": "official-003",
       "number": 3,
-      "rank": 11,
+      "rank": 14,
       "model": "GPT-6.1 Terra",
       "label": "GPT-6.1 Terra",
       "independent_entry": 1,
@@ -1873,7 +2344,7 @@
     {
       "id": "official-015",
       "number": 15,
-      "rank": 12,
+      "rank": 15,
       "model": "Qwen3.8 Flash",
       "label": "Qwen3.8 Flash",
       "independent_entry": 1,
@@ -2028,7 +2499,7 @@
     {
       "id": "official-009",
       "number": 9,
-      "rank": 13,
+      "rank": 16,
       "model": "Kimi K3.1 Pro",
       "label": "Kimi K3.1 Pro",
       "independent_entry": 1,
@@ -2183,7 +2654,7 @@
     {
       "id": "official-011",
       "number": 11,
-      "rank": 14,
+      "rank": 17,
       "model": "Grok4.7",
       "label": "Grok4.7",
       "independent_entry": 1,
