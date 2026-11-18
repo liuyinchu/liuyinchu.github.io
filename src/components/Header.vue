@@ -107,6 +107,7 @@ const navItems = [
     to: '/code',
     match: [
       '/code',
+      '/vix-dashboard',
       '/music-box',
       '/stellar-field',
       '/labreport',

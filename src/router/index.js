@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '../pages/Home.vue'
 const Code = () => import('../pages/Code.vue')
+const VixDashboard = () => import('../pages/VixDashboard.vue')
 const MusicBox = () => import('../pages/MusicBox.vue')
 const BirthdayPlanet = () => import('../pages/BirthdayPlanet.vue')
 const StellarField = () => import('../pages/StellarField.vue')
@@ -49,6 +50,7 @@ const NotFound = () => import('../pages/NotFound.vue')
 const routes = [
   { path: '/', component: Home },
   { path: '/code', component: Code },
+  { path: '/vix-dashboard', component: VixDashboard },
   { path: '/music-box', component: MusicBox },
   { path: '/birthday-planet', component: BirthdayPlanet },
   { path: '/stellar-field', component: StellarField },

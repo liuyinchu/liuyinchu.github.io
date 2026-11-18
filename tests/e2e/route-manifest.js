@@ -1,6 +1,7 @@
 export const STATIC_ROUTES = Object.freeze([
   '/',
   '/code',
+  '/vix-dashboard',
   '/music-box',
   '/resource',
   '/space1',
