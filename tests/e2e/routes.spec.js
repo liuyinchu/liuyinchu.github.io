@@ -1,6 +1,7 @@
 import { test } from '@playwright/test'
 import { STATIC_ROUTES } from './route-manifest.js'
 import { mockFrontierNotes } from './frontier-fixture.js'
+import { mockVixQuotes } from './vix-quote-fixture.js'
 import {
   auditPage,
   expectKnownRouteShell,
@@ -12,6 +13,7 @@ test.describe('known routes', () => {
   test.beforeEach(async ({ page }) => { await mockFrontierNotes(page) })
   for (const route of STATIC_ROUTES) {
     test(route + ' renders without route-level failures', async ({ page }) => {
+      if (route === '/vix-dashboard') await mockVixQuotes(page)
       const audit = auditPage(page)
 
       await gotoRoute(page, route)

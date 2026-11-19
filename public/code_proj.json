@@ -8,7 +8,7 @@
   },
   {
     "name": "VIX 指数仪表盘",
-    "desc": "用三只立体表盘独立推演 VIX、VXN 与 VVIX，并刷新 VIX 和 VXN 的日收盘图。",
+    "desc": "在三只立体表盘上查看 VIX、VXN 与 VVIX 的最新可用读数，拖动 VIX 滑杆联动推演。",
     "homepage": "/vix-dashboard",
     "repo": "",
     "category": "project"

@@ -6,6 +6,15 @@ import { postItPlugin } from './scripts/vite-post-it.mjs'
 
 export default defineConfig({
   base: '/', // ✅ 根目录仓库为 /
+  server: {
+    proxy: {
+      '^/vix-history/(VIX|VXN|VVIX)_History[.]csv$': {
+        target: 'https://cdn-api.cboe.com',
+        changeOrigin: true,
+        rewrite: request => request.replace('/vix-history/', '/api/global/us_indices/daily_prices/'),
+      },
+    },
+  },
   plugins: [
     vue(),
     postItPlugin(),
