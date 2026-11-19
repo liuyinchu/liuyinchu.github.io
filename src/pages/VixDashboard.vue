@@ -340,8 +340,7 @@ onBeforeUnmount(() => {
   --dial-middle: #28293e;
   --dial-bottom: #171728;
   --dial-needle: #f5edff;
-  min-height: calc(100vh - var(--site-header-height, 72px));
-  padding: clamp(1.25rem, 4vw, 3.5rem) var(--page-gutter, 1.25rem) 4rem;
+  padding: clamp(1.25rem, 4vw, 3.5rem) var(--page-gutter, 1.25rem) 1.5rem;
   color: var(--ink);
   background: radial-gradient(ellipse at 50% -5%, color-mix(in srgb, var(--accent) 12%, var(--page-base)), transparent 28rem),
     var(--page-base);
