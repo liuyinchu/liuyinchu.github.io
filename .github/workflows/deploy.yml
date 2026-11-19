@@ -5,6 +5,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    - cron: '37 4,10 * * 2-6'
 
 permissions:
   contents: write
@@ -26,6 +28,15 @@ jobs:
         with:
           node-version: 24
           cache: npm
+
+      - name: Refresh VIX closing data
+        run: |
+          git fetch --no-tags --depth=1 --filter=blob:none origin gh-pages
+          if git cat-file -e FETCH_HEAD:data/vix-latest.json 2>/dev/null; then
+            git show FETCH_HEAD:data/vix-latest.json | node scripts/update-vix-snapshot.mjs --previous-stdin
+          else
+            node scripts/update-vix-snapshot.mjs
+          fi
 
       - name: Install dependencies
         run: npm ci

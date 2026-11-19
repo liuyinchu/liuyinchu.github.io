@@ -59,14 +59,16 @@ export function mergeIndexCloses(previous, updates) {
   }))
 }
 
+export function parseClosingSnapshot(data) {
+  if (data?.kind !== 'close' || !VIX_SYMBOLS.every(symbol => {
+    const quote = data.quotes?.[symbol]
+    return Number.isFinite(quote?.value) && quote.value > 0 && /^\d{4}-\d{2}-\d{2}$/.test(quote.date)
+  })) throw new Error('Invalid volatility quotes')
+  return data
+}
+
 export async function fetchQuoteSnapshot(url, signal) {
   const response = await fetch(url, { cache: 'no-store', signal })
   if (!response.ok) throw new Error('Quote feed unavailable')
-  const data = await response.json()
-  if (!['close', 'delayed', 'live'].includes(data?.kind) || !VIX_SYMBOLS.every(symbol => {
-    const quote = data.quotes?.[symbol]
-    return Number.isFinite(quote?.value) && quote.value > 0 && typeof quote.date === 'string' &&
-      Number.isFinite(Date.parse(quote.date))
-  })) throw new Error('Invalid volatility quotes')
-  return data
+  return parseClosingSnapshot(await response.json())
 }
