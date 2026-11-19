@@ -7,6 +7,13 @@
     "category": "project"
   },
   {
+    "name": "VIX 指数仪表盘",
+    "desc": "在三只立体表盘上查看 VIX、VXN 与 VVIX 的最新可用读数，拖动 VIX 滑杆联动推演。",
+    "homepage": "/vix-dashboard",
+    "repo": "",
+    "category": "project"
+  },
+  {
     "name": "音乐机关盒",
     "desc": "摆放音铃、鼓面和斜坡，让弹珠沿重力轨迹奏响旋律；支持拖动编排、音符调整和本地保存。",
     "homepage": "/music-box",
